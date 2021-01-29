@@ -1,0 +1,254 @@
+<?php
+/*
+ * This file is part of Hector ORM.
+ *
+ * @license   https://opensource.org/licenses/MIT MIT License
+ * @copyright 2021 Ronan GIRON
+ * @author    Ronan GIRON <https://github.com/ElGigi>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code, to the root.
+ */
+
+declare(strict_types=1);
+
+namespace Hector\Schema;
+
+use Hector\Schema\Exception\SchemaException;
+
+/**
+ * Class Column.
+ *
+ * @package Hector\Schema
+ */
+class Column
+{
+    use NameHelperTrait;
+
+    private string $name;
+    private int $position;
+    private mixed $default;
+    private bool $nullable;
+    private string $type;
+    private bool $auto_increment;
+    private ?int $maxlength;
+    private ?int $numeric_precision;
+    private ?int $numeric_scale;
+    private bool $unsigned;
+    private ?string $charset;
+    private ?string $collation;
+    private ?Table $table = null;
+
+    /**
+     * PHP serialize method.
+     *
+     * @return array
+     */
+    public function __serialize(): array
+    {
+        return [
+            'name' => $this->name,
+            'position' => $this->position,
+            'default' => $this->default,
+            'nullable' => $this->nullable,
+            'type' => $this->type,
+            'auto_increment' => $this->auto_increment,
+            'maxlength' => $this->maxlength,
+            'numeric_precision' => $this->numeric_precision,
+            'numeric_scale' => $this->numeric_scale,
+            'unsigned' => $this->unsigned,
+            'charset' => $this->charset,
+            'collation' => $this->collation,
+        ];
+    }
+
+    /**
+     * PHP unserialize method.
+     *
+     * @param array $data
+     */
+    public function __unserialize(array $data): void
+    {
+        $this->name = $data['name'];
+        $this->position = $data['position'];
+        $this->default = $data['default'];
+        $this->nullable = $data['nullable'];
+        $this->type = $data['type'];
+        $this->auto_increment = $data['auto_increment'];
+        $this->maxlength = $data['maxlength'];
+        $this->numeric_precision = $data['numeric_precision'];
+        $this->numeric_scale = $data['numeric_scale'];
+        $this->unsigned = $data['unsigned'];
+        $this->charset = $data['charset'];
+        $this->collation = $data['collation'];
+    }
+
+    /**
+     * Get name.
+     *
+     * @param bool $quoted
+     * @param string|null $tableAlias
+     *
+     * @return string
+     */
+    public function getName(bool $quoted = false, ?string $tableAlias = null): string
+    {
+        $name = $this->name;
+
+        $quoted && $name = $this->quoteName($name);
+        null !== $tableAlias && $name = $this->addAliasToName($name, $tableAlias);
+
+        return $name;
+    }
+
+    /**
+     * Get full name.
+     *
+     * @param bool $quoted
+     *
+     * @return string
+     * @throws SchemaException
+     */
+    public function getFullName(bool $quoted = false): string
+    {
+        return sprintf('%s.%s', $this->getTable()->getFullName($quoted), $this->getName($quoted));
+    }
+
+    /**
+     * Get position.
+     *
+     * @return int
+     */
+    public function getPosition(): int
+    {
+        return $this->position;
+    }
+
+    /**
+     * Get default.
+     *
+     * @return mixed
+     */
+    public function getDefault(): mixed
+    {
+        return $this->default;
+    }
+
+    /**
+     * Is nullable?
+     *
+     * @return bool
+     */
+    public function isNullable(): bool
+    {
+        return $this->nullable;
+    }
+
+    /**
+     * Get type.
+     *
+     * @return string
+     */
+    public function getType(): string
+    {
+        return $this->type;
+    }
+
+    /**
+     * Is auto increment?
+     *
+     * @return bool
+     */
+    public function isAutoIncrement(): bool
+    {
+        return $this->auto_increment;
+    }
+
+    /**
+     * Get max length.
+     *
+     * @return int|null
+     */
+    public function getMaxlength(): ?int
+    {
+        return $this->maxlength;
+    }
+
+    /**
+     * Get numeric precision.
+     *
+     * @return int|null
+     */
+    public function getNumericPrecision(): ?int
+    {
+        return $this->numeric_precision;
+    }
+
+    /**
+     * Get numeric scale.
+     *
+     * @return int|null
+     */
+    public function getNumericScale(): ?int
+    {
+        return $this->numeric_scale;
+    }
+
+    /**
+     * Is unsigned?
+     *
+     * @return bool
+     */
+    public function isUnsigned(): bool
+    {
+        return $this->unsigned;
+    }
+
+    /**
+     * Get charset.
+     *
+     * @return string|null
+     */
+    public function getCharset(): ?string
+    {
+        return $this->charset;
+    }
+
+    /**
+     * Get collation.
+     *
+     * @return string|null
+     */
+    public function getCollation(): ?string
+    {
+        return $this->collation;
+    }
+
+    /**
+     * Get table.
+     *
+     * @return Table
+     * @throws SchemaException
+     */
+    public function getTable(): Table
+    {
+        return $this->table ?? throw new SchemaException('No table attached to the column');
+    }
+
+    /**
+     * Is primary?
+     *
+     * @return bool
+     * @throws SchemaException
+     */
+    public function isPrimary(): bool
+    {
+        $primaryIndex = $this->getTable()->getPrimaryIndex();
+
+        if (null === $primaryIndex) {
+            return false;
+        }
+
+        return $primaryIndex->hasColumn($this);
+    }
+}
