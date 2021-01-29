@@ -1,0 +1,343 @@
+<?php
+/*
+ * This file is part of Hector ORM.
+ *
+ * @license   https://opensource.org/licenses/MIT MIT License
+ * @copyright 2021 Ronan GIRON
+ * @author    Ronan GIRON <https://github.com/ElGigi>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code, to the root.
+ */
+
+namespace Hector\Query\Tests;
+
+use Hector\Connection\Connection;
+use Hector\Query\Delete;
+use Hector\Query\Insert;
+use Hector\Query\QueryBuilder;
+use Hector\Query\Select;
+use Hector\Query\Update;
+use PHPUnit\Framework\TestCase;
+
+class QueryBuilderTest extends TestCase
+{
+    private ?Connection $connection = null;
+
+    /**
+     * Get connection.
+     *
+     * @return Connection
+     */
+    private function getConnection(): Connection
+    {
+        if (null !== $this->connection) {
+            return $this->connection;
+        }
+
+        return $this->connection = new Connection('sqlite:' . realpath(__DIR__ . '/test.sqlite'));
+
+        return $this->connection = new Connection('mysql:host=localhost;dbname=schema;user=root');
+    }
+
+    public function testFetchOne()
+    {
+        $queryBuilder = new QueryBuilder($this->getConnection());
+
+        $result = $queryBuilder->from('`table`')->columns('*')->fetchOne();
+
+        $this->assertNotNull($result);
+        $this->assertArrayHasKey('table_id', $result);
+    }
+
+    public function testFetchAll()
+    {
+        $queryBuilder = new QueryBuilder($this->getConnection());
+
+        $result = $queryBuilder->from('`table`')->columns('*')->fetchAll();
+
+        $this->assertInstanceOf(\Generator::class, $result);
+        $this->assertIsIterable($result);
+
+        $result = iterator_to_array($result);
+        $this->assertGreaterThanOrEqual(2, $result);
+    }
+
+    public function testFetchColumn()
+    {
+        $queryBuilder = new QueryBuilder($this->getConnection());
+
+        $result = $queryBuilder->from('`table`')->fetchColumn(1);
+
+        $this->assertInstanceOf(\Generator::class, $result);
+        $this->assertIsIterable($result);
+
+        $result = iterator_to_array($result);
+        $this->assertGreaterThanOrEqual(2, $result);
+        $this->assertNotNull($result);
+        $this->assertContains("Foo", $result);
+        $this->assertContains("Bar", $result);
+    }
+
+    public function testSelect()
+    {
+        $reflectionMethod = new \ReflectionMethod(QueryBuilder::class, 'makeSelect');
+        $reflectionMethod->setAccessible(true);
+
+        $queryBuilder = new QueryBuilder($this->getConnection());
+        $queryBuilder = $queryBuilder->select('foo', 'f');
+        $binding = [];
+
+        $this->assertInstanceOf(QueryBuilder::class, $queryBuilder);
+        $this->assertEquals(
+            'SELECT' . PHP_EOL .
+            '    *' . PHP_EOL .
+            'FROM' . PHP_EOL .
+            '    foo AS f' . PHP_EOL,
+            $reflectionMethod->invoke($queryBuilder)->getStatement($binding)
+        );
+        $this->assertEmpty($binding);
+    }
+
+    public function testDistinct()
+    {
+        $queryBuilder = new FakeQueryBuilder($this->getConnection());
+        $queryBuilder = $queryBuilder->from('foo', 'f')->orderBy('bar', 'DESC')->distinct();
+        $binding = [];
+        $select = $queryBuilder->makeSelect();
+
+        $this->assertInstanceOf(Select::class, $select);
+        $this->assertInstanceOf(QueryBuilder::class, $queryBuilder);
+        $this->assertEquals(
+            'SELECT' . PHP_EOL .
+            '    DISTINCT' . PHP_EOL .
+            '    *' . PHP_EOL .
+            'FROM' . PHP_EOL .
+            '    foo AS f' . PHP_EOL .
+            'ORDER BY' . PHP_EOL .
+            '    bar DESC' . PHP_EOL,
+            $select->getStatement($binding)
+        );
+        $this->assertEmpty($binding);
+    }
+
+    public function testSelectWithClosureCondition()
+    {
+        $reflectionMethod = new \ReflectionMethod(QueryBuilder::class, 'makeSelect');
+        $reflectionMethod->setAccessible(true);
+
+        $queryBuilder = new QueryBuilder($this->getConnection());
+        $queryBuilder->from('`foo`')
+            ->where(
+                function (QueryBuilder $builder) {
+                    $builder->where('bar', 'baz');
+                }
+            );
+
+        $binding = [];
+        $this->assertEquals(
+            'SELECT' . PHP_EOL .
+            '    *' . PHP_EOL .
+            'FROM' . PHP_EOL .
+            '    `foo`' . PHP_EOL .
+            'WHERE' . PHP_EOL .
+            '    bar = ?' . PHP_EOL,
+            $reflectionMethod->invoke($queryBuilder)->getStatement($binding)
+        );
+        $this->assertEquals(['baz'], $binding);
+
+        $binding = [];
+        $this->assertEquals(
+            'SELECT' . PHP_EOL .
+            '    *' . PHP_EOL .
+            'FROM' . PHP_EOL .
+            '    `foo`' . PHP_EOL .
+            'WHERE' . PHP_EOL .
+            '    bar = ?' . PHP_EOL,
+            $reflectionMethod->invoke($queryBuilder)->getStatement($binding)
+        );
+        $this->assertEquals(['baz'], $binding);
+    }
+
+    public function testSelectWithClosureConditionWithReturnedValue()
+    {
+        $reflectionMethod = new \ReflectionMethod(QueryBuilder::class, 'makeSelect');
+        $reflectionMethod->setAccessible(true);
+
+        $queryBuilder = new QueryBuilder($this->getConnection());
+        $queryBuilder->from('`foo`')
+            ->where(
+                function () {
+                    return 'bar';
+                },
+                'test'
+            );
+
+        $binding = [];
+        $this->assertEquals(
+            'SELECT' . PHP_EOL .
+            '    *' . PHP_EOL .
+            'FROM' . PHP_EOL .
+            '    `foo`' . PHP_EOL .
+            'WHERE' . PHP_EOL .
+            '    bar = ?' . PHP_EOL,
+            $reflectionMethod->invoke($queryBuilder)->getStatement($binding)
+        );
+        $this->assertEquals(['test'], $binding);
+    }
+
+    public function testSelectWithClosureConditionValue()
+    {
+        $reflectionMethod = new \ReflectionMethod(QueryBuilder::class, 'makeSelect');
+        $reflectionMethod->setAccessible(true);
+
+        $queryBuilder = new QueryBuilder($this->getConnection());
+        $queryBuilder->from('`foo`')
+            ->where(
+                'bar',
+                function () {
+                    return 'test';
+                }
+            );
+
+        $binding = [];
+        $this->assertEquals(
+            'SELECT' . PHP_EOL .
+            '    *' . PHP_EOL .
+            'FROM' . PHP_EOL .
+            '    `foo`' . PHP_EOL .
+            'WHERE' . PHP_EOL .
+            '    bar = ?' . PHP_EOL,
+            $reflectionMethod->invoke($queryBuilder)->getStatement($binding)
+        );
+        $this->assertEquals(['test'], $binding);
+    }
+
+    public function testMakeSelect()
+    {
+        $queryBuilder = new FakeQueryBuilder($this->getConnection());
+        $queryBuilder = $queryBuilder->from('foo', 'f')->orderBy('bar', 'DESC');
+        $binding = [];
+        $select = $queryBuilder->makeSelect();
+
+        $this->assertInstanceOf(Select::class, $select);
+        $this->assertInstanceOf(QueryBuilder::class, $queryBuilder);
+        $this->assertEquals(
+            'SELECT' . PHP_EOL .
+            '    *' . PHP_EOL .
+            'FROM' . PHP_EOL .
+            '    foo AS f' . PHP_EOL .
+            'ORDER BY' . PHP_EOL .
+            '    bar DESC' . PHP_EOL,
+            $select->getStatement($binding)
+        );
+        $this->assertEmpty($binding);
+    }
+
+    public function testMakeCount()
+    {
+        $queryBuilder = new FakeQueryBuilder($this->getConnection());
+        $queryBuilder = $queryBuilder
+            ->from('foo', 'f')
+            ->orderBy('bar', 'DESC')
+            ->limit(2);
+        $binding = [];
+        $select = $queryBuilder->makeCount();
+
+        $this->assertInstanceOf(Select::class, $select);
+        $this->assertInstanceOf(QueryBuilder::class, $queryBuilder);
+        $this->assertEquals(
+            'SELECT' . PHP_EOL .
+            '    COUNT(*) AS `count`' . PHP_EOL .
+            'FROM' . PHP_EOL .
+            '    foo AS f' . PHP_EOL,
+            $select->getStatement($binding)
+        );
+        $this->assertEmpty($binding);
+    }
+
+    public function testMakeExists()
+    {
+        $queryBuilder = new FakeQueryBuilder($this->getConnection());
+        $queryBuilder->from('foo', 'f');
+        $queryBuilder->where('f.bar', 'baz');
+
+        $binding = [];
+        $select = $queryBuilder->makeExists();
+
+        $this->assertInstanceOf(Select::class, $select);
+        $this->assertEquals(
+            'SELECT' . PHP_EOL .
+            '    EXISTS(' . PHP_EOL .
+            '        SELECT' . PHP_EOL .
+            '            1' . PHP_EOL .
+            '        FROM' . PHP_EOL .
+            '            foo AS f' . PHP_EOL .
+            '        WHERE' . PHP_EOL .
+            '            f.bar = ?' . PHP_EOL .
+            '    ) AS `exists`' . PHP_EOL,
+            $select->getStatement($binding)
+        );
+        $this->assertEquals(['baz'], $binding);
+    }
+
+    public function testMakeInsert()
+    {
+        $queryBuilder = new FakeQueryBuilder($this->getConnection());
+        $queryBuilder->from('foo', 'f');
+        $queryBuilder->assign('bar', 'bar_value');
+
+        $binding = [];
+        $insert = $queryBuilder->makeInsert();
+
+        $this->assertInstanceOf(Insert::class, $insert);
+        $this->assertEquals(
+            'INSERT INTO' . PHP_EOL .
+            '    foo' . PHP_EOL .
+            'SET' . PHP_EOL .
+            '    bar = ?' . PHP_EOL,
+            $insert->getStatement($binding)
+        );
+        $this->assertEquals(['bar_value'], $binding);
+    }
+
+    public function testMakeUpdate()
+    {
+        $queryBuilder = new FakeQueryBuilder($this->getConnection());
+        $queryBuilder->from('foo', 'f');
+        $queryBuilder->assign('bar', 'bar_value');
+
+        $binding = [];
+        $update = $queryBuilder->makeUpdate();
+
+        $this->assertInstanceOf(Update::class, $update);
+        $this->assertEquals(
+            'UPDATE' . PHP_EOL .
+            '    foo AS f' . PHP_EOL .
+            'SET' . PHP_EOL .
+            '    bar = ?' . PHP_EOL,
+            $update->getStatement($binding)
+        );
+        $this->assertEquals(['bar_value'], $binding);
+    }
+
+    public function testDelete()
+    {
+        $queryBuilder = new FakeQueryBuilder($this->getConnection());
+        $queryBuilder->from('foo', 'f');
+        $queryBuilder->where('bar', 'bar_value');
+
+        $binding = [];
+        $delete = $queryBuilder->makeDelete();
+
+        $this->assertInstanceOf(Delete::class, $delete);
+        $this->assertEquals(
+            'DELETE FROM' . PHP_EOL .
+            '    foo' . PHP_EOL .
+            'WHERE' . PHP_EOL .
+            '    bar = ?' . PHP_EOL,
+            $delete->getStatement($binding)
+        );
+        $this->assertEquals(['bar_value'], $binding);
+    }
+}
