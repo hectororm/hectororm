@@ -108,7 +108,7 @@ class Connection
             return $this->pdo;
         }
 
-        $logEntry = $this->logger?->newEntry('CONNECTION ' . $this->dsn);
+        $logEntry = $this->logger?->newEntry($this->name, 'CONNECTION ' . $this->dsn);
 
         $this->pdo = new PDO($this->dsn);
 
@@ -137,7 +137,7 @@ class Connection
             return $this->getPdo();
         }
 
-        $logEntry = $this->logger?->newEntry('CONNECTION ' . $this->readDsn);
+        $logEntry = $this->logger?->newEntry($this->name, 'CONNECTION ' . $this->readDsn);
 
         $this->readPdo = new PDO($this->readDsn);
 
@@ -213,7 +213,12 @@ class Connection
      */
     protected function pdoExecute(PDO $pdo, string $statement, array $input_parameters = []): PDOStatement
     {
-        $logEntry = $this->logger?->newEntry($statement, $input_parameters, (new Exception())->getTraceAsString());
+        $logEntry = $this->logger?->newEntry(
+            $this->name,
+            $statement,
+            $input_parameters,
+            (new Exception())->getTraceAsString()
+        );
 
         try {
             $stm = $pdo->prepare($statement);

@@ -12,6 +12,7 @@
 
 namespace Hector\Connection\Tests\Log;
 
+use Hector\Connection\Connection;
 use Hector\Connection\Log\LogEntry;
 use Hector\Connection\Log\Logger;
 use PHPUnit\Framework\TestCase;
@@ -21,7 +22,7 @@ class LoggerTest extends TestCase
     public function testSerialization()
     {
         $logger = new Logger();
-        $logger->newEntry('STATEMENT');
+        $logger->newEntry(Connection::DEFAULT_NAME, 'STATEMENT');
         $logger2 = unserialize(serialize($logger));
 
         $this->assertCount(1, $logger);
@@ -34,8 +35,8 @@ class LoggerTest extends TestCase
 
         $this->assertCount(0, $logger);
 
-        $logger->newEntry('STATEMENT');
-        $logger->newEntry('STATEMENT');
+        $logger->newEntry(Connection::DEFAULT_NAME, 'STATEMENT');
+        $logger->newEntry(Connection::DEFAULT_NAME, 'STATEMENT');
 
         $this->assertCount(2, $logger);
     }
@@ -43,7 +44,7 @@ class LoggerTest extends TestCase
     public function testAdd()
     {
         $logger = new Logger();
-        $logEntry = new LogEntry('STATEMENT');
+        $logEntry = new LogEntry(Connection::DEFAULT_NAME, 'STATEMENT');
         $logger->add($logEntry);
 
         $this->assertContains($logEntry, $logger->getLogs());
@@ -52,8 +53,8 @@ class LoggerTest extends TestCase
     public function testGetLogs()
     {
         $logger = new Logger();
-        $logger->newEntry('STATEMENT');
-        $logger->newEntry('STATEMENT');
+        $logger->newEntry(Connection::DEFAULT_NAME, 'STATEMENT');
+        $logger->newEntry(Connection::DEFAULT_NAME, 'STATEMENT');
 
         $this->assertNotEmpty($logger->getLogs());
         $this->assertCount(2, $logger->getLogs());
@@ -72,7 +73,7 @@ class LoggerTest extends TestCase
     {
         $logger = new Logger();
 
-        $this->assertInstanceOf(LogEntry::class, $logEntry = $logger->newEntry('STATEMENT'));
+        $this->assertInstanceOf(LogEntry::class, $logEntry = $logger->newEntry(Connection::DEFAULT_NAME, 'STATEMENT'));
         $this->assertContains($logEntry, $logger->getLogs());
     }
 }

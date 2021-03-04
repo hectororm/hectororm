@@ -23,23 +23,22 @@ class LogEntry
 {
     private float $start;
     private ?float $end = null;
-    private string $statement;
-    private array $parameters;
-    private ?string $trace = null;
 
     /**
      * LogEntry constructor.
      *
+     * @param string $connection
      * @param string $statement
      * @param array $parameters
      * @param string|null $trace
      */
-    public function __construct(string $statement, array $parameters = [], ?string $trace = null)
-    {
+    public function __construct(
+        private string $connection,
+        private string $statement,
+        private array $parameters = [],
+        private ?string $trace = null
+    ) {
         $this->start = microtime(true);
-        $this->statement = $statement;
-        $this->parameters = $parameters;
-        $this->trace = $trace;
     }
 
     /**
@@ -82,6 +81,16 @@ class LogEntry
         }
 
         return $this->end - $this->start;
+    }
+
+    /**
+     * Get connection.
+     *
+     * @return string
+     */
+    public function getConnection(): string
+    {
+        return $this->connection;
     }
 
     /**

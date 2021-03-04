@@ -56,15 +56,20 @@ class Logger implements Countable
     /**
      * New log entry.
      *
+     * @param string $connection
      * @param string $statement
      * @param array $parameters
      * @param string|null $trace
      *
      * @return LogEntry
      */
-    public function newEntry(string $statement, array $parameters = [], string $trace = null): LogEntry
-    {
-        return $this->logs[] = new LogEntry($statement, $parameters, $trace);
+    public function newEntry(
+        string $connection,
+        string $statement,
+        array $parameters = [],
+        string $trace = null
+    ): LogEntry {
+        return $this->logs[] = new LogEntry($connection, $statement, $parameters, $trace);
     }
 
     /**

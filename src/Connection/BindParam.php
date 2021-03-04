@@ -23,7 +23,6 @@ use PDO;
  */
 class BindParam
 {
-    private mixed $variable;
     private int $type;
 
     /**
@@ -32,9 +31,10 @@ class BindParam
      * @param mixed $variable
      * @param int|null $type
      */
-    public function __construct(mixed &$variable, ?int $type = null)
-    {
-        $this->variable = $variable;
+    public function __construct(
+        private mixed &$variable,
+        ?int $type = null
+    ) {
         $this->type = $type ?? static::findDataType($variable);
     }
 
