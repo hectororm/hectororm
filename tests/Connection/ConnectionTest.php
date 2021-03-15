@@ -144,6 +144,8 @@ class ConnectionTest extends TestCase
 
         $this->assertTrue($connection->inTransaction());
         $this->assertEquals(2, $reflectionProperty->getValue($connection));
+
+        $connection->rollBack();
     }
 
     public function testCommit()
@@ -188,6 +190,10 @@ class ConnectionTest extends TestCase
 
         $connection->commit();
 
+        $this->assertEquals(1, $reflectionProperty->getValue($connection));
+
+        $connection->commit();
+
         $this->assertEquals(0, $reflectionProperty->getValue($connection));
     }
 
@@ -214,6 +220,22 @@ class ConnectionTest extends TestCase
         $connection = new Connection('sqlite::memory:');
 
         $this->assertEquals(0, $reflectionProperty->getValue($connection));
+
+        $connection->rollBack();
+
+        $this->assertEquals(0, $reflectionProperty->getValue($connection));
+    }
+
+    public function testRollBackWithMultipleTransactions()
+    {
+        $reflectionProperty = new ReflectionProperty(Connection::class, 'transactions');
+        $reflectionProperty->setAccessible(true);
+
+        $connection = new Connection('sqlite::memory:');
+        $connection->beginTransaction();
+        $connection->beginTransaction();
+
+        $this->assertEquals(2, $reflectionProperty->getValue($connection));
 
         $connection->rollBack();
 

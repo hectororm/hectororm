@@ -175,10 +175,15 @@ class Connection
      */
     public function commit(): void
     {
-        if ($this->transactions > 0) {
-            $this->getPdo()->commit();
-            $this->transactions = 0;
+        if ($this->transactions <= 0) {
+            return;
         }
+
+        if ($this->transactions === 1) {
+            $this->getPdo()->commit();
+        }
+
+        $this->transactions--;
     }
 
     /**
