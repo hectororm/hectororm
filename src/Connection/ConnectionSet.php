@@ -16,7 +16,9 @@ namespace Hector\Connection;
 
 use ArrayIterator;
 use Countable;
+use Generator;
 use Hector\Connection\Exception\NotFoundException;
+use Hector\Connection\Log\Logger;
 use IteratorAggregate;
 
 /**
@@ -88,5 +90,21 @@ class ConnectionSet implements Countable, IteratorAggregate
     public function getConnection(string $name = Connection::DEFAULT_NAME): Connection
     {
         return $this->connections[$name] ?? throw new NotFoundException(sprintf('Connection "%s" not found', $name));
+    }
+
+    /**
+     * Get loggers.
+     *
+     * @return Generator<Logger>
+     */
+    public function getLoggers(): Generator
+    {
+        foreach ($this->connections as $connection) {
+            if (null === $connection->getLogger()) {
+                continue;
+            }
+
+            yield $connection->getLogger();
+        }
     }
 }

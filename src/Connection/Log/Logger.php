@@ -69,7 +69,9 @@ class Logger implements Countable
         array $parameters = [],
         string $trace = null
     ): LogEntry {
-        return $this->logs[] = new LogEntry($connection, $statement, $parameters, $trace);
+        $this->add($entry = new LogEntry($connection, $statement, $parameters, $trace));
+
+        return $entry;
     }
 
     /**

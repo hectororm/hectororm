@@ -14,8 +14,8 @@ namespace Hector\Connection\Tests;
 
 use Hector\Connection\Connection;
 use Hector\Connection\ConnectionSet;
-use Hector\Connection\Exception\ConnectionException;
 use Hector\Connection\Exception\NotFoundException;
+use Hector\Connection\Log\Logger;
 use PHPUnit\Framework\TestCase;
 
 class ConnectionSetTest extends TestCase
@@ -114,5 +114,34 @@ class ConnectionSetTest extends TestCase
         $this->assertCount(1, $connectionSet);
         $this->assertNotSame($connection1, $connectionSet->getConnection());
         $this->assertSame($connection2, $connectionSet->getConnection());
+    }
+
+    public function testGetLoggers()
+    {
+        $connectionSet = new ConnectionSet();
+
+        $connectionSet->addConnection(
+            $connection1 = new Connection(
+                'sqlite:memory:',
+                name: 'connection1',
+                logger: new Logger()
+            )
+        );
+        $connectionSet->addConnection(
+            $connection2 = new Connection(
+                'sqlite:memory:',
+                name: 'connection2',
+                logger: new Logger()
+            )
+        );
+        $connectionSet->addConnection(new Connection('sqlite:memory:', name: 'connection3'));
+
+        $this->assertSame(
+            [
+                $connection1->getLogger(),
+                $connection2->getLogger(),
+            ],
+            iterator_to_array($connectionSet->getLoggers())
+        );
     }
 }
