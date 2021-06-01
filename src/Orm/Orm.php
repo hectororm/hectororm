@@ -36,7 +36,7 @@ class Orm
 
     public static ?Orm $instance = null;
     public static int $alias = 0;
-    protected Connection|ConnectionSet $connection;
+    protected ConnectionSet $connections;
     protected DataTypeSet $dataTypes;
     protected SchemaContainer $schemaContainer;
     protected EventDispatcherInterface $eventDispatcher;
@@ -58,7 +58,10 @@ class Orm
         SchemaContainer $schemaContainer,
         ?EventDispatcherInterface $eventDispatcher = null
     ) {
-        $this->connection = $connection;
+        if ($connection instanceof Connection) {
+            $connection = new ConnectionSet($connection);
+        }
+        $this->connections = $connection;
         $this->dataTypes = new DataTypeSet();
         $this->dataTypes->initDefaults();
         $this->schemaContainer = $schemaContainer;
@@ -90,7 +93,7 @@ class Orm
     public function __serialize(): array
     {
         return [
-            'connection' => $this->connection,
+            'connections' => $this->connections,
             'dataTypes' => $this->dataTypes,
             'schemaContainer' => $this->schemaContainer,
             'reflections' => $this->reflections,
@@ -106,7 +109,7 @@ class Orm
      */
     public function __unserialize(array $data): void
     {
-        $this->connection = $data['connection'];
+        $this->connections = $data['connections'];
         $this->dataTypes = $data['dataTypes'];
         $this->schemaContainer = $data['schemaContainer'];
         $this->reflections = $data['reflections'];
@@ -151,14 +154,20 @@ class Orm
     public function getConnection(string $connectionName = Connection::DEFAULT_NAME): Connection
     {
         try {
-            if ($this->connection instanceof Connection) {
-                return $this->connection;
-            }
-
-            return $this->connection->getConnection($connectionName);
+            return $this->connections->getConnection($connectionName);
         } catch (NotFoundException) {
             throw new OrmException(sprintf('Connection named "%s" does not exists', $connectionName));
         }
+    }
+
+    /**
+     * Get connections.
+     *
+     * @return ConnectionSet
+     */
+    public function getConnections(): ConnectionSet
+    {
+        return $this->connections;
     }
 
     /**
@@ -389,7 +398,6 @@ class Orm
 
                 if (!$event->isPropagationStopped()) {
                     $mapper->insertEntity($entity);
-                    $mapper->refreshEntity($entity);
 
                     $this->storage->attach($entity, EntityStorage::STATUS_NONE);
 
@@ -402,7 +410,6 @@ class Orm
 
                 if (!$event->isPropagationStopped()) {
                     $mapper->updateEntity($entity);
-                    $mapper->refreshEntity($entity);
 
                     $this->storage->attach($entity, EntityStorage::STATUS_NONE);
 
