@@ -21,6 +21,7 @@ use Hector\Orm\Exception\OrmException;
 use Hector\Schema\Exception\SchemaException;
 use Hector\Schema\Generator\MySQL;
 use Hector\Schema\SchemaContainer;
+use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\SimpleCache\CacheInterface;
 use Psr\SimpleCache\InvalidArgumentException;
 
@@ -33,6 +34,7 @@ class OrmFactory
      *
      * @param array $options
      * @param Connection|ConnectionSet|null $connection
+     * @param EventDispatcherInterface|null $eventDispatcher
      * @param CacheInterface|null $cache
      *
      * @return Orm
@@ -40,28 +42,24 @@ class OrmFactory
      * @throws OrmException
      * @throws SchemaException
      */
-    public static function orm(array $options, Connection|ConnectionSet|null $connection, ?CacheInterface $cache = null): Orm
-    {
-        if (null === $connection) {
-            $connection = static::connection($options);
-        }
+    public static function orm(
+        array $options,
+        Connection|ConnectionSet|null $connection,
+        ?EventDispatcherInterface $eventDispatcher = null,
+        ?CacheInterface $cache = null
+    ): Orm {
+        $connection = $connection ?? static::connection($options);
 
-        if (null === $cache || !$cache->has(static::CACHE_ORM_KEY)) {
+        if (null === ($schemaContainer = $cache?->get(static::CACHE_ORM_KEY))) {
             if (!array_key_exists('schemas', $options) || !is_array($options['schemas'])) {
                 throw new OrmException('Missing "schemas" (array) option key in configuration');
             }
 
             $schemaContainer = static::schemaContainer($connection, ...$options['schemas']);
-            $orm = new Orm($connection, $schemaContainer);
-
-            if (null !== $cache) {
-                $cache->set(static::CACHE_ORM_KEY, $orm);
-            }
-
-            return $orm;
+            $cache->set(static::CACHE_ORM_KEY, $schemaContainer);
         }
 
-        return $cache->get(static::CACHE_ORM_KEY);
+        return new Orm($connection, $schemaContainer, $eventDispatcher);
     }
 
     /**
