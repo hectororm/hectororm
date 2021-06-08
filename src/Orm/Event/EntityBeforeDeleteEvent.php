@@ -19,7 +19,7 @@ namespace Hector\Orm\Event;
  *
  * @package Hector\Orm\Event
  */
-class EntityBeforeDeleteEvent extends EntityEvent implements StoppableEventInterface
+class EntityBeforeDeleteEvent extends EntityDeleteEvent implements StoppableEventInterface
 {
     use StoppableEventTrait;
 }

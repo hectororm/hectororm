@@ -15,10 +15,8 @@ declare(strict_types=1);
 namespace Hector\Orm\Event;
 
 /**
- * Class EntityAfterDeleteEvent.
- *
- * @package Hector\Orm\Event
+ * Class EntityDeleteEvent.
  */
-class EntityAfterDeleteEvent extends EntityDeleteEvent
+abstract class EntityDeleteEvent extends EntityEvent
 {
 }

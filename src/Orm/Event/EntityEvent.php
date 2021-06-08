@@ -14,7 +14,6 @@ declare(strict_types=1);
 
 namespace Hector\Orm\Event;
 
-use Hector\Orm\Entity\AbstractEvent;
 use Hector\Orm\Entity\Entity;
 
 /**

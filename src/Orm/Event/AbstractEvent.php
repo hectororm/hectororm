@@ -12,7 +12,7 @@
 
 declare(strict_types=1);
 
-namespace Hector\Orm\Entity;
+namespace Hector\Orm\Event;
 
 use DateTimeImmutable;
 
