@@ -16,8 +16,6 @@ namespace Hector\Orm\DataType;
 
 /**
  * Class FloatType.
- *
- * @package Hector\Orm\DataType
  */
 class FloatType extends AbstractNumericType
 {

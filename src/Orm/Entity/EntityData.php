@@ -16,8 +16,6 @@ namespace Hector\Orm\Entity;
 
 /**
  * Class EntityData.
- *
- * @package Hector\Orm\Entity
  */
 final class EntityData
 {

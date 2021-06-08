@@ -16,8 +16,6 @@ namespace Hector\Orm\DataType;
 
 /**
  * Class YearType.
- *
- * @package Hector\Orm\DataType
  */
 class YearType extends AbstractNumericType
 {

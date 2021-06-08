@@ -16,8 +16,6 @@ namespace Hector\Orm\DataType;
 
 /**
  * Class MediumIntType.
- *
- * @package Hector\Orm\DataType
  */
 class MediumIntType extends AbstractNumericType
 {

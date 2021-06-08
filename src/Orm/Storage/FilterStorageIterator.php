@@ -19,8 +19,6 @@ use WeakReference;
 
 /**
  * Class FilterStorageIterator.
- *
- * @package Hector\Orm\Storage
  */
 class FilterStorageIterator extends FilterIterator
 {

@@ -16,8 +16,6 @@ namespace Hector\Orm\DataType;
 
 /**
  * Class DateTimeType.
- *
- * @package Hector\Orm\DataType
  */
 class DateTimeType extends TimestampType
 {

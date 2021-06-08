@@ -19,8 +19,6 @@ use Iterator;
 
 /**
  * Class FilterCollectionIterator.
- *
- * @package Hector\Orm\Collection
  */
 class FilterCollectionIterator extends FilterIterator
 {

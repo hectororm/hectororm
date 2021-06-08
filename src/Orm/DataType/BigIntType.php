@@ -16,8 +16,6 @@ namespace Hector\Orm\DataType;
 
 /**
  * Class BigIntType.
- *
- * @package Hector\Orm\DataType
  */
 class BigIntType extends AbstractNumericType
 {

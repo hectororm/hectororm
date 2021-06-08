@@ -16,8 +16,6 @@ namespace Hector\Orm\DataType;
 
 /**
  * Class EnumType.
- *
- * @package Hector\Orm\DataType
  */
 class EnumType extends AbstractStringType
 {

@@ -16,8 +16,6 @@ namespace Hector\Orm\Event;
 
 /**
  * Class EntityAfterSaveEvent.
- *
- * @package Hector\Orm\Event
  */
 class EntityAfterSaveEvent extends EntitySaveEvent
 {

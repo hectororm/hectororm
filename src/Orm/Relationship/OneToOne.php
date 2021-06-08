@@ -16,8 +16,6 @@ namespace Hector\Orm\Relationship;
 
 /**
  * Class OneToOne.
- *
- * @package Hector\Orm\Entity\Relation
  */
 class OneToOne extends ManyToOne
 {

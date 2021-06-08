@@ -20,8 +20,6 @@ use Stringable;
 
 /**
  * Class AbstractStringType.
- *
- * @package Hector\Orm\DataType
  */
 abstract class AbstractStringType extends AbstractType implements TypeInterface
 {

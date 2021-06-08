@@ -23,8 +23,6 @@ use Throwable;
 
 /**
  * Class AbstractDateType.
- *
- * @package Hector\Orm\DataType
  */
 abstract class AbstractDateType extends AbstractType implements TypeInterface
 {

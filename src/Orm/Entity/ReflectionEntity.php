@@ -32,8 +32,6 @@ use ReflectionProperty;
 /**
  * Class ReflectionEntity.
  *
- * @package Hector\Orm\Entity
- *
  * @property-read string|Entity $class Class of entity
  * @property-read string $mapper Mapper class of entity
  * @property-read string $collection Collection class of entity

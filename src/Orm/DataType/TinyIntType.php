@@ -16,8 +16,6 @@ namespace Hector\Orm\DataType;
 
 /**
  * Class TinyIntType.
- *
- * @package Hector\Orm\DataType
  */
 class TinyIntType extends AbstractNumericType
 {

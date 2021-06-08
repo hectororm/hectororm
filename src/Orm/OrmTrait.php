@@ -16,8 +16,6 @@ use Hector\Orm\Exception\OrmException;
 
 /**
  * Trait OrmTrait.
- *
- * @package Hector\Orm
  */
 trait OrmTrait
 {

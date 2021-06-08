@@ -16,8 +16,6 @@ namespace Hector\Orm\DataType;
 
 /**
  * Class LongTextType.
- *
- * @package Hector\Orm\DataType
  */
 class LongTextType extends AbstractStringType
 {

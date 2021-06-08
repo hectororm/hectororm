@@ -16,8 +16,6 @@ namespace Hector\Orm\DataType;
 
 /**
  * Class CharType.
- *
- * @package Hector\Orm\DataType
  */
 class CharType extends AbstractStringType
 {

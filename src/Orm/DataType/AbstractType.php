@@ -16,8 +16,6 @@ namespace Hector\Orm\DataType;
 
 /**
  * Class AbstractType.
- *
- * @package Hector\Orm\DataType
  */
 abstract class AbstractType implements TypeInterface
 {

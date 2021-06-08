@@ -21,8 +21,6 @@ use Throwable;
 
 /**
  * Class JsonType.
- *
- * @package Hector\Orm\DataType
  */
 class JsonType extends AbstractType implements TypeInterface
 {

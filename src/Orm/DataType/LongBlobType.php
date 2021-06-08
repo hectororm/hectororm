@@ -16,8 +16,6 @@ namespace Hector\Orm\DataType;
 
 /**
  * Class LongBlobType.
- *
- * @package Hector\Orm\DataType
  */
 class LongBlobType extends AbstractStringType
 {

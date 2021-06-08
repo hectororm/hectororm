@@ -28,8 +28,6 @@ use Hector\Schema\Table;
 
 /**
  * Class ManyToMany.
- *
- * @package Hector\Orm\Entity\Relation
  */
 class ManyToMany extends Relationship
 {

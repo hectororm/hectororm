@@ -16,8 +16,6 @@ namespace Hector\Orm\DataType;
 
 /**
  * Class MediumBlobType.
- *
- * @package Hector\Orm\DataType
  */
 class MediumBlobType extends AbstractStringType
 {

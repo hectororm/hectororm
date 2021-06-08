@@ -16,8 +16,6 @@ namespace Hector\Orm;
 
 /**
  * Trait ExternalEnvironment.
- *
- * @package Hector\Orm
  */
 trait ExternalEnvironment
 {

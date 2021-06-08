@@ -18,8 +18,6 @@ use DateTimeImmutable;
 
 /**
  * Class AbstractEvent.
- *
- * @package Hector\Orm\Entity
  */
 abstract class AbstractEvent
 {

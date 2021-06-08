@@ -21,8 +21,6 @@ use Throwable;
 
 /**
  * Class TypeException.
- *
- * @package Hector\Orm\Exception
  */
 class TypeException extends OrmException
 {

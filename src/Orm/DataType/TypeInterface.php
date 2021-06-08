@@ -19,8 +19,6 @@ use ReflectionNamedType;
 
 /**
  * Interface TypeInterface.
- *
- * @package Hector\Orm\DataType
  */
 interface TypeInterface
 {

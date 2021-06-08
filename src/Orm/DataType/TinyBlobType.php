@@ -16,8 +16,6 @@ namespace Hector\Orm\DataType;
 
 /**
  * Class TinyBlobType.
- *
- * @package Hector\Orm\DataType
  */
 class TinyBlobType extends AbstractStringType
 {

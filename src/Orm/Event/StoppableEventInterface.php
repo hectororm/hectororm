@@ -18,8 +18,6 @@ use Psr\EventDispatcher\StoppableEventInterface as PsrStoppableEventInterface;
 
 /**
  * Interface StoppableEventInterface.
- *
- * @package Hector\Orm\Event
  */
 interface StoppableEventInterface extends PsrStoppableEventInterface
 {

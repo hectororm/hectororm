@@ -18,8 +18,6 @@ use Psr\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Class NullEventDispatcher.
- *
- * @package Hector\Orm\Event
  */
 class NullEventDispatcher implements EventDispatcherInterface
 {

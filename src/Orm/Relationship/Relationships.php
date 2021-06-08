@@ -23,8 +23,6 @@ use Hector\Orm\Exception\RelationException;
 
 /**
  * Class Relationships.
- *
- * @package Hector\Orm\Relationship
  */
 class Relationships implements Countable
 {

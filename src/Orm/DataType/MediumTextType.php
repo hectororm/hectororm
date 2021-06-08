@@ -16,8 +16,6 @@ namespace Hector\Orm\DataType;
 
 /**
  * Class MediumTextType.
- *
- * @package Hector\Orm\DataType
  */
 class MediumTextType extends AbstractStringType
 {

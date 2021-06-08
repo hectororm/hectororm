@@ -22,8 +22,6 @@ use Hector\Orm\Exception\RelationException;
 
 /**
  * Class ManyToOne.
- *
- * @package Hector\Orm\Entity\Relation
  */
 class ManyToOne extends RegularRelationship
 {

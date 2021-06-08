@@ -20,8 +20,6 @@ use Hector\Schema\Exception\SchemaException;
 
 /**
  * Class DataTypeSet.
- *
- * @package Hector\Orm\DataType
  */
 class DataTypeSet
 {

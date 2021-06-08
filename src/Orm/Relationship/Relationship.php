@@ -28,8 +28,6 @@ use Hector\Schema\Exception\SchemaException;
 
 /**
  * Class Relationship.
- *
- * @package Hector\Orm\Entity\Relation
  */
 abstract class Relationship
 {

@@ -26,8 +26,6 @@ use JsonSerializable;
 
 /**
  * Class Collection.
- *
- * @package Hector\Orm\Entity
  */
 class Collection extends ArrayObject implements JsonSerializable
 {

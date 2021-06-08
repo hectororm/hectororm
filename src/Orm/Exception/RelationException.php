@@ -16,8 +16,6 @@ namespace Hector\Orm\Exception;
 
 /**
  * Class RelationException.
- *
- * @package Hector\Orm\Exception
  */
 class RelationException extends OrmException
 {

@@ -23,8 +23,6 @@ use Hector\Query\Statement\Row;
 
 /**
  * Class AbstractRegularRelationship.
- *
- * @package Hector\Orm\Relationship
  */
 abstract class RegularRelationship extends Relationship
 {

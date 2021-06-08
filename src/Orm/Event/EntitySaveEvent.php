@@ -18,8 +18,6 @@ use Hector\Orm\Entity\Entity;
 
 /**
  * Class EntitySaveEvent.
- *
- * @package Hector\Orm\Event
  */
 abstract class EntitySaveEvent extends EntityEvent
 {

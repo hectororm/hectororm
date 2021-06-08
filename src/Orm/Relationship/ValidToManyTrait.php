@@ -18,8 +18,6 @@ use Hector\Orm\Entity\ReflectionEntity;
 
 /**
  * Trait ValidToManyTrait.
- *
- * @package Hector\Orm\Relationship
  */
 trait ValidToManyTrait
 {

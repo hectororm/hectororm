@@ -21,8 +21,6 @@ use Hector\Orm\Relationship\Relationships;
 
 /**
  * Class RelationshipAttribute.
- *
- * @package Hector\Orm\Attributes
  */
 abstract class RelationshipAttribute
 {

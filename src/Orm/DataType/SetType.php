@@ -19,8 +19,6 @@ use ReflectionNamedType;
 
 /**
  * Class SetType.
- *
- * @package Hector\Orm\DataType
  */
 class SetType extends AbstractType implements TypeInterface
 {

@@ -16,8 +16,6 @@ namespace Hector\Orm\DataType;
 
 /**
  * Class NumericType.
- *
- * @package Hector\Orm\DataType
  */
 class NumericType extends AbstractNumericType
 {

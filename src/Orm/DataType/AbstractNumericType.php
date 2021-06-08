@@ -19,8 +19,6 @@ use ReflectionNamedType;
 
 /**
  * Class NumericType.
- *
- * @package Hector\Orm\DataType
  */
 abstract class AbstractNumericType extends AbstractType implements TypeInterface
 {
