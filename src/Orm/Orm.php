@@ -30,10 +30,11 @@ use Hector\Schema\SchemaContainer;
 use InvalidArgumentException;
 use Psr\EventDispatcher\EventDispatcherInterface;
 
+/**
+ * Class Orm.
+ */
 class Orm
 {
-    use ExternalEnvironment;
-
     public static ?Orm $instance = null;
     public static int $alias = 0;
     protected ConnectionSet $connections;
