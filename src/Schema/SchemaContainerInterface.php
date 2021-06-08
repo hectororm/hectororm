@@ -21,8 +21,6 @@ use IteratorAggregate;
 
 /**
  * Interface SchemaContainerInterface.
- *
- * @package Hector\Schema
  */
 interface SchemaContainerInterface extends Countable, IteratorAggregate
 {
@@ -79,4 +77,39 @@ interface SchemaContainerInterface extends Countable, IteratorAggregate
      * @throws NotFoundException
      */
     public function getTable(string $name, ?string $schemaName = null, ?string $connection = null): Table;
+
+    /**
+     * Has column?
+     *
+     * @param string $name
+     * @param string $tableName
+     * @param string|null $schemaName
+     * @param string|null $connection
+     *
+     * @return bool
+     */
+    public function hasColumn(
+        string $name,
+        string $tableName,
+        ?string $schemaName = null,
+        ?string $connection = null
+    ): bool;
+
+    /**
+     * Get column.
+     *
+     * @param string $name
+     * @param string $tableName
+     * @param string|null $schemaName
+     * @param string|null $connection
+     *
+     * @return Column
+     * @throws NotFoundException
+     */
+    public function getColumn(
+        string $name,
+        string $tableName,
+        ?string $schemaName = null,
+        ?string $connection = null
+    ): Column;
 }

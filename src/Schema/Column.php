@@ -18,26 +18,27 @@ use Hector\Schema\Exception\SchemaException;
 
 /**
  * Class Column.
- *
- * @package Hector\Schema
  */
 class Column
 {
     use NameHelperTrait;
 
-    private string $name;
-    private int $position;
-    private mixed $default;
-    private bool $nullable;
-    private string $type;
-    private bool $auto_increment;
-    private ?int $maxlength;
-    private ?int $numeric_precision;
-    private ?int $numeric_scale;
-    private bool $unsigned;
-    private ?string $charset;
-    private ?string $collation;
-    private ?Table $table = null;
+    public function __construct(
+        private string $name,
+        private int $position,
+        private mixed $default,
+        private bool $nullable,
+        private string $type,
+        private bool $auto_increment = false,
+        private ?int $maxlength = null,
+        private ?int $numeric_precision = null,
+        private ?int $numeric_scale = null,
+        private bool $unsigned = false,
+        private ?string $charset = null,
+        private ?string $collation = null,
+        private ?Table $table = null,
+    ) {
+    }
 
     /**
      * PHP serialize method.
@@ -81,6 +82,7 @@ class Column
         $this->unsigned = $data['unsigned'];
         $this->charset = $data['charset'];
         $this->collation = $data['collation'];
+        $this->table = null;
     }
 
     /**
@@ -233,6 +235,16 @@ class Column
     public function getTable(): Table
     {
         return $this->table ?? throw new SchemaException('No table attached to the column');
+    }
+
+    /**
+     * Set table.
+     *
+     * @param Table|null $table
+     */
+    public function setTable(?Table $table): void
+    {
+        $this->table = $table;
     }
 
     /**

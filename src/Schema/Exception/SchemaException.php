@@ -18,8 +18,6 @@ use Exception;
 
 /**
  * Class SchemaException.
- *
- * @package Hector\Schema\Exception
  */
 class SchemaException extends Exception
 {

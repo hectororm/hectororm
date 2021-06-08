@@ -20,8 +20,6 @@ use Hector\Schema\SchemaContainer;
 
 /**
  * Interface GeneratorInterface.
- *
- * @package Hector\Schema\Generator
  */
 interface GeneratorInterface
 {

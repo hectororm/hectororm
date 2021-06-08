@@ -22,28 +22,14 @@ use Hector\Schema\Index;
 use Hector\Schema\Schema;
 use Hector\Schema\SchemaContainer;
 use Hector\Schema\Table;
-use ReflectionClass;
-use ReflectionException;
 
 /**
  * Class AbstractGenerator.
- *
- * @package Hector\Schema\Generator
  */
 abstract class AbstractGenerator implements GeneratorInterface
 {
-    /** @var ReflectionClass[] */
-    private static array $classReflections;
-    protected Connection $connection;
-
-    /**
-     * AbstractGenerator constructor.
-     *
-     * @param Connection $connection
-     */
-    public function __construct(Connection $connection)
+    public function __construct(protected Connection $connection)
     {
-        $this->connection = $connection;
     }
 
     /**
@@ -52,6 +38,7 @@ abstract class AbstractGenerator implements GeneratorInterface
      * @param string $name
      *
      * @return array
+     * @throws SchemaException
      */
     abstract protected function getSchemaInfo(string $name): array;
 
@@ -61,6 +48,7 @@ abstract class AbstractGenerator implements GeneratorInterface
      * @param string $name
      *
      * @return array[array]
+     * @throws SchemaException
      */
     abstract protected function getTablesInfo(string $name): array;
 
@@ -71,6 +59,7 @@ abstract class AbstractGenerator implements GeneratorInterface
      * @param string $table
      *
      * @return array[array]
+     * @throws SchemaException
      */
     abstract protected function getColumnsInfo(string $schema, string $table): array;
 
@@ -81,6 +70,7 @@ abstract class AbstractGenerator implements GeneratorInterface
      * @param string $table
      *
      * @return array
+     * @throws SchemaException
      */
     abstract protected function getIndexesInfo(string $schema, string $table): array;
 
@@ -91,92 +81,84 @@ abstract class AbstractGenerator implements GeneratorInterface
      * @param string $table
      *
      * @return array
+     * @throws SchemaException
      */
     abstract protected function getForeignKeysInfo(string $schema, string $table): array;
-
-    /**
-     * Hydrate properties of object.
-     *
-     * @param object $object
-     * @param $values
-     *
-     * @throws ReflectionException
-     */
-    private function hydrateObject(object $object, $values): void
-    {
-        $class = get_class($object);
-        if (!isset(self::$classReflections[$class])) {
-            self::$classReflections[$class] = new ReflectionClass($class);
-        }
-
-        foreach (self::$classReflections[$class]->getProperties() as $property) {
-            if (!array_key_exists($property->getName(), $values)) {
-                continue;
-            }
-
-            $property->setAccessible(true);
-            $property->setValue($object, $values[$property->getName()]);
-        }
-    }
 
     /**
      * @inheritDoc
      */
     public function generateSchema(string $name): Schema
     {
-        try {
-            $schema = new Schema();
+        // Get schema info
+        $schemaInfo = $this->getSchemaInfo($name);
 
-            // Get schema info
-            $schemaInfo = $this->getSchemaInfo($name);
-            $schemaInfo['connection'] = $this->connection->getName();
-            $this->hydrateObject($schema, $schemaInfo);
+        $tables = [];
+        foreach ($this->getTablesInfo($name) as $tableInfo) {
+            $tableName = $tableInfo['name'];
 
-            $tables = [];
-            foreach ($this->getTablesInfo($name) as $tableInfo) {
-                $table = new Table();
-                $this->hydrateObject($table, $tableInfo);
-                $tables[$table->getName()] = $table;
-
-                $columns = [];
-                foreach ($this->getColumnsInfo($name, $table->getName()) as $columnInfo) {
-                    $column = new Column();
-                    $this->hydrateObject($column, $columnInfo);
-                    $columns[$column->getName()] = $column;
-                }
-
-                $indexes = [];
-                foreach ($this->getIndexesInfo($name, $table->getName()) as $indexInfo) {
-                    $index = new Index();
-                    $this->hydrateObject($index, $indexInfo);
-                    $indexes[$index->getName()] = $index;
-                }
-
-                $foreignKeys = [];
-                foreach ($this->getForeignKeysInfo($name, $table->getName()) as $foreignKeyInfo) {
-                    $foreignKey = new ForeignKey();
-                    $this->hydrateObject($foreignKey, $foreignKeyInfo);
-                    $foreignKeys[$foreignKey->getName()] = $foreignKey;
-                }
-
-                $this->hydrateObject(
-                    $table,
-                    [
-                        'columns' => $columns,
-                        'indexes' => $indexes,
-                        'foreign_keys' => $foreignKeys,
-                    ]
+            $columns = [];
+            foreach ($this->getColumnsInfo($name, $tableName) as $columnInfo) {
+                $column = new Column(
+                    name: $columnInfo['name'],
+                    position: $columnInfo['position'],
+                    default: $columnInfo['default'],
+                    nullable: $columnInfo['nullable'],
+                    type: $columnInfo['type'],
+                    auto_increment: $columnInfo['auto_increment'] ?? false,
+                    maxlength: $columnInfo['maxlength'] ?? null,
+                    numeric_precision: $columnInfo['numeric_precision'] ?? null,
+                    numeric_scale: $columnInfo['numeric_scale'] ?? null,
+                    unsigned: $columnInfo['unsigned'] ?? false,
+                    charset: $columnInfo['charset'] ?? null,
+                    collation: $columnInfo['collation'] ?? null,
                 );
-                $table->restoreInheritance();
+                $columns[$column->getName()] = $column;
             }
 
-            $this->hydrateObject($schema, ['tables' => $tables]);
-            $schema->restoreInheritance();
+            $indexes = [];
+            foreach ($this->getIndexesInfo($name, $tableName) as $indexInfo) {
+                $index = new Index(
+                    name: $indexInfo['name'],
+                    type: $indexInfo['type'],
+                    columns_name: $indexInfo['columns_name'] ?? [],
+                );
+                $indexes[$index->getName()] = $index;
+            }
 
-            return $schema;
-        } catch (ReflectionException $e) {
-            throw new SchemaException(sprintf('Unable to generate schema of "%s"', $name), 0, $e);
+            $foreignKeys = [];
+            foreach ($this->getForeignKeysInfo($name, $tableName) as $foreignKeyInfo) {
+                $foreignKey = new ForeignKey(
+                    name: $foreignKeyInfo['name'],
+                    columns_name: $foreignKeyInfo['columns_name'],
+                    referenced_schema_name: $foreignKeyInfo['referenced_schema_name'],
+                    referenced_table_name: $foreignKeyInfo['referenced_table_name'],
+                    referenced_columns_name: $foreignKeyInfo['referenced_columns_name'],
+                    update_rule: $foreignKeyInfo['update_rule'] ?? ForeignKey::RULE_NO_ACTION,
+                    delete_rule: $foreignKeyInfo['delete_rule'] ?? ForeignKey::RULE_NO_ACTION,
+                );
+                $foreignKeys[$foreignKey->getName()] = $foreignKey;
+            }
+
+            $tables[$tableName] = new Table(
+                schema_name: $tableInfo['schema_name'],
+                type: $tableInfo['type'],
+                name: $tableName,
+                charset: $tableInfo['charset'] ?? null,
+                collation: $tableInfo['collation'] ?? null,
+                columns: $columns ?? [],
+                indexes: $indexes ?? [],
+                foreign_keys: $foreignKeys ?? [],
+            );
         }
+
+        return new Schema(
+            connection: $this->connection->getName(),
+            name: $schemaInfo['name'],
+            charset: $schemaInfo['charset'],
+            collation: $schemaInfo['collation'] ?? null,
+            tables: $tables,
+        );
     }
 
     /**
@@ -184,30 +166,16 @@ abstract class AbstractGenerator implements GeneratorInterface
      */
     public function generateSchemas(string ...$names): SchemaContainer
     {
-        $container = new SchemaContainer();
         $schemas = [];
 
         try {
             foreach ($names as $name) {
-                $schemas[] = $schema = $this->generateSchema($name);
+                $schemas[] = $this->generateSchema($name);
             }
 
-            $this->hydrateObject($container, ['schemas' => $schemas]);
-            $container->restoreInheritance();
+            $container = new SchemaContainer($schemas);
         } catch (SchemaException $e) {
             throw $e;
-        } catch (ReflectionException $e) {
-            throw new SchemaException(
-                sprintf(
-                    'Unable to generate schema of %s',
-                    implode(
-                        ', ',
-                        array_map(fn($name) => sprintf('"%s"', $name), $names)
-                    )
-                ),
-                0,
-                $e
-            );
         }
 
         return $container;

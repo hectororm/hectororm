@@ -18,6 +18,9 @@ use Hector\Schema\Exception\SchemaException;
 use Hector\Schema\Index;
 use Hector\Schema\Table;
 
+/**
+ * Class Sqlite.
+ */
 class Sqlite extends AbstractGenerator
 {
     private ?string $encoding = null;
@@ -41,6 +44,9 @@ class Sqlite extends AbstractGenerator
         return $this->encoding;
     }
 
+    /**
+     * @inheritDoc
+     */
     protected function getSchemaInfo(string $name): array
     {
         return [
@@ -50,6 +56,9 @@ class Sqlite extends AbstractGenerator
         ];
     }
 
+    /**
+     * @inheritDoc
+     */
     protected function getTablesInfo(string $name): array
     {
         $stm =
@@ -78,7 +87,6 @@ class Sqlite extends AbstractGenerator
 
     /**
      * @inheritDoc
-     * @throws SchemaException
      */
     protected function getColumnsInfo(string $schema, string $table): array
     {
@@ -170,6 +178,9 @@ class Sqlite extends AbstractGenerator
         ];
     }
 
+    /**
+     * @inheritDoc
+     */
     protected function getIndexesInfo(string $schema, string $table): array
     {
         $stm = 'PRAGMA index_list(\'' . $table . '\');';
@@ -200,6 +211,9 @@ class Sqlite extends AbstractGenerator
         return $indexesInfo;
     }
 
+    /**
+     * @inheritDoc
+     */
     protected function getForeignKeysInfo(string $schema, string $table): array
     {
         $stm = 'PRAGMA foreign_key_list(\'' . $table . '\');';
@@ -212,7 +226,7 @@ class Sqlite extends AbstractGenerator
             if (!array_key_exists($key, $foreignKeysInfo)) {
                 $foreignKeysInfo[$key] =
                     [
-                        'name' => $key,
+                        'name' => (string)$key,
                         'table_name' => $table,
                         'columns_name' => [$result['from']],
                         'referenced_schema_name' => $schema,

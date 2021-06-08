@@ -17,14 +17,15 @@ namespace Hector\Schema;
 use ArrayIterator;
 use Generator;
 use Hector\Schema\Exception\NotFoundException;
-use ReflectionClass;
-use ReflectionException;
 use Traversable;
 
 class SchemaContainer implements SchemaContainerInterface
 {
-    /** @var Schema[] */
-    private array $schemas = [];
+    public function __construct(
+        private array $schemas = [],
+    ) {
+        $this->restoreInheritance();
+    }
 
     /**
      * PHP serialize method.
@@ -42,8 +43,6 @@ class SchemaContainer implements SchemaContainerInterface
      * PHP unserialize method.
      *
      * @param array $data
-     *
-     * @throws ReflectionException
      */
     public function __unserialize(array $data): void
     {
@@ -54,18 +53,10 @@ class SchemaContainer implements SchemaContainerInterface
 
     /**
      * Restore inheritance.
-     *
-     * @throws ReflectionException
      */
-    public function restoreInheritance(): void
+    private function restoreInheritance(): void
     {
-        // Attach container to schemas
-        $reflectionClass = new ReflectionClass(Schema::class);
-        $reflectionProperty = $reflectionClass->getProperty('container');
-        $reflectionProperty->setAccessible(true);
-        foreach ($this->schemas as $schema) {
-            $reflectionProperty->setValue($schema, $this);
-        }
+        array_walk($this->schemas, fn(Schema $schema) => $schema->setContainer($this));
     }
 
     /**
@@ -167,5 +158,37 @@ class SchemaContainer implements SchemaContainerInterface
         }
 
         throw new NotFoundException(sprintf('Table "%s" not found in schemas', $name));
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function hasColumn(
+        string $name,
+        string $tableName,
+        ?string $schemaName = null,
+        ?string $connection = null
+    ): bool {
+        if (false === $this->hasTable($tableName, $schemaName, $connection)) {
+            return false;
+        }
+
+        $table = $this->getTable($tableName, $schemaName, $connection);
+
+        return $table->hasColumn($name);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getColumn(
+        string $name,
+        string $tableName,
+        ?string $schemaName = null,
+        ?string $connection = null
+    ): Column {
+        $table = $this->getTable($tableName, $schemaName, $connection);
+
+        return $table->getColumn($name);
     }
 }

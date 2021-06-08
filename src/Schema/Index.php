@@ -18,8 +18,6 @@ use Hector\Schema\Exception\SchemaException;
 
 /**
  * Class Index.
- *
- * @package Hector\Schema
  */
 class Index
 {
@@ -29,10 +27,13 @@ class Index
     public const UNIQUE = 'unique';
     public const INDEX = 'index';
 
-    private string $name;
-    private string $type;
-    private array $columns_name;
-    private ?Table $table = null;
+    public function __construct(
+        private string $name,
+        private string $type,
+        private array $columns_name = [],
+        private ?Table $table = null,
+    ) {
+    }
 
     /**
      * PHP serialize method.
@@ -58,6 +59,7 @@ class Index
         $this->name = $data['name'];
         $this->type = $data['type'];
         $this->columns_name = $data['columns_name'];
+        $this->table = null;
     }
 
     /**
@@ -107,6 +109,16 @@ class Index
     public function getTable(): Table
     {
         return $this->table ?? throw new SchemaException('No table attached to the index');
+    }
+
+    /**
+     * Set table.
+     *
+     * @param Table|null $table
+     */
+    public function setTable(?Table $table): void
+    {
+        $this->table = $table;
     }
 
     /**

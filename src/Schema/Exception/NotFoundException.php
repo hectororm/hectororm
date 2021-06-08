@@ -16,8 +16,6 @@ namespace Hector\Schema\Exception;
 
 /**
  * Class NotFoundException.
- *
- * @package Hector\Schema\Exception
  */
 class NotFoundException extends SchemaException
 {

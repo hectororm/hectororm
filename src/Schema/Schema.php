@@ -19,23 +19,22 @@ use Countable;
 use Generator;
 use Hector\Schema\Exception\NotFoundException;
 use IteratorAggregate;
-use ReflectionClass;
-use ReflectionException;
 
 /**
  * Class Schema.
- *
- * @package Hector\Schema
  */
 class Schema implements Countable, IteratorAggregate
 {
-    private string $connection;
-    private string $name;
-    private string $charset;
-    private ?string $collation;
-    /** @var Table[] */
-    private array $tables = [];
-    private ?SchemaContainer $container = null;
+    public function __construct(
+        private string $connection,
+        private string $name,
+        private string $charset,
+        private ?string $collation = null,
+        private array $tables = [],
+        private ?SchemaContainer $container = null,
+    ) {
+        $this->restoreInheritance();
+    }
 
     /**
      * PHP serialize method.
@@ -57,8 +56,6 @@ class Schema implements Countable, IteratorAggregate
      * PHP unserialize method.
      *
      * @param array $data
-     *
-     * @throws ReflectionException
      */
     public function __unserialize(array $data): void
     {
@@ -67,24 +64,17 @@ class Schema implements Countable, IteratorAggregate
         $this->charset = $data['charset'];
         $this->collation = $data['collation'];
         $this->tables = $data['tables'];
+        $this->container = null;
 
         $this->restoreInheritance();
     }
 
     /**
      * Restore inheritance.
-     *
-     * @throws ReflectionException
      */
-    public function restoreInheritance(): void
+    private function restoreInheritance(): void
     {
-        // Attach schema to tables
-        $reflectionClass = new ReflectionClass(Table::class);
-        $reflectionProperty = $reflectionClass->getProperty('schema');
-        $reflectionProperty->setAccessible(true);
-        foreach ($this->tables as $table) {
-            $reflectionProperty->setValue($table, $this);
-        }
+        array_walk($this->tables, fn(Table $table) => $table->setSchema($this));
     }
 
     /**
@@ -200,5 +190,15 @@ class Schema implements Countable, IteratorAggregate
     public function getContainer(): ?SchemaContainer
     {
         return $this->container;
+    }
+
+    /**
+     * Set container.
+     *
+     * @param SchemaContainer|null $container
+     */
+    public function setContainer(?SchemaContainer $container): void
+    {
+        $this->container = $container;
     }
 }

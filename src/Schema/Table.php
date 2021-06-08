@@ -20,31 +20,28 @@ use Generator;
 use Hector\Schema\Exception\NotFoundException;
 use Hector\Schema\Exception\SchemaException;
 use IteratorAggregate;
-use ReflectionClass;
-use ReflectionException;
 
 /**
  * Class Table.
- *
- * @package Hector\Schema
  */
 class Table implements Countable, IteratorAggregate
 {
     public const TYPE_TABLE = 'table';
     public const TYPE_VIEW = 'view';
 
-    private string $schema_name;
-    private string $type;
-    private string $name;
-    private ?string $charset;
-    private ?string $collation;
-    /** @var Column[] */
-    private array $columns = [];
-    /** @var Index[] */
-    private array $indexes = [];
-    /** @var ForeignKey[] */
-    private array $foreign_keys = [];
-    private ?Schema $schema = null;
+    public function __construct(
+        private string $schema_name,
+        private string $type,
+        private string $name,
+        private ?string $charset = null,
+        private ?string $collation = null,
+        private array $columns = [],
+        private array $indexes = [],
+        private array $foreign_keys = [],
+        private ?Schema $schema = null,
+    ) {
+        $this->restoreInheritance();
+    }
 
     /**
      * PHP serialize method.
@@ -69,8 +66,6 @@ class Table implements Countable, IteratorAggregate
      * PHP unserialize method.
      *
      * @param array $data
-     *
-     * @throws ReflectionException
      */
     public function __unserialize(array $data): void
     {
@@ -82,42 +77,19 @@ class Table implements Countable, IteratorAggregate
         $this->columns = $data['columns'];
         $this->indexes = $data['indexes'];
         $this->foreign_keys = $data['foreign_keys'];
+        $this->schema = null;
 
         $this->restoreInheritance();
     }
 
     /**
      * Restore inheritance.
-     *
-     * @throws ReflectionException
      */
-    public function restoreInheritance(): void
+    private function restoreInheritance(): void
     {
-        // Attach table to columns
-        $reflectionClass = new ReflectionClass(Column::class);
-        $reflectionProperty = $reflectionClass->getProperty('table');
-        $reflectionProperty->setAccessible(true);
-        foreach ($this->columns as $column) {
-            $reflectionProperty->setValue($column, $this);
-        }
-
-        if ($this->type === static::TYPE_TABLE) {
-            // Attach table to indexes
-            $reflectionClass = new ReflectionClass(Index::class);
-            $reflectionProperty = $reflectionClass->getProperty('table');
-            $reflectionProperty->setAccessible(true);
-            foreach ($this->indexes as $index) {
-                $reflectionProperty->setValue($index, $this);
-            }
-
-            // Attach table to foreign keys
-            $reflectionClass = new ReflectionClass(ForeignKey::class);
-            $reflectionProperty = $reflectionClass->getProperty('table');
-            $reflectionProperty->setAccessible(true);
-            foreach ($this->foreign_keys as $foreign_key) {
-                $reflectionProperty->setValue($foreign_key, $this);
-            }
-        }
+        array_walk($this->columns, fn(Column $column) => $column->setTable($this));
+        array_walk($this->indexes, fn(Index $index) => $index->setTable($this));
+        array_walk($this->foreign_keys, fn(ForeignKey $foreign_key) => $foreign_key->setTable($this));
     }
 
     /**
@@ -357,5 +329,15 @@ class Table implements Countable, IteratorAggregate
     public function getSchema(): Schema
     {
         return $this->schema ?? throw new SchemaException('No schema attached to the table');
+    }
+
+    /**
+     * Set schema.
+     *
+     * @param Schema|null $schema
+     */
+    public function setSchema(?Schema $schema): void
+    {
+        $this->schema = $schema;
     }
 }

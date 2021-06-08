@@ -19,8 +19,6 @@ use Hector\Schema\Exception\SchemaException;
 
 /**
  * Class ForeignKey.
- *
- * @package Hector\Schema
  */
 class ForeignKey
 {
@@ -31,14 +29,17 @@ class ForeignKey
     public const RULE_RESTRICT = 'RESTRICT';
     public const RULE_SET_NULL = 'SET NULL';
 
-    private string $name;
-    private array $columns_name;
-    private string $referenced_schema_name;
-    private string $referenced_table_name;
-    private array $referenced_columns_name;
-    private string $update_rule;
-    private string $delete_rule;
-    private ?Table $table = null;
+    public function __construct(
+        private string $name,
+        private array $columns_name,
+        private string $referenced_schema_name,
+        private string $referenced_table_name,
+        private array $referenced_columns_name,
+        private string $update_rule = self::RULE_NO_ACTION,
+        private string $delete_rule = self::RULE_NO_ACTION,
+        private ?Table $table = null,
+    ) {
+    }
 
     /**
      * PHP serialize method.
@@ -72,6 +73,7 @@ class ForeignKey
         $this->referenced_columns_name = $data['referenced_columns_name'];
         $this->update_rule = $data['update_rule'];
         $this->delete_rule = $data['delete_rule'];
+        $this->table = null;
     }
 
     /**
@@ -169,6 +171,16 @@ class ForeignKey
     public function getTable(): Table
     {
         return $this->table ?? throw new SchemaException('No table attached to the foreign key');
+    }
+
+    /**
+     * Set table.
+     *
+     * @param Table|null $table
+     */
+    public function setTable(?Table $table): void
+    {
+        $this->table = $table;
     }
 
     /**

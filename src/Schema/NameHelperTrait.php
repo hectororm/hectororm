@@ -16,8 +16,6 @@ namespace Hector\Schema;
 
 /**
  * Trait NameHelperTrait.
- *
- * @package Hector\Schema
  */
 trait NameHelperTrait
 {

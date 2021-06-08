@@ -20,14 +20,11 @@ use Hector\Schema\Table;
 
 /**
  * Class MySQL.
- *
- * @package Hector\Schema\Generator
  */
 class MySQL extends AbstractGenerator
 {
     /**
      * @inheritDoc
-     * @throws SchemaException
      */
     protected function getSchemaInfo(string $name): array
     {
