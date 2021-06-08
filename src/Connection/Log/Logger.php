@@ -18,8 +18,6 @@ use Countable;
 
 /**
  * Class Logger.
- *
- * @package Hector\Connection
  */
 class Logger implements Countable
 {

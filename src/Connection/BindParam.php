@@ -18,8 +18,6 @@ use PDO;
 
 /**
  * Class BindParam.
- *
- * @package Hector\Connection
  */
 class BindParam
 {

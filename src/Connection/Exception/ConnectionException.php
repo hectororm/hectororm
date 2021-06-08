@@ -18,8 +18,6 @@ use Exception;
 
 /**
  * Class ConnectionException.
- *
- * @package Hector\Connection
  */
 class ConnectionException extends Exception
 {

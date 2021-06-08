@@ -16,8 +16,6 @@ namespace Hector\Connection\Exception;
 
 /**
  * Class NotFoundException.
- *
- * @package Hector\Connection\Exception
  */
 class NotFoundException extends ConnectionException
 {

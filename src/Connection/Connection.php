@@ -22,8 +22,6 @@ use PDOStatement;
 
 /**
  * Class Connection.
- *
- * @package Hector\Connection
  */
 class Connection
 {

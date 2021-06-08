@@ -23,8 +23,6 @@ use IteratorAggregate;
 
 /**
  * Class ConnectionSet.
- *
- * @package Hector\Connection
  */
 class ConnectionSet implements Countable, IteratorAggregate
 {

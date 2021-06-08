@@ -16,8 +16,6 @@ namespace Hector\Connection\Log;
 
 /**
  * Class LogEntry.
- *
- * @package Hector\Connection
  */
 class LogEntry
 {
