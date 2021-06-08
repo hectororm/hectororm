@@ -16,8 +16,6 @@ namespace Hector\Query\Component;
 
 /**
  * Class Limit.
- *
- * @package Hector\Query\Component
  */
 class Limit extends AbstractComponent
 {

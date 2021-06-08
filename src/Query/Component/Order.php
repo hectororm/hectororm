@@ -20,8 +20,6 @@ use Hector\Query\StatementInterface;
 
 /**
  * Class Order.
- *
- * @package Hector\Query\Component
  */
 class Order extends AbstractComponent implements Countable
 {

@@ -24,8 +24,6 @@ use InvalidArgumentException;
 
 /**
  * Trait Having.
- *
- * @package Hector\Query\Clause
  */
 trait Having
 {

@@ -18,8 +18,6 @@ use Hector\Query\StatementInterface;
 
 /**
  * Class Join.
- *
- * @package Hector\Query\Component
  */
 class Join extends AbstractComponent
 {

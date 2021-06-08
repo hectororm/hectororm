@@ -19,8 +19,6 @@ use Hector\Query\StatementInterface;
 
 /**
  * Class Exists.
- *
- * @package Hector\Query\Statement
  */
 class Exists extends SqlFunction
 {

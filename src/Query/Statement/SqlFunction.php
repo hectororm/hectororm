@@ -20,8 +20,6 @@ use Hector\Query\StatementInterface;
 
 /**
  * Class SqlFunction.
- *
- * @package Hector\Query\Statement
  */
 class SqlFunction implements StatementInterface
 {

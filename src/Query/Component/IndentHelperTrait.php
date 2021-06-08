@@ -16,8 +16,6 @@ namespace Hector\Query\Component;
 
 /**
  * Trait IndentHelperTrait.
- *
- * @package Hector\Query\Component
  */
 trait IndentHelperTrait
 {

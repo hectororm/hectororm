@@ -18,8 +18,6 @@ use Hector\Query\StatementInterface;
 
 /**
  * Class Table.
- *
- * @package Hector\Query\Component
  */
 class Table extends AbstractComponent
 {

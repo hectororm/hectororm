@@ -19,8 +19,6 @@ use Hector\Query\StatementInterface;
 
 /**
  * Class Group.
- *
- * @package Hector\Query\Component
  */
 class Group extends AbstractComponent implements Countable
 {

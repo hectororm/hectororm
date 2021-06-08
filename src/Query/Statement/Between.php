@@ -19,8 +19,6 @@ use Hector\Query\StatementInterface;
 
 /**
  * Class Between.
- *
- * @package Hector\Query\Statement
  */
 class Between implements StatementInterface
 {

@@ -20,8 +20,6 @@ use Hector\Query\Statement\Exists;
 
 /**
  * Class QueryBuilder.
- *
- * @package Hector\Query
  */
 class QueryBuilder
 {

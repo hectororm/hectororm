@@ -21,8 +21,6 @@ use Hector\Query\StatementInterface;
 
 /**
  * Class Conditions.
- *
- * @package Hector\Query\Component
  */
 class Conditions extends AbstractComponent implements Countable
 {

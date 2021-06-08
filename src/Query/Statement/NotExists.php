@@ -18,8 +18,6 @@ use Hector\Query\StatementInterface;
 
 /**
  * Class NotExists.
- *
- * @package Hector\Query\Statement
  */
 class NotExists extends SqlFunction
 {

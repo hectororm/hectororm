@@ -18,8 +18,6 @@ use Hector\Query\StatementInterface;
 
 /**
  * Class Assignments.
- *
- * @package Hector\Query\Component
  */
 class Assignments extends AbstractComponent
 {

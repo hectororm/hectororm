@@ -16,8 +16,6 @@ namespace Hector\Query\Statement;
 
 /**
  * Class NotBetween.
- *
- * @package Hector\Query\Statement
  */
 class NotBetween extends Between
 {

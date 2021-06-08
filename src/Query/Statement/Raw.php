@@ -18,8 +18,6 @@ use Hector\Query\StatementInterface;
 
 /**
  * Class Raw.
- *
- * @package Hector\Query\Statement
  */
 class Raw implements StatementInterface
 {
