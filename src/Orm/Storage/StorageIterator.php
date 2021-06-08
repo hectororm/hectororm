@@ -21,17 +21,15 @@ use WeakReference;
 class StorageIterator implements SeekableIterator
 {
     private int $position = 0;
-    /** @var WeakReference[] */
-    private array $weakReferences;
 
     /**
      * StorageIterator constructor.
      *
      * @param WeakReference[] $weakReferences
      */
-    public function __construct(array $weakReferences)
+    public function __construct(private array $weakReferences)
     {
-        $this->weakReferences = array_values($weakReferences);
+        $this->weakReferences = array_values($this->weakReferences);
     }
 
     /**

@@ -36,7 +36,6 @@ class ManyToMany extends Relationship
     protected string $pivotTable;
     protected array $pivotTargetColumns;
     protected array $pivotSourceColumns;
-//    protected array $temporaryLinks = [];
 
     /**
      * ManyToMany constructor.
@@ -150,6 +149,7 @@ class ManyToMany extends Relationship
 
     /**
      * @inheritDoc
+     * @throws OrmException
      */
     protected function newBuilder(): Builder
     {
@@ -178,7 +178,7 @@ class ManyToMany extends Relationship
             );
 
             // Add pivot columns
-            foreach ($this->pivotTargetColumns as $iPivotTargetColumn => $pivotTargetColumnName) {
+            foreach ($this->pivotTargetColumns as $pivotTargetColumnName) {
                 $pivotTargetColumn = $pivotTable->getColumn($pivotTargetColumnName);
                 $builder->withPivotColumn($pivotTargetColumn->getName(true, $aliasPivot), $pivotTargetColumnName);
             }
@@ -316,51 +316,6 @@ class ManyToMany extends Relationship
 
         return $this->targetEntity->newInstanceOfCollection(array_values($foreignersAdded));
     }
-//    /**
-//     * @inheritDoc
-//     */
-//    public function get(Entity ...$entities): Collection
-//    {
-//        $rawForeigners = [];
-//        if (!empty($this->filterEntities(...$entities))) {
-//            $rawForeigners = $this->getBuilder(...$entities)->getQueryBuilder()->fetchAll();
-//        }
-//        $entities = $this->tidyEntities($this->sourceColumns, ...$entities);
-//
-//        $foreigners = [];
-//        /** @var AbstractMapper $targetMapper */
-//        $targetMapper = $this->targetEntity::getMapper();
-//
-//        foreach ($rawForeigners as $row) {
-//            $pivotData = array_filter($row, fn($key) => substr($key, 0, 6) == 'PIVOT_', ARRAY_FILTER_USE_KEY);
-//            $pivotData = array_values($pivotData);
-//
-//            /** @var Entity $foreign */
-//            $foreign = new $this->targetEntity();
-//            $targetMapper->hydrateEntity($foreign, $row);
-//            $foreignHash = $targetMapper->getPrimaryHash($foreign);
-//
-//            if (!array_key_exists($foreignHash, $foreigners)) {
-//                $foreigners[$foreignHash] = $foreign;
-//                $this->storage->attach($foreign);
-//                // @todo Need to register entity in storage
-//            }
-//
-//            foreach ($entities as $entity) {
-//                if ($entity['columns'] == $pivotData) {
-//                    $this->addForeignToEntity($entity['entity'], $foreigners[$foreignHash]);
-//                }
-//            }
-//        }
-//
-//        foreach ($entities as $entity) {
-//            if (!$entity['entity']->getRelated()->isset($this->name)) {
-//                $entity['entity']->getRelated()->set($this->name, new Collection([], $this->targetEntity));
-//            }
-//        }
-//
-//        return new Collection(array_values($foreigners));
-//    }
 
     /**
      * Add foreign entity to entity.
@@ -383,6 +338,7 @@ class ManyToMany extends Relationship
 
     /**
      * @inheritDoc
+     * @throws OrmException
      */
     public function linkNative(Entity $entity, Entity|Collection|null $foreign): void
     {

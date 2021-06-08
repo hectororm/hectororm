@@ -20,6 +20,7 @@ use Hector\Orm\Exception\OrmException;
 use Hector\Orm\Orm;
 use Hector\Orm\Query\Builder;
 use Hector\Query\Statement\Row;
+use Hector\Schema\Exception\SchemaException;
 
 /**
  * Class AbstractRegularRelationship.
@@ -87,6 +88,7 @@ abstract class RegularRelationship extends Relationship
 
     /**
      * @inheritDoc
+     * @throws SchemaException
      */
     public function addJoinToBuilder(Builder $builder, ?string $initialAlias = null): string
     {

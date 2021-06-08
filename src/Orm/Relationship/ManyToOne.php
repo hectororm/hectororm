@@ -82,6 +82,7 @@ class ManyToOne extends RegularRelationship
 
     /**
      * @inheritDoc
+     * @throws OrmException
      */
     public function linkForeign(Entity $entity, Entity|Collection|null $foreign): void
     {

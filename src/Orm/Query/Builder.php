@@ -191,10 +191,9 @@ class Builder extends QueryBuilder
      *
      * @param mixed ...$primaryValues
      *
-     * @return static
      * @throws OrmException
      */
-    private function findQuery(mixed ...$primaryValues): static
+    private function findQuery(mixed ...$primaryValues): void
     {
         $table = $this->entityReflection->getTable();
 
@@ -222,8 +221,6 @@ class Builder extends QueryBuilder
         }
 
         $this->whereIn(new Row(...$primaryColumns), $primaryValues);
-
-        return $this;
     }
 
     /**
@@ -274,7 +271,7 @@ class Builder extends QueryBuilder
      * @return Entity|Collection
      * @throws OrmException
      */
-    public function findOrFail(mixed ...$primaryValues): Entity
+    public function findOrFail(mixed ...$primaryValues): Entity|Collection
     {
         $result = $this->find(...$primaryValues);
 

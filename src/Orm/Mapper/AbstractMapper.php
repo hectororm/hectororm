@@ -21,13 +21,11 @@ use Hector\Orm\Entity\Entity;
 use Hector\Orm\Entity\ReflectionEntity;
 use Hector\Orm\Exception\MapperException;
 use Hector\Orm\Exception\OrmException;
-use Hector\Orm\Exception\RelationException;
 use Hector\Orm\Orm;
 use Hector\Orm\Query\Builder;
 use Hector\Orm\Relationship\Relationships;
 use Hector\Orm\Storage\EntityStorage;
 use ReflectionAttribute;
-use ReflectionException;
 
 abstract class AbstractMapper implements Mapper
 {
@@ -75,21 +73,17 @@ abstract class AbstractMapper implements Mapper
         // Init relationships
         $this->relationships = new Relationships($this->reflection->class);
 
-        try {
-            $attributes =
-                $this->reflection->getClass()
-                    ->getAttributes(
-                        Attributes\RelationshipAttribute::class,
-                        ReflectionAttribute::IS_INSTANCEOF
-                    );
+        $attributes =
+            $this->reflection->getClass()
+                ->getAttributes(
+                    Attributes\RelationshipAttribute::class,
+                    ReflectionAttribute::IS_INSTANCEOF
+                );
 
-            foreach ($attributes as $attribute) {
-                /** @var Attributes\RelationshipAttribute $attrRelationship */
-                $attrRelationship = $attribute->newInstance();
-                $attrRelationship->init($this->relationships);
-            }
-        } catch (ReflectionException $exception) {
-            throw new RelationException('Unable to init relationships from attributes', 0, $exception);
+        foreach ($attributes as $attribute) {
+            /** @var Attributes\RelationshipAttribute $attrRelationship */
+            $attrRelationship = $attribute->newInstance();
+            $attrRelationship->init($this->relationships);
         }
 
         $this->reflection->class::setUpRelations($this->relationships);
@@ -97,6 +91,11 @@ abstract class AbstractMapper implements Mapper
         return $this->relationships;
     }
 
+    /**
+     * Get primary value.
+     *
+     * @throws OrmException
+     */
     public function getPrimaryValue(Entity $entity): ?array
     {
         $primaryIndex = $this->reflection->getTable()->getPrimaryIndex();

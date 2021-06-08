@@ -53,7 +53,6 @@ class MagicMapper extends AbstractMapper
 
         try {
             // Update pivot data
-//            $this->reflection->getHectorData($entity)->setPivot($data);
             $this->setPivotData($entity, $data);
 
             // Filter bad properties
@@ -81,7 +80,7 @@ class MagicMapper extends AbstractMapper
             $propertyData = $reflectionProperty->getValue($entity);
             $propertyData = array_replace($propertyData, $data);
             $reflectionProperty->setValue($entity, $propertyData);
-        } catch (OrmException $e) {
+        } catch (OrmException | SchemaException $e) {
             throw new MapperException(sprintf('Unable to hydrate entity "%s"', $this->reflection->class), 0, $e);
         }
     }
@@ -118,7 +117,7 @@ class MagicMapper extends AbstractMapper
             );
 
             // Filter columns
-            $data = array_filter(
+            return array_filter(
                 $data,
                 function ($value, $key) {
                     $column = $this->reflection->getTable()->getColumn($key);
@@ -139,8 +138,6 @@ class MagicMapper extends AbstractMapper
                 },
                 ARRAY_FILTER_USE_BOTH
             );
-
-            return $data;
         } catch (OrmException | SchemaException $e) {
             throw new MapperException(sprintf('Unable to collect entity "%s"', $this->reflection->class), 0, $e);
         }

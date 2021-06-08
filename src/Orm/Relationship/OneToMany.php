@@ -51,6 +51,7 @@ class OneToMany extends RegularRelationship
 
     /**
      * @inheritDoc
+     * @throws OrmException
      */
     public function linkNative(Entity $entity, Entity|Collection|null $foreign): void
     {
