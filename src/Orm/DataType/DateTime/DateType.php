@@ -12,12 +12,13 @@
 
 declare(strict_types=1);
 
-namespace Hector\Orm\DataType;
+namespace Hector\Orm\DataType\DateTime;
 
 /**
- * Class TextType.
+ * Class DateType.
  */
-class TextType extends AbstractStringType
+class DateType extends TimestampType
 {
-    public const NAME = 'text';
+    public const NAME = 'date';
+    protected const FORMAT = 'Y-m-d';
 }

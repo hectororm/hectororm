@@ -12,12 +12,12 @@
 
 declare(strict_types=1);
 
-namespace Hector\Orm\DataType;
+namespace Hector\Orm\DataType\String;
 
 /**
- * Class BlobType.
+ * Class MediumTextType.
  */
-class BlobType extends AbstractStringType
+class MediumTextType extends AbstractStringType
 {
-    public const NAME = 'blob';
+    public const NAME = 'mediumtext';
 }

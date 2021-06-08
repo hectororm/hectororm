@@ -12,15 +12,15 @@
 
 namespace Hector\Orm\Tests\DataType;
 
-use Hector\Orm\DataType\BigIntType;
-use Hector\Orm\DataType\DecimalType;
-use Hector\Orm\DataType\DoubleType;
-use Hector\Orm\DataType\FloatType;
-use Hector\Orm\DataType\IntType;
-use Hector\Orm\DataType\MediumIntType;
-use Hector\Orm\DataType\NumericType;
-use Hector\Orm\DataType\SmallIntType;
-use Hector\Orm\DataType\TinyIntType;
+use Hector\Orm\DataType\Numeric\BigIntType;
+use Hector\Orm\DataType\Numeric\DecimalType;
+use Hector\Orm\DataType\Numeric\DoubleType;
+use Hector\Orm\DataType\Numeric\FloatType;
+use Hector\Orm\DataType\Numeric\IntType;
+use Hector\Orm\DataType\Numeric\MediumIntType;
+use Hector\Orm\DataType\Numeric\NumericType;
+use Hector\Orm\DataType\Numeric\SmallIntType;
+use Hector\Orm\DataType\Numeric\TinyIntType;
 use Hector\Orm\DataType\TypeInterface;
 use Hector\Orm\Exception\TypeException;
 use PHPUnit\Framework\TestCase;

@@ -13,13 +13,13 @@
 namespace Hector\Orm\Tests\DataType;
 
 use DateTime;
-use Hector\Orm\DataType\DateTimeType;
-use Hector\Orm\DataType\DateType;
+use Hector\Orm\DataType\DateTime\DateTimeType;
+use Hector\Orm\DataType\DateTime\DateType;
 use Hector\Orm\Exception\TypeException;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 
-class DateTypeTest extends TestCase
+class DateTimeTypeTest extends TestCase
 {
     public function testFromSchema()
     {
@@ -59,7 +59,10 @@ class DateTypeTest extends TestCase
 
         $type = new DateTimeType();
 
-        $this->assertSame(1592143200, $type->fromSchema('2020-06-14 14:00:00', $declaredType));
+        $this->assertSame(
+            (new DateTime('2020-06-14 14:00:00'))->getTimestamp(),
+            $type->fromSchema('2020-06-14 14:00:00', $declaredType)
+        );
     }
 
     public function testFromSchemaWithDeclaredTypeBuiltinDateTime()

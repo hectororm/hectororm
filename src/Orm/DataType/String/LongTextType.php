@@ -12,12 +12,12 @@
 
 declare(strict_types=1);
 
-namespace Hector\Orm\DataType;
+namespace Hector\Orm\DataType\String;
 
 /**
- * Class VarCharType.
+ * Class LongTextType.
  */
-class VarCharType extends AbstractStringType
+class LongTextType extends AbstractStringType
 {
-    public const NAME = 'varchar';
+    public const NAME = 'longtext';
 }

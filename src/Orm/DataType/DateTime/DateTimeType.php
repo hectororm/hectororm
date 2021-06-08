@@ -12,12 +12,12 @@
 
 declare(strict_types=1);
 
-namespace Hector\Orm\DataType;
+namespace Hector\Orm\DataType\DateTime;
 
 /**
- * Class LongBlobType.
+ * Class DateTimeType.
  */
-class LongBlobType extends AbstractStringType
+class DateTimeType extends TimestampType
 {
-    public const NAME = 'longblob';
+    public const NAME = 'datetime';
 }

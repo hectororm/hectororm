@@ -12,13 +12,13 @@
 
 declare(strict_types=1);
 
-namespace Hector\Orm\DataType;
+namespace Hector\Orm\DataType\Numeric;
 
 /**
- * Class DateType.
+ * Class TinyIntType.
  */
-class DateType extends TimestampType
+class TinyIntType extends AbstractNumericType
 {
-    public const NAME = 'date';
-    protected const FORMAT = 'Y-m-d';
+    public const NAME = 'tinyint';
+    protected const TYPE = 'int';
 }

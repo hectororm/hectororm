@@ -12,8 +12,10 @@
 
 declare(strict_types=1);
 
-namespace Hector\Orm\DataType;
+namespace Hector\Orm\DataType\String;
 
+use Hector\Orm\DataType\AbstractType;
+use Hector\Orm\DataType\TypeInterface;
 use Hector\Orm\Exception\TypeException;
 use ReflectionNamedType;
 

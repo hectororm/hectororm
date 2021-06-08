@@ -12,13 +12,12 @@
 
 declare(strict_types=1);
 
-namespace Hector\Orm\DataType;
+namespace Hector\Orm\DataType\String;
 
 /**
- * Class TinyIntType.
+ * Class EnumType.
  */
-class TinyIntType extends AbstractNumericType
+class EnumType extends AbstractStringType
 {
-    public const NAME = 'tinyint';
-    protected const TYPE = 'int';
+    public const NAME = 'enum';
 }

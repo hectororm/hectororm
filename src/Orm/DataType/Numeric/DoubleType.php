@@ -12,13 +12,13 @@
 
 declare(strict_types=1);
 
-namespace Hector\Orm\DataType;
+namespace Hector\Orm\DataType\Numeric;
 
 /**
- * Class TimestampType.
+ * Class DoubleType.
  */
-class TimestampType extends AbstractDateType
+class DoubleType extends AbstractNumericType
 {
-    public const NAME = 'timestamp';
-    protected const FORMAT = 'Y-m-d H:i:s';
+    public const NAME = 'double';
+    protected const TYPE = 'float';
 }

@@ -12,13 +12,13 @@
 
 declare(strict_types=1);
 
-namespace Hector\Orm\DataType;
+namespace Hector\Orm\DataType\Numeric;
 
 /**
- * Class DecimalType.
+ * Class MediumIntType.
  */
-class DecimalType extends AbstractNumericType
+class MediumIntType extends AbstractNumericType
 {
-    public const NAME = 'decimal';
-    protected const TYPE = 'float';
+    public const NAME = 'mediumint';
+    protected const TYPE = 'int';
 }

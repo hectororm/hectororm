@@ -12,12 +12,13 @@
 
 declare(strict_types=1);
 
-namespace Hector\Orm\DataType;
+namespace Hector\Orm\DataType\Numeric;
 
 /**
- * Class CharType.
+ * Class FloatType.
  */
-class CharType extends AbstractStringType
+class FloatType extends AbstractNumericType
 {
-    public const NAME = 'char';
+    public const NAME = 'float';
+    protected const TYPE = 'float';
 }

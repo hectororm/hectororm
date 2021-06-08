@@ -12,13 +12,14 @@
 
 declare(strict_types=1);
 
-namespace Hector\Orm\DataType;
+namespace Hector\Orm\DataType\Numeric;
+
+use Hector\Orm\DataType\String\AbstractStringType;
 
 /**
- * Class BigIntType.
+ * Class TextType.
  */
-class BigIntType extends AbstractNumericType
+class TextType extends AbstractStringType
 {
-    public const NAME = 'bigint';
-    protected const TYPE = 'int';
+    public const NAME = 'text';
 }

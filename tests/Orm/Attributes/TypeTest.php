@@ -13,7 +13,7 @@
 namespace Hector\Orm\Tests\Attributes;
 
 use Hector\Orm\Attributes\Type;
-use Hector\Orm\DataType\DateType;
+use Hector\Orm\DataType\DateTime\DateType;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 use TypeError;

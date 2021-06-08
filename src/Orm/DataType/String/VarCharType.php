@@ -12,13 +12,12 @@
 
 declare(strict_types=1);
 
-namespace Hector\Orm\DataType;
+namespace Hector\Orm\DataType\String;
 
 /**
- * Class SmallIntType.
+ * Class VarCharType.
  */
-class SmallIntType extends AbstractNumericType
+class VarCharType extends AbstractStringType
 {
-    public const NAME = 'smallint';
-    protected const TYPE = 'int';
+    public const NAME = 'varchar';
 }

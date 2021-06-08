@@ -12,12 +12,12 @@
 
 declare(strict_types=1);
 
-namespace Hector\Orm\DataType;
+namespace Hector\Orm\DataType\String;
 
 /**
- * Class TinyTextType.
+ * Class CharType.
  */
-class TinyTextType extends AbstractStringType
+class CharType extends AbstractStringType
 {
-    public const NAME = 'tinytext';
+    public const NAME = 'char';
 }

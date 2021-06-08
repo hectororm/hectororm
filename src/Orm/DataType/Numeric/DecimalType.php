@@ -12,13 +12,13 @@
 
 declare(strict_types=1);
 
-namespace Hector\Orm\DataType;
+namespace Hector\Orm\DataType\Numeric;
 
 /**
- * Class YearType.
+ * Class DecimalType.
  */
-class YearType extends AbstractNumericType
+class DecimalType extends AbstractNumericType
 {
-    public const NAME = 'year';
-    protected const TYPE = 'int';
+    public const NAME = 'decimal';
+    protected const TYPE = 'float';
 }

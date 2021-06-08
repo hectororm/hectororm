@@ -12,9 +12,8 @@
 
 namespace Hector\Orm\Tests\DataType;
 
-use Hector\Orm\DataType\VarCharType;
+use Hector\Orm\DataType\String\VarCharType;
 use Hector\Orm\Exception\TypeException;
-use Hector\Schema\Column;
 use PHPUnit\Framework\TestCase;
 
 class StringTypeTest extends TestCase

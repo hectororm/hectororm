@@ -12,12 +12,12 @@
 
 declare(strict_types=1);
 
-namespace Hector\Orm\DataType;
+namespace Hector\Orm\DataType\String;
 
 /**
- * Class DateTimeType.
+ * Class BlobType.
  */
-class DateTimeType extends TimestampType
+class BlobType extends AbstractStringType
 {
-    public const NAME = 'datetime';
+    public const NAME = 'blob';
 }

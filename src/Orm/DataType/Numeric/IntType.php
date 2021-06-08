@@ -12,12 +12,13 @@
 
 declare(strict_types=1);
 
-namespace Hector\Orm\DataType;
+namespace Hector\Orm\DataType\Numeric;
 
 /**
- * Class TinyBlobType.
+ * Class IntType.
  */
-class TinyBlobType extends AbstractStringType
+class IntType extends AbstractNumericType
 {
-    public const NAME = 'tinyblob';
+    public const NAME = 'int';
+    protected const TYPE = 'int';
 }

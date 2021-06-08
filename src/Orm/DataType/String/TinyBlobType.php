@@ -12,13 +12,12 @@
 
 declare(strict_types=1);
 
-namespace Hector\Orm\DataType;
+namespace Hector\Orm\DataType\String;
 
 /**
- * Class MediumIntType.
+ * Class TinyBlobType.
  */
-class MediumIntType extends AbstractNumericType
+class TinyBlobType extends AbstractStringType
 {
-    public const NAME = 'mediumint';
-    protected const TYPE = 'int';
+    public const NAME = 'tinyblob';
 }

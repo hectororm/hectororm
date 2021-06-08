@@ -12,13 +12,12 @@
 
 declare(strict_types=1);
 
-namespace Hector\Orm\DataType;
+namespace Hector\Orm\DataType\String;
 
 /**
- * Class FloatType.
+ * Class LongBlobType.
  */
-class FloatType extends AbstractNumericType
+class LongBlobType extends AbstractStringType
 {
-    public const NAME = 'float';
-    protected const TYPE = 'float';
+    public const NAME = 'longblob';
 }

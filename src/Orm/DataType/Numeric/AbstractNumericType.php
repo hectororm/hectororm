@@ -12,18 +12,19 @@
 
 declare(strict_types=1);
 
-namespace Hector\Orm\DataType;
+namespace Hector\Orm\DataType\Numeric;
 
+use Hector\Orm\DataType\AbstractType;
+use Hector\Orm\DataType\TypeInterface;
 use Hector\Orm\Exception\TypeException;
 use ReflectionNamedType;
-use Stringable;
 
 /**
- * Class AbstractStringType.
+ * Class NumericType.
  */
-abstract class AbstractStringType extends AbstractType implements TypeInterface
+abstract class AbstractNumericType extends AbstractType implements TypeInterface
 {
-    public const NAME = 'varchar';
+    protected const TYPE = null;
 
     /**
      * @inheritDoc
@@ -44,7 +45,9 @@ abstract class AbstractStringType extends AbstractType implements TypeInterface
             throw TypeException::castNotBuiltin($this);
         }
 
-        return (string)$value;
+        settype($value, static::TYPE ?? 'int');
+
+        return $value;
     }
 
     /**
@@ -53,13 +56,11 @@ abstract class AbstractStringType extends AbstractType implements TypeInterface
     public function toSchema(mixed $value, ?ReflectionNamedType $declaredType = null): mixed
     {
         if (!is_scalar($value)) {
-            if (is_object($value) && $value instanceof Stringable) {
-                return (string)$value;
-            }
-
             throw TypeException::castError($this);
         }
 
-        return (string)$value;
+        settype($value, static::TYPE ?? 'int');
+
+        return $value;
     }
 }

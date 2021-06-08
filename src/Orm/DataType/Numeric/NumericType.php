@@ -12,12 +12,13 @@
 
 declare(strict_types=1);
 
-namespace Hector\Orm\DataType;
+namespace Hector\Orm\DataType\Numeric;
 
 /**
- * Class EnumType.
+ * Class NumericType.
  */
-class EnumType extends AbstractStringType
+class NumericType extends AbstractNumericType
 {
-    public const NAME = 'enum';
+    public const NAME = 'numeric';
+    protected const TYPE = 'float';
 }

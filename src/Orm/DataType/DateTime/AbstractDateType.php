@@ -12,11 +12,13 @@
 
 declare(strict_types=1);
 
-namespace Hector\Orm\DataType;
+namespace Hector\Orm\DataType\DateTime;
 
 use DateTime;
 use DateTimeInterface;
 use Exception;
+use Hector\Orm\DataType\AbstractType;
+use Hector\Orm\DataType\TypeInterface;
 use Hector\Orm\Exception\TypeException;
 use ReflectionNamedType;
 use Throwable;

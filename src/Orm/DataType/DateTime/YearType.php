@@ -12,12 +12,15 @@
 
 declare(strict_types=1);
 
-namespace Hector\Orm\DataType;
+namespace Hector\Orm\DataType\DateTime;
+
+use Hector\Orm\DataType\Numeric\AbstractNumericType;
 
 /**
- * Class LongTextType.
+ * Class YearType.
  */
-class LongTextType extends AbstractStringType
+class YearType extends AbstractNumericType
 {
-    public const NAME = 'longtext';
+    public const NAME = 'year';
+    protected const TYPE = 'int';
 }
