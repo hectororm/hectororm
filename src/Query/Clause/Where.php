@@ -249,4 +249,43 @@ trait Where
     {
         return $this->andWhere(new SqlFunction('NOT EXISTS', $value));
     }
+
+    /**
+     * Where contains.
+     *
+     * @param Closure|StatementInterface|string $column
+     * @param string $value
+     *
+     * @return static
+     */
+    public function whereContains(Closure|StatementInterface|string $column, string $value): static
+    {
+        return $this->andWhere($column, 'LIKE', sprintf('%%%s%%', $value));
+    }
+
+    /**
+     * Where starts with.
+     *
+     * @param Closure|StatementInterface|string $column
+     * @param string $value
+     *
+     * @return static
+     */
+    public function whereStartsWith(Closure|StatementInterface|string $column, string $value): static
+    {
+        return $this->andWhere($column, 'LIKE', sprintf('%s%%', $value));
+    }
+
+    /**
+     * Where ends with.
+     *
+     * @param Closure|StatementInterface|string $column
+     * @param string $value
+     *
+     * @return static
+     */
+    public function whereEndsWith(Closure|StatementInterface|string $column, string $value): static
+    {
+        return $this->andWhere($column, 'LIKE', sprintf('%%%s', $value));
+    }
 }

@@ -386,4 +386,52 @@ class HavingTest extends TestCase
         );
         $this->assertEmpty($binding);
     }
+
+    public function testHavingContains()
+    {
+        $clause = new class {
+            use Having;
+        };
+        $binding = [];
+        $clause->resetHaving();
+        $clause->havingContains('foo', 'bar');
+
+        $this->assertEquals(
+            'foo LIKE ?',
+            $clause->having->getStatement($binding)
+        );
+        $this->assertEquals(['%bar%'], $binding);
+    }
+
+    public function testHavingStartsWith()
+    {
+        $clause = new class {
+            use Having;
+        };
+        $binding = [];
+        $clause->resetHaving();
+        $clause->havingStartsWith('foo', 'bar');
+
+        $this->assertEquals(
+            'foo LIKE ?',
+            $clause->having->getStatement($binding)
+        );
+        $this->assertEquals(['bar%'], $binding);
+    }
+
+    public function testHavingEndsWith()
+    {
+        $clause = new class {
+            use Having;
+        };
+        $binding = [];
+        $clause->resetHaving();
+        $clause->havingEndsWith('foo', 'bar');
+
+        $this->assertEquals(
+            'foo LIKE ?',
+            $clause->having->getStatement($binding)
+        );
+        $this->assertEquals(['%bar'], $binding);
+    }
 }

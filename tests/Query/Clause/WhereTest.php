@@ -385,4 +385,52 @@ class WhereTest extends TestCase
         );
         $this->assertEmpty($binding);
     }
+
+    public function testWhereContains()
+    {
+        $clause = new class {
+            use Where;
+        };
+        $binding = [];
+        $clause->resetWhere();
+        $clause->whereContains('foo', 'bar');
+
+        $this->assertEquals(
+            'foo LIKE ?',
+            $clause->where->getStatement($binding)
+        );
+        $this->assertEquals(['%bar%'], $binding);
+    }
+
+    public function testWhereStartsWith()
+    {
+        $clause = new class {
+            use Where;
+        };
+        $binding = [];
+        $clause->resetWhere();
+        $clause->whereStartsWith('foo', 'bar');
+
+        $this->assertEquals(
+            'foo LIKE ?',
+            $clause->where->getStatement($binding)
+        );
+        $this->assertEquals(['bar%'], $binding);
+    }
+
+    public function testWhereEndsWith()
+    {
+        $clause = new class {
+            use Where;
+        };
+        $binding = [];
+        $clause->resetWhere();
+        $clause->whereEndsWith('foo', 'bar');
+
+        $this->assertEquals(
+            'foo LIKE ?',
+            $clause->where->getStatement($binding)
+        );
+        $this->assertEquals(['%bar'], $binding);
+    }
 }

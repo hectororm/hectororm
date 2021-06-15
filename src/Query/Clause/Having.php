@@ -249,4 +249,43 @@ trait Having
     {
         return $this->andHaving(new SqlFunction('NOT EXISTS', $value));
     }
+
+    /**
+     * Having contains.
+     *
+     * @param Closure|StatementInterface|string $column
+     * @param string $value
+     *
+     * @return static
+     */
+    public function havingContains(Closure|StatementInterface|string $column, string $value): static
+    {
+        return $this->andHaving($column, 'LIKE', sprintf('%%%s%%', $value));
+    }
+
+    /**
+     * Having starts with.
+     *
+     * @param Closure|StatementInterface|string $column
+     * @param string $value
+     *
+     * @return static
+     */
+    public function havingStartsWith(Closure|StatementInterface|string $column, string $value): static
+    {
+        return $this->andHaving($column, 'LIKE', sprintf('%s%%', $value));
+    }
+
+    /**
+     * Having ends with.
+     *
+     * @param Closure|StatementInterface|string $column
+     * @param string $value
+     *
+     * @return static
+     */
+    public function havingEndsWith(Closure|StatementInterface|string $column, string $value): static
+    {
+        return $this->andHaving($column, 'LIKE', sprintf('%%%s', $value));
+    }
 }
