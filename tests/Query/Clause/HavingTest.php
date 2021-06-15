@@ -13,6 +13,7 @@
 namespace Hector\Query\Tests\Clause;
 
 use Hector\Query\Clause\Having;
+use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 
 class HavingTest extends TestCase
@@ -46,7 +47,7 @@ class HavingTest extends TestCase
         $clause->having('foo');
 
         $this->assertEquals(
-            '    foo' . PHP_EOL,
+            'foo',
             $clause->having->getStatement($binding)
         );
         $this->assertEmpty($binding);
@@ -54,7 +55,7 @@ class HavingTest extends TestCase
 
     public function testAndHavingWithoutArgument()
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
 
         $clause = new class {
             use Having;
@@ -73,7 +74,7 @@ class HavingTest extends TestCase
         $clause->andHaving('foo');
 
         $this->assertEquals(
-            '    foo' . PHP_EOL,
+            'foo',
             $clause->having->getStatement($binding)
         );
         $this->assertEmpty($binding);
@@ -90,8 +91,7 @@ class HavingTest extends TestCase
         $clause->andHaving('bar');
 
         $this->assertEquals(
-            '    foo' . PHP_EOL .
-            '    AND bar' . PHP_EOL,
+            'foo AND bar',
             $clause->having->getStatement($binding)
         );
         $this->assertEmpty($binding);
@@ -107,7 +107,7 @@ class HavingTest extends TestCase
         $clause->andHaving('foo', 'bar');
 
         $this->assertEquals(
-            '    foo = ?' . PHP_EOL,
+            'foo = ?',
             $clause->having->getStatement($binding)
         );
         $this->assertEquals(['bar'], $binding);
@@ -123,7 +123,7 @@ class HavingTest extends TestCase
         $clause->andHaving('foo', '<>', 'bar');
 
         $this->assertEquals(
-            '    foo <> ?' . PHP_EOL,
+            'foo <> ?',
             $clause->having->getStatement($binding)
         );
         $this->assertEquals(['bar'], $binding);
@@ -131,7 +131,7 @@ class HavingTest extends TestCase
 
     public function testOrHavingWithoutArgument()
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
 
         $clause = new class {
             use Having;
@@ -151,8 +151,7 @@ class HavingTest extends TestCase
         $clause->orHaving('bar');
 
         $this->assertEquals(
-            '    foo' . PHP_EOL .
-            '    OR bar' . PHP_EOL,
+            'foo OR bar',
             $clause->having->getStatement($binding)
         );
         $this->assertEmpty($binding);
@@ -168,7 +167,7 @@ class HavingTest extends TestCase
         $clause->orHaving('foo');
 
         $this->assertEquals(
-            '    foo' . PHP_EOL,
+            'foo',
             $clause->having->getStatement($binding)
         );
         $this->assertEmpty($binding);
@@ -184,7 +183,7 @@ class HavingTest extends TestCase
         $clause->orHaving('foo', 'bar');
 
         $this->assertEquals(
-            '    foo = ?' . PHP_EOL,
+            'foo = ?',
             $clause->having->getStatement($binding)
         );
         $this->assertEquals(['bar'], $binding);
@@ -200,7 +199,7 @@ class HavingTest extends TestCase
         $clause->orHaving('foo', '<>', 'bar');
 
         $this->assertEquals(
-            '    foo <> ?' . PHP_EOL,
+            'foo <> ?',
             $clause->having->getStatement($binding)
         );
         $this->assertEquals(['bar'], $binding);
@@ -222,9 +221,7 @@ class HavingTest extends TestCase
         );
 
         $this->assertEquals(
-            '    EXISTS(corge)' . PHP_EOL .
-            '    AND foo = ?' . PHP_EOL .
-            '    AND baz IN (?, ?)' . PHP_EOL,
+            'EXISTS(corge) AND foo = ? AND baz IN ( ?, ? )',
             $clause->having->getStatement($binding)
         );
         $this->assertEquals(['bar', 'qux', 'quux'], $binding);
@@ -240,7 +237,7 @@ class HavingTest extends TestCase
         $clause->havingIn('foo', ['bar', 'baz']);
 
         $this->assertEquals(
-            '    foo IN (?, ?)' . PHP_EOL,
+            'foo IN ( ?, ? )',
             $clause->having->getStatement($binding)
         );
         $this->assertEquals(['bar', 'baz'], $binding);
@@ -256,7 +253,7 @@ class HavingTest extends TestCase
         $clause->havingNotIn('foo', ['bar', 'baz']);
 
         $this->assertEquals(
-            '    foo NOT IN (?, ?)' . PHP_EOL,
+            'foo NOT IN ( ?, ? )',
             $clause->having->getStatement($binding)
         );
         $this->assertEquals(['bar', 'baz'], $binding);
@@ -272,7 +269,7 @@ class HavingTest extends TestCase
         $clause->havingBetween('foo', 1, 10);
 
         $this->assertEquals(
-            '    foo BETWEEN ? AND ?' . PHP_EOL,
+            'foo BETWEEN ? AND ?',
             $clause->having->getStatement($binding)
         );
         $this->assertEquals([1, 10], $binding);
@@ -288,7 +285,7 @@ class HavingTest extends TestCase
         $clause->havingNotBetween('foo', 1, 10);
 
         $this->assertEquals(
-            '    foo NOT BETWEEN ? AND ?' . PHP_EOL,
+            'foo NOT BETWEEN ? AND ?',
             $clause->having->getStatement($binding)
         );
         $this->assertEquals([1, 10], $binding);
@@ -304,7 +301,7 @@ class HavingTest extends TestCase
         $clause->havingGreaterThan('foo', 10);
 
         $this->assertEquals(
-            '    foo > ?' . PHP_EOL,
+            'foo > ?',
             $clause->having->getStatement($binding)
         );
         $this->assertEquals([10], $binding);
@@ -320,7 +317,7 @@ class HavingTest extends TestCase
         $clause->havingGreaterThanOrEqual('foo', 10);
 
         $this->assertEquals(
-            '    foo >= ?' . PHP_EOL,
+            'foo >= ?',
             $clause->having->getStatement($binding)
         );
         $this->assertEquals([10], $binding);
@@ -336,7 +333,7 @@ class HavingTest extends TestCase
         $clause->havingLessThan('foo', 10);
 
         $this->assertEquals(
-            '    foo < ?' . PHP_EOL,
+            'foo < ?',
             $clause->having->getStatement($binding)
         );
         $this->assertEquals([10], $binding);
@@ -352,7 +349,7 @@ class HavingTest extends TestCase
         $clause->havingLessThanOrEqual('foo', 10);
 
         $this->assertEquals(
-            '    foo <= ?' . PHP_EOL,
+            'foo <= ?',
             $clause->having->getStatement($binding)
         );
         $this->assertEquals([10], $binding);
@@ -368,7 +365,7 @@ class HavingTest extends TestCase
         $clause->havingExists('foo');
 
         $this->assertEquals(
-            '    EXISTS( foo )' . PHP_EOL,
+            'EXISTS( foo )',
             $clause->having->getStatement($binding)
         );
         $this->assertEmpty($binding);
@@ -384,7 +381,7 @@ class HavingTest extends TestCase
         $clause->havingNotExists('foo');
 
         $this->assertEquals(
-            '    NOT EXISTS( foo )' . PHP_EOL,
+            'NOT EXISTS( foo )',
             $clause->having->getStatement($binding)
         );
         $this->assertEmpty($binding);

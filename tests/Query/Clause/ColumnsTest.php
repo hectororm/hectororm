@@ -47,8 +47,7 @@ class ColumnsTest extends TestCase
         $clause->column('bar', 'b');
 
         $this->assertEquals(
-            '    foo AS f,' . PHP_EOL .
-            '    bar AS b' . PHP_EOL,
+            'foo AS f, bar AS b',
             $clause->columns->getStatement($binding)
         );
         $this->assertEmpty($binding);
@@ -64,8 +63,7 @@ class ColumnsTest extends TestCase
         $clause->columns('foo', 'bar');
 
         $this->assertEquals(
-            '    foo,' . PHP_EOL .
-            '    bar' . PHP_EOL,
+            'foo, bar',
             $clause->columns->getStatement($binding)
         );
         $this->assertEmpty($binding);

@@ -46,7 +46,7 @@ class LimitTest extends TestCase
         $clause->limit(10);
 
         $this->assertEquals(
-            'LIMIT 10' . PHP_EOL,
+            'LIMIT 10',
             $clause->limit->getStatement($binding)
         );
         $this->assertEmpty($binding);
@@ -62,7 +62,7 @@ class LimitTest extends TestCase
         $clause->limit(10, 5);
 
         $this->assertEquals(
-            'LIMIT 10 OFFSET 5' . PHP_EOL,
+            'LIMIT 10 OFFSET 5',
             $clause->limit->getStatement($binding)
         );
         $this->assertEmpty($binding);
@@ -79,7 +79,7 @@ class LimitTest extends TestCase
         $clause->offset(5);
 
         $this->assertEquals(
-            'LIMIT 10 OFFSET 5' . PHP_EOL,
+            'LIMIT 10 OFFSET 5',
             $clause->limit->getStatement($binding)
         );
         $this->assertEmpty($binding);

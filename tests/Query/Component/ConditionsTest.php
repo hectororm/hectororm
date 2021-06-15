@@ -47,7 +47,7 @@ class ConditionsTest extends TestCase
         $binding = [];
 
         $this->assertEquals(
-            '    foo IS NULL' . PHP_EOL,
+            'foo IS NULL',
             $condition->getStatement($binding)
         );
         $this->assertEmpty($binding);
@@ -61,8 +61,7 @@ class ConditionsTest extends TestCase
         $binding = [];
 
         $this->assertEquals(
-            '    foo IS NULL' . PHP_EOL .
-            '    OR `bar` = ?' . PHP_EOL,
+            'foo IS NULL OR `bar` = ?',
             $condition->getStatement($binding)
         );
         $this->assertEquals(['test'], $binding);
@@ -76,10 +75,7 @@ class ConditionsTest extends TestCase
         $binding = [];
 
         $this->assertEquals(
-            '    (' . PHP_EOL .
-            '        foo IS NULL' . PHP_EOL .
-            '        OR `bar` = ?' . PHP_EOL .
-            '    )' . PHP_EOL,
+            '( foo IS NULL OR `bar` = ? )',
             $condition->getStatement($binding, true)
         );
         $this->assertEquals(['test'], $binding);
@@ -92,7 +88,7 @@ class ConditionsTest extends TestCase
         $binding = [];
 
         $this->assertEquals(
-            '    foo = ?' . PHP_EOL,
+            'foo = ?',
             $conditions->getStatement($binding)
         );
         $this->assertEquals(
@@ -108,7 +104,7 @@ class ConditionsTest extends TestCase
         $binding = [];
 
         $this->assertEquals(
-            '    foo IS NULL' . PHP_EOL,
+            'foo IS NULL',
             $conditions->getStatement($binding)
         );
         $this->assertEquals(
@@ -124,7 +120,7 @@ class ConditionsTest extends TestCase
         $binding = [];
 
         $this->assertEquals(
-            '    foo IN (?, ?)' . PHP_EOL,
+            'foo IN ( ?, ? )',
             $conditions->getStatement($binding)
         );
         $this->assertEquals(
@@ -151,18 +147,11 @@ class ConditionsTest extends TestCase
         );
 
         $this->assertEquals(
-            '    baz IS NOT NULL' . PHP_EOL .
-            '    AND qux IN (?, ?)' . PHP_EOL .
-            '    AND quux = ?' . PHP_EOL .
-            '    AND (corge, grault) IN ((?, ?), (?, ?))' . PHP_EOL .
-            '    AND garply IN (' . PHP_EOL .
-            '        SELECT' . PHP_EOL .
-            '            waldo' . PHP_EOL .
-            '        FROM' . PHP_EOL .
-            '            table' . PHP_EOL .
-            '        WHERE' . PHP_EOL .
-            '            fred = ?' . PHP_EOL .
-            '    )' . PHP_EOL,
+            'baz IS NOT NULL '.
+            'AND qux IN ( ?, ? ) '.
+            'AND quux = ? '.
+            'AND (corge, grault) IN ( (?, ?), (?, ?) ) '.
+            'AND garply IN ( SELECT waldo FROM table WHERE fred = ? )',
             $condition->getStatement($binding)
         );
         $this->assertEquals(
@@ -184,14 +173,7 @@ class ConditionsTest extends TestCase
         $binding = [];
 
         $this->assertEquals(
-            '    foo IN (' . PHP_EOL .
-            '        SELECT' . PHP_EOL .
-            '            *' . PHP_EOL .
-            '        FROM' . PHP_EOL .
-            '            bar' . PHP_EOL .
-            '        WHERE' . PHP_EOL .
-            '            bar.qux = ?' . PHP_EOL .
-            '    )' . PHP_EOL,
+            'foo IN ( SELECT * FROM bar WHERE bar.qux = ? )',
             $condition->getStatement($binding)
         );
         $this->assertEquals([1], $binding);
@@ -204,7 +186,7 @@ class ConditionsTest extends TestCase
         $binding = [];
 
         $this->assertEquals(
-            '    (foo, bar) IN ((?, ?), (?, ?), (?, ?))' . PHP_EOL,
+            '(foo, bar) IN ( (?, ?), (?, ?), (?, ?) )',
             $conditions->getStatement($binding)
         );
         $this->assertEquals([1, 2, 3, 4, 5, 6], $binding);
@@ -226,7 +208,7 @@ class ConditionsTest extends TestCase
         );
 
         $this->assertEquals(
-            '    foo = ?' . PHP_EOL,
+            '( foo = ? )',
             $conditions->getStatement($binding)
         );
         $this->assertEquals(['bar'], $binding);
@@ -251,7 +233,7 @@ class ConditionsTest extends TestCase
         );
 
         $this->assertEquals(
-            '    foo = ?' . PHP_EOL,
+            'foo = ?',
             $conditions->getStatement($binding)
         );
         $this->assertEquals(['bar'], $binding);

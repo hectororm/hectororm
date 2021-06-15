@@ -34,7 +34,7 @@ class JoinTest extends TestCase
         $binding = [];
 
         $this->assertEquals(
-            'INNER JOIN bar' . PHP_EOL,
+            'INNER JOIN bar',
             $join->getStatement($binding)
         );
         $this->assertEmpty($binding);
@@ -48,9 +48,7 @@ class JoinTest extends TestCase
         $binding = [];
 
         $this->assertEquals(
-            'INNER JOIN bar' . PHP_EOL .
-            'LEFT JOIN baz' . PHP_EOL .
-            '    ON ( q.id = baz.id )' . PHP_EOL,
+            'INNER JOIN bar LEFT JOIN baz ON ( q.id = baz.id )',
             $join->getStatement($binding)
         );
         $this->assertEmpty($binding);
@@ -66,12 +64,7 @@ class JoinTest extends TestCase
         $binding = [];
 
         $this->assertEquals(
-            'LEFT JOIN (' . PHP_EOL .
-            '    SELECT' . PHP_EOL .
-            '        *' . PHP_EOL .
-            '    FROM' . PHP_EOL .
-            '        `foo`' . PHP_EOL .
-            ')' . PHP_EOL,
+            'LEFT JOIN ( SELECT * FROM `foo` )',
             $join->getStatement($binding)
         );
         $this->assertEquals([], $binding);
@@ -88,8 +81,7 @@ class JoinTest extends TestCase
         $binding = [];
 
         $this->assertEquals(
-            'LEFT JOIN `foo`' . PHP_EOL .
-            '    ON ( UNIX_TIMESTAMP(?) )' . PHP_EOL,
+            'LEFT JOIN `foo` ON ( UNIX_TIMESTAMP(?) )',
             $join->getStatement($binding)
         );
         $this->assertEquals([$date], $binding);

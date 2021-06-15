@@ -35,7 +35,7 @@ class AssignmentsTest extends TestCase
         $binding = [];
 
         $this->assertEquals(
-            '    foo = ?' . PHP_EOL,
+            'foo = ?',
             $assignments->getStatement($binding)
         );
         $this->assertEquals(['value'], $binding);
@@ -49,8 +49,7 @@ class AssignmentsTest extends TestCase
         $binding = [];
 
         $this->assertEquals(
-            '    foo = ?,' . PHP_EOL .
-            '    bar = ?' . PHP_EOL,
+            'foo = ?, bar = ?',
             $assignments->getStatement($binding)
         );
         $this->assertEquals(['value', 'value2'], $binding);
@@ -69,9 +68,7 @@ class AssignmentsTest extends TestCase
         $binding = [];
 
         $this->assertEquals(
-            '    foo = ?,' . PHP_EOL .
-            '    `baz` = UNIX_TIMESTAMP(?),' . PHP_EOL .
-            '    qux = ?' . PHP_EOL,
+            'foo = ?, `baz` = UNIX_TIMESTAMP(?), qux = ?',
             $assignments->getStatement($binding)
         );
         $this->assertEquals(['value', '2020-04-10', 'value3'], $binding);
@@ -90,14 +87,7 @@ class AssignmentsTest extends TestCase
         $binding = [];
 
         $this->assertEquals(
-            '    (' . PHP_EOL .
-            '        SELECT' . PHP_EOL .
-            '            *' . PHP_EOL .
-            '        FROM' . PHP_EOL .
-            '            bar' . PHP_EOL .
-            '        WHERE' . PHP_EOL .
-            '            bar.qux = ?' . PHP_EOL .
-            '    )' . PHP_EOL,
+            '( SELECT * FROM bar WHERE bar.qux = ? )',
             $assignments->getStatement($binding)
         );
         $this->assertEquals([1], $binding);
@@ -115,8 +105,7 @@ class AssignmentsTest extends TestCase
         $binding = [];
 
         $this->assertEquals(
-            '    `foo` = ?,' . PHP_EOL .
-            '    bar = ?' . PHP_EOL,
+            '`foo` = ?, bar = ?',
             $assignments->getStatement($binding)
         );
         $this->assertEquals([null, 'baz'], $binding);

@@ -44,10 +44,7 @@ class UpdateTest extends TestCase
         $update->assign('bar', 'value_bar');
 
         $this->assertEquals(
-            'UPDATE' . PHP_EOL .
-            '    foo' . PHP_EOL .
-            'SET' . PHP_EOL .
-            '    bar = ?' . PHP_EOL,
+            'UPDATE foo SET bar = ?',
             $update->getStatement($binding)
         );
         $this->assertEquals(['value_bar'], $binding);
@@ -62,11 +59,7 @@ class UpdateTest extends TestCase
         $update->assign('baz', 'value_baz');
 
         $this->assertEquals(
-            'UPDATE' . PHP_EOL .
-            '    foo' . PHP_EOL .
-            'SET' . PHP_EOL .
-            '    bar = ?,' . PHP_EOL .
-            '    baz = ?' . PHP_EOL,
+            'UPDATE foo SET bar = ?, baz = ?',
             $update->getStatement($binding)
         );
         $this->assertEquals(['value_bar', 'value_baz'], $binding);
@@ -84,14 +77,7 @@ class UpdateTest extends TestCase
             ->orWhere('foo.foo_column IS NULL');
 
         $this->assertEquals(
-            'UPDATE' . PHP_EOL .
-            '    foo' . PHP_EOL .
-            'SET' . PHP_EOL .
-            '    bar = ?,' . PHP_EOL .
-            '    baz = ?' . PHP_EOL .
-            'WHERE' . PHP_EOL .
-            '    foo.foo_column = ?' . PHP_EOL .
-            '    OR foo.foo_column IS NULL' . PHP_EOL,
+            'UPDATE foo SET bar = ?, baz = ? WHERE foo.foo_column = ? OR foo.foo_column IS NULL',
             $update->getStatement($binding)
         );
         $this->assertEquals(['value_bar', 'value_baz', 1], $binding);
@@ -105,12 +91,7 @@ class UpdateTest extends TestCase
         $update->assign('bar', 'value_bar');
 
         $this->assertEquals(
-            '(' . PHP_EOL .
-            '    UPDATE' . PHP_EOL .
-            '        foo' . PHP_EOL .
-            '    SET' . PHP_EOL .
-            '        bar = ?' . PHP_EOL .
-            ')',
+            '( UPDATE foo SET bar = ? )',
             $update->getStatement($binding, true)
         );
         $this->assertEquals(['value_bar'], $binding);

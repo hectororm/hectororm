@@ -33,7 +33,7 @@ class Select implements StatementInterface
     use Clause\Having;
     use Clause\Order;
     use Clause\Limit;
-    use Component\IndentHelperTrait;
+    use Component\EncapsulateHelperTrait;
 
     protected bool $distinct = false;
 
@@ -81,10 +81,10 @@ class Select implements StatementInterface
      */
     public function getStatement(array &$binding, bool $encapsulate = false): ?string
     {
-        $str = 'SELECT' . PHP_EOL;
+        $str = 'SELECT';
 
         if ($this->distinct) {
-            $str .= $this->indent('DISTINCT') . PHP_EOL;
+            $str .= ' DISTINCT';
         }
 
         $fromStr = $this->from->getStatement($binding);
@@ -94,38 +94,26 @@ class Select implements StatementInterface
             return null;
         }
 
-        $str .= $columnStr ?? $this->indent('*') . PHP_EOL;
+        $str .= ' ' . ($columnStr ?? '*');
 
         if (null !== $fromStr) {
-            $str .=
-                'FROM' . PHP_EOL .
-                $fromStr .
-                ($this->join->getStatement($binding) ?? '');
+            $str .= ' FROM ' . $fromStr . rtrim(' ' . ($this->join->getStatement($binding) ?? ''));
         }
 
         $whereStr = $this->where->getStatement($binding);
         if (null !== $whereStr) {
-            $str .=
-                'WHERE' . PHP_EOL .
-                $whereStr;
+            $str .= ' WHERE ' . $whereStr;
         }
 
-        $str .= $this->group->getStatement($binding) ?? '';
+        $str .= rtrim(' ' . ($this->group->getStatement($binding) ?? ''));
 
         $havingStr = $this->having->getStatement($binding);
         if (null !== $havingStr) {
-            $str .=
-                'HAVING' . PHP_EOL .
-                $havingStr;
+            $str .= ' HAVING ' . $havingStr;
         }
+        $str .= rtrim(' ' . ($this->order->getStatement($binding) ?? ''));
+        $str .= rtrim(' ' . ($this->limit->getStatement($binding) ?? ''));
 
-        $str .= $this->order->getStatement($binding) ?? '';
-        $str .= $this->limit->getStatement($binding) ?? '';
-
-        if ($encapsulate) {
-            return '(' . PHP_EOL . $this->indent($str) . ')';
-        }
-
-        return $str;
+        return $this->encapsulate($str, $encapsulate);
     }
 }

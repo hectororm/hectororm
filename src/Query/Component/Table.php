@@ -53,29 +53,25 @@ class Table extends AbstractComponent
      */
     public function getStatement(array &$binding, bool $encapsulate = false): ?string
     {
-        if (count($this->tables) === 0) {
-            return null;
-        }
+        return $this->encapsulate(
+            implode(
+                ', ',
+                array_map(
+                    function ($from) use (&$binding) {
+                        if ($from['alias'] && $this->alias) {
+                            return sprintf(
+                                '%s AS %s',
+                                $this->getSubStatement($from['table'], $binding),
+                                $from['alias']
+                            );
+                        }
 
-        return
-            $this->indent(
-                implode(
-                    ',' . PHP_EOL,
-                    array_map(
-                        function ($from) use (&$binding) {
-                            if ($from['alias'] && $this->alias) {
-                                return sprintf(
-                                    '%s AS %s',
-                                    $this->getSubStatement($from['table'], $binding),
-                                    $from['alias']
-                                );
-                            }
-
-                            return $this->getSubStatement($from['table'], $binding);
-                        },
-                        $this->tables
-                    )
+                        return $this->getSubStatement($from['table'], $binding);
+                    },
+                    $this->tables
                 )
-            ) . PHP_EOL;
+            ),
+            $encapsulate
+        );
     }
 }

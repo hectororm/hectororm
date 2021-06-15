@@ -47,9 +47,7 @@ class GroupTest extends TestCase
         $clause->groupBy('bar');
 
         $this->assertEquals(
-            'GROUP BY' . PHP_EOL .
-            '    foo,' . PHP_EOL .
-            '    bar' . PHP_EOL,
+            'GROUP BY foo, bar',
             $clause->group->getStatement($binding)
         );
         $this->assertEmpty($binding);
@@ -67,10 +65,7 @@ class GroupTest extends TestCase
         $clause->groupByWithRollup(true);
 
         $this->assertEquals(
-            'GROUP BY' . PHP_EOL .
-            '    foo,' . PHP_EOL .
-            '    bar' . PHP_EOL .
-            '    WITH ROLLUP' . PHP_EOL,
+            'GROUP BY foo, bar WITH ROLLUP',
             $clause->group->getStatement($binding)
         );
         $this->assertEmpty($binding);

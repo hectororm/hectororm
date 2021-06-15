@@ -46,14 +46,7 @@ class ExistsTest extends TestCase
         $binding = [];
 
         $this->assertEquals(
-            'EXISTS(' . PHP_EOL .
-            '    SELECT' . PHP_EOL .
-            '        *' . PHP_EOL .
-            '    FROM' . PHP_EOL .
-            '        foo' . PHP_EOL .
-            '    WHERE' . PHP_EOL .
-            '        bar = ?' . PHP_EOL .
-            ')' . PHP_EOL,
+            'EXISTS( SELECT * FROM foo WHERE bar = ? )',
             $exists->getStatement($binding)
         );
         $this->assertEquals(['qux'], $binding);

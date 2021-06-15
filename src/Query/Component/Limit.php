@@ -72,9 +72,9 @@ class Limit extends AbstractComponent
         }
 
         if (null === $this->offset) {
-            return sprintf('LIMIT %d', $this->limit) . PHP_EOL;
+            return $this->encapsulate(sprintf('LIMIT %d', $this->limit), $encapsulate);
         }
 
-        return sprintf('LIMIT %d OFFSET %d', $this->limit, $this->offset) . PHP_EOL;
+        return $this->encapsulate(sprintf('LIMIT %d OFFSET %d', $this->limit, $this->offset), $encapsulate);
     }
 }

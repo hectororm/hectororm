@@ -47,9 +47,7 @@ class JoinTest extends TestCase
         $clause->innerJoin('baz');
 
         $this->assertEquals(
-            'INNER JOIN foo' . PHP_EOL .
-            '    ON ( foo.bar IS NULL )' . PHP_EOL .
-            'INNER JOIN baz' . PHP_EOL,
+            'INNER JOIN foo ON ( foo.bar IS NULL ) INNER JOIN baz',
             $clause->join->getStatement($binding)
         );
         $this->assertEmpty($binding);
@@ -66,9 +64,7 @@ class JoinTest extends TestCase
         $clause->leftJoin('baz');
 
         $this->assertEquals(
-            'LEFT JOIN foo' . PHP_EOL .
-            '    ON ( foo.bar IS NULL )' . PHP_EOL .
-            'LEFT JOIN baz' . PHP_EOL,
+            'LEFT JOIN foo ON ( foo.bar IS NULL ) LEFT JOIN baz',
             $clause->join->getStatement($binding)
         );
         $this->assertEmpty($binding);
@@ -85,9 +81,7 @@ class JoinTest extends TestCase
         $clause->rightJoin('baz');
 
         $this->assertEquals(
-            'RIGHT JOIN foo' . PHP_EOL .
-            '    ON ( foo.bar IS NULL )' . PHP_EOL .
-            'RIGHT JOIN baz' . PHP_EOL,
+            'RIGHT JOIN foo ON ( foo.bar IS NULL ) RIGHT JOIN baz',
             $clause->join->getStatement($binding)
         );
         $this->assertEmpty($binding);
@@ -104,9 +98,7 @@ class JoinTest extends TestCase
         $clause->rightJoin('baz');
 
         $this->assertEquals(
-            'INNER JOIN table' . PHP_EOL .
-            '    ON ( foo.bar IS NULL AND baz = qux )' . PHP_EOL .
-            'RIGHT JOIN baz' . PHP_EOL,
+            'INNER JOIN table ON ( foo.bar IS NULL AND baz = qux ) RIGHT JOIN baz',
             $clause->join->getStatement($binding)
         );
         $this->assertEmpty($binding);
@@ -122,8 +114,7 @@ class JoinTest extends TestCase
         $clause->innerJoin('foo', 'alias.bar IS NULL', 'alias');
 
         $this->assertEquals(
-            'INNER JOIN foo AS alias' . PHP_EOL .
-            '    ON ( alias.bar IS NULL )' . PHP_EOL,
+            'INNER JOIN foo AS alias ON ( alias.bar IS NULL )',
             $clause->join->getStatement($binding)
         );
         $this->assertEmpty($binding);

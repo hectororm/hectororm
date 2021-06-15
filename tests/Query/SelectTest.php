@@ -43,10 +43,7 @@ class SelectTest extends TestCase
         $select->from('foo', 'f');
 
         $this->assertEquals(
-            'SELECT' . PHP_EOL .
-            '    *' . PHP_EOL .
-            'FROM' . PHP_EOL .
-            '    foo AS f' . PHP_EOL,
+            'SELECT * FROM foo AS f',
             $select->getStatement($binding)
         );
         $this->assertEmpty($binding);
@@ -60,11 +57,7 @@ class SelectTest extends TestCase
         $select->distinct(true);
 
         $this->assertEquals(
-            'SELECT' . PHP_EOL .
-            '    DISTINCT' . PHP_EOL .
-            '    *' . PHP_EOL .
-            'FROM' . PHP_EOL .
-            '    foo AS f' . PHP_EOL,
+            'SELECT DISTINCT * FROM foo AS f',
             $select->getStatement($binding)
         );
         $this->assertEmpty($binding);
@@ -72,10 +65,7 @@ class SelectTest extends TestCase
         $select->distinct(false);
 
         $this->assertEquals(
-            'SELECT' . PHP_EOL .
-            '    *' . PHP_EOL .
-            'FROM' . PHP_EOL .
-            '    foo AS f' . PHP_EOL,
+            'SELECT * FROM foo AS f',
             $select->getStatement($binding)
         );
         $this->assertEmpty($binding);
@@ -89,12 +79,7 @@ class SelectTest extends TestCase
         $select->leftJoin('bar', 'bar.bar_id = f.foo_id');
 
         $this->assertEquals(
-            'SELECT' . PHP_EOL .
-            '    *' . PHP_EOL .
-            'FROM' . PHP_EOL .
-            '    foo AS f' . PHP_EOL .
-            'LEFT JOIN bar' . PHP_EOL .
-            '    ON ( bar.bar_id = f.foo_id )' . PHP_EOL,
+            'SELECT * FROM foo AS f LEFT JOIN bar ON ( bar.bar_id = f.foo_id )',
             $select->getStatement($binding)
         );
         $this->assertEmpty($binding);
@@ -108,11 +93,7 @@ class SelectTest extends TestCase
         $select->columns('baz', 'qux');
 
         $this->assertEquals(
-            'SELECT' . PHP_EOL .
-            '    baz,' . PHP_EOL .
-            '    qux' . PHP_EOL .
-            'FROM' . PHP_EOL .
-            '    foo AS f' . PHP_EOL,
+            'SELECT baz, qux FROM foo AS f',
             $select->getStatement($binding)
         );
         $this->assertEmpty($binding);
@@ -126,12 +107,7 @@ class SelectTest extends TestCase
         $select->where('baz', '=', 'baz_value');
 
         $this->assertEquals(
-            'SELECT' . PHP_EOL .
-            '    *' . PHP_EOL .
-            'FROM' . PHP_EOL .
-            '    foo AS f' . PHP_EOL .
-            'WHERE' . PHP_EOL .
-            '    baz = ?' . PHP_EOL,
+            'SELECT * FROM foo AS f WHERE baz = ?',
             $select->getStatement($binding)
         );
         $this->assertEquals(['baz_value'], $binding);
@@ -149,16 +125,7 @@ class SelectTest extends TestCase
             ->orWhere('bar.bar_column IS NULL');
 
         $this->assertEquals(
-            'SELECT' . PHP_EOL .
-            '    *' . PHP_EOL .
-            'FROM' . PHP_EOL .
-            '    foo AS f' . PHP_EOL .
-            'LEFT JOIN bar' . PHP_EOL .
-            '    ON ( bar.bar_id = f.foo_id )' . PHP_EOL .
-            'WHERE' . PHP_EOL .
-            '    baz = ?' . PHP_EOL .
-            '    AND bar.bar_column = TIME()' . PHP_EOL .
-            '    OR bar.bar_column IS NULL' . PHP_EOL,
+            'SELECT * FROM foo AS f LEFT JOIN bar ON ( bar.bar_id = f.foo_id ) WHERE baz = ? AND bar.bar_column = TIME() OR bar.bar_column IS NULL',
             $select->getStatement($binding)
         );
         $this->assertEquals(['baz_value'], $binding);
@@ -176,17 +143,7 @@ class SelectTest extends TestCase
             ->having('bar', '=', 'bar_value');
 
         $this->assertEquals(
-            'SELECT' . PHP_EOL .
-            '    *' . PHP_EOL .
-            'FROM' . PHP_EOL .
-            '    `foo`' . PHP_EOL .
-            'WHERE' . PHP_EOL .
-            '    baz = ?' . PHP_EOL .
-            'GROUP BY' . PHP_EOL .
-            '    baz' . PHP_EOL .
-            '    WITH ROLLUP' . PHP_EOL .
-            'HAVING' . PHP_EOL .
-            '    bar = ?' . PHP_EOL,
+            'SELECT * FROM `foo` WHERE baz = ? GROUP BY baz WITH ROLLUP HAVING bar = ?',
             $select->getStatement($binding)
         );
         $this->assertEquals(['baz_value', 'bar_value'], $binding);
@@ -199,12 +156,7 @@ class SelectTest extends TestCase
         $select->from('foo', 'f');
 
         $this->assertEquals(
-            '(' . PHP_EOL .
-            '    SELECT' . PHP_EOL .
-            '        *' . PHP_EOL .
-            '    FROM' . PHP_EOL .
-            '        foo AS f' . PHP_EOL .
-            ')',
+            '( SELECT * FROM foo AS f )',
             $select->getStatement($binding, true)
         );
         $this->assertEmpty($binding);

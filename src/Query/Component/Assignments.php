@@ -61,29 +61,25 @@ class Assignments extends AbstractComponent
      */
     public function getStatement(array &$binding, bool $encapsulate = false): ?string
     {
-        if (empty($this->assignments)) {
-            return null;
-        }
+        return $this->encapsulate(
+            implode(
+                ', ',
+                array_map(
+                    function ($assignment) use (&$binding) {
+                        if (!array_key_exists('value', $assignment)) {
+                            return $this->getSubStatement($assignment['column'], $binding);
+                        }
 
-        return
-            $this->indent(
-                implode(
-                    ',' . PHP_EOL,
-                    array_map(
-                        function ($assignment) use (&$binding) {
-                            if (!array_key_exists('value', $assignment)) {
-                                return $this->getSubStatement($assignment['column'], $binding);
-                            }
-
-                            return sprintf(
-                                '%s = %s',
-                                $this->getSubStatement($assignment['column'], $binding),
-                                $this->getSubStatementValue($assignment['value'], $binding)
-                            );
-                        },
-                        $this->assignments
-                    )
+                        return sprintf(
+                            '%s = %s',
+                            $this->getSubStatement($assignment['column'], $binding),
+                            $this->getSubStatementValue($assignment['value'], $binding)
+                        );
+                    },
+                    $this->assignments
                 )
-            ) . PHP_EOL;
+            ),
+            $encapsulate
+        );
     }
 }

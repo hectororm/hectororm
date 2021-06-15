@@ -34,7 +34,7 @@ class TableTest extends TestCase
         $binding = [];
 
         $this->assertEquals(
-            '    foo AS f' . PHP_EOL,
+            'foo AS f',
             $table->getStatement($binding)
         );
         $this->assertEmpty($binding);
@@ -48,8 +48,7 @@ class TableTest extends TestCase
         $binding = [];
 
         $this->assertEquals(
-            '    foo AS f,' . PHP_EOL .
-            '    bar AS b' . PHP_EOL,
+            'foo AS f, bar AS b',
             $table->getStatement($binding)
         );
         $this->assertEmpty($binding);
@@ -68,15 +67,7 @@ class TableTest extends TestCase
         $binding = [];
 
         $this->assertEquals(
-            '    foo AS f,' . PHP_EOL .
-            '    (' . PHP_EOL .
-            '        SELECT' . PHP_EOL .
-            '            *' . PHP_EOL .
-            '        FROM' . PHP_EOL .
-            '            bar' . PHP_EOL .
-            '        WHERE' . PHP_EOL .
-            '            bar.qux = ?' . PHP_EOL .
-            '    ) AS table' . PHP_EOL,
+            'foo AS f, ( SELECT * FROM bar WHERE bar.qux = ? ) AS table',
             $table->getStatement($binding)
         );
         $this->assertEquals([1], $binding);

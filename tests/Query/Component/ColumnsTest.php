@@ -45,7 +45,7 @@ class ColumnsTest extends TestCase
         $columns->column('foo', 'f');
         $binding = [];
 
-        $this->assertEquals('    foo AS f' . PHP_EOL, $columns->getStatement($binding));
+        $this->assertEquals('foo AS f', $columns->getStatement($binding));
         $this->assertEmpty($binding);
     }
 
@@ -57,8 +57,7 @@ class ColumnsTest extends TestCase
         $binding = [];
 
         $this->assertEquals(
-            '    foo AS f,' . PHP_EOL .
-            '    bar' . PHP_EOL,
+            'foo AS f, bar',
             $columns->getStatement($binding)
         );
         $this->assertEmpty($binding);
@@ -72,9 +71,7 @@ class ColumnsTest extends TestCase
         $binding = [];
 
         $this->assertEquals(
-            '    bar,' . PHP_EOL .
-            '    baz,' . PHP_EOL .
-            '    qux' . PHP_EOL,
+            'bar, baz, qux',
             $columns->getStatement($binding)
         );
         $this->assertEmpty($binding);
@@ -93,16 +90,7 @@ class ColumnsTest extends TestCase
         $binding = [];
 
         $this->assertEquals(
-            '    (' . PHP_EOL .
-            '        SELECT' . PHP_EOL .
-            '            *' . PHP_EOL .
-            '        FROM' . PHP_EOL .
-            '            bar' . PHP_EOL .
-            '        WHERE' . PHP_EOL .
-            '            bar.qux = ?' . PHP_EOL .
-            '    ) AS b,' . PHP_EOL .
-            '    foo,' . PHP_EOL .
-            '    baz' . PHP_EOL,
+            '( SELECT * FROM bar WHERE bar.qux = ? ) AS b, foo, baz',
             $columns->getStatement($binding)
         );
         $this->assertEquals([1], $binding);

@@ -32,7 +32,6 @@ class QueryBuilder
     use Clause\Having;
     use Clause\Order;
     use Clause\Limit;
-    use Component\IndentHelperTrait;
 
     protected Connection $connection;
     private bool $distinct = false;

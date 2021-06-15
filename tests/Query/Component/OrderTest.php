@@ -45,8 +45,7 @@ class OrderTest extends TestCase
         $binding = [];
 
         $this->assertEquals(
-            'ORDER BY' . PHP_EOL .
-            '    foo DESC' . PHP_EOL,
+            'ORDER BY foo DESC',
             $orderBy->getStatement($binding)
         );
         $this->assertEmpty($binding);
@@ -60,9 +59,7 @@ class OrderTest extends TestCase
         $binding = [];
 
         $this->assertEquals(
-            'ORDER BY' . PHP_EOL .
-            '    foo DESC,' . PHP_EOL .
-            '    bar' . PHP_EOL,
+            'ORDER BY foo DESC, bar',
             $orderBy->getStatement($binding)
         );
         $this->assertEmpty($binding);
@@ -75,8 +72,7 @@ class OrderTest extends TestCase
         $binding = [];
 
         $this->assertEquals(
-            'ORDER BY' . PHP_EOL .
-            '    baz ASC' . PHP_EOL,
+            'ORDER BY baz ASC',
             $orderBy->getStatement($binding)
         );
     }
@@ -89,9 +85,7 @@ class OrderTest extends TestCase
         $binding = [];
 
         $this->assertEquals(
-            'ORDER BY' . PHP_EOL .
-            '    baz ASC,' . PHP_EOL .
-            '    IF(? IS NULL, 1, 0)' . PHP_EOL,
+            'ORDER BY baz ASC, IF(? IS NULL, 1, 0)',
             $orderBy->getStatement($binding)
         );
         $this->assertEquals(['foo'], $binding);

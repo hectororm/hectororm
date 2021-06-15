@@ -14,7 +14,7 @@ declare(strict_types=1);
 
 namespace Hector\Query\Clause;
 
-use \Hector\Query\Component;
+use Hector\Query\Component;
 use Hector\Query\StatementInterface;
 
 trait From

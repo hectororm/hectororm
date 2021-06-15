@@ -48,14 +48,7 @@ class BetweenTest extends TestCase
         $binding = [];
 
         $this->assertEquals(
-            '(' . PHP_EOL .
-            '    SELECT' . PHP_EOL .
-            '        *' . PHP_EOL .
-            '    FROM' . PHP_EOL .
-            '        foo' . PHP_EOL .
-            '    WHERE' . PHP_EOL .
-            '        bar = ?' . PHP_EOL .
-            ') BETWEEN ? AND ?',
+            '( SELECT * FROM foo WHERE bar = ? ) BETWEEN ? AND ?',
             $between->getStatement($binding)
         );
         $this->assertEquals(['qux', 1, 10], $binding);

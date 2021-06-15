@@ -34,8 +34,7 @@ class DeleteTest extends TestCase
         $delete->from('`foo`');
 
         $this->assertEquals(
-            'DELETE FROM' . PHP_EOL .
-            '    `foo`' . PHP_EOL,
+            'DELETE FROM `foo`',
             $delete->getStatement($binding)
         );
         $this->assertEquals([], $binding);
@@ -48,10 +47,7 @@ class DeleteTest extends TestCase
         $delete->from('`foo`');
 
         $this->assertEquals(
-            '(' . PHP_EOL .
-            '    DELETE FROM' . PHP_EOL .
-            '        `foo`' . PHP_EOL .
-            ')',
+            '( DELETE FROM `foo` )',
             $delete->getStatement($binding, true)
         );
         $this->assertEquals([], $binding);
@@ -65,10 +61,7 @@ class DeleteTest extends TestCase
         $delete->where('`bar`', '=', 'value');
 
         $this->assertEquals(
-            'DELETE FROM' . PHP_EOL .
-            '    `foo`' . PHP_EOL .
-            'WHERE' . PHP_EOL .
-            '    `bar` = ?' . PHP_EOL,
+            'DELETE FROM `foo` WHERE `bar` = ?',
             $delete->getStatement($binding)
         );
         $this->assertEquals(['value'], $binding);
@@ -83,11 +76,7 @@ class DeleteTest extends TestCase
         $delete->limit(2, 5);
 
         $this->assertEquals(
-            'DELETE FROM' . PHP_EOL .
-            '    `foo`' . PHP_EOL .
-            'WHERE' . PHP_EOL .
-            '    `bar` = ?' . PHP_EOL .
-            'LIMIT 2 OFFSET 5' . PHP_EOL,
+            'DELETE FROM `foo` WHERE `bar` = ? LIMIT 2 OFFSET 5',
             $delete->getStatement($binding)
         );
         $this->assertEquals(['value'], $binding);
@@ -102,11 +91,7 @@ class DeleteTest extends TestCase
         $delete->limit(2, 5);
 
         $this->assertEquals(
-            'DELETE FROM' . PHP_EOL .
-            '    `foo`' . PHP_EOL .
-            'ORDER BY' . PHP_EOL .
-            '    `bar` DESC' . PHP_EOL .
-            'LIMIT 2 OFFSET 5' . PHP_EOL,
+            'DELETE FROM `foo` ORDER BY `bar` DESC LIMIT 2 OFFSET 5',
             $delete->getStatement($binding)
         );
         $this->assertEquals([], $binding);

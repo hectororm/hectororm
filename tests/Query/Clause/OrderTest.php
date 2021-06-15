@@ -47,9 +47,7 @@ class OrderTest extends TestCase
         $clause->orderBy('bar', \Hector\Query\Component\Order::ORDER_DESC);
 
         $this->assertEquals(
-            'ORDER BY' . PHP_EOL .
-            '    foo,' . PHP_EOL .
-            '    bar DESC' . PHP_EOL,
+            'ORDER BY foo, bar DESC',
             $clause->order->getStatement($binding)
         );
         $this->assertEmpty($binding);
@@ -65,8 +63,7 @@ class OrderTest extends TestCase
         $clause->random();
 
         $this->assertEquals(
-            'ORDER BY' . PHP_EOL .
-            '    RAND()' . PHP_EOL,
+            'ORDER BY RAND()',
             $clause->order->getStatement($binding)
         );
         $this->assertEmpty($binding);

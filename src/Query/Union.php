@@ -18,7 +18,7 @@ class Union implements StatementInterface
 {
     use Clause\Order;
     use Clause\Limit;
-    use Component\IndentHelperTrait;
+    use Component\EncapsulateHelperTrait;
 
     private bool $all = false;
     private array $selects = [];
@@ -85,23 +85,16 @@ class Union implements StatementInterface
             $selectStatements[] = $select->getStatement($binding, true);
         }
 
-        $str = implode(
-            PHP_EOL . 'UNION ' . ($this->all ? 'ALL' : 'DISTINCT') . PHP_EOL,
-            $selectStatements
-        ) . PHP_EOL;
+        $str = implode(' UNION ' . ($this->all ? 'ALL ' : 'DISTINCT '), $selectStatements);
 
         if (null !== $this->limit->getLimit() || count($this->order) > 0) {
             $encapsulate = true;
         }
 
         if ($encapsulate) {
-            $str =
-                '(' . PHP_EOL .
-                $this->indent($str) .
-                ')' . PHP_EOL;
-
-            $str .= $this->order->getStatement($binding) ?? '';
-            $str .= $this->limit->getStatement($binding) ?? '';
+            $str = $this->encapsulate($str, $encapsulate);
+            $str .= rtrim(' ' . ($this->order->getStatement($binding) ?? ''));
+            $str .= rtrim(' ' . ($this->limit->getStatement($binding) ?? ''));
         }
 
         return $str;

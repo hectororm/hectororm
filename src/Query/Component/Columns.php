@@ -72,25 +72,25 @@ class Columns extends AbstractComponent implements Countable
      */
     public function getStatement(array &$binding, bool $encapsulate = false): ?string
     {
-        if (empty($this->columns)) {
-            return null;
-        }
+        return $this->encapsulate(
+            implode(
+                ', ',
+                array_map(
+                    function ($column) use (&$binding) {
+                        if ($column['alias']) {
+                            return sprintf(
+                                '%s AS %s',
+                                rtrim($this->getSubStatement($column['column'], $binding)),
+                                $column['alias']
+                            );
+                        }
 
-        return
-            $this->indent(
-                implode(
-                    ',' . PHP_EOL,
-                    array_map(
-                        function ($column) use (&$binding) {
-                            if ($column['alias']) {
-                                return sprintf('%s AS %s', rtrim($this->getSubStatement($column['column'], $binding)), $column['alias']);
-                            }
-
-                            return $this->getSubStatement($column['column'], $binding);
-                        },
-                        $this->columns
-                    )
+                        return $this->getSubStatement($column['column'], $binding);
+                    },
+                    $this->columns
                 )
-            ) . PHP_EOL;
+            ),
+            $encapsulate
+        );
     }
 }

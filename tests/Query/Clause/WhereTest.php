@@ -46,7 +46,7 @@ class WhereTest extends TestCase
         $clause->where('foo');
 
         $this->assertEquals(
-            '    foo' . PHP_EOL,
+            'foo',
             $clause->where->getStatement($binding)
         );
         $this->assertEmpty($binding);
@@ -73,7 +73,7 @@ class WhereTest extends TestCase
         $clause->andWhere('foo');
 
         $this->assertEquals(
-            '    foo' . PHP_EOL,
+            'foo',
             $clause->where->getStatement($binding)
         );
         $this->assertEmpty($binding);
@@ -90,8 +90,7 @@ class WhereTest extends TestCase
         $clause->andWhere('bar');
 
         $this->assertEquals(
-            '    foo' . PHP_EOL .
-            '    AND bar' . PHP_EOL,
+            'foo AND bar',
             $clause->where->getStatement($binding)
         );
         $this->assertEmpty($binding);
@@ -107,7 +106,7 @@ class WhereTest extends TestCase
         $clause->andWhere('foo', 'bar');
 
         $this->assertEquals(
-            '    foo = ?' . PHP_EOL,
+            'foo = ?',
             $clause->where->getStatement($binding)
         );
         $this->assertEquals(['bar'], $binding);
@@ -123,7 +122,7 @@ class WhereTest extends TestCase
         $clause->andWhere('foo', '<>', 'bar');
 
         $this->assertEquals(
-            '    foo <> ?' . PHP_EOL,
+            'foo <> ?',
             $clause->where->getStatement($binding)
         );
         $this->assertEquals(['bar'], $binding);
@@ -151,8 +150,7 @@ class WhereTest extends TestCase
         $clause->orWhere('bar');
 
         $this->assertEquals(
-            '    foo' . PHP_EOL .
-            '    OR bar' . PHP_EOL,
+            'foo OR bar',
             $clause->where->getStatement($binding)
         );
         $this->assertEmpty($binding);
@@ -168,7 +166,7 @@ class WhereTest extends TestCase
         $clause->orWhere('foo');
 
         $this->assertEquals(
-            '    foo' . PHP_EOL,
+            'foo',
             $clause->where->getStatement($binding)
         );
         $this->assertEmpty($binding);
@@ -184,7 +182,7 @@ class WhereTest extends TestCase
         $clause->orWhere('foo', 'bar');
 
         $this->assertEquals(
-            '    foo = ?' . PHP_EOL,
+            'foo = ?',
             $clause->where->getStatement($binding)
         );
         $this->assertEquals(['bar'], $binding);
@@ -200,7 +198,7 @@ class WhereTest extends TestCase
         $clause->orWhere('foo', '<>', 'bar');
 
         $this->assertEquals(
-            '    foo <> ?' . PHP_EOL,
+            'foo <> ?',
             $clause->where->getStatement($binding)
         );
         $this->assertEquals(['bar'], $binding);
@@ -222,9 +220,7 @@ class WhereTest extends TestCase
         );
 
         $this->assertEquals(
-            '    EXISTS(corge)' . PHP_EOL .
-            '    AND foo = ?' . PHP_EOL .
-            '    AND baz IN (?, ?)' . PHP_EOL,
+            'EXISTS(corge) AND foo = ? AND baz IN ( ?, ? )',
             $clause->where->getStatement($binding)
         );
         $this->assertEquals(['bar', 'qux', 'quux'], $binding);
@@ -240,7 +236,7 @@ class WhereTest extends TestCase
         $clause->whereIn('foo', ['bar', 'baz', 'qux', 'foo']);
 
         $this->assertEquals(
-            '    foo IN (?, ?, ?, ?)' . PHP_EOL,
+            'foo IN ( ?, ?, ?, ? )',
             $clause->where->getStatement($binding)
         );
         $this->assertEquals(['bar', 'baz', 'qux', 'foo'], $binding);
@@ -256,7 +252,7 @@ class WhereTest extends TestCase
         $clause->whereNotIn('foo', ['bar', 'baz']);
 
         $this->assertEquals(
-            '    foo NOT IN (?, ?)' . PHP_EOL,
+            'foo NOT IN ( ?, ? )',
             $clause->where->getStatement($binding)
         );
         $this->assertEquals(['bar', 'baz'], $binding);
@@ -272,7 +268,7 @@ class WhereTest extends TestCase
         $clause->whereBetween('foo', 1, 10);
 
         $this->assertEquals(
-            '    foo BETWEEN ? AND ?' . PHP_EOL,
+            'foo BETWEEN ? AND ?',
             $clause->where->getStatement($binding)
         );
         $this->assertEquals([1, 10], $binding);
@@ -288,7 +284,7 @@ class WhereTest extends TestCase
         $clause->whereNotBetween('foo', 1, 10);
 
         $this->assertEquals(
-            '    foo NOT BETWEEN ? AND ?' . PHP_EOL,
+            'foo NOT BETWEEN ? AND ?',
             $clause->where->getStatement($binding)
         );
         $this->assertEquals([1, 10], $binding);
@@ -304,7 +300,7 @@ class WhereTest extends TestCase
         $clause->whereGreaterThan('foo', 10);
 
         $this->assertEquals(
-            '    foo > ?' . PHP_EOL,
+            'foo > ?',
             $clause->where->getStatement($binding)
         );
         $this->assertEquals([10], $binding);
@@ -320,7 +316,7 @@ class WhereTest extends TestCase
         $clause->whereGreaterThanOrEqual('foo', 10);
 
         $this->assertEquals(
-            '    foo >= ?' . PHP_EOL,
+            'foo >= ?',
             $clause->where->getStatement($binding)
         );
         $this->assertEquals([10], $binding);
@@ -336,7 +332,7 @@ class WhereTest extends TestCase
         $clause->whereLessThan('foo', 10);
 
         $this->assertEquals(
-            '    foo < ?' . PHP_EOL,
+            'foo < ?',
             $clause->where->getStatement($binding)
         );
         $this->assertEquals([10], $binding);
@@ -352,7 +348,7 @@ class WhereTest extends TestCase
         $clause->whereLessThanOrEqual('foo', 10);
 
         $this->assertEquals(
-            '    foo <= ?' . PHP_EOL,
+            'foo <= ?',
             $clause->where->getStatement($binding)
         );
         $this->assertEquals([10], $binding);
@@ -368,7 +364,7 @@ class WhereTest extends TestCase
         $clause->whereExists('foo');
 
         $this->assertEquals(
-            '    EXISTS( foo )' . PHP_EOL,
+            'EXISTS( foo )',
             $clause->where->getStatement($binding)
         );
         $this->assertEmpty($binding);
@@ -384,7 +380,7 @@ class WhereTest extends TestCase
         $clause->whereNotExists('foo');
 
         $this->assertEquals(
-            '    NOT EXISTS( foo )' . PHP_EOL,
+            'NOT EXISTS( foo )',
             $clause->where->getStatement($binding)
         );
         $this->assertEmpty($binding);

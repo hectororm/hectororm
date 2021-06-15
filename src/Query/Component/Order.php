@@ -59,22 +59,26 @@ class Order extends AbstractComponent implements Countable
             return null;
         }
 
-        return
-            'ORDER BY' . PHP_EOL .
-            $this->indent(
-                implode(
-                    ',' . PHP_EOL,
-                    array_map(
-                        function ($column) use (&$binding) {
-                            if ($column['order']) {
-                                return sprintf('%s %s', $this->getSubStatement($column['column'], $binding), $column['order']);
-                            }
+        return $this->encapsulate(
+            'ORDER BY ' .
+            implode(
+                ', ',
+                array_map(
+                    function ($column) use (&$binding) {
+                        if ($column['order']) {
+                            return sprintf(
+                                '%s %s',
+                                $this->getSubStatement($column['column'], $binding),
+                                $column['order']
+                            );
+                        }
 
-                            return $this->getSubStatement($column['column'], $binding);
-                        },
-                        $this->order
-                    )
+                        return $this->getSubStatement($column['column'], $binding);
+                    },
+                    $this->order
                 )
-            ) . PHP_EOL;
+            ),
+            $encapsulate
+        );
     }
 }

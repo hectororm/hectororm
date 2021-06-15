@@ -46,8 +46,7 @@ class GroupTest extends TestCase
         $binding = [];
 
         $this->assertEquals(
-            'GROUP BY' . PHP_EOL .
-            '    foo' . PHP_EOL,
+            'GROUP BY foo',
             $group->getStatement($binding)
         );
         $this->assertEquals([], $binding);
@@ -61,9 +60,7 @@ class GroupTest extends TestCase
         $binding = [];
 
         $this->assertEquals(
-            'GROUP BY' . PHP_EOL .
-            '    foo,' . PHP_EOL .
-            '    FUNCTION(?)' . PHP_EOL,
+            'GROUP BY foo, FUNCTION(?)',
             $group->getStatement($binding)
         );
         $this->assertEquals(['value'], $binding);
@@ -78,10 +75,7 @@ class GroupTest extends TestCase
         $binding = [];
 
         $this->assertEquals(
-            'GROUP BY' . PHP_EOL .
-            '    foo,' . PHP_EOL .
-            '    bar' . PHP_EOL .
-            '    WITH ROLLUP' . PHP_EOL,
+            'GROUP BY foo, bar WITH ROLLUP',
             $group->getStatement($binding)
         );
         $this->assertEquals([], $binding);

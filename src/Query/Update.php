@@ -27,7 +27,7 @@ class Update implements StatementInterface
     use Clause\Where;
     use Clause\Order;
     use Clause\Limit;
-    use Component\IndentHelperTrait;
+    use Component\EncapsulateHelperTrait;
 
     public function __construct()
     {
@@ -63,26 +63,16 @@ class Update implements StatementInterface
             return null;
         }
 
-        $str =
-            'UPDATE' . PHP_EOL .
-            ($this->from->getStatement($binding) ?? '') .
-            'SET' . PHP_EOL .
-            $assignmentsStr;
+        $str = 'UPDATE ' . ($this->from->getStatement($binding) ?? '') . ' SET ' . $assignmentsStr;
 
         $whereStr = $this->where->getStatement($binding);
         if (null !== $whereStr) {
-            $str .=
-                'WHERE' . PHP_EOL .
-                $whereStr;
+            $str .= ' WHERE ' . $whereStr;
         }
 
-        $str .= $this->order->getStatement($binding) ?? '';
-        $str .= $this->limit->getStatement($binding) ?? '';
+        $str .= rtrim(' ' . ($this->order->getStatement($binding) ?? ''));
+        $str .= rtrim(' ' . ($this->limit->getStatement($binding) ?? ''));
 
-        if ($encapsulate) {
-            return '(' . PHP_EOL . $this->indent($str) . ')';
-        }
-
-        return $str;
+        return $this->encapsulate($str, $encapsulate);
     }
 }

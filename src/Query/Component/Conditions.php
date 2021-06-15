@@ -16,6 +16,8 @@ namespace Hector\Query\Component;
 
 use Closure;
 use Countable;
+use Hector\Query\Clause\Having;
+use Hector\Query\Clause\Where;
 use Hector\Query\Select;
 use Hector\Query\StatementInterface;
 
@@ -114,12 +116,40 @@ class Conditions extends AbstractComponent implements Countable
     /**
      * @inheritDoc
      */
+    protected function getClosureArgs(): array
+    {
+        $group = new class implements StatementInterface {
+            use Where;
+            use Having;
+
+            public function __construct()
+            {
+                $this->resetWhere();
+                $this->resetHaving();
+            }
+
+            /**
+             * @inheritDoc
+             */
+            public function getStatement(array &$binding, bool $encapsulate = false): ?string
+            {
+                return
+                    $this->where->getStatement($binding, $encapsulate) .
+                    $this->having->getStatement($binding, $encapsulate);
+            }
+        };
+        $group->resetWhere();
+
+        return [
+            $group,
+        ];
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function getStatement(array &$binding, bool $encapsulate = false): ?string
     {
-        if (empty($this->conditions)) {
-            return null;
-        }
-
         $statement = '';
 
         for ($iCondition = 0; $iCondition < count($this->conditions); $iCondition++) {
@@ -130,42 +160,28 @@ class Conditions extends AbstractComponent implements Countable
             }
 
             if (!empty($statement)) {
-                $statement .= $condition['link'] . ' ';
+                $statement .= ' ' . $condition['link'] . ' ';
             }
 
             $statement .= $subStatement;
 
             if (null === $condition['operator']) {
-                $statement .= PHP_EOL;
                 continue;
             }
 
             if (null !== $condition['value']) {
                 $statement .=
                     ' ' . $condition['operator'] . ' ' .
-                    $this->getSubStatementValue($condition['value'], $binding, true) . PHP_EOL;
+                    $this->getSubStatementValue($condition['value'], $binding, true);
                 continue;
             }
 
             if (null === $condition['value']) {
-                $statement .= ' IS NULL' . PHP_EOL;
+                $statement .= ' IS NULL';
                 continue;
             }
         }
 
-        if (empty($statement)) {
-            return null;
-        }
-
-        if ($encapsulate) {
-            return
-                $this->indent(
-                    '(' . PHP_EOL .
-                    $this->indent($statement) .
-                    ')' . PHP_EOL
-                );
-        }
-
-        return $this->indent($statement);
+        return $this->encapsulate($statement, $encapsulate);
     }
 }

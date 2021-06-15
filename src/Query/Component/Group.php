@@ -62,19 +62,19 @@ class Group extends AbstractComponent implements Countable
             return null;
         }
 
-        return
-            'GROUP BY' . PHP_EOL .
-            $this->indent(
-                implode(
-                    ',' . PHP_EOL,
-                    array_map(
-                        function ($group) use (&$binding) {
-                            return $this->getSubStatement($group, $binding);
-                        },
-                        $this->group
-                    )
-                ) .
-                ($this->withRollup ? PHP_EOL . 'WITH ROLLUP' : '')
-            ) . PHP_EOL;
+        return $this->encapsulate(
+            'GROUP BY ' .
+            implode(
+                ', ',
+                array_map(
+                    function ($group) use (&$binding) {
+                        return $this->getSubStatement($group, $binding);
+                    },
+                    $this->group
+                )
+            ) .
+            ($this->withRollup ? ' WITH ROLLUP' : ''),
+            $encapsulate
+        );
     }
 }

@@ -47,8 +47,7 @@ class FromTest extends TestCase
         $clause->from('baz');
 
         $this->assertEquals(
-            '    foo AS f,' . PHP_EOL .
-            '    baz' . PHP_EOL,
+            'foo AS f, baz',
             $clause->from->getStatement($binding)
         );
         $this->assertEmpty($binding);

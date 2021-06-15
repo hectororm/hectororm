@@ -36,8 +36,6 @@ class QueryBuilderTest extends TestCase
         }
 
         return $this->connection = new Connection('sqlite:' . realpath(__DIR__ . '/test.sqlite'));
-
-        return $this->connection = new Connection('mysql:host=localhost;dbname=schema;user=root');
     }
 
     public function testFetchOne()
@@ -90,10 +88,7 @@ class QueryBuilderTest extends TestCase
 
         $this->assertInstanceOf(QueryBuilder::class, $queryBuilder);
         $this->assertEquals(
-            'SELECT' . PHP_EOL .
-            '    *' . PHP_EOL .
-            'FROM' . PHP_EOL .
-            '    foo AS f' . PHP_EOL,
+            'SELECT * FROM foo AS f',
             $reflectionMethod->invoke($queryBuilder)->getStatement($binding)
         );
         $this->assertEmpty($binding);
@@ -109,13 +104,7 @@ class QueryBuilderTest extends TestCase
         $this->assertInstanceOf(Select::class, $select);
         $this->assertInstanceOf(QueryBuilder::class, $queryBuilder);
         $this->assertEquals(
-            'SELECT' . PHP_EOL .
-            '    DISTINCT' . PHP_EOL .
-            '    *' . PHP_EOL .
-            'FROM' . PHP_EOL .
-            '    foo AS f' . PHP_EOL .
-            'ORDER BY' . PHP_EOL .
-            '    bar DESC' . PHP_EOL,
+            'SELECT DISTINCT * FROM foo AS f ORDER BY bar DESC',
             $select->getStatement($binding)
         );
         $this->assertEmpty($binding);
@@ -129,31 +118,21 @@ class QueryBuilderTest extends TestCase
         $queryBuilder = new QueryBuilder($this->getConnection());
         $queryBuilder->from('`foo`')
             ->where(
-                function (QueryBuilder $builder) {
-                    $builder->where('bar', 'baz');
+                function ($query) {
+                    $query->where('bar', 'baz');
                 }
             );
 
         $binding = [];
         $this->assertEquals(
-            'SELECT' . PHP_EOL .
-            '    *' . PHP_EOL .
-            'FROM' . PHP_EOL .
-            '    `foo`' . PHP_EOL .
-            'WHERE' . PHP_EOL .
-            '    bar = ?' . PHP_EOL,
+            'SELECT * FROM `foo` WHERE ( bar = ? )',
             $reflectionMethod->invoke($queryBuilder)->getStatement($binding)
         );
         $this->assertEquals(['baz'], $binding);
 
         $binding = [];
         $this->assertEquals(
-            'SELECT' . PHP_EOL .
-            '    *' . PHP_EOL .
-            'FROM' . PHP_EOL .
-            '    `foo`' . PHP_EOL .
-            'WHERE' . PHP_EOL .
-            '    bar = ?' . PHP_EOL,
+            'SELECT * FROM `foo` WHERE ( bar = ? )',
             $reflectionMethod->invoke($queryBuilder)->getStatement($binding)
         );
         $this->assertEquals(['baz'], $binding);
@@ -175,12 +154,7 @@ class QueryBuilderTest extends TestCase
 
         $binding = [];
         $this->assertEquals(
-            'SELECT' . PHP_EOL .
-            '    *' . PHP_EOL .
-            'FROM' . PHP_EOL .
-            '    `foo`' . PHP_EOL .
-            'WHERE' . PHP_EOL .
-            '    bar = ?' . PHP_EOL,
+            'SELECT * FROM `foo` WHERE bar = ?',
             $reflectionMethod->invoke($queryBuilder)->getStatement($binding)
         );
         $this->assertEquals(['test'], $binding);
@@ -202,12 +176,7 @@ class QueryBuilderTest extends TestCase
 
         $binding = [];
         $this->assertEquals(
-            'SELECT' . PHP_EOL .
-            '    *' . PHP_EOL .
-            'FROM' . PHP_EOL .
-            '    `foo`' . PHP_EOL .
-            'WHERE' . PHP_EOL .
-            '    bar = ?' . PHP_EOL,
+            'SELECT * FROM `foo` WHERE bar = ?',
             $reflectionMethod->invoke($queryBuilder)->getStatement($binding)
         );
         $this->assertEquals(['test'], $binding);
@@ -223,12 +192,7 @@ class QueryBuilderTest extends TestCase
         $this->assertInstanceOf(Select::class, $select);
         $this->assertInstanceOf(QueryBuilder::class, $queryBuilder);
         $this->assertEquals(
-            'SELECT' . PHP_EOL .
-            '    *' . PHP_EOL .
-            'FROM' . PHP_EOL .
-            '    foo AS f' . PHP_EOL .
-            'ORDER BY' . PHP_EOL .
-            '    bar DESC' . PHP_EOL,
+            'SELECT * FROM foo AS f ORDER BY bar DESC',
             $select->getStatement($binding)
         );
         $this->assertEmpty($binding);
@@ -247,10 +211,7 @@ class QueryBuilderTest extends TestCase
         $this->assertInstanceOf(Select::class, $select);
         $this->assertInstanceOf(QueryBuilder::class, $queryBuilder);
         $this->assertEquals(
-            'SELECT' . PHP_EOL .
-            '    COUNT(*) AS `count`' . PHP_EOL .
-            'FROM' . PHP_EOL .
-            '    foo AS f' . PHP_EOL,
+            'SELECT COUNT(*) AS `count` FROM foo AS f',
             $select->getStatement($binding)
         );
         $this->assertEmpty($binding);
@@ -267,15 +228,7 @@ class QueryBuilderTest extends TestCase
 
         $this->assertInstanceOf(Select::class, $select);
         $this->assertEquals(
-            'SELECT' . PHP_EOL .
-            '    EXISTS(' . PHP_EOL .
-            '        SELECT' . PHP_EOL .
-            '            1' . PHP_EOL .
-            '        FROM' . PHP_EOL .
-            '            foo AS f' . PHP_EOL .
-            '        WHERE' . PHP_EOL .
-            '            f.bar = ?' . PHP_EOL .
-            '    ) AS `exists`' . PHP_EOL,
+            'SELECT EXISTS( SELECT 1 FROM foo AS f WHERE f.bar = ? ) AS `exists`',
             $select->getStatement($binding)
         );
         $this->assertEquals(['baz'], $binding);
@@ -292,10 +245,7 @@ class QueryBuilderTest extends TestCase
 
         $this->assertInstanceOf(Insert::class, $insert);
         $this->assertEquals(
-            'INSERT INTO' . PHP_EOL .
-            '    foo' . PHP_EOL .
-            'SET' . PHP_EOL .
-            '    bar = ?' . PHP_EOL,
+            'INSERT INTO foo SET bar = ?',
             $insert->getStatement($binding)
         );
         $this->assertEquals(['bar_value'], $binding);
@@ -312,10 +262,7 @@ class QueryBuilderTest extends TestCase
 
         $this->assertInstanceOf(Update::class, $update);
         $this->assertEquals(
-            'UPDATE' . PHP_EOL .
-            '    foo AS f' . PHP_EOL .
-            'SET' . PHP_EOL .
-            '    bar = ?' . PHP_EOL,
+            'UPDATE foo AS f SET bar = ?',
             $update->getStatement($binding)
         );
         $this->assertEquals(['bar_value'], $binding);
@@ -332,10 +279,7 @@ class QueryBuilderTest extends TestCase
 
         $this->assertInstanceOf(Delete::class, $delete);
         $this->assertEquals(
-            'DELETE FROM' . PHP_EOL .
-            '    foo' . PHP_EOL .
-            'WHERE' . PHP_EOL .
-            '    bar = ?' . PHP_EOL,
+            'DELETE FROM foo WHERE bar = ?',
             $delete->getStatement($binding)
         );
         $this->assertEquals(['bar_value'], $binding);

@@ -54,13 +54,9 @@ class Join extends AbstractComponent
      */
     public function getStatement(array &$binding, bool $encapsulate = false): ?string
     {
-        if (count($this->joins) === 0) {
-            return null;
-        }
-
-        return
+        return $this->encapsulate(
             implode(
-                PHP_EOL,
+                ' ',
                 array_map(
                     function ($join) use (&$binding) {
                         $str = sprintf('%s JOIN %s', $join['join'], $this->getSubStatement($join['table'], $binding));
@@ -71,14 +67,16 @@ class Join extends AbstractComponent
 
                         $joinCondition = $this->getJoinCondition($join['condition'], $binding);
                         if (null !== $joinCondition) {
-                            $str .= PHP_EOL . $this->indent(sprintf('ON ( %s )', $joinCondition));
+                            $str .= sprintf(' ON ( %s )', $joinCondition);
                         }
 
                         return $str;
                     },
                     $this->joins
                 )
-            ) . PHP_EOL;
+            ),
+            $encapsulate
+        );
     }
 
     /**

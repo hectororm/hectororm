@@ -41,7 +41,7 @@ class AssignmentsTest extends TestCase
         $clause->assign('foo', 'bar');
 
         $this->assertEquals(
-            '    foo = ?' . PHP_EOL,
+            'foo = ?',
             $clause->assignments->getStatement($binding)
         );
         $this->assertEquals(
@@ -61,8 +61,7 @@ class AssignmentsTest extends TestCase
         $clause->assigns(['foo' => 'qux', 'bar' => 'baz']);
 
         $this->assertEquals(
-            '    foo = ?,' . PHP_EOL .
-            '    bar = ?' . PHP_EOL,
+            'foo = ?, bar = ?',
             $clause->assignments->getStatement($binding)
         );
         $this->assertEquals(

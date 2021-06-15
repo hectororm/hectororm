@@ -18,7 +18,7 @@ class Insert implements StatementInterface
 {
     use Clause\From;
     use Clause\Assignments;
-    use Component\IndentHelperTrait;
+    use Component\EncapsulateHelperTrait;
 
     public function __construct()
     {
@@ -51,16 +51,8 @@ class Insert implements StatementInterface
             return null;
         }
 
-        $str =
-            'INSERT INTO' . PHP_EOL .
-            ($this->from->getStatement($binding) ?? '') .
-            'SET' . PHP_EOL .
-            $assignmentsStr;
+        $str = 'INSERT INTO ' . ($this->from->getStatement($binding) ?? '') . ' SET ' . $assignmentsStr;
 
-        if ($encapsulate) {
-            return '(' . PHP_EOL . $this->indent($str) . ')';
-        }
-
-        return $str;
+        return $this->encapsulate($str, $encapsulate);
     }
 }

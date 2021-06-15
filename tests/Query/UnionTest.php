@@ -39,23 +39,9 @@ class UnionTest extends TestCase
         $union->addSelect($select, $select2);
 
         $this->assertEquals(
-            '(' . PHP_EOL .
-            '    SELECT' . PHP_EOL .
-            '        *' . PHP_EOL .
-            '    FROM' . PHP_EOL .
-            '        foo AS f' . PHP_EOL .
-            '    WHERE' . PHP_EOL .
-            '        bar = ?' . PHP_EOL .
-            ')' . PHP_EOL .
-            'UNION DISTINCT' . PHP_EOL .
-            '(' . PHP_EOL .
-            '    SELECT' . PHP_EOL .
-            '        *' . PHP_EOL .
-            '    FROM' . PHP_EOL .
-            '        foo2 AS f' . PHP_EOL .
-            '    WHERE' . PHP_EOL .
-            '        bar = ?' . PHP_EOL .
-            ')' . PHP_EOL,
+            '( SELECT * FROM foo AS f WHERE bar = ? )' .
+            ' UNION DISTINCT ' .
+            '( SELECT * FROM foo2 AS f WHERE bar = ? )',
             $union->getStatement($binding)
         );
         $this->assertEquals(['baz', 'baz'], $binding);
@@ -75,25 +61,11 @@ class UnionTest extends TestCase
             ->addSelect($select2);
 
         $this->assertEquals(
-            '(' . PHP_EOL .
-            '    (' . PHP_EOL .
-            '        SELECT' . PHP_EOL .
-            '            *' . PHP_EOL .
-            '        FROM' . PHP_EOL .
-            '            foo AS f' . PHP_EOL .
-            '        WHERE' . PHP_EOL .
-            '            bar = ?' . PHP_EOL .
-            '    )' . PHP_EOL .
-            '    UNION DISTINCT' . PHP_EOL .
-            '    (' . PHP_EOL .
-            '        SELECT' . PHP_EOL .
-            '            *' . PHP_EOL .
-            '        FROM' . PHP_EOL .
-            '            foo2 AS f' . PHP_EOL .
-            '        WHERE' . PHP_EOL .
-            '            bar = ?' . PHP_EOL .
-            '    )' . PHP_EOL .
-            ')' . PHP_EOL,
+            '( ' .
+            '( SELECT * FROM foo AS f WHERE bar = ? )' .
+            ' UNION DISTINCT ' .
+            '( SELECT * FROM foo2 AS f WHERE bar = ? )' .
+            ' )',
             $union->getStatement($binding, true)
         );
         $this->assertEquals(['baz', 'baz'], $binding);
@@ -114,23 +86,9 @@ class UnionTest extends TestCase
             ->addSelect($select2);
 
         $this->assertEquals(
-            '(' . PHP_EOL .
-            '    SELECT' . PHP_EOL .
-            '        *' . PHP_EOL .
-            '    FROM' . PHP_EOL .
-            '        foo AS f' . PHP_EOL .
-            '    WHERE' . PHP_EOL .
-            '        bar = ?' . PHP_EOL .
-            ')' . PHP_EOL .
-            'UNION ALL' . PHP_EOL .
-            '(' . PHP_EOL .
-            '    SELECT' . PHP_EOL .
-            '        *' . PHP_EOL .
-            '    FROM' . PHP_EOL .
-            '        foo2 AS f' . PHP_EOL .
-            '    WHERE' . PHP_EOL .
-            '        bar = ?' . PHP_EOL .
-            ')' . PHP_EOL,
+            '( SELECT * FROM foo AS f WHERE bar = ? )' .
+            ' UNION ALL ' .
+            '( SELECT * FROM foo2 AS f WHERE bar = ? )',
             $union->getStatement($binding)
         );
         $this->assertEquals(['baz', 'baz'], $binding);
@@ -149,32 +107,16 @@ class UnionTest extends TestCase
             ->all()
             ->addSelect($select)
             ->addSelect($select2)
-        ->limit(10)
-        ->orderBy('a');
+            ->limit(10)
+            ->orderBy('a');
 
         $this->assertEquals(
-            '(' . PHP_EOL .
-            '    (' . PHP_EOL .
-            '        SELECT' . PHP_EOL .
-            '            *' . PHP_EOL .
-            '        FROM' . PHP_EOL .
-            '            foo AS f' . PHP_EOL .
-            '        WHERE' . PHP_EOL .
-            '            bar = ?' . PHP_EOL .
-            '    )' . PHP_EOL .
-            '    UNION ALL' . PHP_EOL .
-            '    (' . PHP_EOL .
-            '        SELECT' . PHP_EOL .
-            '            *' . PHP_EOL .
-            '        FROM' . PHP_EOL .
-            '            foo2 AS f' . PHP_EOL .
-            '        WHERE' . PHP_EOL .
-            '            bar = ?' . PHP_EOL .
-            '    )' . PHP_EOL .
-            ')' . PHP_EOL .
-            'ORDER BY' . PHP_EOL .
-            '    a' . PHP_EOL .
-            'LIMIT 10' . PHP_EOL,
+            '( ' .
+            '( SELECT * FROM foo AS f WHERE bar = ? )' .
+            ' UNION ALL ' .
+            '( SELECT * FROM foo2 AS f WHERE bar = ? )' .
+            ' ) ' .
+            'ORDER BY a LIMIT 10',
             $union->getStatement($binding)
         );
         $this->assertEquals(['baz', 'baz'], $binding);

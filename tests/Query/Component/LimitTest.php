@@ -46,7 +46,7 @@ class LimitTest extends TestCase
         $binding = [];
 
         $this->assertEquals(10, $limit->getLimit());
-        $this->assertEquals('LIMIT 10' . PHP_EOL, $limit->getStatement($binding));
+        $this->assertEquals('LIMIT 10', $limit->getStatement($binding));
         $this->assertEquals([], $binding);
     }
 
@@ -57,7 +57,7 @@ class LimitTest extends TestCase
         $limit->setOffset(5);
         $binding = [];
 
-        $this->assertEquals('LIMIT 10 OFFSET 5' . PHP_EOL, $limit->getStatement($binding));
+        $this->assertEquals('LIMIT 10 OFFSET 5', $limit->getStatement($binding));
         $this->assertEquals([], $binding);
     }
 }

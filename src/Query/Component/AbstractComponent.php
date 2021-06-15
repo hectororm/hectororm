@@ -19,7 +19,7 @@ use Hector\Query\StatementInterface;
 
 abstract class AbstractComponent implements StatementInterface
 {
-    use IndentHelperTrait;
+    use EncapsulateHelperTrait;
 
     public mixed $builder;
 
@@ -58,13 +58,24 @@ abstract class AbstractComponent implements StatementInterface
 
         // Callable statement
         if ($statement instanceof Closure) {
-            $result = $statement($this->builder ?? $this);
+            $result = $statement->call(
+                $this->builder ?? $this,
+                ...($args = $this->getClosureArgs()),
+            );
 
-            if (null !== $result) {
-                return (string)$result;
+            $str = '';
+
+            foreach ($args as $arg) {
+                if ($arg instanceof StatementInterface) {
+                    $str .= $arg->getStatement($binding, $encapsulate);
+                }
             }
 
-            return null;
+            if (null !== $result) {
+                $str .= (string)$result;
+            }
+
+            return $str ?: null;
         }
 
         return (string)$statement;
@@ -106,11 +117,21 @@ abstract class AbstractComponent implements StatementInterface
                 $statementValues[] = '?';
             }
 
-            return '(' . implode(', ', $statementValues) . ')';
+            return '( ' . implode(', ', $statementValues) . ' )';
         }
 
         array_push($binding, $value);
 
         return '?';
+    }
+
+    /**
+     * Get closure arguments.
+     *
+     * @return array
+     */
+    protected function getClosureArgs(): array
+    {
+        return [];
     }
 }

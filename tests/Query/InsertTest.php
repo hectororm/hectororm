@@ -45,10 +45,7 @@ class InsertTest extends TestCase
         $insert->assign('`bar`', 'value_bar');
 
         $this->assertEquals(
-            'INSERT INTO' . PHP_EOL .
-            '    `foo`' . PHP_EOL .
-            'SET' . PHP_EOL .
-            '    `bar` = ?' . PHP_EOL,
+            'INSERT INTO `foo` SET `bar` = ?',
             $insert->getStatement($binding)
         );
         $this->assertEquals(['value_bar'], $binding);
@@ -69,13 +66,7 @@ class InsertTest extends TestCase
         );
 
         $this->assertEquals(
-            'INSERT INTO' . PHP_EOL .
-            '    `foo`' . PHP_EOL .
-            'SET' . PHP_EOL .
-            '    `bar` = ?,' . PHP_EOL .
-            '    foo = CURRENT_TIMESTAMP(),' . PHP_EOL .
-            '    baz = ?,' . PHP_EOL .
-            '    `qux` = NOW()' . PHP_EOL,
+            'INSERT INTO `foo` SET `bar` = ?, foo = CURRENT_TIMESTAMP(), baz = ?, `qux` = NOW()',
             $insert->getStatement($binding)
         );
         $this->assertEquals(['value_bar', 'baz_value'], $binding);
@@ -89,12 +80,7 @@ class InsertTest extends TestCase
         $insert->assign('`bar`', 'value_bar');
 
         $this->assertEquals(
-            '(' . PHP_EOL .
-            '    INSERT INTO' . PHP_EOL .
-            '        `foo`' . PHP_EOL .
-            '    SET' . PHP_EOL .
-            '        `bar` = ?' . PHP_EOL .
-            ')',
+            '( INSERT INTO `foo` SET `bar` = ? )',
             $insert->getStatement($binding, true)
         );
         $this->assertEquals(['value_bar'], $binding);

@@ -15,7 +15,6 @@ declare(strict_types=1);
 namespace Hector\Query\Statement;
 
 use Closure;
-use Hector\Query\Component\IndentHelperTrait;
 use Hector\Query\StatementInterface;
 
 /**
@@ -23,8 +22,6 @@ use Hector\Query\StatementInterface;
  */
 class SqlFunction implements StatementInterface
 {
-    use IndentHelperTrait;
-
     protected string $function;
     protected Closure|StatementInterface|string $expression;
 
@@ -48,10 +45,9 @@ class SqlFunction implements StatementInterface
         if ($this->expression instanceof StatementInterface) {
             return
                 sprintf(
-                    '%s(' . PHP_EOL .
-                    rtrim($this->indent($this->expression->getStatement($binding, false))) . PHP_EOL .
-                    ')' . PHP_EOL,
-                    $this->function
+                    '%s( %s )',
+                    $this->function,
+                    $this->expression->getStatement($binding, false)
                 );
         }
 

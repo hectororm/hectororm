@@ -14,7 +14,6 @@ declare(strict_types=1);
 
 namespace Hector\Query\Statement;
 
-use Hector\Query\Component\IndentHelperTrait;
 use Hector\Query\StatementInterface;
 
 /**
@@ -23,8 +22,6 @@ use Hector\Query\StatementInterface;
 class Between implements StatementInterface
 {
     protected const EXPRESSION = 'BETWEEN';
-
-    use IndentHelperTrait;
 
     protected StatementInterface|string $column;
     protected $value1;
