@@ -280,7 +280,7 @@ abstract class Relationship
         return array_filter(
             $entities,
             function (Entity $entity) {
-                $storageStatus = Orm::get()->getEntityStorageStatus($entity);
+                $storageStatus = Orm::get()->getStatus($entity);
 
                 if (null === $storageStatus) {
                     return $this->hasRelationValues($entity);

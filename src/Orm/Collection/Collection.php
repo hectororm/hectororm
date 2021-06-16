@@ -155,7 +155,7 @@ class Collection extends ArrayObject implements JsonSerializable
         foreach ($this as $key => $entity) {
             $keys[] = $key;
 
-            if (!Orm::get()->isAttached($entity)) {
+            if (null === Orm::get()->getStatus($entity)) {
                 continue;
             }
 
@@ -176,7 +176,7 @@ class Collection extends ArrayObject implements JsonSerializable
     {
         /** @var Entity $entity */
         foreach ($this as $entity) {
-            if (!Orm::get()->isAttached($entity)) {
+            if (null === Orm::get()->getStatus($entity)) {
                 continue;
             }
 

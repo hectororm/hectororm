@@ -265,25 +265,13 @@ class Orm
     }
 
     /**
-     * Is attached?
-     *
-     * @param Entity $entity
-     *
-     * @return bool
-     */
-    public function isAttached(Entity $entity): bool
-    {
-        return $this->storage->contains($entity);
-    }
-
-    /**
      * Get entity storage status.
      *
      * @param Entity $entity
      *
      * @return int|null
      */
-    public function getEntityStorageStatus(Entity $entity): ?int
+    public function getStatus(Entity $entity): ?int
     {
         if (!$this->storage->contains($entity)) {
             return null;
