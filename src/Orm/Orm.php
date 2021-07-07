@@ -29,6 +29,7 @@ use Hector\Query\QueryBuilder;
 use Hector\Schema\SchemaContainer;
 use InvalidArgumentException;
 use Psr\EventDispatcher\EventDispatcherInterface;
+use Throwable;
 
 /**
  * Class Orm.
@@ -340,12 +341,27 @@ class Orm
      * Persist all waiting entity in storage.
      *
      * @throws OrmException
+     * @throws Throwable
      */
     public function persist(): void
     {
-        /** @var Entity $entity */
-        foreach ($this->storage as $entity) {
-            $this->persistEntity($entity);
+        try {
+            $this->connections->beginTransaction();
+
+            /** @var Entity $entity */
+            foreach ($this->storage as $entity) {
+                $this->persistEntity($entity);
+            }
+
+            $this->connections->commit();
+        } catch (OrmException $exception) {
+            $this->connections->rollBack();
+
+            throw $exception;
+        } catch (Throwable $exception) {
+            $this->connections->rollBack();
+
+            throw new OrmException('Error while persisting entities', previous: $exception);
         }
     }
 
