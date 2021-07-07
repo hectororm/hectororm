@@ -217,6 +217,25 @@ class QueryBuilderTest extends TestCase
         $this->assertEmpty($binding);
     }
 
+    public function testMakeCount_withGroup()
+    {
+        $queryBuilder = new FakeQueryBuilder($this->getConnection());
+        $queryBuilder = $queryBuilder
+            ->from('foo', 'f')
+            ->orderBy('bar', 'DESC')
+            ->groupBy('foo');
+        $binding = [];
+        $select = $queryBuilder->makeCount();
+
+        $this->assertInstanceOf(Select::class, $select);
+        $this->assertInstanceOf(QueryBuilder::class, $queryBuilder);
+        $this->assertEquals(
+            'SELECT COUNT(*) AS `count` FROM ( SELECT 1 FROM foo AS f GROUP BY foo ) AS countable',
+            $select->getStatement($binding)
+        );
+        $this->assertEmpty($binding);
+    }
+
     public function testMakeExists()
     {
         $queryBuilder = new FakeQueryBuilder($this->getConnection());

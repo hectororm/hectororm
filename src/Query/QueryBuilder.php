@@ -157,13 +157,18 @@ class QueryBuilder
      */
     protected function makeCount(): Select
     {
-        return
+        $countSelect =
             $this
                 ->makeSelect()
                 ->resetColumns()
                 ->resetLimit()
-                ->resetOrder()
-                ->column('COUNT(*)', '`count`');
+                ->resetOrder();
+
+        if (count($this->group) > 0) {
+            $countSelect = (new Select())->from($countSelect->column('1'), 'countable');
+        }
+
+        return $countSelect->column('COUNT(*)', '`count`');
     }
 
     /**
