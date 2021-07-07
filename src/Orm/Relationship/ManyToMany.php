@@ -111,8 +111,7 @@ class ManyToMany extends Relationship
         } catch (SchemaException $exception) {
             throw new OrmException(
                 sprintf('Unable to resolve pivot table of relation "%s" of table "%s"', $this->name, $table),
-                0,
-                $exception
+                previous: $exception
             );
         }
     }
@@ -189,8 +188,7 @@ class ManyToMany extends Relationship
                     $this->name,
                     $this->getSourceEntity()
                 ),
-                0,
-                $exception
+                previous: $exception
             );
         }
 
@@ -244,8 +242,7 @@ class ManyToMany extends Relationship
                     $this->name,
                     $this->getSourceEntity()
                 ),
-                0,
-                $exception
+                previous: $exception
             );
         }
 
@@ -420,54 +417,4 @@ class ManyToMany extends Relationship
             array_combine($this->getPivotTargetColumns(), $this->getSourceColumns())
         );
     }
-
-//    /**
-//     * Switch into entities.
-//     *
-//     * @param Collection $foreigners
-//     * @param Entity ...$entities
-//     *
-//     * @throws OrmException
-//     */
-//    protected function switchIntoEntities(Collection $foreigners, Entity ...$entities): void
-//    {
-//        foreach ($entities as $entity) {
-//            $entityLinks = array_filter(
-//                $this->temporaryLinks,
-//                fn($link) => $link['source'] == $entity::getMapper()->collectEntity($entity, $this->getSourceColumns())
-//            );
-//
-//            $foreignersFiltered = $foreigners->filter(fn(Entity $foreign) => $this->isAttached($entityLinks, $foreign));
-//            $entity->getRelated()->set(
-//                $this->getName(),
-//                new Collection(iterator_to_array($foreignersFiltered), $this->getTargetEntity())
-//            );
-//        }
-//    }
-
-//    /**
-//     * Is attached entities?
-//     *
-//     * @param array $entityLinks
-//     * @param Entity $foreign
-//     *
-//     * @return bool
-//     * @throws OrmException
-//     */
-//    protected function isAttached(array $entityLinks, Entity $foreign): bool
-//    {
-//        if (!is_a($foreign, $this->targetEntity, true)) {
-//            return false;
-//        }
-//
-//        $foreignValues = $foreign::getMapper()->collectEntity($foreign, $this->getTargetColumns());
-//
-//        foreach ($entityLinks as $entityLink) {
-//            if ($entityLink['target'] == $foreignValues) {
-//                return true;
-//            }
-//        }
-//
-//        return false;
-//    }
 }

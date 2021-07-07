@@ -32,7 +32,6 @@ class EntityStorage implements Countable, IteratorAggregate, ArrayAccess
     public const STATUS_TO_UPDATE = 2;
     public const STATUS_TO_DELETE = 3;
 
-    /** @var WeakMap Map of weak references */
     protected WeakMap $map;
 
     /**
