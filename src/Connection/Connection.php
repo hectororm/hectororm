@@ -16,6 +16,7 @@ namespace Hector\Connection;
 
 use Exception;
 use Generator;
+use Hector\Connection\Log\LogEntry;
 use Hector\Connection\Log\Logger;
 use PDO;
 use PDOStatement;
@@ -106,7 +107,7 @@ class Connection
             return $this->pdo;
         }
 
-        $logEntry = $this->logger?->newEntry($this->name, 'CONNECTION ' . $this->dsn);
+        $logEntry = $this->logger?->newEntry($this->name, 'CONNECTION ' . $this->dsn, type: LogEntry::TYPE_CONNECTION);
 
         $this->pdo = new PDO($this->dsn);
 

@@ -58,6 +58,7 @@ class Logger implements Countable
      * @param string $statement
      * @param array $parameters
      * @param string|null $trace
+     * @param string $type
      *
      * @return LogEntry
      */
@@ -65,9 +66,10 @@ class Logger implements Countable
         string $connection,
         string $statement,
         array $parameters = [],
-        string $trace = null
+        ?string $trace = null,
+        string $type = LogEntry::TYPE_QUERY,
     ): LogEntry {
-        $this->add($entry = new LogEntry($connection, $statement, $parameters, $trace));
+        $this->add($entry = new LogEntry($connection, $statement, $parameters, $trace, $type));
 
         return $entry;
     }

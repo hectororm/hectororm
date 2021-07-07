@@ -19,6 +19,9 @@ namespace Hector\Connection\Log;
  */
 class LogEntry
 {
+    public const TYPE_CONNECTION = 'connection';
+    public const TYPE_QUERY = 'query';
+
     private float $start;
     private ?float $end = null;
 
@@ -26,15 +29,17 @@ class LogEntry
      * LogEntry constructor.
      *
      * @param string $connection
-     * @param string $statement
+     * @param string|null $statement
      * @param array $parameters
      * @param string|null $trace
+     * @param string $type
      */
     public function __construct(
         private string $connection,
-        private string $statement,
+        private ?string $statement,
         private array $parameters = [],
-        private ?string $trace = null
+        private ?string $trace = null,
+        private string $type = self::TYPE_QUERY,
     ) {
         $this->start = microtime(true);
     }
@@ -45,6 +50,16 @@ class LogEntry
     public function end()
     {
         $this->end = microtime(true);
+    }
+
+    /**
+     * Get type.
+     *
+     * @return string
+     */
+    public function getType(): string
+    {
+        return $this->type;
     }
 
     /**
@@ -99,6 +114,21 @@ class LogEntry
     public function getStatement(): string
     {
         return $this->statement;
+    }
+
+    /**
+     * With statement.
+     *
+     * @param string $statement
+     *
+     * @return LogEntry
+     */
+    public function withStatement(string $statement): LogEntry
+    {
+        $me = clone $this;
+        $me->statement = $statement;
+
+        return $me;
     }
 
     /**
