@@ -161,7 +161,7 @@ class AbstractRegularRelationshipTest extends AbstractTestCase
         $binding = [];
 
         $this->assertInstanceOf(Builder::class, $builder);
-        $this->assertEquals('    (language_id) IN ((?))' . PHP_EOL, $builder->where->getStatement($binding));
+        $this->assertEquals('(language_id) IN ( (?) )', $builder->where->getStatement($binding));
         $this->assertEquals([1], $binding);
     }
 
