@@ -18,6 +18,7 @@ use Hector\Orm\Exception\NotFoundException;
 use Hector\Orm\Exception\OrmException;
 use Hector\Orm\Query\Builder;
 use Hector\Orm\Tests\AbstractTestCase;
+use Hector\Orm\Tests\Fake\Entity\Actor;
 use Hector\Orm\Tests\Fake\Entity\Film;
 use Hector\Orm\Tests\Fake\Entity\FilmMagic;
 use Hector\Orm\Tests\Fake\Entity\Language;
@@ -349,5 +350,28 @@ class EntityTest extends AbstractTestCase
 
         $film = new $class();
         $film->refresh();
+    }
+
+    /**
+     * @dataProvider classProvider
+     */
+    public function testIsEqualTo($class)
+    {
+        $film1 = $class::get(1);
+        $film1bis = $class::get(1);
+        $film2 = $class::get(2);
+        $film2bis = $class::get(2);
+
+        $actor = Actor::get();
+
+        $this->assertTrue($film1->isEqualTo($film1bis));
+        $this->assertFalse($film1->isEqualTo($film2bis));
+        $this->assertTrue($film2->isEqualTo($film2bis));
+        $this->assertFalse($film2->isEqualTo($film1bis));
+
+        $this->assertFalse($film1->isEqualTo($actor));
+        $this->assertFalse($film2->isEqualTo($actor));
+        $this->assertFalse($actor->isEqualTo($film1));
+        $this->assertFalse($actor->isEqualTo($film2));
     }
 }

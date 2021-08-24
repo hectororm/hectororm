@@ -82,6 +82,25 @@ abstract class Entity
     {
     }
 
+    /**
+     * Compare entity with another one with primary values.
+     *
+     * @param Entity $entity
+     *
+     * @return bool
+     * @throws OrmException
+     */
+    final public function isEqualTo(Entity $entity): bool
+    {
+        if (!($entity instanceof $this)) {
+            return false;
+        }
+
+        $mapper = Orm::get()->getEntityReflection($this::class)->getMapper();
+
+        return $mapper->getPrimaryValue($this) == $mapper->getPrimaryValue($entity);
+    }
+
     //////////////////////////////////
     /// ACTIONS ON ENTITY INSTANCE ///
     //////////////////////////////////
