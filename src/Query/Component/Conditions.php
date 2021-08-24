@@ -62,8 +62,13 @@ class Conditions extends AbstractComponent implements Countable
         string $link = Conditions::LINK_AND
     ): void {
         $operator = '=';
+
         if (is_array($value) || $value instanceof Select) {
             $operator = 'IN';
+        }
+
+        if (null === $value) {
+            $operator = 'IS NULL';
         }
 
         $this->add($column, $operator, $value, $link);
@@ -169,16 +174,10 @@ class Conditions extends AbstractComponent implements Countable
                 continue;
             }
 
-            if (null !== $condition['value']) {
-                $statement .=
-                    ' ' . $condition['operator'] . ' ' .
-                    $this->getSubStatementValue($condition['value'], $binding, true);
-                continue;
-            }
+            $statement .= ' ' . $condition['operator'];
 
-            if (null === $condition['value']) {
-                $statement .= ' IS NULL';
-                continue;
+            if (null !== $condition['value']) {
+                $statement .= ' ' . $this->getSubStatementValue($condition['value'], $binding, true);
             }
         }
 

@@ -147,6 +147,34 @@ trait Where
     }
 
     /**
+     * Where null.
+     *
+     * @param Closure|StatementInterface|string $column
+     *
+     * @return static
+     */
+    public function whereNull(Closure|StatementInterface|string $column): static
+    {
+        $this->where->add($column, 'IS NULL');
+
+        return $this;
+    }
+
+    /**
+     * Where not null.
+     *
+     * @param Closure|StatementInterface|string $column
+     *
+     * @return static
+     */
+    public function whereNotNull(Closure|StatementInterface|string $column): static
+    {
+        $this->where->add($column, 'IS NOT NULL');
+
+        return $this;
+    }
+
+    /**
      * Where between.
      *
      * @param Closure|StatementInterface|string $column

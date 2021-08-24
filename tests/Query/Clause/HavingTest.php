@@ -20,9 +20,8 @@ class HavingTest extends TestCase
 {
     public function testResetHaving()
     {
-        $clause = new class {
-            use Having;
-        };
+        /** @var Having $clause */
+        $clause = $this->getMockForTrait(Having::class);
         $binding = [];
         $clause->resetHaving();
 
@@ -39,9 +38,8 @@ class HavingTest extends TestCase
 
     public function testHaving()
     {
-        $clause = new class {
-            use Having;
-        };
+        /** @var Having $clause */
+        $clause = $this->getMockForTrait(Having::class);
         $binding = [];
         $clause->resetHaving();
         $clause->having('foo');
@@ -57,18 +55,16 @@ class HavingTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
 
-        $clause = new class {
-            use Having;
-        };
+        /** @var Having $clause */
+        $clause = $this->getMockForTrait(Having::class);
         $clause->resetHaving();
         $clause->andHaving();
     }
 
     public function testAndHavingWithOneArgument()
     {
-        $clause = new class {
-            use Having;
-        };
+        /** @var Having $clause */
+        $clause = $this->getMockForTrait(Having::class);
         $binding = [];
         $clause->resetHaving();
         $clause->andHaving('foo');
@@ -82,9 +78,8 @@ class HavingTest extends TestCase
 
     public function testAndHavingWithTwoConditions()
     {
-        $clause = new class {
-            use Having;
-        };
+        /** @var Having $clause */
+        $clause = $this->getMockForTrait(Having::class);
         $binding = [];
         $clause->resetHaving();
         $clause->andHaving('foo');
@@ -99,9 +94,8 @@ class HavingTest extends TestCase
 
     public function testAndHavingWithTwoArguments()
     {
-        $clause = new class {
-            use Having;
-        };
+        /** @var Having $clause */
+        $clause = $this->getMockForTrait(Having::class);
         $binding = [];
         $clause->resetHaving();
         $clause->andHaving('foo', 'bar');
@@ -115,9 +109,8 @@ class HavingTest extends TestCase
 
     public function testAndHavingWithThreeArguments()
     {
-        $clause = new class {
-            use Having;
-        };
+        /** @var Having $clause */
+        $clause = $this->getMockForTrait(Having::class);
         $binding = [];
         $clause->resetHaving();
         $clause->andHaving('foo', '<>', 'bar');
@@ -133,18 +126,16 @@ class HavingTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
 
-        $clause = new class {
-            use Having;
-        };
+        /** @var Having $clause */
+        $clause = $this->getMockForTrait(Having::class);
         $clause->resetHaving();
         $clause->orHaving();
     }
 
     public function testOrHavingWithTwoConditions()
     {
-        $clause = new class {
-            use Having;
-        };
+        /** @var Having $clause */
+        $clause = $this->getMockForTrait(Having::class);
         $binding = [];
         $clause->resetHaving();
         $clause->orHaving('foo');
@@ -159,9 +150,8 @@ class HavingTest extends TestCase
 
     public function testOrHavingWithOneArgument()
     {
-        $clause = new class {
-            use Having;
-        };
+        /** @var Having $clause */
+        $clause = $this->getMockForTrait(Having::class);
         $binding = [];
         $clause->resetHaving();
         $clause->orHaving('foo');
@@ -175,9 +165,8 @@ class HavingTest extends TestCase
 
     public function testOrHavingWithTwoArguments()
     {
-        $clause = new class {
-            use Having;
-        };
+        /** @var Having $clause */
+        $clause = $this->getMockForTrait(Having::class);
         $binding = [];
         $clause->resetHaving();
         $clause->orHaving('foo', 'bar');
@@ -191,9 +180,8 @@ class HavingTest extends TestCase
 
     public function testOrHavingWithThreeArguments()
     {
-        $clause = new class {
-            use Having;
-        };
+        /** @var Having $clause */
+        $clause = $this->getMockForTrait(Having::class);
         $binding = [];
         $clause->resetHaving();
         $clause->orHaving('foo', '<>', 'bar');
@@ -207,9 +195,8 @@ class HavingTest extends TestCase
 
     public function testHavingEquals()
     {
-        $clause = new class {
-            use Having;
-        };
+        /** @var Having $clause */
+        $clause = $this->getMockForTrait(Having::class);
         $binding = [];
         $clause->resetHaving();
         $clause->havingEquals(
@@ -229,9 +216,8 @@ class HavingTest extends TestCase
 
     public function testHavingIn()
     {
-        $clause = new class {
-            use Having;
-        };
+        /** @var Having $clause */
+        $clause = $this->getMockForTrait(Having::class);
         $binding = [];
         $clause->resetHaving();
         $clause->havingIn('foo', ['bar', 'baz']);
@@ -245,9 +231,8 @@ class HavingTest extends TestCase
 
     public function testHavingNotIn()
     {
-        $clause = new class {
-            use Having;
-        };
+        /** @var Having $clause */
+        $clause = $this->getMockForTrait(Having::class);
         $binding = [];
         $clause->resetHaving();
         $clause->havingNotIn('foo', ['bar', 'baz']);
@@ -259,11 +244,40 @@ class HavingTest extends TestCase
         $this->assertEquals(['bar', 'baz'], $binding);
     }
 
+    public function testHavingNull()
+    {
+        /** @var Having $clause */
+        $clause = $this->getMockForTrait(Having::class);
+        $binding = [];
+        $clause->resetHaving();
+        $clause->havingNull('foo');
+
+        $this->assertEquals(
+            'foo IS NULL',
+            $clause->having->getStatement($binding)
+        );
+        $this->assertEquals([], $binding);
+    }
+
+    public function testHavingNotNull()
+    {
+        /** @var Having $clause */
+        $clause = $this->getMockForTrait(Having::class);
+        $binding = [];
+        $clause->resetHaving();
+        $clause->havingNotNull('foo');
+
+        $this->assertEquals(
+            'foo IS NOT NULL',
+            $clause->having->getStatement($binding)
+        );
+        $this->assertEquals([], $binding);
+    }
+
     public function testHavingBetween()
     {
-        $clause = new class {
-            use Having;
-        };
+        /** @var Having $clause */
+        $clause = $this->getMockForTrait(Having::class);
         $binding = [];
         $clause->resetHaving();
         $clause->havingBetween('foo', 1, 10);
@@ -277,9 +291,8 @@ class HavingTest extends TestCase
 
     public function testHavingNotBetween()
     {
-        $clause = new class {
-            use Having;
-        };
+        /** @var Having $clause */
+        $clause = $this->getMockForTrait(Having::class);
         $binding = [];
         $clause->resetHaving();
         $clause->havingNotBetween('foo', 1, 10);
@@ -293,9 +306,8 @@ class HavingTest extends TestCase
 
     public function testHavingGreaterThan()
     {
-        $clause = new class {
-            use Having;
-        };
+        /** @var Having $clause */
+        $clause = $this->getMockForTrait(Having::class);
         $binding = [];
         $clause->resetHaving();
         $clause->havingGreaterThan('foo', 10);
@@ -309,9 +321,8 @@ class HavingTest extends TestCase
 
     public function testHavingGreaterThanOrEqual()
     {
-        $clause = new class {
-            use Having;
-        };
+        /** @var Having $clause */
+        $clause = $this->getMockForTrait(Having::class);
         $binding = [];
         $clause->resetHaving();
         $clause->havingGreaterThanOrEqual('foo', 10);
@@ -325,9 +336,8 @@ class HavingTest extends TestCase
 
     public function testHavingLessThan()
     {
-        $clause = new class {
-            use Having;
-        };
+        /** @var Having $clause */
+        $clause = $this->getMockForTrait(Having::class);
         $binding = [];
         $clause->resetHaving();
         $clause->havingLessThan('foo', 10);
@@ -341,9 +351,8 @@ class HavingTest extends TestCase
 
     public function testHavingLessThanOrEqual()
     {
-        $clause = new class {
-            use Having;
-        };
+        /** @var Having $clause */
+        $clause = $this->getMockForTrait(Having::class);
         $binding = [];
         $clause->resetHaving();
         $clause->havingLessThanOrEqual('foo', 10);
@@ -357,9 +366,8 @@ class HavingTest extends TestCase
 
     public function testHavingExists()
     {
-        $clause = new class {
-            use Having;
-        };
+        /** @var Having $clause */
+        $clause = $this->getMockForTrait(Having::class);
         $binding = [];
         $clause->resetHaving();
         $clause->havingExists('foo');
@@ -373,9 +381,8 @@ class HavingTest extends TestCase
 
     public function testHavingNotExists()
     {
-        $clause = new class {
-            use Having;
-        };
+        /** @var Having $clause */
+        $clause = $this->getMockForTrait(Having::class);
         $binding = [];
         $clause->resetHaving();
         $clause->havingNotExists('foo');
@@ -389,9 +396,8 @@ class HavingTest extends TestCase
 
     public function testHavingContains()
     {
-        $clause = new class {
-            use Having;
-        };
+        /** @var Having $clause */
+        $clause = $this->getMockForTrait(Having::class);
         $binding = [];
         $clause->resetHaving();
         $clause->havingContains('foo', 'bar');
@@ -405,9 +411,8 @@ class HavingTest extends TestCase
 
     public function testHavingStartsWith()
     {
-        $clause = new class {
-            use Having;
-        };
+        /** @var Having $clause */
+        $clause = $this->getMockForTrait(Having::class);
         $binding = [];
         $clause->resetHaving();
         $clause->havingStartsWith('foo', 'bar');
@@ -421,9 +426,8 @@ class HavingTest extends TestCase
 
     public function testHavingEndsWith()
     {
-        $clause = new class {
-            use Having;
-        };
+        /** @var Having $clause */
+        $clause = $this->getMockForTrait(Having::class);
         $binding = [];
         $clause->resetHaving();
         $clause->havingEndsWith('foo', 'bar');

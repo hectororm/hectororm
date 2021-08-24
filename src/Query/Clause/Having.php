@@ -147,6 +147,34 @@ trait Having
     }
 
     /**
+     * Having null.
+     *
+     * @param Closure|StatementInterface|string $column
+     *
+     * @return static
+     */
+    public function havingNull(Closure|StatementInterface|string $column): static
+    {
+        $this->having->add($column, 'IS NULL');
+
+        return $this;
+    }
+
+    /**
+     * Having not null.
+     *
+     * @param Closure|StatementInterface|string $column
+     *
+     * @return static
+     */
+    public function havingNotNull(Closure|StatementInterface|string $column): static
+    {
+        $this->having->add($column, 'IS NOT NULL');
+
+        return $this;
+    }
+
+    /**
      * Having between.
      *
      * @param Closure|StatementInterface|string $column
