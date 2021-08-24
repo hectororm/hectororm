@@ -95,7 +95,7 @@ class Table implements Countable, IteratorAggregate
     /**
      * @inheritDoc
      */
-    public function count()
+    public function count(): int
     {
         return count($this->columns);
     }
@@ -103,7 +103,7 @@ class Table implements Countable, IteratorAggregate
     /**
      * @inheritDoc
      */
-    public function getIterator()
+    public function getIterator(): ArrayIterator
     {
         return new ArrayIterator($this->columns);
     }

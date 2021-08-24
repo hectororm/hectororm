@@ -62,7 +62,7 @@ class SchemaContainer implements SchemaContainerInterface
     /**
      * @inheritDoc
      */
-    public function count()
+    public function count(): int
     {
         return count($this->schemas);
     }
