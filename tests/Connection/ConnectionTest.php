@@ -103,6 +103,13 @@ class ConnectionTest extends TestCase
         $this->assertSame($connection->getPdo(), $connection->getReadPdo());
     }
 
+    public function testGetDriverName()
+    {
+        $connection = new Connection('sqlite::memory:', 'sqlite::memory:');
+
+        $this->assertEquals('sqlite', $connection->getDriverName());
+    }
+
     public function testGetLastInsertId()
     {
         $connection = new Connection('sqlite::memory:');

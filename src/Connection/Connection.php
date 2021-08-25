@@ -146,6 +146,16 @@ class Connection
     }
 
     /**
+     * Get driver name.
+     *
+     * @return string
+     */
+    public function getDriverName(): string
+    {
+        return $this->getPdo()->getAttribute(PDO::ATTR_DRIVER_NAME);
+    }
+
+    /**
      * Get last insert id.
      *
      * @param string|null $name
