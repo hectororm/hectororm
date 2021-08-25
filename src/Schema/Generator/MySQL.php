@@ -92,6 +92,7 @@ class MySQL extends AbstractGenerator
             'FROM `information_schema`.`columns` ' .
             'WHERE `table_schema` = :schema ' .
             '  AND `table_name` = :table ' .
+            'ORDER BY `ordinal_position` ASC ' .
             ';';
 
         $results = $this->connection->fetchAll($stm, ['schema' => $schema, 'table' => $table]);
