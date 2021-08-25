@@ -22,7 +22,7 @@ class MySQLTest extends TestCase
 {
     private function getGenerator(): FakeMySQL
     {
-        return new FakeMySQL(new Connection('mysql:host=localhost;dbname=sakila;user=root'));
+        return new FakeMySQL(new Connection(getenv('MYSQL_DSN')));
     }
 
     public function testGetSchemaInfo()
