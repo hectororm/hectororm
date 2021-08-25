@@ -154,6 +154,11 @@ class MySQL extends AbstractGenerator
                 return null;
             }
 
+            // Empty
+            if ("''" === $default) {
+                return '';
+            }
+
             // Timestamp
             if ("current_timestamp()" === $default) {
                 return 'CURRENT_TIMESTAMP';
