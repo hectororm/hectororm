@@ -17,12 +17,32 @@ namespace Hector\Schema\Generator;
 use Hector\Schema\Exception\SchemaException;
 use Hector\Schema\Index;
 use Hector\Schema\Table;
+use PDO;
 
 /**
  * Class MySQL.
  */
 class MySQL extends AbstractGenerator
 {
+    private bool $mariaDB;
+
+    /**
+     * Is MariaDB?
+     *
+     * @return bool
+     */
+    protected function isMariaDB(): bool
+    {
+        if (null === ($this->mariaDB ?? null)) {
+            $this->mariaDB = str_contains(
+                strtolower($this->connection->getPdo()->getAttribute(PDO::ATTR_SERVER_VERSION)),
+                'maria'
+            );
+        }
+
+        return $this->mariaDB;
+    }
+
     /**
      * @inheritDoc
      */
@@ -102,7 +122,7 @@ class MySQL extends AbstractGenerator
             $columnsInfo[] = [
                 'name' => $result['COLUMN_NAME'],
                 'position' => (int)$result['ORDINAL_POSITION'] - 1,
-                'default' => $result['COLUMN_DEFAULT'],
+                'default' => $this->getDefaultValue($result['COLUMN_DEFAULT']),
                 'nullable' => $result['IS_NULLABLE'] === 'YES',
                 'type' => strtolower($result['DATA_TYPE']),
                 'auto_increment' => false !== stripos($result['EXTRA'], 'auto_increment'),
@@ -116,6 +136,31 @@ class MySQL extends AbstractGenerator
         }
 
         return $columnsInfo;
+    }
+
+    /**
+     * Get default value.
+     *
+     * @param string|null $default
+     *
+     * @return string|null
+     */
+    protected function getDefaultValue(?string $default): ?string
+    {
+        // MariaDB?
+        if ($this->isMariaDB()) {
+            // MariaDB NULL values
+            if ("NULL" === $default) {
+                return null;
+            }
+
+            // Timestamp
+            if ("current_timestamp()" === $default) {
+                return 'CURRENT_TIMESTAMP';
+            }
+        }
+
+        return $default;
     }
 
     /**
