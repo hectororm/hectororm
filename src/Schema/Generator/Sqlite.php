@@ -122,7 +122,7 @@ class Sqlite extends AbstractGenerator
                     $result['dflt_value'] == 'NULL' ||
                     null === $result['dflt_value'] ?
                         null : $result['dflt_value'],
-                'nullable' => $result['notnull'] === '0' && $result['pk'] !== '1' && !$autoIncrement,
+                'nullable' => $result['notnull'] == '0' && $result['pk'] != '1' && !$autoIncrement,
                 'type' => $type['name'],
                 'auto_increment' => $autoIncrement,
                 'maxlength' => $type['maxlength'],
@@ -189,7 +189,7 @@ class Sqlite extends AbstractGenerator
         $indexesInfo = [];
         foreach ($results as $result) {
             $indexType = Index::INDEX;
-            if ($result['unique'] === '1') {
+            if ($result['unique'] == '1') {
                 $indexType = Index::UNIQUE;
                 if ($result['origin'] === 'pk') {
                     $indexType = Index::PRIMARY;

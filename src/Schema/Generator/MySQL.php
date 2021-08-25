@@ -184,7 +184,7 @@ class MySQL extends AbstractGenerator
 
             if (!array_key_exists($key, $indexesInfo)) {
                 $indexType = Index::INDEX;
-                if ($result['NON_UNIQUE'] === '0') {
+                if ($result['NON_UNIQUE'] == 0) {
                     $indexType = Index::UNIQUE;
                     if ($result['INDEX_NAME'] === 'PRIMARY') {
                         $indexType = Index::PRIMARY;

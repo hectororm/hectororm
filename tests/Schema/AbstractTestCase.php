@@ -20,8 +20,6 @@ use PHPUnit\Framework\TestCase;
 
 abstract class AbstractTestCase extends TestCase
 {
-    private static ?Connection $mysql = null;
-    private static ?Connection $sqlite = null;
     private static ?SchemaContainer $schemaContainer = null;
 
     /**
