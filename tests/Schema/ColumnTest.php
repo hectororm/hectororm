@@ -79,6 +79,15 @@ class ColumnTest extends AbstractTestCase
         $this->assertEquals(2, $column->getPosition());
     }
 
+    public function testHasDefault()
+    {
+        $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('customer');
+
+        $this->assertFalse($table->getColumn('address_id')->hasDefault());
+        $this->assertTrue($table->getColumn('email')->hasDefault());
+        $this->assertTrue($table->getColumn('active')->hasDefault());
+    }
+
     public function testGetDefault()
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('customer');

@@ -127,6 +127,16 @@ class Column
     }
 
     /**
+     * Has default?
+     *
+     * @return bool
+     */
+    public function hasDefault(): bool
+    {
+        return $this->isNullable() || null !== $this->default;
+    }
+
+    /**
      * Get default.
      *
      * @return mixed
