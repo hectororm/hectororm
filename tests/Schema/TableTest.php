@@ -116,7 +116,7 @@ class TableTest extends AbstractTestCase
         $schema = $this->getSchemaContainer()->getSchema('sakila');
         $table = $schema->getTable('customer');
 
-        $this->assertEquals('utf8mb4_general_ci', $table->getCollation());
+        $this->assertEquals($schema->getCollation(), $table->getCollation());
     }
 
     public function testGetColumns()

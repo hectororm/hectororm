@@ -27,25 +27,24 @@ class MySQLTest extends TestCase
 
     public function testGetSchemaInfo()
     {
-        $this->assertEquals(
-            [
-                'name' => 'sakila',
-                'charset' => 'utf8mb4',
-                'collation' => 'utf8mb4_general_ci',
-            ],
-            $this->getGenerator()->getSchemaInfo('sakila')
-        );
+        $info = $this->getGenerator()->getSchemaInfo('sakila');
+
+        $this->assertEquals('sakila', $info['name']);
+        $this->assertEquals('utf8mb4', $info['charset']);
+        $this->assertStringStartsWith('utf8mb4_', $info['collation']);
     }
 
     public function testGetTablesInfo()
     {
+        $schemaInfo = $this->getGenerator()->getSchemaInfo('sakila');
+
         $this->assertEquals(
             [
                 [
                     'name' => 'actor',
                     'schema_name' => 'sakila',
                     'charset' => 'utf8mb4',
-                    'collation' => 'utf8mb4_general_ci',
+                    'collation' => $schemaInfo['collation'],
                     'type' => Table::TYPE_TABLE,
                 ],
                 [
@@ -59,35 +58,35 @@ class MySQLTest extends TestCase
                     'name' => 'address',
                     'schema_name' => 'sakila',
                     'charset' => 'utf8mb4',
-                    'collation' => 'utf8mb4_general_ci',
+                    'collation' => $schemaInfo['collation'],
                     'type' => Table::TYPE_TABLE,
                 ],
                 [
                     'name' => 'category',
                     'schema_name' => 'sakila',
                     'charset' => 'utf8mb4',
-                    'collation' => 'utf8mb4_general_ci',
+                    'collation' => $schemaInfo['collation'],
                     'type' => Table::TYPE_TABLE,
                 ],
                 [
                     'name' => 'city',
                     'schema_name' => 'sakila',
                     'charset' => 'utf8mb4',
-                    'collation' => 'utf8mb4_general_ci',
+                    'collation' => $schemaInfo['collation'],
                     'type' => Table::TYPE_TABLE,
                 ],
                 [
                     'name' => 'country',
                     'schema_name' => 'sakila',
                     'charset' => 'utf8mb4',
-                    'collation' => 'utf8mb4_general_ci',
+                    'collation' => $schemaInfo['collation'],
                     'type' => Table::TYPE_TABLE,
                 ],
                 [
                     'name' => 'customer',
                     'schema_name' => 'sakila',
                     'charset' => 'utf8mb4',
-                    'collation' => 'utf8mb4_general_ci',
+                    'collation' => $schemaInfo['collation'],
                     'type' => Table::TYPE_TABLE,
                 ],
                 [
@@ -101,21 +100,21 @@ class MySQLTest extends TestCase
                     'name' => 'film',
                     'schema_name' => 'sakila',
                     'charset' => 'utf8mb4',
-                    'collation' => 'utf8mb4_general_ci',
+                    'collation' => $schemaInfo['collation'],
                     'type' => Table::TYPE_TABLE,
                 ],
                 [
                     'name' => 'film_actor',
                     'schema_name' => 'sakila',
                     'charset' => 'utf8mb4',
-                    'collation' => 'utf8mb4_general_ci',
+                    'collation' => $schemaInfo['collation'],
                     'type' => Table::TYPE_TABLE,
                 ],
                 [
                     'name' => 'film_category',
                     'schema_name' => 'sakila',
                     'charset' => 'utf8mb4',
-                    'collation' => 'utf8mb4_general_ci',
+                    'collation' => $schemaInfo['collation'],
                     'type' => Table::TYPE_TABLE,
                 ],
                 [
@@ -129,21 +128,21 @@ class MySQLTest extends TestCase
                     'name' => 'film_text',
                     'schema_name' => 'sakila',
                     'charset' => 'utf8mb4',
-                    'collation' => 'utf8mb4_general_ci',
+                    'collation' => $schemaInfo['collation'],
                     'type' => Table::TYPE_TABLE,
                 ],
                 [
                     'name' => 'inventory',
                     'schema_name' => 'sakila',
                     'charset' => 'utf8mb4',
-                    'collation' => 'utf8mb4_general_ci',
+                    'collation' => $schemaInfo['collation'],
                     'type' => Table::TYPE_TABLE,
                 ],
                 [
                     'name' => 'language',
                     'schema_name' => 'sakila',
                     'charset' => 'utf8mb4',
-                    'collation' => 'utf8mb4_general_ci',
+                    'collation' => $schemaInfo['collation'],
                     'type' => Table::TYPE_TABLE,
                 ],
                 [
@@ -157,14 +156,14 @@ class MySQLTest extends TestCase
                     'name' => 'payment',
                     'schema_name' => 'sakila',
                     'charset' => 'utf8mb4',
-                    'collation' => 'utf8mb4_general_ci',
+                    'collation' => $schemaInfo['collation'],
                     'type' => Table::TYPE_TABLE,
                 ],
                 [
                     'name' => 'rental',
                     'schema_name' => 'sakila',
                     'charset' => 'utf8mb4',
-                    'collation' => 'utf8mb4_general_ci',
+                    'collation' => $schemaInfo['collation'],
                     'type' => Table::TYPE_TABLE,
                 ],
                 [
@@ -185,7 +184,7 @@ class MySQLTest extends TestCase
                     'name' => 'staff',
                     'schema_name' => 'sakila',
                     'charset' => 'utf8mb4',
-                    'collation' => 'utf8mb4_general_ci',
+                    'collation' => $schemaInfo['collation'],
                     'type' => Table::TYPE_TABLE,
                 ],
                 [
@@ -199,7 +198,7 @@ class MySQLTest extends TestCase
                     'name' => 'store',
                     'schema_name' => 'sakila',
                     'charset' => 'utf8mb4',
-                    'collation' => 'utf8mb4_general_ci',
+                    'collation' => $schemaInfo['collation'],
                     'type' => Table::TYPE_TABLE,
                 ]
             ],
@@ -209,6 +208,8 @@ class MySQLTest extends TestCase
 
     public function testGetColumnsInfo()
     {
+        $schemaInfo = $this->getGenerator()->getSchemaInfo('sakila');
+
         $this->assertEquals(
             [
                 [
@@ -228,7 +229,7 @@ class MySQLTest extends TestCase
                 [
                     'name' => 'address',
                     'charset' => 'utf8mb4',
-                    'collation' => 'utf8mb4_general_ci',
+                    'collation' => $schemaInfo['collation'],
                     'position' => 1,
                     'default' => null,
                     'nullable' => false,
@@ -242,7 +243,7 @@ class MySQLTest extends TestCase
                 [
                     'name' => 'address2',
                     'charset' => 'utf8mb4',
-                    'collation' => 'utf8mb4_general_ci',
+                    'collation' => $schemaInfo['collation'],
                     'position' => 2,
                     'default' => null,
                     'nullable' => true,
@@ -256,7 +257,7 @@ class MySQLTest extends TestCase
                 [
                     'name' => 'district',
                     'charset' => 'utf8mb4',
-                    'collation' => 'utf8mb4_general_ci',
+                    'collation' => $schemaInfo['collation'],
                     'position' => 3,
                     'default' => null,
                     'nullable' => false,
@@ -284,7 +285,7 @@ class MySQLTest extends TestCase
                 [
                     'name' => 'postal_code',
                     'charset' => 'utf8mb4',
-                    'collation' => 'utf8mb4_general_ci',
+                    'collation' => $schemaInfo['collation'],
                     'position' => 5,
                     'default' => null,
                     'nullable' => true,
@@ -298,7 +299,7 @@ class MySQLTest extends TestCase
                 [
                     'name' => 'phone',
                     'charset' => 'utf8mb4',
-                    'collation' => 'utf8mb4_general_ci',
+                    'collation' => $schemaInfo['collation'],
                     'position' => 6,
                     'default' => null,
                     'nullable' => false,

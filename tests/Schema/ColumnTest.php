@@ -257,15 +257,17 @@ class ColumnTest extends AbstractTestCase
 
     public function testGetCollation()
     {
-        $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('customer');
+        $schema = $this->getSchemaContainer()->getSchema('sakila');
+        $table = $schema->getTable('customer');
         $column = $table->getColumn('first_name');
 
-        $this->assertEquals('utf8mb4_general_ci', $column->getCollation());
+        $this->assertEquals($schema->getCollation(), $column->getCollation());
     }
 
     public function testGetCollationInteger()
     {
-        $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('customer');
+        $schema = $this->getSchemaContainer()->getSchema('sakila');
+        $table = $schema->getTable('customer');
         $column = $table->getColumn('address_id');
 
         $this->assertNull($column->getCollation());

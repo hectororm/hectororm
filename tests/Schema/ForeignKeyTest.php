@@ -20,7 +20,8 @@ class ForeignKeyTest extends AbstractTestCase
     public function testSerialization()
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('customer');
-        $foreignKey = iterator_to_array($table->getForeignKeys())[0];
+        $foreignKeys = iterator_to_array($table->getForeignKeys());
+        $foreignKey = $foreignKeys[0];
         /** @var ForeignKey $foreignKey2 */
         $foreignKey2 = unserialize(serialize($foreignKey));
 
@@ -36,7 +37,8 @@ class ForeignKeyTest extends AbstractTestCase
     public function testGetName()
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('store');
-        $foreignKey = iterator_to_array($table->getForeignKeys())[0];
+        $foreignKeys = iterator_to_array($table->getForeignKeys());
+        $foreignKey = $foreignKeys[1];
 
         $this->assertEquals('fk_store_staff', $foreignKey->getName());
     }
@@ -44,7 +46,8 @@ class ForeignKeyTest extends AbstractTestCase
     public function testGetColumnsName()
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('store');
-        $foreignKey = iterator_to_array($table->getForeignKeys())[0];
+        $foreignKeys = iterator_to_array($table->getForeignKeys());
+        $foreignKey = $foreignKeys[1];
 
         $this->assertEquals(['manager_staff_id'], $foreignKey->getColumnsName());
     }
@@ -52,7 +55,8 @@ class ForeignKeyTest extends AbstractTestCase
     public function testGetReferencedSchemaName()
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('store');
-        $foreignKey = iterator_to_array($table->getForeignKeys())[0];
+        $foreignKeys = iterator_to_array($table->getForeignKeys());
+        $foreignKey = $foreignKeys[0];
 
         $this->assertEquals('sakila', $foreignKey->getReferencedSchemaName());
     }
@@ -60,7 +64,8 @@ class ForeignKeyTest extends AbstractTestCase
     public function testGetReferencedTableName()
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('store');
-        $foreignKey = iterator_to_array($table->getForeignKeys())[0];
+        $foreignKeys = iterator_to_array($table->getForeignKeys());
+        $foreignKey = $foreignKeys[1];
 
         $this->assertEquals('staff', $foreignKey->getReferencedTableName());
     }
@@ -68,7 +73,8 @@ class ForeignKeyTest extends AbstractTestCase
     public function testGetReferencedColumnsName()
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('store');
-        $foreignKey = iterator_to_array($table->getForeignKeys())[0];
+        $foreignKeys = iterator_to_array($table->getForeignKeys());
+        $foreignKey = $foreignKeys[1];
 
         $this->assertEquals(['staff_id'], $foreignKey->getReferencedColumnsName());
     }
@@ -76,7 +82,8 @@ class ForeignKeyTest extends AbstractTestCase
     public function testGetUpdateRule()
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('store');
-        $foreignKey = iterator_to_array($table->getForeignKeys())[0];
+        $foreignKeys = iterator_to_array($table->getForeignKeys());
+        $foreignKey = $foreignKeys[0];
 
         $this->assertEquals(ForeignKey::RULE_CASCADE, $foreignKey->getUpdateRule());
     }
@@ -84,7 +91,8 @@ class ForeignKeyTest extends AbstractTestCase
     public function testGetDeleteRule()
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('store');
-        $foreignKey = iterator_to_array($table->getForeignKeys())[0];
+        $foreignKeys = iterator_to_array($table->getForeignKeys());
+        $foreignKey = $foreignKeys[0];
 
         $this->assertEquals(ForeignKey::RULE_RESTRICT, $foreignKey->getDeleteRule());
     }
@@ -92,7 +100,8 @@ class ForeignKeyTest extends AbstractTestCase
     public function testGetTable()
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('store');
-        $foreignKey = iterator_to_array($table->getForeignKeys())[0];
+        $foreignKeys = iterator_to_array($table->getForeignKeys());
+        $foreignKey = $foreignKeys[0];
 
         $this->assertSame($table, $foreignKey->getTable());
     }
@@ -100,7 +109,8 @@ class ForeignKeyTest extends AbstractTestCase
     public function testGetColumns()
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('store');
-        $foreignKey = iterator_to_array($table->getForeignKeys())[0];
+        $foreignKeys = iterator_to_array($table->getForeignKeys());
+        $foreignKey = $foreignKeys[0];
 
         $this->assertContainsOnlyInstancesOf(Column::class, $foreignKey->getColumns());
 
@@ -112,7 +122,8 @@ class ForeignKeyTest extends AbstractTestCase
     public function testGetReferencedTable()
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('store');
-        $foreignKey = iterator_to_array($table->getForeignKeys())[0];
+        $foreignKeys = iterator_to_array($table->getForeignKeys());
+        $foreignKey = $foreignKeys[1];
         $tableReferenced = $this->getSchemaContainer()->getSchema('sakila')->getTable('staff');
 
         $this->assertSame($tableReferenced, $foreignKey->getReferencedTable());
@@ -121,7 +132,8 @@ class ForeignKeyTest extends AbstractTestCase
     public function testGetReferencedColumns()
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('store');
-        $foreignKey = iterator_to_array($table->getForeignKeys())[0];
+        $foreignKeys = iterator_to_array($table->getForeignKeys());
+        $foreignKey = $foreignKeys[1];
         $tableReferenced = $this->getSchemaContainer()->getSchema('sakila')->getTable('staff');
 
         $this->assertContainsOnlyInstancesOf(Column::class, $foreignKey->getReferencedColumns());

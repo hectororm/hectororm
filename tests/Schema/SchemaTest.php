@@ -72,7 +72,7 @@ class SchemaTest extends AbstractTestCase
     {
         $schema = $this->getSchemaContainer()->getSchema('sakila');
 
-        $this->assertEquals('utf8mb4_general_ci', $schema->getCollation());
+        $this->assertStringStartsWith('utf8mb4_', $schema->getCollation());
     }
 
     public function testGetTables()

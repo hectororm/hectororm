@@ -10,8 +10,6 @@
  * file that was distributed with this source code, to the root.
  */
 
-declare(strict_types=1);
-
 namespace Hector\Schema\Tests\Generator;
 
 use Hector\Schema\Generator\MySQL;
