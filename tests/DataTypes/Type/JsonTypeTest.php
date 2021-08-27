@@ -103,7 +103,7 @@ class JsonTypeTest extends TestCase
     {
         $type = new JsonType();
         $fakeObject = new class implements \JsonSerializable {
-            public function jsonSerialize()
+            public function jsonSerialize(): array
             {
                 return ["foo" => "bar"];
             }
@@ -120,7 +120,7 @@ class JsonTypeTest extends TestCase
 
         $type = new JsonType();
         $fakeObject = new class implements \JsonSerializable {
-            public function jsonSerialize()
+            public function jsonSerialize(): mixed
             {
                 throw new Exception('Not serializable');
             }
