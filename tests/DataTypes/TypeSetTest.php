@@ -19,6 +19,13 @@ use PHPUnit\Framework\TestCase;
 
 class TypeSetTest extends TestCase
 {
+    public function testConstruct()
+    {
+        $typeSet = new TypeSet(['fake' => $typeObj = new StringType()]);
+
+        $this->assertSame($typeObj, $typeSet->get('fake'));
+    }
+
     public function testReset()
     {
         $typeSet = new TypeSet();

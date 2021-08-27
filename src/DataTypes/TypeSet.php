@@ -27,9 +27,10 @@ class TypeSet implements Countable
     /**
      * TypeSet constructor.
      */
-    public function __construct()
+    public function __construct(array $types = [])
     {
         $this->reset();
+        array_walk($types, fn(Type\TypeInterface $object, string $type) => $this->add($type, $object));
     }
 
     /**
@@ -47,36 +48,41 @@ class TypeSet implements Countable
     {
         $this->types = [];
 
+        $stringType = new Type\StringType();
+        $intType = new Type\NumericType('int');
+        $floatType = new Type\NumericType('float');
+        $dateTimeType = new Type\DateTimeType();
+
         // String
-        $this->add('char', new Type\StringType());
-        $this->add('varchar', new Type\StringType());
-        $this->add('tinytext', new Type\StringType());
-        $this->add('text', new Type\StringType());
-        $this->add('mediumtext', new Type\StringType());
-        $this->add('longtext', new Type\StringType());
+        $this->add('char', $stringType);
+        $this->add('varchar', $stringType);
+        $this->add('tinytext', $stringType);
+        $this->add('text', $stringType);
+        $this->add('mediumtext', $stringType);
+        $this->add('longtext', $stringType);
         // Blob
-        $this->add('tinyblob', new Type\StringType());
-        $this->add('blob', new Type\StringType());
-        $this->add('mediumblob', new Type\StringType());
-        $this->add('longblog', new Type\StringType());
+        $this->add('tinyblob', $stringType);
+        $this->add('blob', $stringType);
+        $this->add('mediumblob', $stringType);
+        $this->add('longblog', $stringType);
         // Integer
-        $this->add('tinyint', new Type\NumericType('int'));
-        $this->add('smallint', new Type\NumericType('int'));
-        $this->add('mediumint', new Type\NumericType('int'));
-        $this->add('int', new Type\NumericType('int'));
-        $this->add('bigint', new Type\NumericType('int'));
+        $this->add('tinyint', $intType);
+        $this->add('smallint', $intType);
+        $this->add('mediumint', $intType);
+        $this->add('int', $intType);
+        $this->add('bigint', $intType);
         // Decimal
-        $this->add('decimal', new Type\NumericType('float'));
-        $this->add('numeric', new Type\NumericType('float'));
-        $this->add('float', new Type\NumericType('float'));
-        $this->add('double', new Type\NumericType('float'));
+        $this->add('decimal', $floatType);
+        $this->add('numeric', $floatType);
+        $this->add('float', $floatType);
+        $this->add('double', $floatType);
         // Date
         $this->add('date', new Type\DateTimeType('Y-m-d'));
-        $this->add('datetime', new Type\DateTimeType());
-        $this->add('timestamp', new Type\DateTimeType());
-        $this->add('year', new Type\NumericType('int'));
+        $this->add('datetime', $dateTimeType);
+        $this->add('timestamp', $dateTimeType);
+        $this->add('year', $intType);
         // List
-        $this->add('enum', new Type\StringType());
+        $this->add('enum', $stringType);
         $this->add('set', new Type\SetType());
         // Json
         $this->add('json', new Type\JsonType());
