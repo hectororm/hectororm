@@ -17,13 +17,11 @@ namespace Hector\Orm\Entity;
 use Generator;
 use Hector\Orm\Attributes;
 use Hector\Orm\Collection\Collection;
-use Hector\Orm\DataType\DataTypeSet;
 use Hector\Orm\Exception\NotFoundException;
 use Hector\Orm\Exception\OrmException;
 use Hector\Orm\Mapper\GenericMapper;
 use Hector\Orm\Orm;
 use Hector\Orm\Query\Builder;
-use Hector\Orm\Relationship\Relationships;
 
 #[Attributes\Collection(Collection::class)]
 #[Attributes\Mapper(GenericMapper::class)]
@@ -62,24 +60,6 @@ abstract class Entity
     final public function getRelated(): Related
     {
         return Orm::get()->getEntityReflection($this::class)->getHectorData($this)->getRelated();
-    }
-
-    /**
-     * Setup relationships.
-     *
-     * @param Relationships $relationships
-     */
-    public static function setUpRelations(Relationships $relationships): void
-    {
-    }
-
-    /**
-     * Setup types.
-     *
-     * @param DataTypeSet $dataTypes
-     */
-    public static function setUpTypes(DataTypeSet $dataTypes): void
-    {
     }
 
     /**

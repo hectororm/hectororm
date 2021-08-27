@@ -12,10 +12,10 @@
 
 namespace Hector\Orm\Tests\Fake\Type;
 
-use Hector\Orm\DataType\AbstractType;
+use Hector\DataTypes\ExpectedType;
+use Hector\DataTypes\Type\AbstractType;
 use Hector\Query\Statement\Raw;
 use Hector\Query\Statement\SqlFunction;
-use ReflectionNamedType;
 
 class GeometryType extends AbstractType
 {
@@ -32,7 +32,7 @@ class GeometryType extends AbstractType
     /**
      * @inheritDoc
      */
-    public function fromSchema(mixed $value, ?ReflectionNamedType $declaredType = null): mixed
+    public function fromSchema(mixed $value, ?ExpectedType $expected = null): mixed
     {
         return $value;
     }
@@ -40,7 +40,7 @@ class GeometryType extends AbstractType
     /**
      * @inheritDoc
      */
-    public function toSchema(mixed $value, ?ReflectionNamedType $declaredType = null): mixed
+    public function toSchema(mixed $value, ?ExpectedType $expected = null): SqlFunction
     {
         return new SqlFunction('ST_GeomFromText', new Raw('?', [$value]));
     }

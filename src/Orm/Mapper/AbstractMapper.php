@@ -45,9 +45,6 @@ abstract class AbstractMapper implements Mapper
         protected EntityStorage $storage
     ) {
         $this->reflection = Orm::get()->getEntityReflection($entity);
-
-        // Init types
-        $this->reflection->class::setUpTypes(Orm::get()->getDataTypes());
     }
 
     /**
@@ -85,8 +82,6 @@ abstract class AbstractMapper implements Mapper
             $attrRelationship = $attribute->newInstance();
             $attrRelationship->init($this->relationships);
         }
-
-        $this->reflection->class::setUpRelations($this->relationships);
 
         return $this->relationships;
     }

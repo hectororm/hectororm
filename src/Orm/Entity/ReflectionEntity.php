@@ -14,6 +14,8 @@ declare(strict_types=1);
 
 namespace Hector\Orm\Entity;
 
+use Exception;
+use Hector\DataTypes\Type\TypeInterface;
 use Hector\Orm\Assert\EntityAssert;
 use Hector\Orm\Attributes;
 use Hector\Orm\Collection\Collection;
@@ -40,6 +42,8 @@ use ReflectionProperty;
  * @property-read string|null $connection Connection name of entity
  * @property-read array $types Type of columns
  * @property-read array $hidden Hidden columns
+ *
+ * @template T
  */
 class ReflectionEntity
 {
@@ -60,7 +64,7 @@ class ReflectionEntity
     /**
      * EntityProperties constructor.
      *
-     * @param string $entity
+     * @param class-string<T> $entity
      *
      * @throws OrmException
      */
@@ -140,7 +144,7 @@ class ReflectionEntity
 
             foreach ($attributes as $attribute) {
                 $typeAttribute = $attribute->newInstance();
-                $types[$typeAttribute->column] = $typeAttribute->type;
+                $types[$typeAttribute->column] = new $typeAttribute->type(...$typeAttribute->arguments);
             }
         } while ($reflectionClass = $reflectionClass->getParentClass());
 
@@ -311,7 +315,7 @@ class ReflectionEntity
     /**
      * Get entity class name.
      *
-     * @return string|Entity
+     * @return class-string<T>
      */
     public function getName(): string
     {
@@ -451,15 +455,20 @@ class ReflectionEntity
      *
      * @param string $column
      *
-     * @return string|null
+     * @return TypeInterface|null
+     * @throws OrmException
      */
-    public function getType(string $column): ?string
+    public function getType(string $column): ?TypeInterface
     {
-        if (array_key_exists($column, $this->types)) {
-            return $this->types[$column];
-        }
+        try {
+            if (array_key_exists($column, $this->types)) {
+                return $this->types[$column];
+            }
 
-        return null;
+            return Orm::get()->getTypes()->get($this->getTable()->getColumn($column)->getType());
+        } catch (Exception $exception) {
+            throw new OrmException(sprintf('Type error for column %s', $column), previous: $exception);
+        }
     }
 
     /////////////////

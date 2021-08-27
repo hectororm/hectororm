@@ -41,7 +41,7 @@ abstract class AbstractTestCase extends TestCase
         $schemaContainer = $schemaGenerator->generateSchemas('sakila');
 
         self::$orm = new FakeOrm($connection, $schemaContainer);
-        self::$orm->getDataTypes()->addGlobalType(new GeometryType());
+        self::$orm->getTypes()->add('geometry', new GeometryType());
 
         return self::$orm;
     }

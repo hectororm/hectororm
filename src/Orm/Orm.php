@@ -17,7 +17,7 @@ namespace Hector\Orm;
 use Hector\Connection\Connection;
 use Hector\Connection\ConnectionSet;
 use Hector\Connection\Exception\NotFoundException;
-use Hector\Orm\DataType\DataTypeSet;
+use Hector\DataTypes\TypeSet;
 use Hector\Orm\Entity\Entity;
 use Hector\Orm\Entity\ReflectionEntity;
 use Hector\Orm\Event;
@@ -39,7 +39,7 @@ class Orm
     public static ?Orm $instance = null;
     public static int $alias = 0;
     protected ConnectionSet $connections;
-    protected DataTypeSet $dataTypes;
+    protected TypeSet $types;
     protected SchemaContainer $schemaContainer;
     protected EventDispatcherInterface $eventDispatcher;
     protected EntityStorage $storage;
@@ -64,10 +64,9 @@ class Orm
             $connection = new ConnectionSet($connection);
         }
         $this->connections = $connection;
-        $this->dataTypes = new DataTypeSet();
-        $this->dataTypes->initDefaults();
         $this->schemaContainer = $schemaContainer;
         $this->eventDispatcher = $eventDispatcher ?? new Event\NullEventDispatcher();
+        $this->types = new TypeSet();
         $this->storage = new EntityStorage();
 
         if (null !== self::$instance) {
@@ -96,7 +95,7 @@ class Orm
     {
         return [
             'connections' => $this->connections,
-            'dataTypes' => $this->dataTypes,
+            'types' => $this->types,
             'schemaContainer' => $this->schemaContainer,
             'reflections' => $this->reflections,
         ];
@@ -112,7 +111,7 @@ class Orm
     public function __unserialize(array $data): void
     {
         $this->connections = $data['connections'];
-        $this->dataTypes = $data['dataTypes'];
+        $this->types = $data['types'];
         $this->schemaContainer = $data['schemaContainer'];
         $this->reflections = $data['reflections'];
 
@@ -240,12 +239,11 @@ class Orm
     /**
      * Get data types.
      *
-     * @return DataTypeSet
-     * @internal
+     * @return TypeSet
      */
-    public function getDataTypes(): DataTypeSet
+    public function getTypes(): TypeSet
     {
-        return $this->dataTypes;
+        return $this->types;
     }
 
     /**

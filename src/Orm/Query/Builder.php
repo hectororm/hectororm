@@ -74,8 +74,7 @@ class Builder extends QueryBuilder
         // Entity columns
         /** @var Column $column */
         foreach ($table->getColumns() as $column) {
-            $type = Orm::get()->getDataTypes()->getType($column->getType());
-            $type = new $type();
+            $type = $this->entityReflection->getType($column->getName());
 
             if (null !== ($sqlFunction = $type->fromSchemaFunction())) {
                 $this->column(

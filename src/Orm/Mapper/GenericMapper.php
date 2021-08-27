@@ -14,10 +14,11 @@ declare(strict_types=1);
 
 namespace Hector\Orm\Mapper;
 
+use Hector\DataTypes\ExpectedType;
+use Hector\DataTypes\TypeException;
 use Hector\Orm\Entity\Entity;
 use Hector\Orm\Exception\MapperException;
-use Hector\Orm\Orm;
-use ReflectionException;
+use Hector\Orm\Exception\OrmException;
 use ReflectionNamedType;
 
 class GenericMapper extends AbstractMapper
@@ -37,39 +38,38 @@ class GenericMapper extends AbstractMapper
         }
 
         try {
-            foreach ($this->reflection->getTable()->getColumns() as $column) {
+            foreach ($this->reflection->getTable()->getColumnsName() as $column) {
                 // Column doesn't exists in data
-                if (!array_key_exists($column->getName(), $data)) {
+                if (!array_key_exists($column, $data)) {
                     continue;
                 }
 
                 // Entity doesn't have property
-                if (!$this->reflection->getClass()->hasProperty($column->getName())) {
+                if (!$this->reflection->getClass()->hasProperty($column)) {
                     continue;
                 }
 
-                $reflectionProperty = $this->reflection->getProperty($column->getName());
-                $value = $data[$column->getName()];
+                $reflectionProperty = $this->reflection->getProperty($column);
+                $value = $data[$column];
 
                 if (null !== $value) {
                     // Get type
                     $reflectionType = $reflectionProperty->getType();
 
+                    // Convert type
                     if ($reflectionType instanceof ReflectionNamedType) {
-                        // Convert type
-                        $value = Orm::get()
-                            ->getDataTypes()
-                            ->getTypeForColumn($column)
-                            ->fromSchema($value, $reflectionType);
+                        $value = $this->reflection->getType($column)->fromSchema(
+                            $value,
+                            ExpectedType::fromReflection($reflectionType)
+                        );
                     }
                 }
 
                 $reflectionProperty->setValue($entity, $value);
             }
 
-//            $this->reflection->getHectorData($entity)->setPivot($data);
             $this->setPivotData($entity, $data);
-        } catch (ReflectionException $e) {
+        } catch (OrmException | TypeException $e) {
             throw new MapperException(sprintf('Unable to hydrate entity "%s"', $this->reflection->class), 0, $e);
         }
     }
@@ -86,21 +86,21 @@ class GenericMapper extends AbstractMapper
         try {
             $data = [];
 
-            foreach ($this->reflection->getTable()->getColumns() as $column) {
+            foreach ($this->reflection->getTable()->getColumnsName() as $column) {
                 // Not attempted column
-                if (null !== $columns && !in_array($column->getName(), $columns)) {
+                if (null !== $columns && !in_array($column, $columns)) {
                     continue;
                 }
 
                 // Entity doesn't have property
-                if (!$this->reflection->getClass()->hasProperty($column->getName())) {
+                if (!$this->reflection->getClass()->hasProperty($column)) {
                     continue;
                 }
 
                 // Set default NULL value
-                $data[$column->getName()] = null;
+                $data[$column] = null;
 
-                $reflectionProperty = $this->reflection->getProperty($column->getName());
+                $reflectionProperty = $this->reflection->getProperty($column);
 
                 if ($reflectionProperty->isInitialized($entity)) {
                     $value = $reflectionProperty->getValue($entity);
@@ -109,18 +109,19 @@ class GenericMapper extends AbstractMapper
                         // Get type
                         $reflectionType = $reflectionProperty->getType();
 
+                        // Convert type
                         if ($reflectionType instanceof ReflectionNamedType) {
-                            $data[$column->getName()] = Orm::get()
-                                ->getDataTypes()
-                                ->getTypeForColumn($column)
-                                ->toSchema($value, $reflectionType);
+                            $data[$column] = $this->reflection->getType($column)->toSchema(
+                                $value,
+                                ExpectedType::fromReflection($reflectionType)
+                            );
                         }
                     }
                 }
             }
 
             return $data;
-        } catch (ReflectionException $e) {
+        } catch (OrmException | TypeException $e) {
             throw new MapperException(sprintf('Unable to collect entity "%s"', $this->reflection->class), 0, $e);
         }
     }

@@ -12,8 +12,8 @@
 
 namespace Hector\Orm\Tests\Attributes;
 
+use Hector\DataTypes\Type\DateTimeType;
 use Hector\Orm\Attributes\Type;
-use Hector\Orm\DataType\DateTime\DateType;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 use TypeError;
@@ -22,9 +22,9 @@ class TypeTest extends TestCase
 {
     public function testConstruct()
     {
-        $attribute = new Type(DateType::class, 'column');
+        $attribute = new Type(DateTimeType::class, 'column');
 
-        $this->assertEquals(DateType::class, $attribute->type);
+        $this->assertEquals(DateTimeType::class, $attribute->type);
         $this->assertEquals('column', $attribute->column);
     }
 

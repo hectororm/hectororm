@@ -14,11 +14,11 @@ declare(strict_types=1);
 
 namespace Hector\Orm\Mapper;
 
+use Hector\DataTypes\TypeException;
 use Hector\Orm\Entity\Entity;
 use Hector\Orm\Entity\MagicEntity;
 use Hector\Orm\Exception\MapperException;
 use Hector\Orm\Exception\OrmException;
-use Hector\Orm\Orm;
 use Hector\Orm\Storage\EntityStorage;
 use Hector\Schema\Exception\SchemaException;
 
@@ -70,8 +70,7 @@ class MagicMapper extends AbstractMapper
                         return;
                     }
 
-                    $column = $this->reflection->getTable()->getColumn($key);
-                    $value = Orm::get()->getDataTypes()->getTypeForColumn($column)->fromSchema($value);
+                    $value = $this->reflection->getType($key)->fromSchema($value);
                 }
             );
 
@@ -80,7 +79,7 @@ class MagicMapper extends AbstractMapper
             $propertyData = $reflectionProperty->getValue($entity);
             $propertyData = array_replace($propertyData, $data);
             $reflectionProperty->setValue($entity, $propertyData);
-        } catch (OrmException | SchemaException $e) {
+        } catch (OrmException | TypeException $e) {
             throw new MapperException(sprintf('Unable to hydrate entity "%s"', $this->reflection->class), 0, $e);
         }
     }
@@ -111,8 +110,7 @@ class MagicMapper extends AbstractMapper
                         return;
                     }
 
-                    $column = $this->reflection->getTable()->getColumn($key);
-                    $value = Orm::get()->getDataTypes()->getTypeForColumn($column)->toSchema($value);
+                    $value = $this->reflection->getType($key)->toSchema($value);
                 }
             );
 
@@ -138,7 +136,7 @@ class MagicMapper extends AbstractMapper
                 },
                 ARRAY_FILTER_USE_BOTH
             );
-        } catch (OrmException | SchemaException $e) {
+        } catch (OrmException | SchemaException | TypeException $e) {
             throw new MapperException(sprintf('Unable to collect entity "%s"', $this->reflection->class), 0, $e);
         }
     }
