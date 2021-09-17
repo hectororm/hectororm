@@ -23,19 +23,19 @@ use JsonSerializable;
 #[Attributes\Mapper(MagicMapper::class)]
 abstract class MagicEntity extends Entity implements JsonSerializable
 {
-    protected array $hectorAttributes = [];
+    protected array $_hectorAttributes = [];
 
     public function __serialize(): array
     {
         return [
-            'hectorAttributes' => $this->hectorAttributes,
+            '_hectorAttributes' => $this->_hectorAttributes,
             'parent' => parent::__serialize(),
         ];
     }
 
     public function __unserialize(array $data): void
     {
-        $this->hectorAttributes = $data['hectorAttributes'];
+        $this->_hectorAttributes = $data['_hectorAttributes'];
         parent::__unserialize($data['parent'] ?? []);
     }
 
@@ -44,7 +44,7 @@ abstract class MagicEntity extends Entity implements JsonSerializable
      */
     public function jsonSerialize(): array
     {
-        return $this->hectorAttributes;
+        return $this->_hectorAttributes;
     }
 
     /**
@@ -54,7 +54,7 @@ abstract class MagicEntity extends Entity implements JsonSerializable
      */
     public function __debugInfo(): ?array
     {
-        return $this->hectorAttributes;
+        return $this->_hectorAttributes;
     }
 
     /////////////////////////
@@ -77,7 +77,7 @@ abstract class MagicEntity extends Entity implements JsonSerializable
             return false;
         }
 
-        if (array_key_exists($name, $this->hectorAttributes)) {
+        if (array_key_exists($name, $this->_hectorAttributes)) {
             return true;
         }
 
@@ -109,7 +109,7 @@ abstract class MagicEntity extends Entity implements JsonSerializable
 
         // Property
         if ($this->__isset($name)) {
-            return $this->hectorAttributes[$name] ?? null;
+            return $this->_hectorAttributes[$name] ?? null;
         }
 
         throw new OrmException(sprintf('Property "%s" not found for "%s" entity', $name, get_class($this)));
@@ -131,7 +131,7 @@ abstract class MagicEntity extends Entity implements JsonSerializable
         }
 
         if ($this->__isset($name)) {
-            $this->hectorAttributes[$name] = $value;
+            $this->_hectorAttributes[$name] = $value;
             return;
         }
 

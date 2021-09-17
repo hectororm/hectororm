@@ -74,7 +74,7 @@ class MagicMapper extends AbstractMapper
                 }
             );
 
-            $reflectionProperty = $this->reflection->getProperty('hectorAttributes', MagicEntity::class);
+            $reflectionProperty = $this->reflection->getProperty('_hectorAttributes', MagicEntity::class);
 
             $propertyData = $reflectionProperty->getValue($entity);
             $propertyData = array_replace($propertyData, $data);
@@ -94,7 +94,7 @@ class MagicMapper extends AbstractMapper
         }
 
         try {
-            $reflectionDataProperty = $this->reflection->getProperty('hectorAttributes', MagicEntity::class);
+            $reflectionDataProperty = $this->reflection->getProperty('_hectorAttributes', MagicEntity::class);
             $data = $reflectionDataProperty->getValue($entity);
 
             // Remove columns not attempted
