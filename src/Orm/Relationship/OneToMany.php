@@ -97,7 +97,14 @@ class OneToMany extends RegularRelationship
         $foreigners = $this->tidyEntities($this->targetColumns, ...$foreigners);
 
         // Get inverted relationship
-        $relationship = $this->targetEntity->getMapper()->getRelationships()->getWith($this->sourceEntity->class, columns: $this->getTargetColumns());
+        try {
+            $relationship = $this->targetEntity->getMapper()->getRelationships()->getWith(
+                foreignEntity: $this->sourceEntity->class,
+                columns:       $this->getTargetColumns()
+            );
+        } catch (RelationException) {
+            $relationship = null;
+        }
 
         foreach ($entities as $entity) {
             $foreignersFiltered = array_filter($foreigners, fn($foreign) => $foreign['columns'] == $entity['columns']);

@@ -13,13 +13,16 @@
 namespace Hector\Orm\Tests\Relationship;
 
 use Hector\Orm\Collection\Collection;
-use Hector\Orm\Relationship\Relationship;
 use Hector\Orm\Relationship\ManyToOne;
 use Hector\Orm\Relationship\OneToMany;
+use Hector\Orm\Relationship\Relationship;
 use Hector\Orm\Tests\AbstractTestCase;
 use Hector\Orm\Tests\Fake\Entity\Actor;
 use Hector\Orm\Tests\Fake\Entity\Film;
 use Hector\Orm\Tests\Fake\Entity\Language;
+use Hector\Orm\Tests\Fake\Entity\Payment;
+use Hector\Orm\Tests\Fake\Entity\Staff;
+use ReflectionMethod;
 
 class OneToManyTest extends AbstractTestCase
 {
@@ -125,7 +128,7 @@ class OneToManyTest extends AbstractTestCase
             ['language_id' => 'language_id']
         );
 
-        $reflectionMethod = new \ReflectionMethod(OneToMany::class, 'switchIntoEntities');
+        $reflectionMethod = new ReflectionMethod(OneToMany::class, 'switchIntoEntities');
         $reflectionMethod->setAccessible(true);
 
         $foreigners = new Collection(
@@ -148,6 +151,32 @@ class OneToManyTest extends AbstractTestCase
         $this->assertTrue($language1->getRelated()->films->contains($film2));
         $this->assertFalse($language2->getRelated()->films->contains($film2));
         $this->assertFalse($language2->getRelated()->films->contains($film1));
+    }
+
+    public function testSwitchIntoEntities_withoutInverted()
+    {
+        $relationship = new OneToMany(
+            'payments',
+            Staff::class,
+            Payment::class
+        );
+
+        $reflectionMethod = new ReflectionMethod(OneToMany::class, 'switchIntoEntities');
+        $reflectionMethod->setAccessible(true);
+
+        $foreigners = new Collection([
+                                         $payment1 = Payment::find(1),
+                                         $payment2 = Payment::find(2),
+                                         $payment3 = Payment::find(3),
+                                     ]);
+        $reflectionMethod->invoke(
+            $relationship,
+            $foreigners,
+            $staff = Staff::find(1)
+        );
+
+        $this->assertTrue($staff->getRelated()->isset('payments'));
+        $this->assertInstanceOf(Collection::class, $staff->getRelated()->payments);
     }
 
     public function testLinkNative()

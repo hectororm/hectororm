@@ -12,12 +12,8 @@
 
 namespace Hector\Orm\Tests\Fake\Entity;
 
-use Hector\Orm\Attributes\HasMany;
-use Hector\Orm\Attributes\HasOne;
 use Hector\Orm\Entity\MagicEntity;
 
-#[HasOne(Address::class, 'address')]
-#[HasMany(Payment::class, 'payments')]
-class Staff extends MagicEntity
+class Payment extends MagicEntity
 {
 }

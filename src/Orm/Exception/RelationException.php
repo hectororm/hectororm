@@ -57,7 +57,12 @@ class RelationException extends OrmException
     public static function notAttemptedColumns(string $name, array $columns, string $entity): RelationException
     {
         return new static(
-            sprintf('Entity "%s" does not have the same attempted columns (%s) for the relationship "%s"', $entity, implode(', ', $columns), $name)
+            sprintf(
+                'Entity "%s" does not have the same attempted columns (%s) for the relationship "%s"',
+                $entity,
+                implode(', ', $columns),
+                $name
+            )
         );
     }
 
