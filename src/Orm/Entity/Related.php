@@ -49,6 +49,16 @@ class Related implements Countable
         $this->related = $data['related'];
     }
 
+    /**
+     * PHP magic method.
+     *
+     * @return array|null
+     */
+    public function __debugInfo(): ?array
+    {
+        return $this->related;
+    }
+
     public function restore(Entity $entity): void
     {
         $this->entity = $entity;

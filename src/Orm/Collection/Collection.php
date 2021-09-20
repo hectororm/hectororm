@@ -49,6 +49,16 @@ class Collection extends ArrayObject implements JsonSerializable
     }
 
     /**
+     * PHP magic method.
+     *
+     * @return array
+     */
+    public function __debugInfo(): array
+    {
+        return $this->getArrayCopy();
+    }
+
+    /**
      * Get accepted entity.
      *
      * @return string
