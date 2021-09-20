@@ -384,19 +384,20 @@ class EntityTest extends AbstractTestCase
         $film = $class::get(1);
 
         $this->assertFalse($film->isAltered());
-        $this->assertFalse($film->isAltered(['rating']));
-        $this->assertFalse($film->isAltered(['description']));
+        $this->assertFalse($film->isAltered('rating'));
+        $this->assertFalse($film->isAltered('description'));
 
         $film->description = 'Foo bar';
 
         $this->assertTrue($film->isAltered());
-        $this->assertFalse($film->isAltered(['rating']));
-        $this->assertTrue($film->isAltered(['description']));
+        $this->assertFalse($film->isAltered('rating'));
+        $this->assertTrue($film->isAltered('description'));
+        $this->assertTrue($film->isAltered('description', 'rating'));
 
         $film->refresh();
 
         $this->assertFalse($film->isAltered());
-        $this->assertFalse($film->isAltered(['rating']));
-        $this->assertFalse($film->isAltered(['description']));
+        $this->assertFalse($film->isAltered('rating'));
+        $this->assertFalse($film->isAltered('description'));
     }
 }

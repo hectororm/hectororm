@@ -88,14 +88,14 @@ abstract class Entity
     /**
      * Is altered?
      *
-     * @param array|null $columns
+     * @param string ...$column
      *
      * @return bool
      * @throws OrmException
      */
-    public function isAltered(?array $columns = null): bool
+    public function isAltered(string ...$column): bool
     {
-        return !empty(Orm::get()->getMapper($this)->getEntityAlteration($this, $columns));
+        return !empty(Orm::get()->getMapper($this)->getEntityAlteration($this, $column ?: null));
     }
 
     //////////////////////////////////
