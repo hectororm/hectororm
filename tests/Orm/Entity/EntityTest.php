@@ -374,4 +374,29 @@ class EntityTest extends AbstractTestCase
         $this->assertFalse($actor->isEqualTo($film1));
         $this->assertFalse($actor->isEqualTo($film2));
     }
+
+    /**
+     * @dataProvider classProvider
+     */
+    public function testIsAltered($class)
+    {
+        /** @var Film $film */
+        $film = $class::get(1);
+
+        $this->assertFalse($film->isAltered());
+        $this->assertFalse($film->isAltered(['rating']));
+        $this->assertFalse($film->isAltered(['description']));
+
+        $film->description = 'Foo bar';
+
+        $this->assertTrue($film->isAltered());
+        $this->assertFalse($film->isAltered(['rating']));
+        $this->assertTrue($film->isAltered(['description']));
+
+        $film->refresh();
+
+        $this->assertFalse($film->isAltered());
+        $this->assertFalse($film->isAltered(['rating']));
+        $this->assertFalse($film->isAltered(['description']));
+    }
 }

@@ -260,22 +260,24 @@ abstract class AbstractMapper implements Mapper
     {
         $entity->getRelated()->linkForeign();
 
-        $values = $this->collectEntity($entity);
-        $primaryValue = $this->extractPrimaryValue($values);
+        $values = $this->collectEntity($entity, $this->getEntityAlteration($entity));
+        $primaryValue = $this->getPrimaryValue($entity);
 
-        // Separate values of primary value
-        $values = array_diff_key($values, array_flip($primaryValue));
+        if (count($values) > 0) {
+            // Separate values of primary value
+            $values = array_diff_key($values, array_flip($primaryValue));
 
-        $nbAffected =
-            $entity::query()
-                ->whereEquals($this->quoteArrayKeys($primaryValue))
-                ->update($this->quoteArrayKeys($values));
+            $nbAffected =
+                $entity::query()
+                    ->whereEquals($this->quoteArrayKeys($primaryValue))
+                    ->update($this->quoteArrayKeys($values));
+        }
 
         $entity->getRelated()->linkNative();
 
         $this->refreshEntity($entity);
 
-        return $nbAffected;
+        return $nbAffected ?? 0;
     }
 
     /**
@@ -312,6 +314,24 @@ abstract class AbstractMapper implements Mapper
         $this->hydrateEntity($entity, $data);
         $this->updateOriginalData($entity, $data, true);
         $this->storage->attach($entity);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getEntityAlteration(Entity $entity, ?array $columns = null): array
+    {
+        $originalData = $this->reflection->getHectorData($entity)->get('original', []);
+        if (null !== $columns) {
+            $originalData = array_intersect_key($originalData, array_fill_keys($columns, null));
+        }
+
+        $currentData = $this->collectEntity($entity, $columns);
+
+        ksort($originalData);
+        ksort($currentData);
+
+        return array_keys(array_diff_assoc($originalData, $currentData));
     }
 
     /////////////
@@ -364,19 +384,15 @@ abstract class AbstractMapper implements Mapper
      * @param Entity $entity
      * @param array $data
      * @param bool $erase
-     *
-     * @throws OrmException
      */
     protected function updateOriginalData(Entity $entity, array $data, bool $erase = false): void
     {
-        $reflectionProperty = $this->reflection->getProperty('originalData', Entity::class);
-
         // Erase old data
         if (!$erase) {
-            $data = array_replace($reflectionProperty->getValue($entity), $data);
+            $data = array_replace($this->reflection->getHectorData($entity)->get('original', []), $data);
         }
 
-        $reflectionProperty->setValue($entity, $data);
+        $this->reflection->getHectorData($entity)->set('original', $data);
     }
 
     /**

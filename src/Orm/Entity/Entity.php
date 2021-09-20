@@ -28,7 +28,6 @@ use Hector\Orm\Query\Builder;
 abstract class Entity
 {
     private EntityData $_hectorData;
-    private array $originalData = [];
 
     public function __serialize(): array
     {
@@ -81,9 +80,22 @@ abstract class Entity
             return true;
         }
 
-        $mapper = Orm::get()->getEntityReflection($this::class)->getMapper();
+        $mapper = Orm::get()->getMapper($this);
 
         return $mapper->getPrimaryValue($this) == $mapper->getPrimaryValue($entity);
+    }
+
+    /**
+     * Is altered?
+     *
+     * @param array|null $columns
+     *
+     * @return bool
+     * @throws OrmException
+     */
+    public function isAltered(?array $columns = null): bool
+    {
+        return !empty(Orm::get()->getMapper($this)->getEntityAlteration($this, $columns));
     }
 
     //////////////////////////////////

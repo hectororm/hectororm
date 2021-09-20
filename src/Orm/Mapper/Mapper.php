@@ -67,7 +67,7 @@ interface Mapper
      *
      * @param Builder $builder
      *
-     * @return \Hector\Orm\Collection\Collection<Entity>
+     * @return Collection
      * @throws OrmException
      */
     public function fetchAllWithBuilder(Builder $builder): Collection;
@@ -142,6 +142,17 @@ interface Mapper
      * @throws OrmException
      */
     public function collectEntity(Entity $entity, ?array $columns = null): array;
+
+    /**
+     * Get entity alteration.
+     *
+     * @param Entity $entity
+     * @param array|null $columns
+     *
+     * @return array
+     * @throws OrmException
+     */
+    public function getEntityAlteration(Entity $entity, ?array $columns = null): array;
 
     /**
      * Get pivot data.
