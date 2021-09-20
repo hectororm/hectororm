@@ -17,6 +17,7 @@ use Hector\Connection\Log\Logger;
 use Hector\Orm\Tests\Fake\FakeOrm;
 use Hector\Orm\Tests\Fake\Type\GeometryType;
 use Hector\Schema\Generator\MySQL;
+use LogicException;
 use PHPUnit\Framework\TestCase;
 
 abstract class AbstractTestCase extends TestCase
@@ -35,7 +36,10 @@ abstract class AbstractTestCase extends TestCase
             return self::$orm;
         }
 
-        $connection = new Connection(getenv('MYSQL_DSN'), logger: new Logger());
+        $connection = new Connection(
+            dsn:    getenv('MYSQL_DSN') ?: throw new LogicException('Missing env variable "MYSQL_DSN" for tests'),
+            logger: new Logger()
+        );
 
         $schemaGenerator = new MySQL($connection);
         $schemaContainer = $schemaGenerator->generateSchemas('sakila');
