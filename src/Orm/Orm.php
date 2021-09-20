@@ -291,6 +291,11 @@ class Orm
     {
         $status = EntityStorage::STATUS_TO_INSERT;
         if ($this->storage->contains($entity)) {
+            // Already in storage for an action?
+            if ($this->storage[$entity] !== EntityStorage::STATUS_NONE) {
+                return;
+            }
+
             $status = EntityStorage::STATUS_TO_UPDATE;
         }
 
@@ -313,6 +318,11 @@ class Orm
     {
         if (!$this->storage->contains($entity)) {
             throw new OrmException('Entity does not exists in storage');
+        }
+
+        // Already in storage
+        if ($this->storage[$entity] !== EntityStorage::STATUS_TO_DELETE) {
+            return;
         }
 
         $this->storage->attach($entity, EntityStorage::STATUS_TO_DELETE);
