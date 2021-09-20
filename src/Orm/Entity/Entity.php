@@ -76,6 +76,11 @@ abstract class Entity
             return false;
         }
 
+        // Same object?
+        if ($this === $entity) {
+            return true;
+        }
+
         $mapper = Orm::get()->getEntityReflection($this::class)->getMapper();
 
         return $mapper->getPrimaryValue($this) == $mapper->getPrimaryValue($entity);
