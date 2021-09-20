@@ -102,20 +102,22 @@ class GenericMapper extends AbstractMapper
 
                 $reflectionProperty = $this->reflection->getProperty($column);
 
-                if ($reflectionProperty->isInitialized($entity)) {
-                    $value = $reflectionProperty->getValue($entity);
+                if (false === $reflectionProperty->isInitialized($entity)) {
+                    continue;
+                }
 
-                    if (null !== $value) {
-                        // Get type
-                        $reflectionType = $reflectionProperty->getType();
+                $value = $reflectionProperty->getValue($entity);
 
-                        // Convert type
-                        if ($reflectionType instanceof ReflectionNamedType) {
-                            $data[$column] = $this->reflection->getType($column)->toSchema(
-                                $value,
-                                ExpectedType::fromReflection($reflectionType)
-                            );
-                        }
+                if (null !== $value) {
+                    // Get type
+                    $reflectionType = $reflectionProperty->getType();
+
+                    // Convert type
+                    if ($reflectionType instanceof ReflectionNamedType) {
+                        $data[$column] = $this->reflection->getType($column)->toSchema(
+                            $value,
+                            ExpectedType::fromReflection($reflectionType)
+                        );
                     }
                 }
             }
