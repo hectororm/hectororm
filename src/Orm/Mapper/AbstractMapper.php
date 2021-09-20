@@ -356,7 +356,6 @@ abstract class AbstractMapper implements Mapper
      * @param Entity $entity
      * @param array $data
      * @param bool $merge
-     *
      */
     protected function setPivotData(Entity $entity, array $data, bool $merge = true): void
     {

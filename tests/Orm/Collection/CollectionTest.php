@@ -44,6 +44,32 @@ class CollectionTest extends AbstractTestCase
         new Collection([$film = new Film()], Actor::class);
     }
 
+    public function testUpdateHook()
+    {
+        $film1 = new Film();
+        $film1->title = 'Foo';
+        $film2 = new Film();
+        $film2->title = 'Bar';
+        $film3 = new Film();
+        $film3->title = 'Baz';
+
+        $films = new CollectionWithHook([$film1]);
+
+        $this->assertEquals('Foo', $films->getHookValue());
+
+        $films->exchangeArray([$film2, $film3]);
+
+        $this->assertEquals('Bar, Baz', $films->getHookValue());
+
+        unset($films[0]);
+
+        $this->assertEquals('Baz', $films->getHookValue());
+
+        $films[] = $film1;
+
+        $this->assertEquals('Baz, Foo', $films->getHookValue());
+    }
+
     public function testExchangeArray()
     {
         $films = new Collection();

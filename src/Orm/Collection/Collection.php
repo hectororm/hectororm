@@ -46,6 +46,7 @@ class Collection extends ArrayObject implements JsonSerializable
         $this->accepted = $accepted;
 
         parent::__construct($this->validInput($input));
+        $this->updateHook();
     }
 
     /**
@@ -84,6 +85,16 @@ class Collection extends ArrayObject implements JsonSerializable
     public function jsonSerialize(): array
     {
         return $this->getArrayCopy();
+    }
+
+    /**
+     * Update hook.
+     *
+     * Method called after an update of collection, not an update of entities.
+     * Example: new entity, exchange of array and filling.
+     */
+    protected function updateHook(): void
+    {
     }
 
     /**
@@ -237,6 +248,16 @@ class Collection extends ArrayObject implements JsonSerializable
         }
 
         parent::offsetSet($key, $value);
+        $this->updateHook();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function offsetUnset(mixed $key): void
+    {
+        parent::offsetUnset($key);
+        $this->updateHook();
     }
 
     /**
@@ -244,7 +265,10 @@ class Collection extends ArrayObject implements JsonSerializable
      */
     public function exchangeArray(mixed $array): array
     {
-        return parent::exchangeArray($this->validInput($array));
+        $old = parent::exchangeArray($this->validInput($array));
+        $this->updateHook();
+
+        return $old;
     }
 
     /**
