@@ -321,7 +321,7 @@ class Orm
         }
 
         // Already in storage
-        if ($this->storage[$entity] !== EntityStorage::STATUS_TO_DELETE) {
+        if ($this->storage[$entity] !== EntityStorage::STATUS_NONE) {
             return;
         }
 
