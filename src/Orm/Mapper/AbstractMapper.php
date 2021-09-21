@@ -159,6 +159,9 @@ abstract class AbstractMapper implements Mapper
         $this->updateOriginalData($entity, $data, true);
         $this->storage->attach($entity);
 
+        // With
+        $entity->load($builder->with);
+
         return $entity;
     }
 
