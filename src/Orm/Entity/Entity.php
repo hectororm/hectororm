@@ -81,8 +81,13 @@ abstract class Entity
         }
 
         $mapper = Orm::get()->getMapper($this);
+        $myPrimaries = array_filter($mapper->getPrimaryValue($this) ?? []);
 
-        return $mapper->getPrimaryValue($this) == $mapper->getPrimaryValue($entity);
+        if (empty($myPrimaries)) {
+            return false;
+        }
+
+        return $myPrimaries == $mapper->getPrimaryValue($entity);
     }
 
     /**

@@ -277,6 +277,7 @@ class Collection extends ArrayObject implements JsonSerializable
      * @param Entity $entity
      *
      * @return bool
+     * @throws OrmException
      */
     public function contains(Entity $entity): bool
     {
@@ -286,7 +287,7 @@ class Collection extends ArrayObject implements JsonSerializable
 
         /** @var Entity $entityInCollection */
         foreach ($this as $entityInCollection) {
-            if ($entityInCollection === $entity) {
+            if ($entityInCollection->isEqualTo($entity)) {
                 return true;
             }
         }
