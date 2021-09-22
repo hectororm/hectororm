@@ -16,12 +16,8 @@ namespace Hector\DataTypes\Type;
 
 use Hector\DataTypes\ExpectedType;
 use Hector\DataTypes\TypeException;
-use Stringable;
 
-/**
- * Class StringType.
- */
-class StringType extends AbstractType
+class BooleanType extends AbstractType
 {
     /**
      * @inheritDoc
@@ -42,22 +38,36 @@ class StringType extends AbstractType
             throw TypeException::castNotBuiltin($this);
         }
 
-        return (string)$value;
+        if (is_string($value)) {
+            switch (strtolower($value)) {
+                case 'true':
+                    return true;
+                case 'false':
+                    return false;
+            }
+        }
+
+        return $value == true;
     }
 
     /**
      * @inheritDoc
      */
-    public function toSchema(mixed $value, ?ExpectedType $expected = null): string
+    public function toSchema(mixed $value, ?ExpectedType $expected = null): int
     {
         if (!is_scalar($value)) {
-            if ($value instanceof Stringable) {
-                return (string)$value;
-            }
-
             throw TypeException::castError($this);
         }
 
-        return (string)$value;
+        if (is_string($value)) {
+            switch (strtolower($value)) {
+                case 'true':
+                    return 1;
+                case 'false':
+                    return 0;
+            }
+        }
+
+        return (int)$value;
     }
 }
