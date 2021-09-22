@@ -17,9 +17,6 @@ namespace Hector\DataTypes\Type;
 use Hector\DataTypes\ExpectedType;
 use Hector\DataTypes\TypeException;
 
-/**
- * Class SetType.
- */
 class SetType extends AbstractType
 {
     /**

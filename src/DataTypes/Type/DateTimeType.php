@@ -20,9 +20,6 @@ use Hector\DataTypes\ExpectedType;
 use Hector\DataTypes\TypeException;
 use Throwable;
 
-/**
- * Class DateTimeType.
- */
 class DateTimeType extends AbstractType
 {
     public function __construct(

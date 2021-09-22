@@ -18,10 +18,6 @@ use Exception;
 use Hector\DataTypes\Type\TypeInterface;
 use Throwable;
 
-
-/**
- * Class TypeException.
- */
 class TypeException extends Exception
 {
     /**

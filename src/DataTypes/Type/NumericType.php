@@ -17,9 +17,6 @@ namespace Hector\DataTypes\Type;
 use Hector\DataTypes\ExpectedType;
 use Hector\DataTypes\TypeException;
 
-/**
- * Class NumericType.
- */
 class NumericType extends AbstractType
 {
     public function __construct(

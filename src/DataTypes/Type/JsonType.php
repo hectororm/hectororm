@@ -19,9 +19,6 @@ use Hector\DataTypes\TypeException;
 use stdClass;
 use Throwable;
 
-/**
- * Class JsonType.
- */
 class JsonType extends AbstractType
 {
     /**

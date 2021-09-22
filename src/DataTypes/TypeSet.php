@@ -17,9 +17,6 @@ namespace Hector\DataTypes;
 use Countable;
 use Hector\DataTypes\Type;
 
-/**
- * Class TypeSet.
- */
 class TypeSet implements Countable
 {
     private array $types = [];

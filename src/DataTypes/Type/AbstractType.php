@@ -14,9 +14,6 @@ declare(strict_types=1);
 
 namespace Hector\DataTypes\Type;
 
-/**
- * Class AbstractType.
- */
 abstract class AbstractType implements TypeInterface
 {
     /**

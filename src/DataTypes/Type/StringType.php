@@ -18,9 +18,6 @@ use Hector\DataTypes\ExpectedType;
 use Hector\DataTypes\TypeException;
 use Stringable;
 
-/**
- * Class StringType.
- */
 class StringType extends AbstractType
 {
     /**

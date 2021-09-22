@@ -16,9 +16,6 @@ namespace Hector\DataTypes;
 
 use ReflectionNamedType;
 
-/**
- * Class ExpectedType.
- */
 class ExpectedType
 {
     /**
