@@ -29,11 +29,7 @@ class MagicMapper extends AbstractMapper
      */
     public function __construct(string $entity, protected EntityStorage $storage)
     {
-        // Not a valid entity
-        if (!is_a($entity, MagicEntity::class, true)) {
-            throw new MapperException(sprintf('"%s" must extends "%s" class', $entity, MagicEntity::class));
-        }
-
+        $this->assertEntityType($entity, MagicEntity::class);
         parent::__construct($entity, $storage);
     }
 

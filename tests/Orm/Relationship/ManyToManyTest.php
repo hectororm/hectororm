@@ -13,14 +13,14 @@
 namespace Hector\Orm\Tests\Relationship;
 
 use Hector\Orm\Collection\Collection;
-use Hector\Orm\Exception\RelationException;
 use Hector\Orm\Query\Builder;
-use Hector\Orm\Relationship\Relationship;
 use Hector\Orm\Relationship\ManyToMany;
+use Hector\Orm\Relationship\Relationship;
 use Hector\Orm\Tests\AbstractTestCase;
 use Hector\Orm\Tests\Fake\Entity\Actor;
 use Hector\Orm\Tests\Fake\Entity\Film;
 use Hector\Orm\Tests\Fake\Entity\Language;
+use TypeError;
 
 class ManyToManyTest extends AbstractTestCase
 {
@@ -96,7 +96,7 @@ class ManyToManyTest extends AbstractTestCase
 
     public function testGetBuilderWithBadEntity()
     {
-        $this->expectException(RelationException::class);
+        $this->expectException(TypeError::class);
 
         $relationship = new ManyToMany('actors', Film::class, Actor::class);
         $relationship->getBuilder(Language::get(2));

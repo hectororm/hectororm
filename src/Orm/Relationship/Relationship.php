@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace Hector\Orm\Relationship;
 
+use Hector\Orm\Assert\EntityAssert;
 use Hector\Orm\Collection\Collection;
 use Hector\Orm\Entity\Entity;
 use Hector\Orm\Entity\ReflectionEntity;
@@ -28,6 +29,7 @@ use Hector\Schema\Exception\SchemaException;
 
 abstract class Relationship
 {
+    use EntityAssert;
     use Clause\Where;
     use Clause\Group;
     use Clause\Having;
@@ -228,10 +230,7 @@ abstract class Relationship
         $nbColumns = count($columns);
 
         foreach ($entities as $entity) {
-            if (!is_a($entity, $entityReflection->getName(), true)) {
-                throw new RelationException(sprintf('Entity must be a "%s" class', $entityReflection->getName()));
-            }
-
+            $this->assertEntityType($entity, $entityReflection->getName());
             $entityValue = $entityReflection->getMapper()->collectEntity($entity, $columns);
 
             if (count($entityValue) !== $nbColumns) {

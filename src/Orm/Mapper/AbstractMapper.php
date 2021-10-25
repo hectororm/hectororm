@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace Hector\Orm\Mapper;
 
 use Generator;
+use Hector\Orm\Assert\EntityAssert;
 use Hector\Orm\Attributes;
 use Hector\Orm\Collection\Collection;
 use Hector\Orm\Entity\Entity;
@@ -29,6 +30,8 @@ use ReflectionAttribute;
 
 abstract class AbstractMapper implements Mapper
 {
+    use EntityAssert;
+
     protected ReflectionEntity $reflection;
     protected ?Relationships $relationships = null;
 

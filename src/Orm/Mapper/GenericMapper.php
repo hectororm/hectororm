@@ -28,9 +28,7 @@ class GenericMapper extends AbstractMapper
      */
     public function hydrateEntity(Entity $entity, array $data): void
     {
-        if (!is_a($entity, $this->reflection->class, true)) {
-            throw new MapperException(sprintf('Entity must be a "%s" class', $this->reflection->class));
-        }
+        $this->assertEntityType($entity, $this->reflection->class);
 
         // No data
         if (empty($data)) {
@@ -79,9 +77,7 @@ class GenericMapper extends AbstractMapper
      */
     public function collectEntity(Entity $entity, ?array $columns = null): array
     {
-        if (!is_a($entity, $this->reflection->class, true)) {
-            throw new MapperException(sprintf('Entity must be a "%s" class', $this->reflection->class));
-        }
+        $this->assertEntityType($entity, $this->reflection->class);
 
         try {
             $data = [];

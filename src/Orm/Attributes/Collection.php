@@ -15,17 +15,15 @@ declare(strict_types=1);
 namespace Hector\Orm\Attributes;
 
 use Attribute;
-use TypeError;
+use Hector\Orm\Assert\CollectionAssert;
 
 #[Attribute(Attribute::TARGET_CLASS)]
 class Collection implements OrmAttribute
 {
+    use CollectionAssert;
+
     public function __construct(public string $collection)
     {
-        if (!is_a($collection, \Hector\Orm\Collection\Collection::class, true)) {
-            throw new TypeError(
-                sprintf('Excepted %s class, got %s', \Hector\Orm\Collection\Collection::class, $collection)
-            );
-        }
+        $this->assertCollection($this->collection);
     }
 }

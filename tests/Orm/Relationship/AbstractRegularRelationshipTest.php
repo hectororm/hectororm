@@ -167,7 +167,7 @@ class AbstractRegularRelationshipTest extends AbstractTestCase
 
     public function testGetBuilderWithBadEntity()
     {
-        $this->expectException(RelationException::class);
+        $this->expectException(TypeError::class);
 
         $relationship = new ManyToOne(
             'language',

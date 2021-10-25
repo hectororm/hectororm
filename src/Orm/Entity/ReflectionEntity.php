@@ -16,6 +16,7 @@ namespace Hector\Orm\Entity;
 
 use Exception;
 use Hector\DataTypes\Type\TypeInterface;
+use Hector\Orm\Assert\CollectionAssert;
 use Hector\Orm\Assert\EntityAssert;
 use Hector\Orm\Attributes;
 use Hector\Orm\Collection\Collection;
@@ -45,6 +46,7 @@ use ReflectionProperty;
  */
 class ReflectionEntity
 {
+    use CollectionAssert;
     use EntityAssert;
 
     private string $mapper;
@@ -231,15 +233,7 @@ class ReflectionEntity
             }
         } while (null === $collection && $reflectionClass = $reflectionClass->getParentClass());
 
-        if (!is_a($collection, Collection::class, true)) {
-            throw new OrmException(
-                sprintf(
-                    'Defined collection of "%s" entity must extend "%s" class',
-                    $this->entity,
-                    Collection::class
-                )
-            );
-        }
+        $this->assertCollection((string)$collection);
 
         return (string)$collection;
     }

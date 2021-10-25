@@ -34,4 +34,25 @@ trait EntityAssert
             throw new TypeError(sprintf('Excepted %s class, got %s', Entity::class, $entity));
         }
     }
+
+    /**
+     * Assert entity type.
+     *
+     * @param Entity|string $entity
+     * @param Entity|string $expected
+     */
+    protected function assertEntityType(Entity|string $entity, Entity|string $expected): void
+    {
+        $this->assertEntity($entity);
+
+        if (false === is_a($entity, $expected, true)) {
+            throw new TypeError(
+                sprintf(
+                    'Excepted %s entity, got %s',
+                    is_string($expected) ? $expected : $expected::class,
+                    is_string($entity) ? $entity : $entity::class,
+                )
+            );
+        }
+    }
 }

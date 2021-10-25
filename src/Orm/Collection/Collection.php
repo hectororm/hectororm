@@ -39,7 +39,6 @@ class Collection extends ArrayObject implements JsonSerializable
     public function __construct(iterable $input = [], string $accepted = Entity::class)
     {
         $this->assertEntity($accepted);
-
         $this->accepted = $accepted;
 
         parent::__construct($this->validInput($input));
@@ -236,9 +235,7 @@ class Collection extends ArrayObject implements JsonSerializable
      */
     public function offsetSet(mixed $key, mixed $value): void
     {
-        if (!is_a($value, $this->accepted, true)) {
-            throw new InvalidArgumentException(sprintf('Value must be a "%s" class', $this->accepted));
-        }
+        $this->assertEntityType($value, $this->accepted);
 
         if ($this->contains($value)) {
             return;
@@ -303,9 +300,7 @@ class Collection extends ArrayObject implements JsonSerializable
     private function validInput(iterable $input): iterable
     {
         foreach ($input as $value) {
-            if (!is_a($value, $this->accepted, true)) {
-                throw new InvalidArgumentException(sprintf('Value must be an array of "%s" class', $this->accepted));
-            }
+            $this->assertEntityType($value, $this->accepted);
         }
 
         return $input;

@@ -27,7 +27,6 @@ use Hector\Orm\Query\Builder;
 use Hector\Orm\Storage\EntityStorage;
 use Hector\Query\QueryBuilder;
 use Hector\Schema\SchemaContainer;
-use InvalidArgumentException;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Throwable;
 
@@ -253,10 +252,6 @@ class Orm
      */
     public function getBuilder(string $entity): Builder
     {
-        if (!is_a($entity, Entity::class, true)) {
-            throw new InvalidArgumentException(sprintf('Argument must be a valid entity class name "%s"', $entity));
-        }
-
         return new Builder($entity);
     }
 

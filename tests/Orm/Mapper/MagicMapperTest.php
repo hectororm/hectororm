@@ -18,6 +18,7 @@ use Hector\Orm\Tests\AbstractTestCase;
 use Hector\Orm\Tests\Fake\Entity\Film;
 use Hector\Orm\Tests\Fake\Entity\FilmMagic;
 use Hector\Orm\Tests\Fake\Entity\Language;
+use TypeError;
 
 class MagicMapperTest extends AbstractTestCase
 {
@@ -30,7 +31,7 @@ class MagicMapperTest extends AbstractTestCase
 
     public function testConstructWithBadEntity()
     {
-        $this->expectException(MapperException::class);
+        $this->expectException(TypeError::class);
 
         new MagicMapper(Film::class, $this->getOrm()->getStorage());
     }

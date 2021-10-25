@@ -39,9 +39,9 @@ class CollectionTest extends AbstractTestCase
 
     public function testCollectionConstructWithBadEntities()
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(TypeError::class);
 
-        new Collection([$film = new Film()], Actor::class);
+        new Collection([new Film()], Actor::class);
     }
 
     public function testUpdateHook()
@@ -80,10 +80,10 @@ class CollectionTest extends AbstractTestCase
 
     public function testExchangeArrayWithBadEntities()
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(TypeError::class);
 
         $films = new Collection([], Actor::class);
-        $films->exchangeArray([$film = new Film()]);
+        $films->exchangeArray([new Film()]);
     }
 
     public function testFilter()
@@ -113,7 +113,7 @@ class CollectionTest extends AbstractTestCase
 
     public function testCollectionAppendInvalidEntity()
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(TypeError::class);
 
         $films = new Collection([], Actor::class);
         $films->append(new Film());
@@ -121,7 +121,7 @@ class CollectionTest extends AbstractTestCase
 
     public function testCollectionAppend2InvalidEntity()
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(TypeError::class);
 
         $films = new Collection([], Actor::class);
         $films[] = new Film();
@@ -129,7 +129,7 @@ class CollectionTest extends AbstractTestCase
 
     public function testCollectionAppend3InvalidEntity()
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(TypeError::class);
 
         $films = new Collection([], Actor::class);
         $films['foo'] = new Film();

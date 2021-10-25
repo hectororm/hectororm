@@ -18,6 +18,7 @@ use Hector\Orm\Tests\AbstractTestCase;
 use Hector\Orm\Tests\Fake\Entity\Film;
 use Hector\Orm\Tests\Fake\Entity\FilmIncomplete;
 use Hector\Orm\Tests\Fake\Entity\Language;
+use TypeError;
 
 class GenericMapperTest extends AbstractTestCase
 {
@@ -42,7 +43,7 @@ class GenericMapperTest extends AbstractTestCase
 
     public function testHydrateEntityWithBadEntity()
     {
-        $this->expectException(MapperException::class);
+        $this->expectException(TypeError::class);
 
         $mapper = new GenericMapper(Film::class, $this->getOrm()->getStorage());
         $entity = new Language();
@@ -96,7 +97,7 @@ class GenericMapperTest extends AbstractTestCase
 
     public function testCollectEntityWithBadEntity()
     {
-        $this->expectException(MapperException::class);
+        $this->expectException(TypeError::class);
 
         $mapper = new GenericMapper(Film::class, $this->getOrm()->getStorage());
         $entity = new Language();
