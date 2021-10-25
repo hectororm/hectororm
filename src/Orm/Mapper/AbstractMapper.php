@@ -365,7 +365,11 @@ abstract class AbstractMapper implements Mapper
      */
     protected function setPivotData(Entity $entity, array $data, bool $merge = true): void
     {
-        $pivotData = array_filter($data, fn($key) => str_starts_with($key, 'PIVOT_'), ARRAY_FILTER_USE_KEY);
+        $pivotData = array_filter(
+            $data,
+            fn($key) => str_starts_with($key, Builder::PIVOT_PREFIX),
+            ARRAY_FILTER_USE_KEY
+        );
 
         $pivotKeys = array_keys($pivotData);
         array_walk($pivotKeys, fn(&$key) => $key = substr($key, 6));

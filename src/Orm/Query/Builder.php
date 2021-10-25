@@ -30,6 +30,7 @@ use Hector\Schema\Column;
 class Builder extends QueryBuilder
 {
     public const FROM_ALIAS = 'main';
+    public const PIVOT_PREFIX = 'PIVOT_';
 
     private ReflectionEntity $entityReflection;
     public array $with = [];
@@ -115,7 +116,7 @@ class Builder extends QueryBuilder
      */
     public function withPivotColumn(string $column, string $alias): static
     {
-        $this->column($column, sprintf('`PIVOT_%s`', $alias));
+        $this->column($column, Builder::PIVOT_PREFIX . $alias);
 
         return $this;
     }
