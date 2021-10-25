@@ -16,9 +16,6 @@ namespace Hector\Orm\Event;
 
 use Hector\Orm\Entity\Entity;
 
-/**
- * Class EntitySaveEvent.
- */
 abstract class EntitySaveEvent extends EntityEvent
 {
     /**

@@ -20,9 +20,6 @@ use Hector\Orm\Entity\ReflectionEntity;
 use Hector\Orm\Exception\OrmException;
 use Hector\Orm\Exception\RelationException;
 
-/**
- * Class ManyToOne.
- */
 class ManyToOne extends RegularRelationship
 {
     /**

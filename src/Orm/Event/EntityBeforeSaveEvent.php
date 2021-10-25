@@ -14,9 +14,6 @@ declare(strict_types=1);
 
 namespace Hector\Orm\Event;
 
-/**
- * Class EntityBeforeSaveEvent.
- */
 class EntityBeforeSaveEvent extends EntitySaveEvent implements StoppableEventInterface
 {
     use StoppableEventTrait;

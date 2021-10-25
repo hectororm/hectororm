@@ -22,9 +22,6 @@ use Hector\Orm\Query\Builder;
 use Hector\Query\Statement\Row;
 use Hector\Schema\Exception\SchemaException;
 
-/**
- * Class AbstractRegularRelationship.
- */
 abstract class RegularRelationship extends Relationship
 {
     /**

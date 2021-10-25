@@ -21,9 +21,6 @@ use Hector\Orm\Entity\ReflectionEntity;
 use Hector\Orm\Exception\OrmException;
 use Hector\Orm\Exception\RelationException;
 
-/**
- * Class Relationships.
- */
 class Relationships implements Countable
 {
     use EntityAssert;

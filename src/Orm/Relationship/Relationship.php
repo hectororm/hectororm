@@ -26,9 +26,6 @@ use Hector\Query\Clause;
 use Hector\Query\StatementInterface;
 use Hector\Schema\Exception\SchemaException;
 
-/**
- * Class Relationship.
- */
 abstract class Relationship
 {
     use Clause\Where;

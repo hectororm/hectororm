@@ -17,9 +17,6 @@ namespace Hector\Orm\Collection;
 use FilterIterator;
 use Iterator;
 
-/**
- * Class FilterCollectionIterator.
- */
 class FilterCollectionIterator extends FilterIterator
 {
     private $callback;

@@ -24,9 +24,6 @@ use Hector\Orm\Orm;
 use InvalidArgumentException;
 use JsonSerializable;
 
-/**
- * Class Collection.
- */
 class Collection extends ArrayObject implements JsonSerializable
 {
     use EntityAssert;

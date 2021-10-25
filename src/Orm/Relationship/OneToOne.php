@@ -14,9 +14,6 @@ declare(strict_types=1);
 
 namespace Hector\Orm\Relationship;
 
-/**
- * Class OneToOne.
- */
 class OneToOne extends ManyToOne
 {
     /**

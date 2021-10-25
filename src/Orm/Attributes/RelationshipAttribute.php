@@ -19,9 +19,6 @@ use Hector\Orm\Exception\OrmException;
 use Hector\Orm\Relationship\Relationship;
 use Hector\Orm\Relationship\Relationships;
 
-/**
- * Class RelationshipAttribute.
- */
 abstract class RelationshipAttribute
 {
     use EntityAssert;

@@ -16,9 +16,6 @@ use Hector\Orm\Collection\Collection;
 use Hector\Orm\Entity\Entity;
 use Hector\Orm\Entity\ReflectionEntity;
 
-/**
- * Trait ValidToManyTrait.
- */
 trait ValidToManyTrait
 {
     protected ReflectionEntity $targetEntity;

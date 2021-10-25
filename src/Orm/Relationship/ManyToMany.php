@@ -26,9 +26,6 @@ use Hector\Query\Statement\Row;
 use Hector\Schema\Exception\SchemaException;
 use Hector\Schema\Table;
 
-/**
- * Class ManyToMany.
- */
 class ManyToMany extends Relationship
 {
     use ValidToManyTrait;

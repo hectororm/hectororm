@@ -17,9 +17,6 @@ namespace Hector\Orm\Storage;
 use FilterIterator;
 use WeakReference;
 
-/**
- * Class FilterStorageIterator.
- */
 class FilterStorageIterator extends FilterIterator
 {
     /**

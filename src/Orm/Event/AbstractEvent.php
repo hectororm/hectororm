@@ -16,9 +16,6 @@ namespace Hector\Orm\Event;
 
 use DateTimeImmutable;
 
-/**
- * Class AbstractEvent.
- */
 abstract class AbstractEvent
 {
     private DateTimeImmutable $time;

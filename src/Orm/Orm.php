@@ -31,9 +31,6 @@ use InvalidArgumentException;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Throwable;
 
-/**
- * Class Orm.
- */
 class Orm
 {
     public static ?Orm $instance = null;

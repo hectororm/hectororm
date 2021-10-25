@@ -16,9 +16,6 @@ namespace Hector\Orm\Event;
 
 use Psr\EventDispatcher\EventDispatcherInterface;
 
-/**
- * Class NullEventDispatcher.
- */
 class NullEventDispatcher implements EventDispatcherInterface
 {
     /**

@@ -14,9 +14,6 @@ declare(strict_types=1);
 
 namespace Hector\Orm\Entity;
 
-/**
- * Class EntityData.
- */
 final class EntityData
 {
     private Related $related;

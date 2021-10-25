@@ -16,9 +16,6 @@ namespace Hector\Orm\Event;
 
 use Psr\EventDispatcher\StoppableEventInterface as PsrStoppableEventInterface;
 
-/**
- * Interface StoppableEventInterface.
- */
 interface StoppableEventInterface extends PsrStoppableEventInterface
 {
     /**

@@ -14,9 +14,6 @@ declare(strict_types=1);
 
 namespace Hector\Orm\Exception;
 
-/**
- * Class RelationException.
- */
 class RelationException extends OrmException
 {
     /**
