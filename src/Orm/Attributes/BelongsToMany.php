@@ -33,7 +33,6 @@ class BelongsToMany extends RelationshipAttribute implements OrmAttribute
         ...$params
     ) {
         parent::__construct($target, $name, $params);
-        $this->assertEntity($this->target);
     }
 
     /**
