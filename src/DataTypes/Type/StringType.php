@@ -14,8 +14,9 @@ declare(strict_types=1);
 
 namespace Hector\DataTypes\Type;
 
+use BackedEnum;
+use Hector\DataTypes\Exception\ValueException;
 use Hector\DataTypes\ExpectedType;
-use Hector\DataTypes\TypeException;
 use Stringable;
 
 class StringType extends AbstractType
@@ -25,9 +26,7 @@ class StringType extends AbstractType
      */
     public function fromSchema(mixed $value, ?ExpectedType $expected = null): mixed
     {
-        if (!is_scalar($value)) {
-            throw TypeException::castError($this);
-        }
+        $this->assertScalar($value);
 
         if (null !== $expected) {
             if ($expected->isBuiltin()) {
@@ -36,7 +35,11 @@ class StringType extends AbstractType
                 return $value;
             }
 
-            throw TypeException::castNotBuiltin($this);
+            if (is_a($expected->getName(), BackedEnum::class)) {
+                return $expected->getName()::from($value);
+            }
+
+            throw ValueException::castNotBuiltin($this);
         }
 
         return (string)$value;
@@ -52,7 +55,7 @@ class StringType extends AbstractType
                 return (string)$value;
             }
 
-            throw TypeException::castError($this);
+            throw ValueException::castError($this);
         }
 
         return (string)$value;

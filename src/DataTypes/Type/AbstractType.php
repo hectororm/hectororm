@@ -14,6 +14,8 @@ declare(strict_types=1);
 
 namespace Hector\DataTypes\Type;
 
+use ValueError;
+
 abstract class AbstractType implements TypeInterface
 {
     /**
@@ -38,5 +40,17 @@ abstract class AbstractType implements TypeInterface
     public function getBindingType(): ?int
     {
         return null;
+    }
+
+    /**
+     * Assert scalar value.
+     *
+     * @param mixed $value
+     */
+    protected function assertScalar(mixed $value): void
+    {
+        if (!is_scalar($value)) {
+            throw new ValueError(sprintf('Value must be scalar, "%s" type given', get_debug_type($value)));
+        }
     }
 }

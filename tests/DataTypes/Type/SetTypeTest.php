@@ -12,9 +12,9 @@
 
 namespace Hector\DataTypes\Tests\Type;
 
+use Hector\DataTypes\Exception\ValueException;
 use Hector\DataTypes\ExpectedType;
 use Hector\DataTypes\Type\SetType;
-use Hector\DataTypes\TypeException;
 use PHPUnit\Framework\TestCase;
 
 class SetTypeTest extends TestCase
@@ -28,7 +28,7 @@ class SetTypeTest extends TestCase
 
     public function testFromSchemaWithNotValid()
     {
-        $this->expectException(TypeException::class);
+        $this->expectException(ValueException::class);
 
         $type = new SetType();
         $type->fromSchema(1);
@@ -36,7 +36,7 @@ class SetTypeTest extends TestCase
 
     public function testFromSchemaWithNotScalar()
     {
-        $this->expectException(TypeException::class);
+        $this->expectException(ValueException::class);
 
         $type = new SetType();
         $type->fromSchema(['foo']);
@@ -60,7 +60,7 @@ class SetTypeTest extends TestCase
 
     public function testFromSchemaWithDeclaredTypeBuiltinInvalid()
     {
-        $this->expectException(TypeException::class);
+        $this->expectException(ValueException::class);
 
         $expectedType = new ExpectedType('int', false, true);
         $type = new SetType();
@@ -70,7 +70,7 @@ class SetTypeTest extends TestCase
 
     public function testFromSchemaWithDeclaredTypeBuiltinAndBadValue()
     {
-        $this->expectException(TypeException::class);
+        $this->expectException(ValueException::class);
         $expectedType = new ExpectedType('string', false, true);
 
         $type = new SetType();
@@ -79,7 +79,7 @@ class SetTypeTest extends TestCase
 
     public function testFromSchemaWithDeclaredTypeNotBuiltin()
     {
-        $this->expectException(TypeException::class);
+        $this->expectException(ValueException::class);
 
         $expectedType = new ExpectedType('\stdClass', false, false);
 
@@ -96,7 +96,7 @@ class SetTypeTest extends TestCase
 
     public function testToSchemaWithBadType()
     {
-        $this->expectException(TypeException::class);
+        $this->expectException(ValueException::class);
 
         $type = new SetType();
         $fakeObject = new class {

@@ -12,43 +12,53 @@
 
 namespace Hector\DataTypes\Tests\Type;
 
+use BackedEnum;
 use Hector\DataTypes\ExpectedType;
-use Hector\DataTypes\Type\BooleanType;
+use Hector\DataTypes\Type\EnumType;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 use ValueError;
 
-class BooleanTypeTest extends TestCase
+class EnumTypeTest extends TestCase
 {
-    public function testFromSchema()
+    protected function setUp(): void
     {
-        $type = new BooleanType();
+        if (!interface_exists(BackedEnum::class)) {
+            $this->markTestSkipped('Enum are not available on this PHP version.');
+        }
+    }
 
-        $this->assertSame(true, $type->fromSchema(1));
-        $this->assertSame(true, $type->fromSchema('1'));
-        $this->assertSame(true, $type->fromSchema(true));
-        $this->assertSame(true, $type->fromSchema('true'));
-        $this->assertSame(false, $type->fromSchema(false));
-        $this->assertSame(false, $type->fromSchema('false'));
-        $this->assertSame(false, $type->fromSchema('0'));
-        $this->assertSame(false, $type->fromSchema(0));
+    public function testFromSchema_int()
+    {
+        $type = new EnumType(FakeEnumInt::class);
+
+        $this->assertSame(FakeEnumInt::FOO, $type->fromSchema(0));
+        $this->assertSame(FakeEnumInt::BAR, $type->fromSchema(1));
+    }
+
+    public function testFromSchema_string()
+    {
+        $type = new EnumType(FakeEnumString::class);
+
+        $this->assertSame(FakeEnumString::FOO, $type->fromSchema('foo'));
+        $this->assertSame(FakeEnumString::BAR, $type->fromSchema('bar'));
     }
 
     public function testFromSchemaWithNotScalar()
     {
         $this->expectException(ValueError::class);
 
-        $type = new BooleanType();
+        $type = new EnumType(FakeEnumString::class);
         $type->fromSchema(['foo']);
     }
 
-    public function testFromSchemaWithDeclaredTypeBuiltin()
+    public function testFromSchemaWithDeclaredTypeStringBuiltin()
     {
         $expectedType = new ExpectedType('string', false, true);
 
-        $type = new BooleanType();
+        $type = new EnumType(FakeEnumString::class);
 
-        $this->assertSame('1', $type->fromSchema('1', $expectedType));
+        $this->assertSame('foo', $type->fromSchema('foo', $expectedType));
     }
 
     public function testFromSchemaWithDeclaredTypeBuiltinAndBadValue()
@@ -56,7 +66,7 @@ class BooleanTypeTest extends TestCase
         $this->expectException(ValueError::class);
         $expectedType = new ExpectedType('string', false, true);
 
-        $type = new BooleanType();
+        $type = new EnumType(FakeEnumString::class);
 
         $this->assertSame('1', $type->fromSchema(new stdClass(), $expectedType));
     }
@@ -67,29 +77,23 @@ class BooleanTypeTest extends TestCase
 
         $expectedType = new ExpectedType('string', false, false);
 
-        $type = new BooleanType();
+        $type = new EnumType(FakeEnumString::class);
         $type->fromSchema('1', $expectedType);
     }
 
     public function testToSchema()
     {
-        $type = new BooleanType();
+        $type = new EnumType(FakeEnumString::class);
 
-        $this->assertSame(1, $type->toSchema(1));
-        $this->assertSame(1, $type->toSchema('1'));
-        $this->assertSame(1, $type->toSchema(true));
-        $this->assertSame(1, $type->toSchema('true'));
-        $this->assertSame(0, $type->toSchema(false));
-        $this->assertSame(0, $type->toSchema('false'));
-        $this->assertSame(0, $type->toSchema('0'));
-        $this->assertSame(0, $type->toSchema(0));
+        $this->assertSame('foo', $type->toSchema(FakeEnumString::FOO));
+        $this->assertSame('bar', $type->toSchema(FakeEnumString::BAR));
     }
 
     public function testToSchemaWithNotScalar()
     {
         $this->expectException(ValueError::class);
 
-        $type = new BooleanType();
+        $type = new EnumType(FakeEnumString::class);
         $type->toSchema(['foo']);
     }
 }

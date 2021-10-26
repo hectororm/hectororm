@@ -14,8 +14,8 @@ declare(strict_types=1);
 
 namespace Hector\DataTypes\Type;
 
+use Hector\DataTypes\Exception\ValueException;
 use Hector\DataTypes\ExpectedType;
-use Hector\DataTypes\TypeException;
 use stdClass;
 use Throwable;
 
@@ -26,9 +26,7 @@ class JsonType extends AbstractType
      */
     public function fromSchema(mixed $value, ?ExpectedType $expected = null): mixed
     {
-        if (!is_scalar($value)) {
-            throw TypeException::castError($this);
-        }
+        $this->assertScalar($value);
 
         try {
             if (null !== $expected) {
@@ -46,12 +44,12 @@ class JsonType extends AbstractType
                     return json_decode($value, false, 512, JSON_FORCE_OBJECT);
                 }
 
-                throw TypeException::castError($this);
+                throw ValueException::castError($this);
             }
 
             return json_decode($value, true, 512, JSON_THROW_ON_ERROR);
         } catch (Throwable $e) {
-            throw TypeException::castError($this, $e);
+            throw ValueException::castError($this, $e);
         }
     }
 
@@ -67,7 +65,7 @@ class JsonType extends AbstractType
         try {
             return json_encode($value, JSON_THROW_ON_ERROR);
         } catch (Throwable $e) {
-            throw TypeException::castError($this, $e);
+            throw ValueException::castError($this, $e);
         }
     }
 }

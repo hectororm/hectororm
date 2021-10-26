@@ -15,7 +15,9 @@ declare(strict_types=1);
 namespace Hector\DataTypes;
 
 use Countable;
+use Hector\DataTypes\Exception\ValueException;
 use Hector\DataTypes\Type;
+use UnexpectedValueException;
 
 class TypeSet implements Countable
 {
@@ -104,12 +106,11 @@ class TypeSet implements Countable
      * @param string $type
      *
      * @return Type\TypeInterface
-     * @throws TypeException
      */
     public function get(string $type): Type\TypeInterface
     {
         if (!array_key_exists($type, $this->types)) {
-            throw TypeException::unknown($type);
+            throw new UnexpectedValueException(sprintf('Type "%s" not declared in Hector', $type));
         }
 
         return $this->types[$type];

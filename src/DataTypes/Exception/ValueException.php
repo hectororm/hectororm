@@ -12,38 +12,14 @@
 
 declare(strict_types=1);
 
-namespace Hector\DataTypes;
+namespace Hector\DataTypes\Exception;
 
-use Exception;
 use Hector\DataTypes\Type\TypeInterface;
 use Throwable;
+use ValueError;
 
-class TypeException extends Exception
+class ValueException extends ValueError
 {
-    /**
-     * Unknown.
-     *
-     * @param string $type
-     *
-     * @return static
-     */
-    public static function unknown(string $type): static
-    {
-        return new static(sprintf('Type "%s" not declared in Hector', $type));
-    }
-
-    /**
-     * Bad type.
-     *
-     * @param string $type
-     *
-     * @return static
-     */
-    public static function badType(string $type): static
-    {
-        return new static(sprintf('Type "%s" must implement "%s" interface', $type, TypeInterface::class));
-    }
-
     /**
      * Cast error.
      *

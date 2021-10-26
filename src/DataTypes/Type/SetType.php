@@ -14,8 +14,8 @@ declare(strict_types=1);
 
 namespace Hector\DataTypes\Type;
 
+use Hector\DataTypes\Exception\ValueException;
 use Hector\DataTypes\ExpectedType;
-use Hector\DataTypes\TypeException;
 
 class SetType extends AbstractType
 {
@@ -25,7 +25,7 @@ class SetType extends AbstractType
     public function fromSchema(mixed $value, ?ExpectedType $expected = null): mixed
     {
         if (!is_string($value)) {
-            throw TypeException::castError($this);
+            throw ValueException::castError($this);
         }
 
         // Explode string
@@ -36,7 +36,7 @@ class SetType extends AbstractType
             if ($expected->isBuiltin()) {
                 if ('array' !== $expected->getName()) {
                     if ('string' !== $expected->getName()) {
-                        throw TypeException::castError($this);
+                        throw ValueException::castError($this);
                     }
 
                     $value = implode(',', $value);
@@ -47,7 +47,7 @@ class SetType extends AbstractType
                 return $value;
             }
 
-            throw TypeException::castNotBuiltin($this);
+            throw ValueException::castNotBuiltin($this);
         }
 
         return (array)$value;
@@ -59,7 +59,7 @@ class SetType extends AbstractType
     public function toSchema(mixed $value, ?ExpectedType $expected = null): string
     {
         if (!is_array($value)) {
-            throw TypeException::castError($this);
+            throw ValueException::castError($this);
         }
 
         return implode(',', $value);

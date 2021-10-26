@@ -13,9 +13,9 @@
 namespace Hector\DataTypes\Tests\Type;
 
 use DateTime;
+use Hector\DataTypes\Exception\ValueException;
 use Hector\DataTypes\ExpectedType;
 use Hector\DataTypes\Type\DateTimeType;
-use Hector\DataTypes\TypeException;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 
@@ -30,7 +30,7 @@ class DateTimeTypeTest extends TestCase
 
     public function testFromSchemaWithBadFormat()
     {
-        $this->expectException(TypeException::class);
+        $this->expectException(ValueException::class);
 
         $type = new DateTimeType();
         $type->fromSchema('BAD @FORMAT');
@@ -38,7 +38,7 @@ class DateTimeTypeTest extends TestCase
 
     public function testFromSchemaWithNotValid()
     {
-        $this->expectException(TypeException::class);
+        $this->expectException(ValueException::class);
 
         $type = new DateTimeType();
         $type->fromSchema(1);
@@ -46,7 +46,7 @@ class DateTimeTypeTest extends TestCase
 
     public function testFromSchemaWithNotScalar()
     {
-        $this->expectException(TypeException::class);
+        $this->expectException(ValueException::class);
 
         $type = new DateTimeType();
         $type->fromSchema(['foo']);
@@ -87,7 +87,7 @@ class DateTimeTypeTest extends TestCase
 
     public function testFromSchemaWithDeclaredTypeBuiltinAndBadValue()
     {
-        $this->expectException(TypeException::class);
+        $this->expectException(ValueException::class);
         $expectedType = new ExpectedType('string', false, true);
 
         $type = new DateTimeType();
@@ -96,7 +96,7 @@ class DateTimeTypeTest extends TestCase
 
     public function testFromSchemaWithDeclaredTypeNotBuiltin()
     {
-        $this->expectException(TypeException::class);
+        $this->expectException(ValueException::class);
 
         $expectedType = new ExpectedType('\stdClass', false, false);
 
@@ -116,7 +116,7 @@ class DateTimeTypeTest extends TestCase
 
     public function testToSchemaWithBadFormat()
     {
-        $this->expectException(TypeException::class);
+        $this->expectException(ValueException::class);
 
         $type = new DateTimeType('BAD FORMAT');
         $type->toSchema('Y-m-d H:i:s');
@@ -134,7 +134,7 @@ class DateTimeTypeTest extends TestCase
 
     public function testToSchemaWithNotScalar()
     {
-        $this->expectException(TypeException::class);
+        $this->expectException(ValueException::class);
 
         $type = new DateTimeType();
         $type->toSchema(['foo']);

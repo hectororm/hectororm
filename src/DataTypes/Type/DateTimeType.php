@@ -16,8 +16,8 @@ namespace Hector\DataTypes\Type;
 
 use DateTime;
 use DateTimeInterface;
+use Hector\DataTypes\Exception\ValueException;
 use Hector\DataTypes\ExpectedType;
-use Hector\DataTypes\TypeException;
 use Throwable;
 
 class DateTimeType extends AbstractType
@@ -51,10 +51,10 @@ class DateTimeType extends AbstractType
                 return new $class((string)$value);
             }
         } catch (Throwable $e) {
-            throw TypeException::castError($this, $e);
+            throw ValueException::castError($this, $e);
         }
 
-        throw TypeException::castError($this);
+        throw ValueException::castError($this);
     }
 
     /**
@@ -75,11 +75,11 @@ class DateTimeType extends AbstractType
                 return $value->format($this->format);
             }
 
-            throw TypeException::castError($this);
-        } catch (TypeException $exception) {
+            throw ValueException::castError($this);
+        } catch (ValueException $exception) {
             throw $exception;
         } catch (Throwable $exception) {
-            throw TypeException::castError($this, $exception);
+            throw ValueException::castError($this, $exception);
         }
     }
 }

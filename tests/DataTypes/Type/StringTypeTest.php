@@ -14,9 +14,9 @@ namespace Hector\DataTypes\Tests\Type;
 
 use Hector\DataTypes\ExpectedType;
 use Hector\DataTypes\Type\StringType;
-use Hector\DataTypes\TypeException;
 use PHPUnit\Framework\TestCase;
 use stdClass;
+use ValueError;
 
 class StringTypeTest extends TestCase
 {
@@ -34,7 +34,7 @@ class StringTypeTest extends TestCase
 
     public function testFromSchemaWithNotScalar()
     {
-        $this->expectException(TypeException::class);
+        $this->expectException(ValueError::class);
 
         $type = new StringType();
         $type->fromSchema(['foo']);
@@ -51,7 +51,7 @@ class StringTypeTest extends TestCase
 
     public function testFromSchemaWithDeclaredTypeBuiltinAndBadValue()
     {
-        $this->expectException(TypeException::class);
+        $this->expectException(ValueError::class);
         $expectedType = new ExpectedType('string', false, true);
 
         $type = new StringType();
@@ -61,7 +61,7 @@ class StringTypeTest extends TestCase
 
     public function testFromSchemaWithDeclaredTypeNotBuiltin()
     {
-        $this->expectException(TypeException::class);
+        $this->expectException(ValueError::class);
 
         $expectedType = new ExpectedType('string', false, false);
 
@@ -83,7 +83,7 @@ class StringTypeTest extends TestCase
 
     public function testToSchemaWithNotScalar()
     {
-        $this->expectException(TypeException::class);
+        $this->expectException(ValueError::class);
 
         $type = new StringType();
         $type->toSchema(['foo']);

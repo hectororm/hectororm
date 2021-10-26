@@ -14,14 +14,18 @@ declare(strict_types=1);
 
 namespace Hector\DataTypes\Type;
 
+use BackedEnum;
 use Hector\DataTypes\Exception\ValueException;
 use Hector\DataTypes\ExpectedType;
+use ValueError;
 
-class NumericType extends AbstractType
+class EnumType extends AbstractType
 {
-    public function __construct(
-        protected string $type = 'int'
-    ) {
+    public function __construct(protected string $enum)
+    {
+        if (false === is_a($this->enum, BackedEnum::class, true)) {
+            throw new ValueError('Enum must be a PHP 8.1 backed enum type');
+        }
     }
 
     /**
@@ -33,17 +37,22 @@ class NumericType extends AbstractType
 
         if (null !== $expected) {
             if ($expected->isBuiltin()) {
+                if (!in_array($expected->getName(), ['int', 'string'])) {
+                    throw ValueException::castError($this);
+                }
+
+                $value = $this->enum::from($value)->value;
                 settype($value, $expected->getName());
 
                 return $value;
             }
 
-            throw ValueException::castNotBuiltin($this);
+            if ($this->enum !== $expected->getName()) {
+                ValueException::castError($this);
+            }
         }
 
-        settype($value, $this->type);
-
-        return $value;
+        return $this->enum::from($value);
     }
 
     /**
@@ -51,10 +60,14 @@ class NumericType extends AbstractType
      */
     public function toSchema(mixed $value, ?ExpectedType $expected = null): mixed
     {
-        $this->assertScalar($value);
+        if (false === is_a($value, $this->enum)) {
+            if (is_scalar($value)) {
+                return $this->enum::from($value)->value;
+            }
 
-        settype($value, $this->type);
+            throw new ValueError(sprintf('Value must be an enum "%s"', $this->enum));
+        }
 
-        return $value;
+        return $value->value;
     }
 }

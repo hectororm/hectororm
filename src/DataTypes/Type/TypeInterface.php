@@ -14,8 +14,8 @@ declare(strict_types=1);
 
 namespace Hector\DataTypes\Type;
 
+use Hector\DataTypes\Exception\ValueException;
 use Hector\DataTypes\ExpectedType;
-use Hector\DataTypes\TypeException;
 
 interface TypeInterface
 {
@@ -33,7 +33,6 @@ interface TypeInterface
      * @param ExpectedType|null $expected
      *
      * @return mixed
-     * @throws TypeException
      */
     public function fromSchema(mixed $value, ?ExpectedType $expected = null): mixed;
 
@@ -51,7 +50,6 @@ interface TypeInterface
      * @param ExpectedType|null $expected
      *
      * @return mixed
-     * @throws TypeException
      */
     public function toSchema(mixed $value, ?ExpectedType $expected = null): mixed;
 

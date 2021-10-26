@@ -14,8 +14,8 @@ declare(strict_types=1);
 
 namespace Hector\DataTypes\Type;
 
+use Hector\DataTypes\Exception\ValueException;
 use Hector\DataTypes\ExpectedType;
-use Hector\DataTypes\TypeException;
 
 class BooleanType extends AbstractType
 {
@@ -24,9 +24,7 @@ class BooleanType extends AbstractType
      */
     public function fromSchema(mixed $value, ?ExpectedType $expected = null): mixed
     {
-        if (!is_scalar($value)) {
-            throw TypeException::castError($this);
-        }
+        $this->assertScalar($value);
 
         if (null !== $expected) {
             if ($expected->isBuiltin()) {
@@ -35,7 +33,7 @@ class BooleanType extends AbstractType
                 return $value;
             }
 
-            throw TypeException::castNotBuiltin($this);
+            throw ValueException::castNotBuiltin($this);
         }
 
         if (is_string($value)) {
@@ -55,9 +53,7 @@ class BooleanType extends AbstractType
      */
     public function toSchema(mixed $value, ?ExpectedType $expected = null): int
     {
-        if (!is_scalar($value)) {
-            throw TypeException::castError($this);
-        }
+        $this->assertScalar($value);
 
         if (is_string($value)) {
             switch (strtolower($value)) {

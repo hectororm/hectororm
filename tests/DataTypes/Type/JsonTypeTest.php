@@ -14,9 +14,11 @@ namespace Hector\DataTypes\Tests\Type;
 
 use Hector\DataTypes\ExpectedType;
 use Hector\DataTypes\Type\JsonType;
-use Hector\DataTypes\TypeException;
+use JsonSerializable;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Util\Exception;
+use stdClass;
+use ValueError;
 
 class JsonTypeTest extends TestCase
 {
@@ -29,7 +31,7 @@ class JsonTypeTest extends TestCase
 
     public function testFromSchemaWithNotValid()
     {
-        $this->expectException(TypeException::class);
+        $this->expectException(ValueError::class);
 
         $type = new JsonType();
         $type->fromSchema(1);
@@ -37,7 +39,7 @@ class JsonTypeTest extends TestCase
 
     public function testFromSchemaWithNotScalar()
     {
-        $this->expectException(TypeException::class);
+        $this->expectException(ValueError::class);
 
         $type = new JsonType();
         $type->fromSchema(['foo']);
@@ -61,7 +63,7 @@ class JsonTypeTest extends TestCase
 
     public function testFromSchemaWithDeclaredTypeBuiltinInvalid()
     {
-        $this->expectException(TypeException::class);
+        $this->expectException(ValueError::class);
 
         $expectedType = new ExpectedType('int', false, true);
         $type = new JsonType();
@@ -71,16 +73,16 @@ class JsonTypeTest extends TestCase
 
     public function testFromSchemaWithDeclaredTypeBuiltinAndBadValue()
     {
-        $this->expectException(TypeException::class);
+        $this->expectException(ValueError::class);
         $expectedType = new ExpectedType('string', false, true);
 
         $type = new JsonType();
-        $type->fromSchema(new \stdClass(), $expectedType);
+        $type->fromSchema(new stdClass(), $expectedType);
     }
 
     public function testFromSchemaWithDeclaredTypeStdClass()
     {
-        $expectedType = new ExpectedType(\stdClass::class, false, false);
+        $expectedType = new ExpectedType(stdClass::class, false, false);
         $type = new JsonType();
 
         $this->assertEquals(
@@ -91,7 +93,7 @@ class JsonTypeTest extends TestCase
 
     public function testFromSchemaWithDeclaredTypeNotBuiltin()
     {
-        $this->expectException(TypeException::class);
+        $this->expectException(ValueError::class);
 
         $expectedType = new ExpectedType('\stdClass', false, false);
 
@@ -102,7 +104,7 @@ class JsonTypeTest extends TestCase
     public function testToSchema()
     {
         $type = new JsonType();
-        $fakeObject = new class implements \JsonSerializable {
+        $fakeObject = new class implements JsonSerializable {
             public function jsonSerialize(): array
             {
                 return ["foo" => "bar"];
@@ -116,10 +118,10 @@ class JsonTypeTest extends TestCase
 
     public function testToSchemaWithBadType()
     {
-        $this->expectException(TypeException::class);
+        $this->expectException(ValueError::class);
 
         $type = new JsonType();
-        $fakeObject = new class implements \JsonSerializable {
+        $fakeObject = new class implements JsonSerializable {
             public function jsonSerialize(): mixed
             {
                 throw new Exception('Not serializable');
