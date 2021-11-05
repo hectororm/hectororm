@@ -12,9 +12,11 @@
 
 namespace Hector\Query\Tests\Component;
 
+use BackedEnum;
 use Hector\Query\Component\Conditions;
 use Hector\Query\Select;
 use Hector\Query\Statement\Row;
+use Hector\Query\Tests\FakeEnum;
 use PHPUnit\Framework\TestCase;
 
 class ConditionsTest extends TestCase
@@ -129,6 +131,71 @@ class ConditionsTest extends TestCase
         );
     }
 
+    public function testEqualWithObjectStringable()
+    {
+        $obj = new class {
+            public function __toString(): string
+            {
+                return 'foo';
+            }
+        };
+
+        $conditions = new Conditions();
+        $conditions->equal('foo', $obj);
+        $conditions->equal('bar', [$obj, $obj]);
+        $binding = [];
+
+        $this->assertEquals(
+            'foo = ? AND bar IN ( ?, ? )',
+            $conditions->getStatement($binding)
+        );
+        $this->assertEquals(
+            [$obj, $obj, $obj],
+            $binding
+        );
+    }
+
+    public function testEqualWithObjectNotStringable()
+    {
+        $obj = new class {
+            public string $foo = 'foo';
+            public string $bar = 'bar';
+        };
+
+        $conditions = new Conditions();
+        $conditions->equal('foo', $obj);
+        $binding = [];
+
+        $this->assertEquals(
+            'foo = ?',
+            $conditions->getStatement($binding)
+        );
+        $this->assertEquals(
+            [$obj],
+            $binding
+        );
+    }
+
+    public function testEqualWithArrayOfEnum()
+    {
+        if (!interface_exists(BackedEnum::class)) {
+            $this->markTestSkipped('Enum are not available on this PHP version.');
+        }
+
+        $conditions = new Conditions();
+        $conditions->equal('foo', [FakeEnum::FOO, FakeEnum::BAR]);
+        $binding = [];
+
+        $this->assertEquals(
+            'foo IN ( ?, ? )',
+            $conditions->getStatement($binding)
+        );
+        $this->assertEquals(
+            [FakeEnum::FOO, FakeEnum::BAR],
+            $binding
+        );
+    }
+
     public function testEquals()
     {
         $othersConditions = new Conditions();
@@ -147,10 +214,10 @@ class ConditionsTest extends TestCase
         );
 
         $this->assertEquals(
-            'baz IS NOT NULL '.
-            'AND qux IN ( ?, ? ) '.
-            'AND quux = ? '.
-            'AND (corge, grault) IN ( (?, ?), (?, ?) ) '.
+            'baz IS NOT NULL ' .
+            'AND qux IN ( ?, ? ) ' .
+            'AND quux = ? ' .
+            'AND (corge, grault) IN ( (?, ?), (?, ?) ) ' .
             'AND garply IN ( SELECT waldo FROM table WHERE fred = ? )',
             $condition->getStatement($binding)
         );

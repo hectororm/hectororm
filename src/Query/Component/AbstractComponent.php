@@ -107,7 +107,7 @@ abstract class AbstractComponent implements StatementInterface
             $statementValues = [];
             foreach ($value as $subValue) {
                 // Binding
-                array_push($binding, ...array_values((array)$subValue));
+                array_push($binding, ...array_values(!is_array($subValue) ? [$subValue] : $subValue));
 
                 if (is_array($subValue)) {
                     $statementValues[] = '(' . implode(', ', array_fill(0, count($subValue), '?')) . ')';
