@@ -19,12 +19,23 @@ use DateTimeInterface;
 use Hector\DataTypes\Exception\ValueException;
 use Hector\DataTypes\ExpectedType;
 use Throwable;
+use ValueError;
 
 class DateTimeType extends AbstractType
 {
     public function __construct(
-        protected string $format = 'Y-m-d H:i:s'
+        protected string $format = 'Y-m-d H:i:s',
+        protected string $class = DateTime::class,
     ) {
+        if (false === is_a($this->class, DateTimeInterface::class, true)) {
+            throw new ValueError(
+                sprintf(
+                    'Expected a "%s" interface, "%s" given',
+                    DateTimeInterface::class,
+                    $this->class
+                )
+            );
+        }
     }
 
     /**
@@ -34,7 +45,7 @@ class DateTimeType extends AbstractType
     {
         try {
             if (null === $expected) {
-                return new DateTime($value);
+                return new $this->class((string)$value);
             }
 
             if ($expected->getName() == 'string') {

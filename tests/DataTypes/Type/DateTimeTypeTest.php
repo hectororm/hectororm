@@ -13,6 +13,7 @@
 namespace Hector\DataTypes\Tests\Type;
 
 use DateTime;
+use DateTimeImmutable;
 use Hector\DataTypes\Exception\ValueException;
 use Hector\DataTypes\ExpectedType;
 use Hector\DataTypes\Type\DateTimeType;
@@ -102,6 +103,14 @@ class DateTimeTypeTest extends TestCase
 
         $type = new DateTimeType();
         $type->fromSchema('2020-06-14 14:00:00', $expectedType);
+    }
+
+    public function testFromSchema_targetClass()
+    {
+        $type = new DateTimeType(class: DateTimeImmutable::class);
+
+        $this->assertInstanceOf(DateTimeImmutable::class, $type->fromSchema('2021-11-05'));
+        $this->assertEquals('2021-11-05', $type->fromSchema('2021-11-05')->format('Y-m-d'));
     }
 
     public function testToSchema()
