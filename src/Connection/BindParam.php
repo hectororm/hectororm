@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace Hector\Connection;
 
+use BackedEnum;
 use PDO;
 
 /**
@@ -57,6 +58,12 @@ class BindParam
             return PDO::PARAM_BOOL;
         }
 
+        if ($variable instanceof BackedEnum) {
+            if (is_int($variable->value)) {
+                return PDO::PARAM_INT;
+            }
+        }
+
         return PDO::PARAM_STR;
     }
 
@@ -67,6 +74,10 @@ class BindParam
      */
     public function getVariable(): mixed
     {
+        if ($this->variable instanceof BackedEnum) {
+            return $this->variable->value;
+        }
+
         return $this->variable;
     }
 

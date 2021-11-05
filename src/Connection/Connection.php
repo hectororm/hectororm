@@ -227,6 +227,7 @@ class Connection
      */
     protected function pdoExecute(PDO $pdo, string $statement, array $input_parameters = []): PDOStatement
     {
+        $input_parameters = $this->prepareParameters($input_parameters);
         $logEntry = $this->logger?->newEntry(
             $this->name,
             $statement,
@@ -241,19 +242,10 @@ class Connection
             foreach ($input_parameters as $name => $parameter) {
                 is_int($name) && $name = ++$iParam;
 
-                if ($parameter instanceof BindParam) {
-                    $stm->bindValue(
-                        $name,
-                        $parameter->getVariable(),
-                        $parameter->getDataType()
-                    );
-                    continue;
-                }
-
                 $stm->bindValue(
                     $name,
-                    $parameter,
-                    BindParam::findDataType($parameter)
+                    $parameter->getVariable(),
+                    $parameter->getDataType()
                 );
             }
 
@@ -263,6 +255,29 @@ class Connection
         }
 
         return $stm;
+    }
+
+    /**
+     * Prepare parameters.
+     *
+     * @param array $input_parameters
+     *
+     * @return BindParam[]
+     */
+    private function prepareParameters(array $input_parameters): array
+    {
+        $result = [];
+
+        foreach ($input_parameters as $name => &$parameter) {
+            if (!$parameter instanceof BindParam) {
+                $result[$name] = new BindParam($parameter);
+                continue;
+            }
+
+            $result[$name] = $parameter;
+        }
+
+        return $result;
     }
 
     /**
