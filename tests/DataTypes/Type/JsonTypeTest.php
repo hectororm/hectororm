@@ -29,6 +29,14 @@ class JsonTypeTest extends TestCase
         $this->assertEquals(["foo" => "bar"], $type->fromSchema('{"foo": "bar"}'));
     }
 
+    public function testFromSchema_notAssociative()
+    {
+        $type = new JsonType(associative: false);
+
+        $this->assertInstanceOf(stdClass::class, $type->fromSchema('{"foo": "bar"}'));
+        $this->assertEquals('bar', $type->fromSchema('{"foo": "bar"}')->foo);
+    }
+
     public function testFromSchemaWithNotValid()
     {
         $this->expectException(ValueError::class);

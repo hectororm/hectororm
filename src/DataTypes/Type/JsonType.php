@@ -21,6 +21,10 @@ use Throwable;
 
 class JsonType extends AbstractType
 {
+    public function __construct(private bool $associative = true)
+    {
+    }
+
     /**
      * @inheritDoc
      */
@@ -30,6 +34,14 @@ class JsonType extends AbstractType
 
         try {
             if (null !== $expected) {
+                if (null === $value) {
+                    if (false === $expected->allowsNull()) {
+                        throw ValueException::castError($this);
+                    }
+
+                    return null;
+                }
+
                 if ($expected->isBuiltin()) {
                     if ($expected->getName() == 'array') {
                         return json_decode($value, true, 512, JSON_THROW_ON_ERROR);
@@ -47,7 +59,7 @@ class JsonType extends AbstractType
                 throw ValueException::castError($this);
             }
 
-            return json_decode($value, true, 512, JSON_THROW_ON_ERROR);
+            return json_decode($value, $this->associative, 512, JSON_THROW_ON_ERROR);
         } catch (Throwable $e) {
             throw ValueException::castError($this, $e);
         }
@@ -56,7 +68,7 @@ class JsonType extends AbstractType
     /**
      * @inheritDoc
      */
-    public function toSchema(mixed $value, ?ExpectedType $expected = null): string
+    public function toSchema(mixed $value, ?ExpectedType $expected = null): string|bool|null
     {
         if (is_scalar($value)) {
             return (string)$value;
