@@ -213,7 +213,7 @@ class Collection extends ArrayObject implements JsonSerializable
     public function load(array $relations): static
     {
         // Get mapper for entity
-        $acceptedEntityReflection = new ReflectionEntity($this->accepted);
+        $acceptedEntityReflection = ReflectionEntity::get($this->accepted);
 
         foreach ($relations as $key => $value) {
             $relationName = $value;

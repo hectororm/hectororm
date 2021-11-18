@@ -87,8 +87,8 @@ class ManyToOne extends RegularRelationship
             throw new RelationException('Foreign must be an entity');
         }
 
-        $entityReflection = new ReflectionEntity($entity::class);
-        $foreignReflection = new ReflectionEntity($foreign::class);
+        $entityReflection = ReflectionEntity::get($entity::class);
+        $foreignReflection = ReflectionEntity::get($foreign::class);
 
         if (null === $foreign) {
             $entityReflection->getMapper()->hydrateEntity($entity, array_fill_keys($this->getSourceColumns(), null));

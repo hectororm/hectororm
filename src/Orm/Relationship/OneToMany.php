@@ -56,14 +56,14 @@ class OneToMany extends RegularRelationship
             throw new RelationException('Foreign must be a collection');
         }
 
-        $entityReflection = new ReflectionEntity($entity::class);
+        $entityReflection = ReflectionEntity::get($entity::class);
 
         $sourceColumns = $entityReflection->getMapper()->collectEntity($entity, $this->getSourceColumns());
         $targetColumns = array_combine($this->getTargetColumns(), $sourceColumns);
 
         /** @var Entity $foreignEntity */
         foreach ($foreign as $foreignEntity) {
-            $foreignEntityReflection = new ReflectionEntity($foreignEntity::class);
+            $foreignEntityReflection = ReflectionEntity::get($foreignEntity::class);
             $targetColumnsOrigin = $foreignEntityReflection->getMapper()->collectEntity(
                 $foreignEntity,
                 $this->getTargetColumns()

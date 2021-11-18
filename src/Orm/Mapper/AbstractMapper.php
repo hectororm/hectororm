@@ -48,7 +48,7 @@ abstract class AbstractMapper implements Mapper
         string $entity,
         protected EntityStorage $storage
     ) {
-        $this->reflection = Orm::get()->getEntityReflection($entity);
+        $this->reflection = ReflectionEntity::get($entity);
     }
 
     /**

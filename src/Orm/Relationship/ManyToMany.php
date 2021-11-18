@@ -301,7 +301,7 @@ class ManyToMany extends Relationship
 
         /** @var Entity $foreign */
         foreach ($foreigners as $foreign) {
-            $foreignReflection = new ReflectionEntity($foreign::class);
+            $foreignReflection = ReflectionEntity::get($foreign::class);
             $pivot = $foreignReflection->getHectorData($foreign)->getPivot();
 
             // Not a pivot

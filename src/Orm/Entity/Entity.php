@@ -58,7 +58,7 @@ abstract class Entity
      */
     final public function getRelated(): Related
     {
-        return Orm::get()->getEntityReflection($this::class)->getHectorData($this)->getRelated();
+        return ReflectionEntity::get($this::class)->getHectorData($this)->getRelated();
     }
 
     /**
@@ -69,7 +69,7 @@ abstract class Entity
      */
     final public function getPivot(): ?PivotData
     {
-        return Orm::get()->getEntityReflection($this::class)->getHectorData($this)->getPivot();
+        return ReflectionEntity::get($this::class)->getHectorData($this)->getPivot();
     }
 
     /**

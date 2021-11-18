@@ -49,6 +49,9 @@ class ReflectionEntity
     use CollectionAssert;
     use EntityAssert;
 
+    private static array $reflections = [];
+
+    private string $entity;
     private string $mapper;
     private string $collection;
     private string $table;
@@ -62,15 +65,37 @@ class ReflectionEntity
     private ReflectionClass $reflection;
 
     /**
+     * Get entity reflection.
+     *
+     * @param Entity|string $entity
+     *
+     * @return static
+     * @throws OrmException
+     */
+    public static function get(Entity|string $entity): static
+    {
+        if ($entity instanceof Entity) {
+            $entity = $entity::class;
+        }
+
+        if (array_key_exists($entity, static::$reflections)) {
+            return static::$reflections[$entity];
+        }
+
+        return static::$reflections[$entity] = new ReflectionEntity($entity);
+    }
+
+    /**
      * EntityProperties constructor.
      *
-     * @param class-string<T> $entity
+     * @param Entity|class-string<T> $entity
      *
      * @throws OrmException
      */
-    public function __construct(protected string $entity)
+    public function __construct(Entity|string $entity)
     {
-        $this->assertEntity($this->entity);
+        $this->assertEntity($entity);
+        $this->entity = ($entity instanceof Entity ? $entity::class : $entity);
 
         $this->mapper = $this->retrieveMapper();
         $this->collection = $this->retrieveCollection();

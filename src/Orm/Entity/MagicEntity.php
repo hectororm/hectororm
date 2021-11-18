@@ -17,7 +17,6 @@ namespace Hector\Orm\Entity;
 use Hector\Orm\Attributes;
 use Hector\Orm\Exception\OrmException;
 use Hector\Orm\Mapper\MagicMapper;
-use Hector\Orm\Orm;
 use JsonSerializable;
 
 #[Attributes\Mapper(MagicMapper::class)]
@@ -75,7 +74,7 @@ abstract class MagicEntity extends Entity implements JsonSerializable
      */
     public function __isset(string $name): bool
     {
-        $entityReflection = Orm::get()->getEntityReflection($this::class);
+        $entityReflection = ReflectionEntity::get($this::class);
 
         if (in_array($name, $entityReflection->hidden)) {
             return false;

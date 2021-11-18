@@ -37,7 +37,7 @@ class Relationships implements Countable
      */
     public function __construct(string $entity)
     {
-        $this->entity = new ReflectionEntity($entity);
+        $this->entity = ReflectionEntity::get($entity);
     }
 
     /**
@@ -202,7 +202,7 @@ class Relationships implements Countable
      */
     public function belongsTo(string $target, string $name, ?string $foreignName = null): Relationship
     {
-        $targetReflection = new ReflectionEntity($target);
+        $targetReflection = ReflectionEntity::get($target);
 
         /** @var Entity $target */
         $foreignRelationships = $targetReflection->getMapper()->getRelationships();

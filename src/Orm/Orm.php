@@ -191,28 +191,6 @@ class Orm
     }
 
     /**
-     * Get entity reflection.
-     *
-     * @param Entity|string $entity
-     *
-     * @return ReflectionEntity
-     * @throws OrmException
-     * @internal
-     */
-    public function getEntityReflection(Entity|string $entity): ReflectionEntity
-    {
-        if ($entity instanceof Entity) {
-            $entity = $entity::class;
-        }
-
-        if (array_key_exists($entity, $this->reflections)) {
-            return $this->reflections[$entity];
-        }
-
-        return $this->reflections[$entity] = new ReflectionEntity($entity);
-    }
-
-    /**
      * Get mapper of entity.
      *
      * @param Entity|string $entity
@@ -229,7 +207,7 @@ class Orm
 
         return
             $this->mappers[$entity] ??
-            $this->mappers[$entity] = $this->getEntityReflection($entity)->newInstanceOfMapper($this->storage);
+            $this->mappers[$entity] = ReflectionEntity::get($entity)->newInstanceOfMapper($this->storage);
     }
 
     /**

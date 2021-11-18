@@ -46,7 +46,7 @@ class Builder extends QueryBuilder
      */
     public function __construct(string $entity)
     {
-        $this->entityReflection = new ReflectionEntity($entity);
+        $this->entityReflection = ReflectionEntity::get($entity);
         parent::__construct(Orm::get()->getConnection($this->entityReflection->connection));
     }
 

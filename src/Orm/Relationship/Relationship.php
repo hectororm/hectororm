@@ -54,8 +54,8 @@ abstract class Relationship
     public function __construct(string $name, string $sourceEntity, string $targetEntity)
     {
         $this->name = $name;
-        $this->sourceEntity = new ReflectionEntity($sourceEntity);
-        $this->targetEntity = new ReflectionEntity($targetEntity);
+        $this->sourceEntity = ReflectionEntity::get($sourceEntity);
+        $this->targetEntity = ReflectionEntity::get($targetEntity);
 
         $this->resetWhere();
         $this->resetGroup();
@@ -308,7 +308,7 @@ abstract class Relationship
     {
         return array_map(
             function (Entity $entity) use ($columns) {
-                $entityReflection = new ReflectionEntity($entity::class);
+                $entityReflection = ReflectionEntity::get($entity::class);
 
                 return [
                     'columns' => array_values($entityReflection->getMapper()->collectEntity($entity, $columns)),
