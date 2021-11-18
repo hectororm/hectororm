@@ -139,10 +139,13 @@ class Related implements Countable
      *
      * @throws InvalidArgumentException
      * @throws OrmException
+     * @todo Hydrate source entity if necessary
      */
     public function set(string $name, Collection|Entity|null $value): void
     {
-        if (!$this->getRelationships()->get($name)->valid($value)) {
+        $relationship = $this->getRelationships()->get($name);
+
+        if (false === $relationship->valid($value)) {
             throw new InvalidArgumentException(
                 sprintf(
                     'Invalid value for related property "%s", excepted "%s" entity',
@@ -236,6 +239,8 @@ class Related implements Countable
     /**
      * Link foreign.
      *
+     * Call before entity saving.
+     *
      * @throws OrmException
      */
     public function linkForeign(): void
@@ -251,6 +256,8 @@ class Related implements Countable
 
     /**
      * Link native.
+     *
+     * Call after entity saving.
      *
      * @throws OrmException
      */

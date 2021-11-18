@@ -19,6 +19,7 @@ use Hector\Orm\Assert\EntityAssert;
 use Hector\Orm\Attributes;
 use Hector\Orm\Collection\Collection;
 use Hector\Orm\Entity\Entity;
+use Hector\Orm\Entity\PivotData;
 use Hector\Orm\Entity\ReflectionEntity;
 use Hector\Orm\Exception\MapperException;
 use Hector\Orm\Exception\OrmException;
@@ -160,6 +161,7 @@ abstract class AbstractMapper implements Mapper
         $entity = new $this->reflection->class();
         $this->hydrateEntity($entity, $data);
         $this->updateOriginalData($entity, $data, true);
+        $this->updatePivotData($entity, $data);
         $this->storage->attach($entity);
 
         // With
@@ -191,6 +193,7 @@ abstract class AbstractMapper implements Mapper
             $entity = new $this->reflection->class();
             $this->hydrateEntity($entity, $data);
             $this->updateOriginalData($entity, $data, true);
+            $this->updatePivotData($entity, $data);
             $this->storage->attach($entity);
 
             yield $entity;
@@ -267,11 +270,11 @@ abstract class AbstractMapper implements Mapper
         $entity->getRelated()->linkForeign();
 
         $values = $this->collectEntity($entity, $this->getEntityAlteration($entity));
-        $primaryValue = $this->getPrimaryValue($entity);
+        $primaryValue = $this->getPrimaryValue($entity) ?: $this->reflection->getHectorData($entity)->get('original');
 
         if (count($values) > 0) {
             // Separate values of primary value
-            $values = array_diff_key($values, array_flip($primaryValue));
+            $values = array_diff_key($values, array_fill_keys(array_keys($primaryValue), null));
 
             $nbAffected =
                 $entity::query()
@@ -291,13 +294,18 @@ abstract class AbstractMapper implements Mapper
      */
     public function deleteEntity(Entity $entity): int
     {
-        $values = $this->collectEntity($entity);
-        $primaryValue = $this->extractPrimaryValue($values);
+        $values = $this->reflection->getHectorData($entity)->get('original') ?? $this->collectEntity($entity);
+        $conditions = $this->extractPrimaryValue($values) ?: $values;
 
-        $affected = $entity::query()->whereEquals($this->quoteArrayKeys($primaryValue))->delete();
+        if (empty($conditions)) {
+            throw new MapperException('Unable to delete entity');
+        }
+
+        $affected = $entity::query()->whereEquals($this->quoteArrayKeys($conditions))->delete();
 
         if ($affected !== 0) {
             $this->updateOriginalData($entity, [], true);
+            $this->reflection->getHectorData($entity)->unsetPivot();
         }
 
         return $affected;
@@ -308,10 +316,10 @@ abstract class AbstractMapper implements Mapper
      */
     public function refreshEntity(Entity $entity): void
     {
-        $values = $this->collectEntity($entity);
-        $primaryValue = $this->extractPrimaryValue($values);
+        $values = $this->reflection->getHectorData($entity)->get('original') ?? $this->collectEntity($entity);
+        $conditions = $this->extractPrimaryValue($values) ?: $values;
 
-        $data = $entity::query()->whereEquals($this->quoteArrayKeys($primaryValue))->fetchOne();
+        $data = $entity::query()->whereEquals($this->quoteArrayKeys($conditions))->fetchOne();
 
         if (null === $data) {
             throw new MapperException('Unable to refresh an unexciting entity');
@@ -319,6 +327,7 @@ abstract class AbstractMapper implements Mapper
 
         $this->hydrateEntity($entity, $data);
         $this->updateOriginalData($entity, $data, true);
+        $this->updatePivotData($entity, $data);
         $this->storage->attach($entity);
     }
 
@@ -327,60 +336,29 @@ abstract class AbstractMapper implements Mapper
      */
     public function getEntityAlteration(Entity $entity, ?array $columns = null): array
     {
-        $originalData = $this->reflection->getHectorData($entity)->get('original', []);
+        $originalData = $this->reflection->getHectorData($entity)->get('original');
+        $currentData = $this->collectEntity($entity, $columns);
+
+        if (null === $originalData) {
+            if (null !== $columns) {
+                return $columns;
+            }
+
+            if (false === empty($currentData)) {
+                return array_keys($currentData);
+            }
+
+            return $this->reflection->getTable()->getColumnsName();
+        }
+
         if (null !== $columns) {
             $originalData = array_intersect_key($originalData, array_fill_keys($columns, null));
         }
-
-        $currentData = $this->collectEntity($entity, $columns);
 
         ksort($originalData);
         ksort($currentData);
 
         return array_keys(array_diff_assoc($originalData, $currentData));
-    }
-
-    /////////////
-    /// PIVOT ///
-    /////////////
-
-    /**
-     * Get pivot data.
-     *
-     * @param Entity $entity
-     *
-     * @return array
-     */
-    public function getPivotData(Entity $entity): array
-    {
-        return $this->reflection->getHectorData($entity)->get('pivot', []);
-    }
-
-    /**
-     * Set pivot data.
-     *
-     * @param Entity $entity
-     * @param array $data
-     * @param bool $merge
-     */
-    protected function setPivotData(Entity $entity, array $data, bool $merge = true): void
-    {
-        $pivotData = array_filter(
-            $data,
-            fn($key) => str_starts_with($key, Builder::PIVOT_PREFIX),
-            ARRAY_FILTER_USE_KEY
-        );
-
-        $pivotKeys = array_keys($pivotData);
-        array_walk($pivotKeys, fn(&$key) => $key = substr($key, 6));
-        $pivotData = array_combine($pivotKeys, array_values($pivotData));
-
-        // Merge pivot data
-        if ($merge) {
-            $pivotData = array_replace($this->getPivotData($entity), $pivotData);
-        }
-
-        $this->reflection->getHectorData($entity)->set('pivot', $pivotData);
     }
 
     ///////////////
@@ -405,6 +383,33 @@ abstract class AbstractMapper implements Mapper
     }
 
     /**
+     * Update pivot data.
+     *
+     * @param Entity $entity
+     * @param array $data
+     */
+    protected function updatePivotData(Entity $entity, array $data): void
+    {
+        $pivotKeys = PivotData::extractPrefixedData($data, PivotData::PIVOT_KEY_PREFIX);
+        $pivotData = PivotData::extractPrefixedData($data, PivotData::PIVOT_DATA_PREFIX);
+
+        // No pivot keys
+        if (0 === count($pivotKeys)) {
+            return;
+        }
+
+        $hectorData = $this->reflection->getHectorData($entity);
+        $pivot = $hectorData->getPivot();
+
+        // Not yet a pivot
+        if (null === $pivot) {
+            $hectorData->setPivot($pivot = new PivotData($pivotKeys));
+        }
+
+        $pivot->setData($pivotData);
+    }
+
+    /**
      * Extract primary value of entity values.
      *
      * @param array $values
@@ -415,7 +420,12 @@ abstract class AbstractMapper implements Mapper
     private function extractPrimaryValue(array $values): array
     {
         $values = array_filter($values, fn($value) => null !== $value);
-        $primaryColumns = $this->reflection->getTable()->getPrimaryIndex()->getColumnsName();
+        $primaryColumns = $this->reflection->getTable()->getPrimaryIndex()?->getColumnsName();
+
+        if (null === $primaryColumns) {
+            return [];
+        }
+
         $primary = array_intersect_key($values, array_flip($primaryColumns));
 
         if (count($primary) !== count($primaryColumns)) {

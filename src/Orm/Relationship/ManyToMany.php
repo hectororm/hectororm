@@ -16,7 +16,9 @@ namespace Hector\Orm\Relationship;
 
 use Hector\Orm\Collection\Collection;
 use Hector\Orm\Entity\Entity;
+use Hector\Orm\Entity\PivotData;
 use Hector\Orm\Entity\ReflectionEntity;
+use Hector\Orm\Entity\Related;
 use Hector\Orm\Exception\OrmException;
 use Hector\Orm\Exception\RelationException;
 use Hector\Orm\Orm;
@@ -174,9 +176,13 @@ class ManyToMany extends Relationship
             );
 
             // Add pivot columns
-            foreach ($this->pivotTargetColumns as $pivotTargetColumnName) {
-                $pivotTargetColumn = $pivotTable->getColumn($pivotTargetColumnName);
-                $builder->withPivotColumn($pivotTargetColumn->getName(true, $aliasPivot), $pivotTargetColumnName);
+            foreach ($this->getPivotTargetColumns() as $pivotColumnName) {
+                $pivotColumn = $pivotTable->getColumn($pivotColumnName);
+
+                $builder->withPivotColumn(
+                    $pivotColumn->getName(true, $aliasPivot),
+                    PivotData::PIVOT_KEY_PREFIX . $pivotColumn->getName()
+                );
             }
         } catch (SchemaException $exception) {
             throw new OrmException(
@@ -280,6 +286,15 @@ class ManyToMany extends Relationship
             return $this->targetEntity->newInstanceOfCollection();
         }
 
+        // Set default collections
+        array_walk(
+            $entities,
+            fn(Entity $entity) => $entity->getRelated()->set(
+                $this->name,
+                new Collection([], $this->targetEntity->getName())
+            )
+        );
+
         $foreigners = $this->getBuilder(...$entities)->yield();
         $entities = $this->tidyEntities($this->sourceColumns, ...$entities);
         $foreignersAdded = [];
@@ -287,47 +302,33 @@ class ManyToMany extends Relationship
         /** @var Entity $foreign */
         foreach ($foreigners as $foreign) {
             $foreignReflection = new ReflectionEntity($foreign::class);
-            $pivotData = $foreignReflection->getMapper()->getPivotData($foreign);
-            $pivotData = array_values($pivotData);
+            $pivot = $foreignReflection->getHectorData($foreign)->getPivot();
+
+            // Not a pivot
+            if (null === $pivot) {
+                continue;
+            }
+
+            $pivotKeys = array_values($pivot->getKeys());
             $foreignHash = md5(implode("\0", $foreignReflection->getMapper()->getPrimaryValue($foreign) ?: []));
 
             foreach ($entities as $entity) {
-                if ($entity['columns'] == $pivotData) {
-                    if (!array_key_exists($foreignHash, $foreignersAdded)) {
-                        $foreignersAdded[$foreignHash] = $foreign;
-                    }
+                /** @var Related $entityRelated */
+                $entityRelated = $entity['entity']->getRelated();
 
-                    $this->addForeignToEntity($entity['entity'], $foreignersAdded[$foreignHash]);
+                if ($entity['columns'] != $pivotKeys) {
+                    continue;
                 }
-            }
-        }
 
-        foreach ($entities as $entity) {
-            if (!$entity['entity']->getRelated()->isset($this->name)) {
-                $entity['entity']->getRelated()->set($this->name, new Collection([], $this->targetEntity->getName()));
+                if (!array_key_exists($foreignHash, $foreignersAdded)) {
+                    $foreignersAdded[$foreignHash] = $foreign;
+                }
+
+                $entityRelated->get($this->name)->append($foreign);
             }
         }
 
         return $this->targetEntity->newInstanceOfCollection(array_values($foreignersAdded));
-    }
-
-    /**
-     * Add foreign entity to entity.
-     *
-     * @param Entity $entity
-     * @param Entity $foreign
-     *
-     * @throws OrmException
-     */
-    private function addForeignToEntity(Entity $entity, Entity $foreign): void
-    {
-        if (!$entity->getRelated()->isset($this->name)) {
-            $foreignReflection = new ReflectionEntity($foreign::class);
-            $entity->getRelated()->set($this->name, $foreignReflection->newInstanceOfCollection([$foreign]));
-            return;
-        }
-
-        $entity->getRelated()->get($this->name)->append($foreign);
     }
 
     /**
@@ -352,12 +353,14 @@ class ManyToMany extends Relationship
             }
         }
 
+        // Check if it has new relation
+        /** @var Entity $foreignEntity */
         foreach ($foreign as $foreignEntity) {
             // Pivot
             $queryBuilder = $this->newQueryBuilder($entity, $foreignEntity);
 
             if (!$queryBuilder->exists()) {
-                if ($queryBuilder->insert() !== 1) {
+                if ($queryBuilder->insert($foreignEntity->getPivot()?->getData() ?? []) !== 1) {
                     throw new RelationException(
                         sprintf(
                             'Error during creation of link between entities "%s" and "%s"',
@@ -366,8 +369,18 @@ class ManyToMany extends Relationship
                         )
                     );
                 }
+                continue;
             }
+
+            $queryBuilder->update($foreignEntity->getPivot()?->getData() ?? []);
         }
+
+        // Detached
+        foreach ($foreign->detached() as $detachedEntity) {
+            $queryBuilder = $this->newQueryBuilder($entity, $detachedEntity);
+            $queryBuilder->delete();
+        }
+        $foreign->clearDetached();
     }
 
     /**

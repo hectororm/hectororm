@@ -13,9 +13,9 @@
 namespace Hector\Orm\Tests\Relationship;
 
 use Hector\Orm\Collection\Collection;
-use Hector\Orm\Relationship\Relationship;
 use Hector\Orm\Relationship\ManyToOne;
 use Hector\Orm\Relationship\OneToMany;
+use Hector\Orm\Relationship\Relationship;
 use Hector\Orm\Tests\AbstractTestCase;
 use Hector\Orm\Tests\Fake\Entity\Actor;
 use Hector\Orm\Tests\Fake\Entity\Address;
@@ -142,5 +142,14 @@ class ManyToOneTest extends AbstractTestCase
         $this->assertEquals($reverse->getSourceColumns(), $relationship->getTargetColumns());
         $this->assertEquals($reverse->getTargetEntity(), $relationship->getSourceEntity());
         $this->assertEquals($reverse->getTargetColumns(), $relationship->getSourceColumns());
+    }
+
+    public function testEntityGet()
+    {
+        $staff = Staff::findOrFail(1);
+
+        $this->assertInstanceOf(Address::class, $staff->address);
+        $this->assertSame(3, $staff->address_id);
+        $this->assertSame(3, $staff->address->address_id);
     }
 }

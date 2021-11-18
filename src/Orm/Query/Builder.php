@@ -27,10 +27,12 @@ use Hector\Query\Statement\Row;
 use Hector\Query\Statement\SqlFunction;
 use Hector\Schema\Column;
 
+/**
+ * @template T
+ */
 class Builder extends QueryBuilder
 {
     public const FROM_ALIAS = 'main';
-    public const PIVOT_PREFIX = 'PIVOT_';
 
     private ReflectionEntity $entityReflection;
     public array $with = [];
@@ -38,7 +40,7 @@ class Builder extends QueryBuilder
     /**
      * EntityQuery constructor.
      *
-     * @param string $entity
+     * @param class-string<T> $entity
      *
      * @throws OrmException
      */
@@ -116,7 +118,7 @@ class Builder extends QueryBuilder
      */
     public function withPivotColumn(string $column, string $alias): static
     {
-        $this->column($column, Builder::PIVOT_PREFIX . $alias);
+        $this->column($column, $alias);
 
         return $this;
     }
@@ -128,7 +130,7 @@ class Builder extends QueryBuilder
      *
      * @param int $offset
      *
-     * @return Entity|null
+     * @return T|null
      * @throws OrmException
      */
     public function get(int $offset = 0): ?Entity
@@ -145,7 +147,7 @@ class Builder extends QueryBuilder
      *
      * @param int $offset
      *
-     * @return Entity
+     * @return T
      * @throws NotFoundException if no entity found
      * @throws OrmException
      */
@@ -168,7 +170,7 @@ class Builder extends QueryBuilder
      * @param int $offset
      * @param array $initialData
      *
-     * @return Entity
+     * @return T
      * @throws OrmException
      */
     public function getOrNew(int $offset = 0, array $initialData = []): Entity
@@ -231,7 +233,7 @@ class Builder extends QueryBuilder
      *
      * @param mixed ...$primaryValues
      *
-     * @return Entity|Collection|null
+     * @return T|Collection<T>|null
      * @throws OrmException
      */
     public function find(mixed ...$primaryValues): Entity|Collection|null
@@ -250,7 +252,7 @@ class Builder extends QueryBuilder
      *
      * @param mixed ...$primaryValues
      *
-     * @return Collection
+     * @return Collection<T>
      * @throws OrmException
      */
     public function findAll(mixed ...$primaryValues): Collection
@@ -268,7 +270,7 @@ class Builder extends QueryBuilder
      *
      * @param mixed ...$primaryValues
      *
-     * @return Entity|Collection
+     * @return T|Collection<T>
      * @throws OrmException
      */
     public function findOrFail(mixed ...$primaryValues): Entity|Collection
@@ -290,7 +292,7 @@ class Builder extends QueryBuilder
      * @param mixed $primaryValue
      * @param array $initialData
      *
-     * @return Entity
+     * @return T
      * @throws OrmException
      */
     public function findOrNew(mixed $primaryValue, array $initialData = []): Entity
@@ -308,7 +310,7 @@ class Builder extends QueryBuilder
     /**
      * All.
      *
-     * @return Collection
+     * @return Collection<T>
      * @throws OrmException
      */
     public function all(): Collection
@@ -347,7 +349,7 @@ class Builder extends QueryBuilder
     /**
      * Iterate result with Generator.
      *
-     * @return Generator<Entity>
+     * @return Generator<T>
      * @throws OrmException
      */
     public function yield(): Generator

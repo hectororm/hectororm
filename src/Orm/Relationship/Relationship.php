@@ -175,22 +175,26 @@ abstract class Relationship
     abstract public function get(Entity ...$entities): Collection;
 
     /**
-     * Link native entity to foreign entity.
-     *
-     * @param Entity $entity
-     * @param Entity|Collection|null $foreign
-     */
-    public function linkNative(Entity $entity, Entity|Collection|null $foreign): void
-    {
-    }
-
-    /**
      * Link foreign entity to native entity.
+     *
+     * Call before entity saving.
      *
      * @param Entity $entity
      * @param Entity|Collection|null $foreign
      */
     public function linkForeign(Entity $entity, Entity|Collection|null $foreign): void
+    {
+    }
+
+    /**
+     * Link native entity to foreign entity.
+     *
+     * Call after entity saving.
+     *
+     * @param Entity $entity
+     * @param Entity|Collection|null $foreign
+     */
+    public function linkNative(Entity $entity, Entity|Collection|null $foreign): void
     {
     }
 

@@ -64,11 +64,30 @@ class OneToMany extends RegularRelationship
         /** @var Entity $foreignEntity */
         foreach ($foreign as $foreignEntity) {
             $foreignEntityReflection = new ReflectionEntity($foreignEntity::class);
+            $targetColumnsOrigin = $foreignEntityReflection->getMapper()->collectEntity(
+                $foreignEntity,
+                $this->getTargetColumns()
+            );
+
+            // Already hydrated?
+            if ($targetColumns == array_filter($targetColumnsOrigin)) {
+                // Not altered?
+                if (false === $foreignEntity->isAltered(...$this->getTargetColumns())) {
+                    continue;
+                }
+            }
+
+            // Hydrate foreign entity
             $foreignEntityReflection->getMapper()->hydrateEntity($foreignEntity, $targetColumns);
+
+            // Save foreign
+            $foreignEntity->save();
         }
 
-        // Save foreign
-        $foreign->save();
+        // Detached
+        foreach ($foreign->detached() as $detachedEntity) {
+            $detachedEntity->delete();
+        }
     }
 
     /**
@@ -97,7 +116,7 @@ class OneToMany extends RegularRelationship
         try {
             $relationship = $this->targetEntity->getMapper()->getRelationships()->getWith(
                 foreignEntity: $this->sourceEntity->class,
-                columns:       $this->getTargetColumns()
+                columns: $this->getTargetColumns()
             );
         } catch (RelationException) {
             $relationship = null;

@@ -17,6 +17,7 @@ namespace Hector\Orm\Entity;
 final class EntityData
 {
     private Related $related;
+    private ?PivotData $pivot = null;
     private array $data = [];
 
     public function __construct(private Entity $entity)
@@ -28,6 +29,7 @@ final class EntityData
     {
         return [
             'related' => $this->related,
+            'pivot' => $this->pivot,
             'data' => $this->data,
         ];
     }
@@ -35,6 +37,7 @@ final class EntityData
     public function __unserialize(array $data): void
     {
         $this->related = $data['related'];
+        $this->pivot = $data['pivot'];
         $this->data = $data['data'];
     }
 
@@ -52,6 +55,34 @@ final class EntityData
     public function getRelated(): Related
     {
         return $this->related;
+    }
+
+    /**
+     * Get pivot data.
+     *
+     * @return PivotData|null
+     */
+    public function getPivot(): ?PivotData
+    {
+        return $this->pivot;
+    }
+
+    /**
+     * Set pivot data.
+     *
+     * @param PivotData $pivot
+     */
+    public function setPivot(PivotData $pivot): void
+    {
+        $this->pivot = $pivot;
+    }
+
+    /**
+     * Unset pivot data.
+     */
+    public function unsetPivot(): void
+    {
+        $this->pivot = null;
     }
 
     public function get(string $name, mixed $default = null): mixed

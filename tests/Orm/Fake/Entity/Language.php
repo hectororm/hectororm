@@ -12,9 +12,15 @@
 
 namespace Hector\Orm\Tests\Fake\Entity;
 
+use DateTimeImmutable;
 use Hector\Orm\Attributes as Orm;
 use Hector\Orm\Entity\MagicEntity;
 
+/**
+ * @property int $language_id
+ * @property string $name
+ * @property DateTimeImmutable $last_update
+ */
 #[Orm\Collection(LanguageCollection::class)]
 #[Orm\HasMany(Film::class, 'films', ['language_id' => 'language_id'])]
 class Language extends MagicEntity

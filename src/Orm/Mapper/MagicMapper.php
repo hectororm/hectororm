@@ -48,9 +48,6 @@ class MagicMapper extends AbstractMapper
         }
 
         try {
-            // Update pivot data
-            $this->setPivotData($entity, $data);
-
             // Filter bad properties
             $data = array_filter(
                 $data,

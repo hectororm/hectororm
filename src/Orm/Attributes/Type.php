@@ -26,17 +26,17 @@ class Type implements OrmAttribute
     /**
      * Type constructor.
      *
-     * @param string $type
      * @param string $column
+     * @param string $type
      * @param mixed ...$arguments
      */
     public function __construct(
-        public string $type,
         public string $column,
+        public string $type,
         mixed ...$arguments,
     ) {
         if (!is_a($this->type, TypeInterface::class, true)) {
-            throw new TypeError(sprintf('First parameter must be an object of type "%s"', TypeInterface::class));
+            throw new TypeError(sprintf('Parameter "type" must be an "%s" object', TypeInterface::class));
         }
 
         $this->arguments = $arguments;

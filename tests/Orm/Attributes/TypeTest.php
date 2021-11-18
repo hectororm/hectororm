@@ -22,10 +22,10 @@ class TypeTest extends TestCase
 {
     public function testConstruct()
     {
-        $attribute = new Type(DateTimeType::class, 'column');
+        $attribute = new Type('column', DateTimeType::class);
 
-        $this->assertEquals(DateTimeType::class, $attribute->type);
         $this->assertEquals('column', $attribute->column);
+        $this->assertEquals(DateTimeType::class, $attribute->type);
     }
 
     public function testConstructWithBadCollection()

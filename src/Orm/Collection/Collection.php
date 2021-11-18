@@ -29,6 +29,7 @@ class Collection extends ArrayObject implements JsonSerializable
     use EntityAssert;
 
     private string $accepted;
+    private array $detached = [];
 
     /**
      * Collection constructor.
@@ -250,6 +251,10 @@ class Collection extends ArrayObject implements JsonSerializable
      */
     public function offsetUnset(mixed $key): void
     {
+        if ($this->offsetExists($key)) {
+            $this->detached[] = $this->offsetGet($key);
+        }
+
         parent::offsetUnset($key);
         $this->updateHook();
     }
@@ -304,5 +309,26 @@ class Collection extends ArrayObject implements JsonSerializable
         }
 
         return $input;
+    }
+
+    /**
+     * Get detached entities.
+     *
+     * @return iterable
+     * @internal
+     */
+    public function detached(): iterable
+    {
+        yield from $this->detached;
+    }
+
+    /**
+     * Clear collection.
+     *
+     * @internal
+     */
+    public function clearDetached(): void
+    {
+        $this->detached = [];
     }
 }

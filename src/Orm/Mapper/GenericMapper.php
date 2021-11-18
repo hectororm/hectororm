@@ -65,8 +65,6 @@ class GenericMapper extends AbstractMapper
 
                 $reflectionProperty->setValue($entity, $value);
             }
-
-            $this->setPivotData($entity, $data);
         } catch (OrmException | TypeException $e) {
             throw new MapperException(sprintf('Unable to hydrate entity "%s"', $this->reflection->class), 0, $e);
         }

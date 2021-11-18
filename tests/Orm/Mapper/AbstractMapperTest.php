@@ -13,9 +13,11 @@
 namespace Hector\Orm\Tests\Mapper;
 
 use Hector\Orm\Collection\Collection;
+use Hector\Orm\Entity\Entity;
 use Hector\Orm\Exception\MapperException;
 use Hector\Orm\Mapper\AbstractMapper;
 use Hector\Orm\Mapper\GenericMapper;
+use Hector\Orm\Mapper\MagicMapper;
 use Hector\Orm\Query\Builder;
 use Hector\Orm\Relationship\Relationships;
 use Hector\Orm\Tests\AbstractTestCase;
@@ -150,10 +152,19 @@ class AbstractMapperTest extends AbstractTestCase
         $nbAffected = $mapper->deleteEntity($entity);
 
         $this->assertEquals(1, $nbAffected);
+    }
 
-        $nbAffected = $mapper->deleteEntity($entity);
+    public function testDeleteEntityNoPrimaryValue()
+    {
+        $mapper = new GenericMapper(Film::class, $this->getOrm()->getStorage());
 
-        $this->assertEquals(0, $nbAffected);
+        $entity = new Film();
+        $entity->title = 'Foo';
+        $entity->description = 'Bar';
+        $entity->language_id = 1;
+
+        $this->expectException(MapperException::class);
+        $mapper->deleteEntity($entity);
     }
 
     public function testRefreshEntity()
@@ -208,5 +219,40 @@ class AbstractMapperTest extends AbstractTestCase
         $this->assertInstanceOf(Collection::class, $collection);
         $this->assertInstanceOf(LanguageCollection::class, $collection);
         $this->assertCount(2, $collection);
+    }
+
+    public function testGetEntityAlteration_freshEntity()
+    {
+        $mapper = new MagicMapper(Language::class, $this->getOrm()->getStorage());
+        $entity = $mapper->fetchOneWithBuilder((new Builder(Language::class))->where('language_id', 2));
+
+        $this->assertInstanceOf(Entity::class, $entity);
+        $this->assertEquals([], $mapper->getEntityAlteration($entity));
+    }
+
+    public function testGetEntityAlteration_alteredEntity()
+    {
+        $mapper = new MagicMapper(Language::class, $this->getOrm()->getStorage());
+        /** @var Language $entity */
+        $entity = $mapper->fetchOneWithBuilder((new Builder(Language::class))->where('language_id', 2));
+
+        $this->assertInstanceOf(Entity::class, $entity);
+
+        $entity->name = 'FOO';
+
+        $this->assertEquals(['name'], $mapper->getEntityAlteration($entity));
+        $this->assertEquals([], $mapper->getEntityAlteration($entity, ['language_id']));
+        $this->assertEquals(['name'], $mapper->getEntityAlteration($entity, ['name']));
+        $this->assertEquals(['name'], $mapper->getEntityAlteration($entity, ['language_id', 'name']));
+    }
+
+    public function testGetEntityAlteration_newEntity()
+    {
+        $mapper = new MagicMapper(Language::class, $this->getOrm()->getStorage());
+        $entity = new Language();
+
+        $this->assertInstanceOf(Entity::class, $entity);
+        $this->assertEquals(['language_id', 'name', 'last_update'], $mapper->getEntityAlteration($entity));
+        $this->assertEquals(['name'], $mapper->getEntityAlteration($entity, ['name']));
     }
 }

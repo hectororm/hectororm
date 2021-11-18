@@ -62,6 +62,17 @@ abstract class Entity
     }
 
     /**
+     * Get pivot.
+     *
+     * @return PivotData|null
+     * @throws OrmException
+     */
+    final public function getPivot(): ?PivotData
+    {
+        return Orm::get()->getEntityReflection($this::class)->getHectorData($this)->getPivot();
+    }
+
+    /**
      * Compare entity with another one with primary values.
      *
      * @param Entity $entity

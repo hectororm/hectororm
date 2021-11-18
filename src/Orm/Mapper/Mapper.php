@@ -153,13 +153,4 @@ interface Mapper
      * @throws OrmException
      */
     public function getEntityAlteration(Entity $entity, ?array $columns = null): array;
-
-    /**
-     * Get pivot data.
-     *
-     * @param Entity $entity
-     *
-     * @return array
-     */
-    public function getPivotData(Entity $entity): array;
 }
