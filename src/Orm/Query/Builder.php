@@ -54,6 +54,18 @@ class Builder extends QueryBuilder
      * @inheritDoc
      * @throws OrmException
      */
+    public function reset(): static
+    {
+        parent::reset();
+        $this->resetEntityColumns();
+
+        return $this;
+    }
+
+    /**
+     * @inheritDoc
+     * @throws OrmException
+     */
     public function resetFrom(): static
     {
         parent::resetFrom();
@@ -65,13 +77,14 @@ class Builder extends QueryBuilder
     }
 
     /**
-     * @inheritDoc
+     * Reset entity columns.
+     *
+     * @return static
      * @throws OrmException
      */
-    public function resetColumns(): static
+    public function resetEntityColumns(): static
     {
-        parent::resetColumns();
-
+        $this->resetColumns();
         $table = $this->entityReflection->getTable();
 
         // Entity columns
