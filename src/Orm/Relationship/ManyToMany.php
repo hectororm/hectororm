@@ -297,7 +297,7 @@ class ManyToMany extends Relationship
 
         $foreigners = $this->getBuilder(...$entities)->yield();
         $entities = $this->tidyEntities($this->sourceColumns, ...$entities);
-        $foreignersAdded = [];
+        $foreignersCollection = $this->targetEntity->newInstanceOfCollection();
 
         /** @var Entity $foreign */
         foreach ($foreigners as $foreign) {
@@ -310,7 +310,6 @@ class ManyToMany extends Relationship
             }
 
             $pivotKeys = array_values($pivot->getKeys());
-            $foreignHash = md5(implode("\0", $foreignReflection->getMapper()->getPrimaryValue($foreign) ?: []));
 
             foreach ($entities as $entity) {
                 /** @var Related $entityRelated */
@@ -320,15 +319,12 @@ class ManyToMany extends Relationship
                     continue;
                 }
 
-                if (!array_key_exists($foreignHash, $foreignersAdded)) {
-                    $foreignersAdded[$foreignHash] = $foreign;
-                }
-
                 $entityRelated->get($this->name)->append($foreign);
+                $foreignersCollection->append($foreign);
             }
         }
 
-        return $this->targetEntity->newInstanceOfCollection(array_values($foreignersAdded));
+        return $foreignersCollection;
     }
 
     /**
