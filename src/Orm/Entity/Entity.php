@@ -98,7 +98,11 @@ abstract class Entity
             return false;
         }
 
-        return $myPrimaries == $mapper->getPrimaryValue($entity);
+        if ($myPrimaries == $mapper->getPrimaryValue($entity)) {
+            return $entity->getPivot()?->getKeys() === $this->getPivot()?->getKeys();
+        }
+
+        return false;
     }
 
     /**
