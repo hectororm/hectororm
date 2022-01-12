@@ -202,6 +202,7 @@ class QueryBuilderTest extends TestCase
     {
         $queryBuilder = new FakeQueryBuilder($this->getConnection());
         $queryBuilder = $queryBuilder
+            ->column('f.bar')
             ->from('foo', 'f')
             ->orderBy('bar', 'DESC')
             ->limit(2);
@@ -211,7 +212,28 @@ class QueryBuilderTest extends TestCase
         $this->assertInstanceOf(Select::class, $select);
         $this->assertInstanceOf(QueryBuilder::class, $queryBuilder);
         $this->assertEquals(
-            'SELECT COUNT(*) AS `count` FROM foo AS f',
+            'SELECT COUNT(*) AS `count` FROM ( SELECT 1 FROM foo AS f ) AS countable',
+            $select->getStatement($binding)
+        );
+        $this->assertEmpty($binding);
+    }
+
+    public function testMakeCount_withHaving()
+    {
+        $queryBuilder = new FakeQueryBuilder($this->getConnection());
+        $queryBuilder = $queryBuilder
+            ->column('f.bar')
+            ->from('foo', 'f')
+            ->orderBy('bar', 'DESC')
+            ->having('f.bar = 1')
+            ->limit(2);
+        $binding = [];
+        $select = $queryBuilder->makeCount();
+
+        $this->assertInstanceOf(Select::class, $select);
+        $this->assertInstanceOf(QueryBuilder::class, $queryBuilder);
+        $this->assertEquals(
+            'SELECT COUNT(*) AS `count` FROM ( SELECT f.bar FROM foo AS f HAVING f.bar = 1 ) AS countable',
             $select->getStatement($binding)
         );
         $this->assertEmpty($binding);
