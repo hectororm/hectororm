@@ -33,17 +33,15 @@ class QueryBuilder
     use Clause\Order;
     use Clause\Limit;
 
-    protected Connection $connection;
-    private bool $distinct = false;
+    protected bool $distinct = false;
 
     /**
      * QueryBuilder constructor.
      *
      * @param Connection $connection
      */
-    public function __construct(Connection $connection)
+    public function __construct(protected Connection $connection)
     {
-        $this->connection = $connection;
         $this->reset();
     }
 
@@ -169,7 +167,9 @@ class QueryBuilder
                 );
 
         if (count($this->having) == 0) {
-            $select->resetColumns()->column('1');
+            if (false === $this->distinct) {
+                $select->resetColumns()->column('1');
+            }
         }
 
         return $count;
