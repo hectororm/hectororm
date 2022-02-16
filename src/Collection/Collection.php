@@ -1,0 +1,366 @@
+<?php
+/*
+ * This file is part of Hector ORM.
+ *
+ * @license   https://opensource.org/licenses/MIT MIT License
+ * @copyright 2022 Ronan GIRON
+ * @author    Ronan GIRON <https://github.com/ElGigi>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code, to the root.
+ */
+
+declare(strict_types=1);
+
+namespace Hector\Collection;
+
+use ArrayIterator;
+use Closure;
+use Countable;
+use Traversable;
+
+class Collection implements CollectionInterface, Countable
+{
+    private array $items;
+
+    public function __construct(iterable $iterable = [])
+    {
+        $this->items = $this->initList($iterable);
+    }
+
+    /**
+     * Init list from iterable.
+     *
+     * @param iterable $iterable
+     *
+     * @return array
+     */
+    protected function initList(iterable $iterable = []): array
+    {
+        if ($iterable instanceof Traversable) {
+            return iterator_to_array($iterable);
+        }
+
+        return $iterable;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function count(): int
+    {
+        return count($this->items);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getIterator(): ArrayIterator
+    {
+        return new ArrayIterator($this->items);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getArrayCopy(): array
+    {
+        return array_map(
+            function ($value) {
+                if ($value instanceof CollectionInterface) {
+                    return $value->getArrayCopy();
+                }
+
+                return $value;
+            },
+            $this->items
+        );
+    }
+
+    /**
+     * PHP magic method.
+     *
+     * @return array
+     */
+    public function __debugInfo(): array
+    {
+        return $this->getArrayCopy();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function jsonSerialize(): array
+    {
+        return $this->getArrayCopy();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function append(mixed ...$value): static
+    {
+        array_push($this->items, ...$value);
+
+        return $this;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function prepend(mixed ...$value): static
+    {
+        array_unshift($this->items, ...$value);
+
+        return $this;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function sort(int|callable|null $callback = null): static
+    {
+        $items = $this->items;
+
+        if (is_callable($callback)) {
+            uasort($items, $callback);
+        } else {
+            asort($items, $callback ?? SORT_REGULAR);
+        }
+
+        return new static($items);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function filter(?callable $callback = null): static
+    {
+        return new static(array_filter($this->items, $callback, ARRAY_FILTER_USE_BOTH));
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function filterInstanceOf(string|object ...$class): static
+    {
+        return $this->filter(function ($value) use (&$class) {
+            foreach ($class as $className) {
+                if (is_object($className)) {
+                    $className = $className::class;
+                }
+
+                if ($value instanceof $className) {
+                    return true;
+                }
+            }
+            return false;
+        });
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function map(callable $callback): static
+    {
+        $keys = array_keys($this->items);
+        $result = array_map($callback, $this->items, $keys);
+
+        return new static(array_combine($keys, $result));
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function search(callable $callback): mixed
+    {
+        return $this->first($callback);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function first(?callable $callback = null): mixed
+    {
+        if (null === $callback) {
+            if (false !== ($result = reset($this->items))) {
+                return $result;
+            }
+
+            return null;
+        }
+
+        foreach ($this as $key => $value) {
+            if ($callback($value, $key)) {
+                return $value;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function last(?callable $callback = null): mixed
+    {
+        if (null === $callback) {
+            if (false !== ($result = end($this->items))) {
+                return $result;
+            }
+
+            return null;
+        }
+
+        $result = null;
+
+        foreach ($this as $key => $value) {
+            if ($callback($value, $key)) {
+                $result = $value;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function contains(mixed $value, bool $strict = false): bool
+    {
+        return in_array($value, $this->items, $strict);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function chunk(int $length, ?callable $callback = null): static
+    {
+        if (null !== $callback) {
+            foreach (array_chunk($this->items, $length, true) as $chunk) {
+                $callback(new static($chunk));
+            }
+
+            return $this;
+        }
+
+        $collection = new static();
+
+        foreach (array_chunk($this->items, $length, true) as $chunk) {
+            $collection->append(new static($chunk));
+        }
+
+        return $collection;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function keys(): static
+    {
+        return new static(array_keys($this->items));
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function values(): static
+    {
+        return new static(array_values($this->items));
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function unique(): static
+    {
+        return new static(array_unique($this->items));
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function flip(): static
+    {
+        return new static(array_flip($this->items));
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function column(string|int|Closure|null $column_key, string|int|Closure|null $index_key = null): static
+    {
+        return new static(b_array_column($this->items, $column_key, $index_key));
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function rand(int $length = 1): static
+    {
+        $keys = (array)array_rand($this->items, $length);
+
+        return new static(array_map(fn($key) => $this->items[$key], $keys));
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function sum(): float|int
+    {
+        return array_sum($this->items);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function avg(): float|int
+    {
+        return array_sum($this->items) / count($this->items);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function reduce(callable $callback, mixed $initial = null): mixed
+    {
+        return array_reduce($this->items, $callback, $initial);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function offsetExists(mixed $offset): bool
+    {
+        return array_key_exists($offset, $this->items);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function offsetGet(mixed $offset): mixed
+    {
+        return $this->items[$offset] ?? null;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function offsetSet(mixed $offset, mixed $value): void
+    {
+        if (null === $offset) {
+            $this->items[] = $value;
+            return;
+        }
+
+        $this->items[$offset] = $value;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function offsetUnset(mixed $offset): void
+    {
+        unset($this->items[$offset]);
+    }
+}
