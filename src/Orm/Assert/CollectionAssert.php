@@ -34,25 +34,4 @@ trait CollectionAssert
             throw new TypeError(sprintf('Excepted %s class, got %s', Collection::class, $collection));
         }
     }
-
-    /**
-     * Assert collection type.
-     *
-     * @param Collection|string $collection
-     * @param Collection|string $expected
-     */
-    protected function assertCollectionType(Collection|string $collection, Collection|string $expected): void
-    {
-        $this->assertCollection($collection);
-
-        if (false === is_a($collection, $expected, true)) {
-            throw new TypeError(
-                sprintf(
-                    'Excepted %s collection, got %s',
-                    is_string($expected) ? $expected : $expected::class,
-                    is_string($collection) ? $collection : $collection::class,
-                )
-            );
-        }
-    }
 }

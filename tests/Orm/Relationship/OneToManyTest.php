@@ -83,18 +83,6 @@ class OneToManyTest extends AbstractTestCase
         $this->assertTrue($relationship->valid(new Collection([], Film::class)));
     }
 
-    public function testValidWithCollectionWithBadEntities()
-    {
-        $relationship = new OneToMany(
-            'films',
-            Language::class,
-            Film::class,
-            ['language_id' => 'language_id']
-        );
-
-        $this->assertFalse($relationship->valid(new Collection([], Actor::class)));
-    }
-
     public function testValidWithCollectionWithNoRestrictionButGoodEntities()
     {
         $relationship = new OneToMany(
@@ -105,18 +93,6 @@ class OneToManyTest extends AbstractTestCase
         );
 
         $this->assertTrue($relationship->valid(new Collection([new Film(), new Film()])));
-    }
-
-    public function testValidWithCollectionWithNoRestrictionButBadEntities()
-    {
-        $relationship = new OneToMany(
-            'films',
-            Language::class,
-            Film::class,
-            ['language_id' => 'language_id']
-        );
-
-        $this->assertFalse($relationship->valid(new Collection([new Actor(), new Film()])));
     }
 
     public function testSwitchIntoEntities()
@@ -165,10 +141,10 @@ class OneToManyTest extends AbstractTestCase
         $reflectionMethod->setAccessible(true);
 
         $foreigners = new Collection([
-                                         $payment1 = Payment::find(1),
-                                         $payment2 = Payment::find(2),
-                                         $payment3 = Payment::find(3),
-                                     ]);
+            $payment1 = Payment::find(1),
+            $payment2 = Payment::find(2),
+            $payment3 = Payment::find(3),
+        ]);
         $reflectionMethod->invoke(
             $relationship,
             $foreigners,

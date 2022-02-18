@@ -279,11 +279,11 @@ class ManyToMany extends Relationship
                 $entities,
                 fn(Entity $entity) => $entity->getRelated()->set(
                     $this->name,
-                    $this->targetEntity->newInstanceOfCollection()
+                    new Collection()
                 )
             );
 
-            return $this->targetEntity->newInstanceOfCollection();
+            return new Collection();
         }
 
         // Set default collections
@@ -297,7 +297,7 @@ class ManyToMany extends Relationship
 
         $foreigners = $this->getBuilder(...$entities)->yield();
         $entities = $this->tidyEntities($this->sourceColumns, ...$entities);
-        $foreignersCollection = $this->targetEntity->newInstanceOfCollection();
+        $foreignersCollection = new Collection();
 
         /** @var Entity $foreign */
         foreach ($foreigners as $foreign) {

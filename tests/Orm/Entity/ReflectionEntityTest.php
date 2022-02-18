@@ -54,16 +54,6 @@ class ReflectionEntityTest extends AbstractTestCase
         new ReflectionEntity(get_class($entity));
     }
 
-    public function testConstruct_badCollection()
-    {
-        $this->expectException(TypeError::class);
-
-        $entity = new #[Attributes\Collection(stdClass::class)] class extends Film {
-        };
-
-        new ReflectionEntity(get_class($entity));
-    }
-
     public function testSerialization()
     {
         $reflectionEntity = new ReflectionEntity(Film::class);
@@ -85,15 +75,6 @@ class ReflectionEntityTest extends AbstractTestCase
         $this->assertEquals(CityMapper::class, $reflectionEntity->mapper);
     }
 
-    public function testCollectionProperty()
-    {
-        $reflectionEntity = new ReflectionEntity(Film::class);
-        $this->assertEquals(\Hector\Orm\Collection\Collection::class, $reflectionEntity->collection);
-
-        $reflectionEntity = new ReflectionEntity(Language::class);
-        $this->assertEquals(LanguageCollection::class, $reflectionEntity->collection);
-    }
-
     public function testNewInstance()
     {
         $reflectionEntity = new ReflectionEntity(Film::class);
@@ -111,16 +92,5 @@ class ReflectionEntityTest extends AbstractTestCase
         $reflectionEntity = new ReflectionEntity(City::class);
         $mapper = $reflectionEntity->newInstanceOfMapper($this->getOrm()->getStorage());
         $this->assertInstanceOf(CityMapper::class, $mapper);
-    }
-
-    public function testNewInstanceOfCollection()
-    {
-        $reflectionEntity = new ReflectionEntity(Film::class);
-        $collection = $reflectionEntity->newInstanceOfCollection();
-        $this->assertInstanceOf(Collection::class, $collection);
-
-        $reflectionEntity = new ReflectionEntity(Language::class);
-        $collection = $reflectionEntity->newInstanceOfCollection();
-        $this->assertInstanceOf(LanguageCollection::class, $collection);
     }
 }

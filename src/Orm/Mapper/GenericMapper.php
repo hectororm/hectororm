@@ -63,9 +63,10 @@ class GenericMapper extends AbstractMapper
                     }
                 }
 
+                $reflectionProperty->setAccessible(true);
                 $reflectionProperty->setValue($entity, $value);
             }
-        } catch (OrmException | TypeException $e) {
+        } catch (OrmException|TypeException $e) {
             throw new MapperException(sprintf('Unable to hydrate entity "%s"', $this->reflection->class), 0, $e);
         }
     }
@@ -117,7 +118,7 @@ class GenericMapper extends AbstractMapper
             }
 
             return $data;
-        } catch (OrmException | TypeException $e) {
+        } catch (OrmException|TypeException $e) {
             throw new MapperException(sprintf('Unable to collect entity "%s"', $this->reflection->class), 0, $e);
         }
     }

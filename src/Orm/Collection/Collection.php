@@ -14,137 +14,23 @@ declare(strict_types=1);
 
 namespace Hector\Orm\Collection;
 
-use ArrayObject;
-use Generator;
-use Hector\Orm\Assert\EntityAssert;
 use Hector\Orm\Entity\Entity;
 use Hector\Orm\Entity\ReflectionEntity;
 use Hector\Orm\Exception\OrmException;
 use Hector\Orm\Orm;
-use InvalidArgumentException;
-use JsonSerializable;
 
-class Collection extends ArrayObject implements JsonSerializable
+class Collection extends \Hector\Collection\Collection
 {
-    use EntityAssert;
-
-    private string $accepted;
     private array $detached = [];
 
     /**
      * Collection constructor.
      *
-     * @param iterable $input
-     * @param string $accepted
+     * @param iterable $iterable
      */
-    public function __construct(iterable $input = [], string $accepted = Entity::class)
+    public function __construct(iterable $iterable = [])
     {
-        $this->assertEntity($accepted);
-        $this->accepted = $accepted;
-
-        parent::__construct($this->validInput($input));
-        $this->updateHook();
-    }
-
-    /**
-     * PHP magic method.
-     *
-     * @return array
-     */
-    public function __debugInfo(): array
-    {
-        return $this->getArrayCopy();
-    }
-
-    /**
-     * Get accepted entity.
-     *
-     * @return string
-     */
-    public function getAcceptedEntity(): string
-    {
-        return $this->accepted;
-    }
-
-    /**
-     * Get iterator.
-     *
-     * @return FilterCollectionIterator
-     */
-    public function getIterator(): FilterCollectionIterator
-    {
-        return new FilterCollectionIterator(parent::getIterator(), fn($entity) => is_a($entity, $this->accepted, true));
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function jsonSerialize(): array
-    {
-        return $this->getArrayCopy();
-    }
-
-    /**
-     * Update hook.
-     *
-     * Method called after an update of collection, not an update of entities.
-     * Example: new entity, exchange of array and filling.
-     */
-    protected function updateHook(): void
-    {
-    }
-
-    /**
-     * Filter collection.
-     *
-     * @param callable $callback
-     *
-     * @return Generator<Entity>
-     */
-    public function filter(callable $callback): Generator
-    {
-        yield from new FilterCollectionIterator(parent::getIterator(), $callback);
-    }
-
-    /**
-     * Search entity.
-     *
-     * @param callable $callback
-     *
-     * @return Entity|null
-     */
-    public function search(callable $callback): ?Entity
-    {
-        $iterator = $this->filter($callback);
-
-        return $iterator->current() ?: null;
-    }
-
-    /**
-     * Map collection.
-     *
-     * @param callable $callback
-     *
-     * @return void
-     */
-    public function map(callable $callback): void
-    {
-        foreach ($this as $entity) {
-            $callback($entity);
-        }
-    }
-
-    /**
-     * Get first entity in collection.
-     *
-     * @return Entity|null
-     */
-    public function first(): ?Entity
-    {
-        $iterator = $this->getIterator();
-        $iterator->rewind();
-
-        return $iterator->current() ?: null;
+        parent::__construct($iterable);
     }
 
     /**
@@ -212,8 +98,14 @@ class Collection extends ArrayObject implements JsonSerializable
      */
     public function load(array $relations): static
     {
-        // Get mapper for entity
-        $acceptedEntityReflection = ReflectionEntity::get($this->accepted);
+        /** @var Entity $entity */
+        $entity = $this->filterInstanceOf(Entity::class)->first();
+
+        if (null === $entity) {
+            return $this;
+        }
+
+        $entityReflection = ReflectionEntity::get($entity);
 
         foreach ($relations as $key => $value) {
             $relationName = $value;
@@ -221,7 +113,7 @@ class Collection extends ArrayObject implements JsonSerializable
                 $relationName = $key;
             }
 
-            $related = $acceptedEntityReflection->getMapper()->getRelationships()->get($relationName)->get(...$this);
+            $related = $entityReflection->getMapper()->getRelationships()->get($relationName)->get(...$this);
 
             if (is_array($value)) {
                 $related->load($value);
@@ -232,83 +124,27 @@ class Collection extends ArrayObject implements JsonSerializable
     }
 
     /**
-     * @inheritDoc
-     */
-    public function offsetSet(mixed $key, mixed $value): void
-    {
-        $this->assertEntityType($value, $this->accepted);
-
-        if ($this->contains($value)) {
-            return;
-        }
-
-        parent::offsetSet($key, $value);
-        $this->updateHook();
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function offsetUnset(mixed $key): void
-    {
-        if ($this->offsetExists($key)) {
-            $this->detached[] = $this->offsetGet($key);
-        }
-
-        parent::offsetUnset($key);
-        $this->updateHook();
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function exchangeArray(mixed $array): array
-    {
-        $old = parent::exchangeArray($this->validInput($array));
-        $this->updateHook();
-
-        return $old;
-    }
-
-    /**
      * Is in?
      *
-     * @param Entity $entity
+     * @param mixed $value
+     * @param bool $strict
      *
      * @return bool
      * @throws OrmException
      */
-    public function contains(Entity $entity): bool
+    public function contains(mixed $value, bool $strict = false): bool
     {
-        if (!is_a($entity, $this->getAcceptedEntity(), true)) {
-            return false;
+        if (!$value instanceof Entity) {
+            return parent::contains($value, $strict);
         }
 
-        /** @var Entity $entityInCollection */
-        foreach ($this as $entityInCollection) {
-            if ($entityInCollection->isEqualTo($entity)) {
+        foreach ($this as $entity) {
+            if ($entity->isEqualTo($value)) {
                 return true;
             }
         }
 
         return false;
-    }
-
-    /**
-     * Valid input.
-     *
-     * @param iterable $input
-     *
-     * @return iterable
-     * @throws InvalidArgumentException
-     */
-    private function validInput(iterable $input): iterable
-    {
-        foreach ($input as $value) {
-            $this->assertEntityType($value, $this->accepted);
-        }
-
-        return $input;
     }
 
     /**

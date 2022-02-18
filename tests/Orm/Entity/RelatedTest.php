@@ -12,12 +12,14 @@
 
 namespace Hector\Orm\Tests\Entity;
 
+use Hector\Orm\Collection\Collection;
 use Hector\Orm\Exception\RelationException;
 use Hector\Orm\Query\Builder;
 use Hector\Orm\Tests\AbstractTestCase;
 use Hector\Orm\Tests\Fake\Entity\Actor;
 use Hector\Orm\Tests\Fake\Entity\Film;
 use Hector\Orm\Tests\Fake\Entity\Language;
+use InvalidArgumentException;
 use ReflectionObject;
 
 class RelatedTest extends AbstractTestCase
@@ -71,8 +73,7 @@ class RelatedTest extends AbstractTestCase
         $related = Film::find(1)->getRelated();
         $relatedData = $related->get('actors');
 
-        $this->assertInstanceOf(\Hector\Orm\Collection\Collection::class, $relatedData);
-        $this->assertEquals(Actor::class, $relatedData->getAcceptedEntity());
+        $this->assertInstanceOf(Collection::class, $relatedData);
         $this->assertGreaterThanOrEqual(2, count($relatedData));
         $this->assertCount($nbQueries + 2, $this->getOrm()->getConnection()->getLogger());
     }
@@ -116,7 +117,7 @@ class RelatedTest extends AbstractTestCase
 
     public function testSetInvalidEntity()
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
 
         $related = Film::get(1)->getRelated();
         $related->set('language', new Actor());

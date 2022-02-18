@@ -23,7 +23,6 @@ use Hector\Orm\Mapper\GenericMapper;
 use Hector\Orm\Orm;
 use Hector\Orm\Query\Builder;
 
-#[Attributes\Collection(Collection::class)]
 #[Attributes\Mapper(GenericMapper::class)]
 abstract class Entity
 {

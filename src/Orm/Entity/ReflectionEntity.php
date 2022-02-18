@@ -16,10 +16,8 @@ namespace Hector\Orm\Entity;
 
 use Exception;
 use Hector\DataTypes\Type\TypeInterface;
-use Hector\Orm\Assert\CollectionAssert;
 use Hector\Orm\Assert\EntityAssert;
 use Hector\Orm\Attributes;
-use Hector\Orm\Collection\Collection;
 use Hector\Orm\Exception\OrmException;
 use Hector\Orm\Mapper\Mapper;
 use Hector\Orm\Orm;
@@ -46,14 +44,12 @@ use ReflectionProperty;
  */
 class ReflectionEntity
 {
-    use CollectionAssert;
     use EntityAssert;
 
     private static array $reflections = [];
 
     private string $entity;
     private string $mapper;
-    private string $collection;
     private string $table;
     private ?string $schema;
     private ?string $connection;
@@ -98,7 +94,6 @@ class ReflectionEntity
         $this->entity = ($entity instanceof Entity ? $entity::class : $entity);
 
         $this->mapper = $this->retrieveMapper();
-        $this->collection = $this->retrieveCollection();
         list(
             'table' => $this->table,
             'schema' => $this->schema,
@@ -118,7 +113,6 @@ class ReflectionEntity
         return [
             'entity' => $this->entity,
             'mapper' => $this->mapper,
-            'collection' => $this->collection,
             'table' => $this->table,
             'schema' => $this->schema,
             'connection' => $this->connection,
@@ -138,7 +132,6 @@ class ReflectionEntity
     {
         $this->entity = $data['entity'] ?? throw new OrmException('Unable to unserialize ReflectionEntity');
         $this->mapper = $data['mapper'] ?? throw new OrmException('Unable to unserialize ReflectionEntity');
-        $this->collection = $data['collection'] ?? throw new OrmException('Unable to unserialize ReflectionEntity');
         $this->table = $data['table'] ?? throw new OrmException('Unable to unserialize ReflectionEntity');
         $this->schema = $data['schema'] ?? null;
         $this->connection = $data['connection'] ?? null;
@@ -237,33 +230,6 @@ class ReflectionEntity
     }
 
     /**
-     * Retrieve collection class.
-     *
-     * @return string
-     * @throws OrmException
-     */
-    protected function retrieveCollection(): string
-    {
-        $reflectionClass = $this->getClass();
-        $collection = null;
-
-        do {
-            $attributes = $reflectionClass->getAttributes(
-                Attributes\Collection::class,
-                ReflectionAttribute::IS_INSTANCEOF
-            );
-
-            if (count($attributes) === 1) {
-                $collection = reset($attributes)->newInstance()->collection;
-            }
-        } while (null === $collection && $reflectionClass = $reflectionClass->getParentClass());
-
-        $this->assertCollection((string)$collection);
-
-        return (string)$collection;
-    }
-
-    /**
      * Retrieve table.
      *
      * @return string[]
@@ -321,7 +287,6 @@ class ReflectionEntity
         return match ($name) {
             'class' => $this->entity,
             'mapper' => $this->mapper,
-            'collection' => $this->collection,
             'table' => $this->getTable()->getName(),
             'schema' => $this->getTable()->getSchemaName(),
             'connection' => $this->getTable()->getSchema()->getConnection(),
@@ -347,16 +312,6 @@ class ReflectionEntity
     public function getMapperName(): string
     {
         return $this->mapper;
-    }
-
-    /**
-     * Get collection class name.
-     *
-     * @return string
-     */
-    public function getCollectionName(): string
-    {
-        return $this->collection;
     }
 
     /**
@@ -495,18 +450,6 @@ class ReflectionEntity
     public function newInstance(): Entity
     {
         return new $this->entity();
-    }
-
-    /**
-     * New instance of collection.
-     *
-     * @param iterable $input
-     *
-     * @return Collection
-     */
-    public function newInstanceOfCollection(iterable $input = []): Collection
-    {
-        return new $this->collection($input, $this->entity);
     }
 
     /**

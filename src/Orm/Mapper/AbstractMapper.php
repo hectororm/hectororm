@@ -176,7 +176,7 @@ abstract class AbstractMapper implements Mapper
     public function fetchAllWithBuilder(Builder $builder): Collection
     {
         // Collection
-        $collection = $this->reflection->newInstanceOfCollection(iterator_to_array($this->yieldWithBuilder($builder)));
+        $collection = new Collection($this->yieldWithBuilder($builder));
 
         // With
         $collection->load($builder->with);

@@ -68,7 +68,7 @@ abstract class RegularRelationship extends Relationship
      */
     public function get(Entity ...$entities): Collection
     {
-        $foreigners = $this->targetEntity->newInstanceOfCollection();
+        $foreigners = new Collection();
 
         if (!empty($filteredEntities = $this->filterEntities(...$entities))) {
             $entityValues = $this->getEntityValues($this->sourceEntity, $this->sourceColumns, ...$entities);

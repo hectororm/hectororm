@@ -48,41 +48,4 @@ class CollectionAssertTest extends TestCase
 
         $rMethod->invoke($trait, stdClass::class);
     }
-
-    public function testAssertCollectionType()
-    {
-        $this->expectNotToPerformAssertions();
-
-        $trait = $this->getMockForTrait(CollectionAssert::class);
-
-        $rMethod = new ReflectionMethod($trait, 'assertCollectionType');
-        $rMethod->setAccessible(true);
-
-        $rMethod->invoke($trait, Collection::class, Collection::class);
-        $rMethod->invoke($trait, new LanguageCollection(), LanguageCollection::class);
-    }
-
-    public function testAssertCollectionType_failedWithObject()
-    {
-        $this->expectException(TypeError::class);
-
-        $trait = $this->getMockForTrait(CollectionAssert::class);
-
-        $rMethod = new ReflectionMethod($trait, 'assertCollectionType');
-        $rMethod->setAccessible(true);
-
-        $rMethod->invoke($trait, new Collection(), LanguageCollection::class);
-    }
-
-    public function testAssertCollectionType_failedWithString()
-    {
-        $this->expectException(TypeError::class);
-
-        $trait = $this->getMockForTrait(CollectionAssert::class);
-
-        $rMethod = new ReflectionMethod($trait, 'assertCollectionType');
-        $rMethod->setAccessible(true);
-
-        $rMethod->invoke($trait, Collection::class, LanguageCollection::class);
-    }
 }

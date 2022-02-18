@@ -209,18 +209,6 @@ class AbstractMapperTest extends AbstractTestCase
         $mapper->refreshEntity($entity);
     }
 
-    public function testFetchWithPersonalizedCollection()
-    {
-        $mapper = new GenericMapper(Language::class, $this->getOrm()->getStorage());
-        $collection = $mapper->fetchAllWithBuilder(
-            (new Builder(Language::class))->where('language_id', [1, 2])
-        );
-
-        $this->assertInstanceOf(Collection::class, $collection);
-        $this->assertInstanceOf(LanguageCollection::class, $collection);
-        $this->assertCount(2, $collection);
-    }
-
     public function testGetEntityAlteration_freshEntity()
     {
         $mapper = new MagicMapper(Language::class, $this->getOrm()->getStorage());

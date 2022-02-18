@@ -37,17 +37,6 @@ trait ValidToManyTrait
             return false;
         }
 
-        if ($related->getAcceptedEntity() === Entity::class) {
-            /** @var Entity $entity */
-            foreach ($related as $entity) {
-                if (get_class($entity) !== $this->targetEntity->getName()) {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        return is_a($related->getAcceptedEntity(), $this->targetEntity->getName(), true);
+        return true;
     }
 }

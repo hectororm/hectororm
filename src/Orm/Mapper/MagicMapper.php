@@ -72,7 +72,7 @@ class MagicMapper extends AbstractMapper
             $propertyData = $reflectionProperty->getValue($entity);
             $propertyData = array_replace($propertyData, $data);
             $reflectionProperty->setValue($entity, $propertyData);
-        } catch (OrmException | TypeException $e) {
+        } catch (OrmException|TypeException $e) {
             throw new MapperException(sprintf('Unable to hydrate entity "%s"', $this->reflection->class), 0, $e);
         }
     }
@@ -129,7 +129,7 @@ class MagicMapper extends AbstractMapper
                 },
                 ARRAY_FILTER_USE_BOTH
             );
-        } catch (OrmException | SchemaException | TypeException $e) {
+        } catch (OrmException|SchemaException|TypeException $e) {
             throw new MapperException(sprintf('Unable to collect entity "%s"', $this->reflection->class), 0, $e);
         }
     }

@@ -23,118 +23,6 @@ use TypeError;
 
 class CollectionTest extends AbstractTestCase
 {
-    public function testCollectionWithBadRestriction()
-    {
-        $this->expectException(TypeError::class);
-
-        new Collection([], stdClass::class);
-    }
-
-    public function testCollectionConstructWithEntities()
-    {
-        $films = new Collection([$film = new Film()]);
-
-        $this->assertCount(1, $films);
-    }
-
-    public function testCollectionConstructWithBadEntities()
-    {
-        $this->expectException(TypeError::class);
-
-        new Collection([new Film()], Actor::class);
-    }
-
-    public function testUpdateHook()
-    {
-        $film1 = new Film();
-        $film1->title = 'Foo';
-        $film2 = new Film();
-        $film2->title = 'Bar';
-        $film3 = new Film();
-        $film3->title = 'Baz';
-
-        $films = new CollectionWithHook([$film1]);
-
-        $this->assertEquals('Foo', $films->getHookValue());
-
-        $films->exchangeArray([$film2, $film3]);
-
-        $this->assertEquals('Bar, Baz', $films->getHookValue());
-
-        unset($films[0]);
-
-        $this->assertEquals('Baz', $films->getHookValue());
-
-        $films[] = $film1;
-
-        $this->assertEquals('Baz, Foo', $films->getHookValue());
-    }
-
-    public function testExchangeArray()
-    {
-        $films = new Collection();
-        $films->exchangeArray([$film = new Film()]);
-
-        $this->assertCount(1, $films);
-    }
-
-    public function testExchangeArrayWithBadEntities()
-    {
-        $this->expectException(TypeError::class);
-
-        $films = new Collection([], Actor::class);
-        $films->exchangeArray([new Film()]);
-    }
-
-    public function testFilter()
-    {
-        $collection = new Collection();
-        $collection->append(new Film());
-        $collection->append(new Film());
-        $collection->append(new Actor());
-        $collection->append(new Actor());
-        $collection->append(new Actor());
-
-        $this->assertCount(3, $collection->filter(fn($entity) => is_a($entity, Actor::class, true)));
-    }
-
-    public function testCollectionAppendEntity()
-    {
-        $films = new Collection();
-
-        $this->assertCount(0, $films);
-
-        $films->append($film = new Film());
-
-        $this->assertCount(1, $films);
-        $this->assertTrue(isset($films[0]));
-        $this->assertSame($film, $films[0]);
-    }
-
-    public function testCollectionAppendInvalidEntity()
-    {
-        $this->expectException(TypeError::class);
-
-        $films = new Collection([], Actor::class);
-        $films->append(new Film());
-    }
-
-    public function testCollectionAppend2InvalidEntity()
-    {
-        $this->expectException(TypeError::class);
-
-        $films = new Collection([], Actor::class);
-        $films[] = new Film();
-    }
-
-    public function testCollectionAppend3InvalidEntity()
-    {
-        $this->expectException(TypeError::class);
-
-        $films = new Collection([], Actor::class);
-        $films['foo'] = new Film();
-    }
-
     public function testSave()
     {
         $films = [
@@ -229,18 +117,10 @@ class CollectionTest extends AbstractTestCase
         $this->assertTrue($collection->contains($entity));
     }
 
-    public function testIsInFalse()
+    public function testContainsFalse()
     {
         $collection = Film::query()->limit(100)->all();
         $entity = new Film();
-
-        $this->assertFalse($collection->contains($entity));
-    }
-
-    public function testIsInFalseWithNotAcceptedEntity()
-    {
-        $collection = Film::query()->limit(100)->all();
-        $entity = new Staff();
 
         $this->assertFalse($collection->contains($entity));
     }

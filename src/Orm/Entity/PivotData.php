@@ -19,10 +19,9 @@ class PivotData
     public const PIVOT_KEY_PREFIX = 'PIVOT_KEY_';
     public const PIVOT_DATA_PREFIX = 'PIVOT_DATA_';
 
-    private array $data = [];
-
     public function __construct(
-        private array $keys = []
+        private array $keys = [],
+        private array $data = [],
     ) {
     }
 
@@ -37,7 +36,7 @@ class PivotData
     }
 
     /**
-     * Get pivot data.
+     * Get pivot additional data.
      *
      * @return array
      */
@@ -47,13 +46,19 @@ class PivotData
     }
 
     /**
-     * Set data.
+     * Set pivot additional data.
      *
      * @param array $data
+     * @param bool $replace
      */
-    public function setData(array $data): void
+    public function setData(array $data, bool $replace = true): void
     {
-        $this->data = $data;
+        if (true === $replace) {
+            $this->data = $data;
+            return;
+        }
+
+        $this->data = array_replace($this->data, $data);
     }
 
     /**

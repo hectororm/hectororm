@@ -128,7 +128,7 @@ class OneToMany extends RegularRelationship
 
             $entity['entity']->getRelated()->set(
                 $this->getName(),
-                $this->targetEntity->newInstanceOfCollection($foreignersFiltered)
+                new Collection($foreignersFiltered)
             );
 
             if (null !== $relationship) {
