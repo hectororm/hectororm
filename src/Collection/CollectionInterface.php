@@ -151,6 +151,18 @@ interface CollectionInterface extends IteratorAggregate, JsonSerializable
     public function slice(int $offset, int|null $length = null): self;
 
     /**
+     * Chunk collection items into collection of fixed length.
+     *
+     * Callback is applied on each chunk collection.
+     *
+     * @param int $length
+     *
+     * @return self
+     * @see array_chunk()
+     */
+    public function chunk(int $length): self;
+
+    /**
      * Collection contains value?
      *
      * @param mixed $value
@@ -160,17 +172,6 @@ interface CollectionInterface extends IteratorAggregate, JsonSerializable
      * @see in_array()
      */
     public function contains(mixed $value, bool $strict = false): bool;
-
-    /**
-     * Chunk collection items into collection of fixed length.
-     *
-     * @param int $length
-     * @param callable|null $callback
-     *
-     * @return self
-     * @see array_chunk()
-     */
-    public function chunk(int $length, ?callable $callback = null): self;
 
     /**
      * Get keys of collection items.

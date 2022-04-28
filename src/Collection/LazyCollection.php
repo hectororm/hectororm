@@ -342,7 +342,7 @@ class LazyCollection implements CollectionInterface
     /**
      * @inheritDoc
      */
-    public function chunk(int $length, ?callable $callback = null): static
+    public function chunk(int $length): static
     {
         $generator = function ($length): Generator {
             while ($this->items->valid()) {
@@ -359,13 +359,7 @@ class LazyCollection implements CollectionInterface
             }
         };
 
-        $collection = new static($generator($length));
-
-        if (null !== $callback) {
-            return $collection->map($callback);
-        }
-
-        return $collection;
+        return new static($generator($length));
     }
 
     /**
@@ -439,7 +433,7 @@ class LazyCollection implements CollectionInterface
     public function column(int|Closure|string|null $column_key, int|Closure|string|null $index_key = null): static
     {
         $generator = function ($column_key, $index_key): Generator {
-            foreach ($this->items as $key => $item) {
+            foreach ($this->items as $item) {
                 $result = b_array_column([$item], $column_key, $index_key);
 
                 foreach ($result as $key2 => $value2) {

@@ -279,18 +279,14 @@ class Collection implements CollectionInterface, ArrayAccess, Countable
      */
     public function chunk(int $length, ?callable $callback = null): static
     {
-        if (null !== $callback) {
-            foreach (array_chunk($this->items, $length, true) as $chunk) {
-                $callback(new static($chunk));
-            }
-
-            return $this;
-        }
-
         $collection = new static();
 
         foreach (array_chunk($this->items, $length, true) as $chunk) {
             $collection->append(new static($chunk));
+        }
+
+        if (null !== $callback) {
+            return $collection->map($callback);
         }
 
         return $collection;

@@ -34,6 +34,7 @@ class CollectionInterfaceTest extends TestCase
      */
     public function testNew(string $class)
     {
+        /** @var class-string<CollectionInterface> $class */
         $collection = $class::new($arr = ['foo', 'bar', 'baz', 'qux', 'quxx']);
 
         $this->assertInstanceOf($class, $collection);
@@ -312,31 +313,6 @@ class CollectionInterfaceTest extends TestCase
         $this->assertInstanceOf(CollectionInterface::class, $result[1]);
         $this->assertCount(2, $result[0]->getArrayCopy());
         $this->assertCount(1, $result[1]->getArrayCopy());
-    }
-
-    /**
-     * @dataProvider collectionTypeProvider
-     */
-    public function testChunk_withCallback(string $class)
-    {
-        $arr = ['key1' => 'value1', 'key2' => 'value2', 'key3' => 'value3'];
-
-        /** @var Collection[] $chunked */
-        $chunked = [];
-        (new $class($arr))
-            ->chunk(
-                2,
-                function (Collection $sub) use (&$chunked) {
-                    $chunked[] = $sub;
-                }
-            )
-            ->getArrayCopy();
-
-        $this->assertCount(2, $chunked);
-        $this->assertCount(2, $chunked[0]);
-        $this->assertCount(1, $chunked[1]);
-        $this->assertEquals(['key3' => 'value3'], $chunked[1]->getArrayCopy());
-        $this->assertEquals($arr, array_merge($chunked[0]->getArrayCopy(), $chunked[1]->getArrayCopy()));
     }
 
     /**

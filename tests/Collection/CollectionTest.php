@@ -21,7 +21,7 @@ class CollectionTest extends TestCase
 {
     public function testLazy()
     {
-        $collection = new Collection($arr = ['foo', 'bar', 'baz', 'qux', 'quxx']);
+        $collection = new Collection(['foo', 'bar', 'baz', 'qux', 'quxx']);
         $collection2 = $collection->lazy();
 
         $this->assertInstanceOf(LazyCollection::class, $collection2);
