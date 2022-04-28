@@ -94,7 +94,7 @@ class Collection implements CollectionInterface, ArrayAccess, Countable
     /**
      * @inheritDoc
      */
-    public function getIterator(): ArrayIterator
+    public function getIterator(): Traversable
     {
         return new ArrayIterator($this->items);
     }
