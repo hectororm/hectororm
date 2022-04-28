@@ -67,6 +67,15 @@ class CollectionInterfaceTest extends TestCase
     /**
      * @dataProvider collectionTypeProvider
      */
+    public function testIsEmpty(string $class)
+    {
+        $this->assertFalse((new $class(['foo', 'bar', 'baz']))->isEmpty());
+        $this->assertTrue((new $class())->isEmpty());
+    }
+
+    /**
+     * @dataProvider collectionTypeProvider
+     */
     public function testDebugInfo(string $class)
     {
         $collection = new $class($arr = ['foo', 'bar', 'baz', 'qux', 'quxx']);

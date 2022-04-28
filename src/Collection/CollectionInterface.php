@@ -52,6 +52,13 @@ interface CollectionInterface extends IteratorAggregate, JsonSerializable
     public function getArrayCopy(): array;
 
     /**
+     * Is empty?
+     *
+     * @return bool
+     */
+    public function isEmpty(): bool;
+
+    /**
      * Collect data in new collection.
      *
      * @return self

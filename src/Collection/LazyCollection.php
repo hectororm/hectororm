@@ -158,6 +158,14 @@ class LazyCollection implements CollectionInterface
     /**
      * @inheritDoc
      */
+    public function isEmpty(): bool
+    {
+        return !$this->items->valid();
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function collect(): CollectionInterface
     {
         return $this->newDefault($this->getArrayCopy());

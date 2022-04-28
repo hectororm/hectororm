@@ -119,6 +119,14 @@ class Collection implements CollectionInterface, ArrayAccess, Countable
     /**
      * @inheritDoc
      */
+    public function isEmpty(): bool
+    {
+        return empty($this->items);
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function collect(): CollectionInterface
     {
         return new static($this->getArrayCopy());
