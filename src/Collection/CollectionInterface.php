@@ -14,13 +14,36 @@ declare(strict_types=1);
 
 namespace Hector\Collection;
 
-use ArrayAccess;
 use Closure;
 use IteratorAggregate;
 use JsonSerializable;
 
-interface CollectionInterface extends IteratorAggregate, ArrayAccess, JsonSerializable
+interface CollectionInterface extends IteratorAggregate, JsonSerializable
 {
+    /**
+     * Init new collection.
+     *
+     * @param Closure|iterable $iterable $iterable
+     *
+     * @return static
+     */
+    public static function new(Closure|iterable $iterable): static;
+
+    /**
+     * PHP magic method.
+     *
+     * MUST return array representation of collection.
+     *
+     * @return array
+     * @see CollectionInterface::getArrayCopy()
+     */
+    public function __debugInfo(): array;
+
+    /**
+     * @inheritDoc
+     */
+    public function jsonSerialize(): array;
+
     /**
      * Get an array representation.
      *
@@ -29,64 +52,53 @@ interface CollectionInterface extends IteratorAggregate, ArrayAccess, JsonSerial
     public function getArrayCopy(): array;
 
     /**
-     * Append value(s) to collection.
+     * Collect data in new collection.
      *
-     * @param mixed ...$value
-     *
-     * @return static
+     * @return self
      */
-    public function append(mixed ...$value): static;
-
-    /**
-     * Prepend value(s) to collection.
-     *
-     * @param mixed ...$value
-     *
-     * @return static
-     */
-    public function prepend(mixed ...$value): static;
+    public function collect(): self;
 
     /**
      * Sort collection with callback.
      *
      * @param int|callable|null $callback
      *
-     * @return static
+     * @return self
      */
-    public function sort(int|callable|null $callback = null): static;
+    public function sort(int|callable|null $callback = null): self;
 
     /**
-     * Filter values with function.
+     * Filter items with function.
      *
      * @param callable|null $callback
      *
-     * @return static
+     * @return self
      * @see array_filter()
      */
-    public function filter(?callable $callback = null): static;
+    public function filter(?callable $callback = null): self;
 
     /**
-     * Filter values with object instance comparison.
+     * Filter items with object instance comparison.
      *
      * @param string|object ...$class
      *
-     * @return static
+     * @return self
      * @see array_filter()
      */
-    public function filterInstanceOf(string|object ...$class): static;
+    public function filterInstanceOf(string|object ...$class): self;
 
     /**
-     * Apply function on values.
+     * Apply callback on items.
      *
      * @param callable $callback
      *
-     * @return static
+     * @return self
      * @see array_map()
      */
-    public function map(callable $callback): static;
+    public function map(callable $callback): self;
 
     /**
-     * Search value with callback.
+     * Search item with callback.
      *
      * @param callable $callback
      *
@@ -95,7 +107,19 @@ interface CollectionInterface extends IteratorAggregate, ArrayAccess, JsonSerial
     public function search(callable $callback): mixed;
 
     /**
-     * Search first value with callback.
+     * Get item at index.
+     *
+     * @param int $index
+     *
+     * @return mixed
+     * @see array_slice()
+     */
+    public function get(int $index = 0): mixed;
+
+    /**
+     * Search first item.
+     *
+     * If callback given, search first item whose respect callback.
      *
      * @param callable|null $callback
      *
@@ -105,7 +129,9 @@ interface CollectionInterface extends IteratorAggregate, ArrayAccess, JsonSerial
     public function first(?callable $callback = null): mixed;
 
     /**
-     * Search last value with callback.
+     * Search last item with callback.
+     *
+     * If callback given, search last item whose respect callback.
      *
      * @param callable|null $callback
      *
@@ -113,6 +139,16 @@ interface CollectionInterface extends IteratorAggregate, ArrayAccess, JsonSerial
      * @see end()
      */
     public function last(?callable $callback = null): mixed;
+
+    /**
+     * Extract a slice of the collection.
+     *
+     * @param int $offset
+     * @param int|null $length
+     *
+     * @return self
+     */
+    public function slice(int $offset, int|null $length = null): self;
 
     /**
      * Collection contains value?
@@ -131,42 +167,42 @@ interface CollectionInterface extends IteratorAggregate, ArrayAccess, JsonSerial
      * @param int $length
      * @param callable|null $callback
      *
-     * @return static
+     * @return self
      * @see array_chunk()
      */
-    public function chunk(int $length, ?callable $callback = null): static;
+    public function chunk(int $length, ?callable $callback = null): self;
 
     /**
-     * Get keys of collection.
+     * Get keys of collection items.
      *
-     * @return static
+     * @return self
      * @see array_keys()
      */
-    public function keys(): static;
+    public function keys(): self;
 
     /**
      * Get values of collection.
      *
-     * @return static
+     * @return self
      * @see array_values()
      */
-    public function values(): static;
+    public function values(): self;
 
     /**
-     * Get unique values of collection.
+     * Get unique items of collection.
      *
-     * @return static
+     * @return self
      * @see array_unique()
      */
-    public function unique(): static;
+    public function unique(): self;
 
     /**
      * Flip keys and values.
      *
-     * @return static
+     * @return self
      * @see array_flip()
      */
-    public function flip(): static;
+    public function flip(): self;
 
     /**
      * Get column value or reindex collection.
@@ -174,21 +210,21 @@ interface CollectionInterface extends IteratorAggregate, ArrayAccess, JsonSerial
      * @param string|int|Closure|null $column_key
      * @param string|int|Closure|null $index_key
      *
-     * @return static
+     * @return self
      * @see array_column()
      * @see b_array_column()
      */
-    public function column(string|int|Closure|null $column_key, string|int|Closure|null $index_key = null): static;
+    public function column(string|int|Closure|null $column_key, string|int|Closure|null $index_key = null): self;
 
     /**
      * Get random values of collection.
      *
      * @param int $length
      *
-     * @return static
+     * @return self
      * @see array_rand()
      */
-    public function rand(int $length = 1): static;
+    public function rand(int $length = 1): self;
 
     /**
      * Get sum of values.

@@ -14,18 +14,49 @@ declare(strict_types=1);
 
 namespace Hector\Collection;
 
+use ArrayAccess;
 use ArrayIterator;
 use Closure;
 use Countable;
 use Traversable;
 
-class Collection implements CollectionInterface, Countable
+class Collection implements CollectionInterface, ArrayAccess, Countable
 {
     private array $items;
 
-    public function __construct(iterable $iterable = [])
+    public function __construct(iterable|Closure $iterable = [])
     {
         $this->items = $this->initList($iterable);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public static function new(iterable|Closure $iterable): static
+    {
+        return new static($iterable);
+    }
+
+    /**
+     * New lazy collection.
+     *
+     * @param Closure|iterable $iterable
+     *
+     * @return CollectionInterface
+     */
+    protected function newLazy(Closure|iterable $iterable): CollectionInterface
+    {
+        return new LazyCollection($iterable);
+    }
+
+    /**
+     * New lazy collection from current collection.
+     *
+     * @return CollectionInterface
+     */
+    public function lazy(): CollectionInterface
+    {
+        return $this->newLazy($this);
     }
 
     /**
@@ -44,6 +75,10 @@ class Collection implements CollectionInterface, Countable
         return $iterable;
     }
 
+    /////////////////
+    /// Countable ///
+    /////////////////
+
     /**
      * @inheritDoc
      */
@@ -51,6 +86,10 @@ class Collection implements CollectionInterface, Countable
     {
         return count($this->items);
     }
+
+    ///////////////////////////
+    /// CollectionInterface ///
+    ///////////////////////////
 
     /**
      * @inheritDoc
@@ -78,6 +117,14 @@ class Collection implements CollectionInterface, Countable
     }
 
     /**
+     * @inheritDoc
+     */
+    public function collect(): CollectionInterface
+    {
+        return new static($this->getArrayCopy());
+    }
+
+    /**
      * PHP magic method.
      *
      * @return array
@@ -93,26 +140,6 @@ class Collection implements CollectionInterface, Countable
     public function jsonSerialize(): array
     {
         return $this->getArrayCopy();
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function append(mixed ...$value): static
-    {
-        array_push($this->items, ...$value);
-
-        return $this;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function prepend(mixed ...$value): static
-    {
-        array_unshift($this->items, ...$value);
-
-        return $this;
     }
 
     /**
@@ -180,6 +207,14 @@ class Collection implements CollectionInterface, Countable
     /**
      * @inheritDoc
      */
+    public function get(int $index = 0): mixed
+    {
+        return $this->slice($index, 1)->first();
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function first(?callable $callback = null): mixed
     {
         if (null === $callback) {
@@ -221,6 +256,14 @@ class Collection implements CollectionInterface, Countable
         }
 
         return $result;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function slice(int $offset, ?int $length = null): static
+    {
+        return new static(array_slice($this->items, $offset, $length, true));
     }
 
     /**
@@ -316,7 +359,13 @@ class Collection implements CollectionInterface, Countable
      */
     public function avg(): float|int
     {
-        return array_sum($this->items) / count($this->items);
+        $count = count($this->items);
+
+        if (0 === $count) {
+            return 0;
+        }
+
+        return array_sum($this->items) / $count;
     }
 
     /**
@@ -326,6 +375,10 @@ class Collection implements CollectionInterface, Countable
     {
         return array_reduce($this->items, $callback, $initial);
     }
+
+    ///////////////////
+    /// ArrayAccess ///
+    ///////////////////
 
     /**
      * @inheritDoc
@@ -362,5 +415,33 @@ class Collection implements CollectionInterface, Countable
     public function offsetUnset(mixed $offset): void
     {
         unset($this->items[$offset]);
+    }
+
+    /**
+     * Append value(s) to collection.
+     *
+     * @param mixed ...$value
+     *
+     * @return static
+     */
+    public function append(mixed ...$value): static
+    {
+        array_push($this->items, ...$value);
+
+        return $this;
+    }
+
+    /**
+     * Prepend value(s) to collection.
+     *
+     * @param mixed ...$value
+     *
+     * @return static
+     */
+    public function prepend(mixed ...$value): static
+    {
+        array_unshift($this->items, ...$value);
+
+        return $this;
     }
 }
