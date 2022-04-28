@@ -24,7 +24,11 @@ class CollectionTest extends TestCase
     {
         $collection = new Collection($arr = ['foo', 'bar', 'baz', 'qux', 'quxx']);
 
-        $this->assertSame(count($arr), count($collection));
+        $this->assertCount(count($arr), $collection);
+
+        $collection = new Collection();
+
+        $this->assertCount(0, $collection);
     }
 
     public function testGetIterator()
