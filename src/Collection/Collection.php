@@ -375,6 +375,62 @@ class Collection implements CollectionInterface, ArrayAccess, Countable
     /**
      * @inheritDoc
      */
+    public function median(): float|int
+    {
+        $count = count($this->items);
+
+        if (0 === $count) {
+            return 0;
+        }
+
+        $items = $this->values()->sort()->getArrayCopy();
+        $middleIndex = $count / 2;
+
+        if (is_float($middleIndex)) {
+            return $items[(int)$middleIndex];
+        }
+
+        return ($items[$middleIndex] + $items[$middleIndex - 1]) / 2;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function variance(): float|int
+    {
+        if ($this->isEmpty()) {
+            return .0;
+        }
+
+        $items = $this->values()->sort()->getArrayCopy();
+        $count = $this->count();
+        $avg = $this->avg();
+        $variance = .0;
+
+        foreach ($items as $value) {
+            $variance += pow(($value - $avg), 2);
+        }
+
+        return $variance / $count;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function deviation(): float|int
+    {
+        $count = $this->count();
+
+        if (0 === $count) {
+            return .0;
+        }
+
+        return pow($this->variance(), .5);
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function reduce(callable $callback, mixed $initial = null): mixed
     {
         return array_reduce($this->items, $callback, $initial);

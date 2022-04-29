@@ -250,6 +250,27 @@ interface CollectionInterface extends IteratorAggregate, JsonSerializable
     public function avg(): float|int;
 
     /**
+     * Get median of values.
+     *
+     * @return float|int
+     */
+    public function median(): float|int;
+
+    /**
+     * Get population variance of values.
+     *
+     * @return float|int
+     */
+    public function variance(): float|int;
+
+    /**
+     * Get population deviation of values.
+     *
+     * @return float|int
+     */
+    public function deviation(): float|int;
+
+    /**
      * Reduce collection.
      *
      * @param callable $callback

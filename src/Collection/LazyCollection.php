@@ -463,7 +463,7 @@ class LazyCollection implements CollectionInterface
      */
     public function rand(int $length = 1): static
     {
-        return new static($this->newDefault($this)->rand($length));
+        return new static($this->collect()->rand($length));
     }
 
     /**
@@ -471,13 +471,7 @@ class LazyCollection implements CollectionInterface
      */
     public function sum(): float|int
     {
-        $sum = 0;
-
-        foreach ($this as $item) {
-            $sum += $item;
-        }
-
-        return $sum;
+        return $this->collect()->sum();
     }
 
     /**
@@ -485,19 +479,31 @@ class LazyCollection implements CollectionInterface
      */
     public function avg(): float|int
     {
-        $sum = 0;
-        $nb = 0;
+        return $this->collect()->avg();
+    }
 
-        foreach ($this as $item) {
-            $sum += $item;
-            $nb++;
-        }
+    /**
+     * @inheritDoc
+     */
+    public function median(): float|int
+    {
+        return $this->collect()->median();
+    }
 
-        if (0 === $nb) {
-            return 0;
-        }
+    /**
+     * @inheritDoc
+     */
+    public function variance(): float|int
+    {
+        return $this->collect()->variance();
+    }
 
-        return $sum / $nb;
+    /**
+     * @inheritDoc
+     */
+    public function deviation(): float|int
+    {
+        return $this->collect()->deviation();
     }
 
     /**
@@ -505,10 +511,6 @@ class LazyCollection implements CollectionInterface
      */
     public function reduce(callable $callback, mixed $initial = null): mixed
     {
-        foreach ($this as $item) {
-            $initial = $callback($initial, $item);
-        }
-
-        return $initial;
+        return $this->collect()->reduce($callback, $initial);
     }
 }

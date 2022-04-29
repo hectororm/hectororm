@@ -464,6 +464,93 @@ class CollectionInterfaceTest extends TestCase
     /**
      * @dataProvider collectionTypeProvider
      */
+    public function testMedian(string $class)
+    {
+        $this->assertEquals(0, (new $class())->median());
+
+        $this->assertEquals(
+            3,
+            (new $class([1, 3, 5]))->median()
+        );
+        $this->assertEquals(
+            4,
+            (new $class([1, 3, 5, 7]))->median()
+        );
+        $this->assertEquals(
+            3,
+            (new $class([1, 2, 3, 4, 5]))->median()
+        );
+        $this->assertEquals(
+            2,
+            (new $class([1, 1, 2, 2, 3, 5]))->median()
+        );
+        $this->assertEquals(
+            3,
+            (new $class([1, 1, 2, 3, 3, 5, 10, 10, 10]))->median()
+        );
+    }
+
+    /**
+     * @dataProvider collectionTypeProvider
+     */
+    public function testVariance(string $class)
+    {
+        $this->assertEquals(0, (new $class())->variance());
+
+        $this->assertEquals(
+            2.666666666667,
+            (new $class([1, 3, 5]))->variance()
+        );
+        $this->assertEquals(
+            5,
+            (new $class([1, 3, 5, 7]))->variance()
+        );
+        $this->assertEquals(
+            2,
+            (new $class([1, 2, 3, 4, 5]))->variance()
+        );
+        $this->assertEquals(
+            1.888888888889,
+            (new $class([1, 1, 2, 2, 3, 5]))->variance()
+        );
+        $this->assertEquals(
+            13.777777777778,
+            (new $class([1, 1, 2, 3, 3, 5, 10, 10, 10]))->variance()
+        );
+    }
+
+    /**
+     * @dataProvider collectionTypeProvider
+     */
+    public function testDeviation(string $class)
+    {
+        $this->assertEquals(0, (new $class())->deviation());
+
+        $this->assertEquals(
+            1.632993161855,
+            (new $class([1, 3, 5]))->deviation()
+        );
+        $this->assertEquals(
+            2.2360679775,
+            (new $class([1, 3, 5, 7]))->deviation()
+        );
+        $this->assertEquals(
+            1.414213562373,
+            (new $class([1, 2, 3, 4, 5]))->deviation()
+        );
+        $this->assertEquals(
+            1.374368541873,
+            (new $class([1, 1, 2, 2, 3, 5]))->deviation()
+        );
+        $this->assertEquals(
+            3.711842908553,
+            (new $class([1, 1, 2, 3, 3, 5, 10, 10, 10]))->deviation()
+        );
+    }
+
+    /**
+     * @dataProvider collectionTypeProvider
+     */
     public function testReduce(string $class)
     {
         $arr = [1, 2, 3, 4, 5];
