@@ -75,6 +75,15 @@ interface CollectionInterface extends IteratorAggregate, JsonSerializable
     public function sort(int|callable|null $callback = null): self;
 
     /**
+     * Multiple sort.
+     *
+     * @param callable ...$callback
+     *
+     * @return self
+     */
+    public function multiSort(callable ...$callback): self;
+
+    /**
      * Filter items with function.
      *
      * @param callable|null $callback

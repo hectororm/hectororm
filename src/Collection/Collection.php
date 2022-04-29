@@ -169,6 +169,30 @@ class Collection implements CollectionInterface, ArrayAccess, Countable
     /**
      * @inheritDoc
      */
+    public function multiSort(callable ...$callback): static
+    {
+        $items = $this->items;
+        uasort($items, fn($a, $b) => $this->multiSortByCmp($a, $b, ...$callback));
+
+        return new static($items);
+    }
+
+    protected function multiSortByCmp(mixed $a, mixed $b, callable ...$callback): int
+    {
+        $current = array_shift($callback);
+
+        if (0 === ($result = $current($a, $b))) {
+            if (!empty($callback)) {
+                return $this->multiSortByCmp($a, $b, ...$callback);
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function filter(?callable $callback = null): static
     {
         return new static(array_filter($this->items, $callback, ARRAY_FILTER_USE_BOTH));

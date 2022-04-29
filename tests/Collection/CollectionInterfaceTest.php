@@ -135,6 +135,37 @@ class CollectionInterfaceTest extends TestCase
     /**
      * @dataProvider collectionTypeProvider
      */
+    public function testMultiSort(string $class)
+    {
+        $arr = [
+            'l' => ['name' => 'Lemon', 'nb' => 1],
+            'o' => ['name' => 'Orange', 'nb' => 1],
+            'b1' => ['name' => 'Banana', 'nb' => 5],
+            'b2' => ['name' => 'Banana', 'nb' => 1],
+            'a1' => ['name' => 'Apple', 'nb' => 10],
+            'a2' => ['name' => 'Apple', 'nb' => 1],
+        ];
+
+        $this->assertSame(
+            [
+                'a2' => ['name' => 'Apple', 'nb' => 1],
+                'a1' => ['name' => 'Apple', 'nb' => 10],
+                'b2' => ['name' => 'Banana', 'nb' => 1],
+                'b1' => ['name' => 'Banana', 'nb' => 5],
+                'l' => ['name' => 'Lemon', 'nb' => 1],
+                'o' => ['name' => 'Orange', 'nb' => 1],
+            ],
+            (new $class($arr))
+                ->multiSort(
+                    fn($value1, $value2) => $value1['name'] <=> $value2['name'],
+                    fn($value1, $value2) => $value1['nb'] <=> $value2['nb'],
+                )->getArrayCopy()
+        );
+    }
+
+    /**
+     * @dataProvider collectionTypeProvider
+     */
     public function testFilter(string $class)
     {
         $collection = new $class(['foo', 'bar', 'baz', 'qux', 'quxx']);
