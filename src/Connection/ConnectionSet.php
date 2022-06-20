@@ -21,9 +21,6 @@ use Hector\Connection\Exception\NotFoundException;
 use Hector\Connection\Log\Logger;
 use IteratorAggregate;
 
-/**
- * Class ConnectionSet.
- */
 class ConnectionSet implements Countable, IteratorAggregate
 {
     /** @var Connection[] */

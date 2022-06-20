@@ -22,9 +22,6 @@ use Hector\Connection\Log\Logger;
 use PDO;
 use PDOStatement;
 
-/**
- * Class Connection.
- */
 class Connection
 {
     public const DEFAULT_NAME = 'default';

@@ -17,9 +17,6 @@ namespace Hector\Connection\Log;
 use Countable;
 use Hector\Connection\Bind\BindParamList;
 
-/**
- * Class Logger.
- */
 class Logger implements Countable
 {
     private array $logs = [];

@@ -14,9 +14,6 @@ declare(strict_types=1);
 
 namespace Hector\Connection\Exception;
 
-/**
- * Class NotFoundException.
- */
 class NotFoundException extends ConnectionException
 {
 }

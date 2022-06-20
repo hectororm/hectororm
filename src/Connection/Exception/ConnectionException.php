@@ -16,9 +16,6 @@ namespace Hector\Connection\Exception;
 
 use Exception;
 
-/**
- * Class ConnectionException.
- */
 class ConnectionException extends Exception
 {
 }

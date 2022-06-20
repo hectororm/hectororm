@@ -16,9 +16,6 @@ namespace Hector\Connection\Log;
 
 use Hector\Connection\Bind\BindParamList;
 
-/**
- * Class LogEntry.
- */
 class LogEntry
 {
     public const TYPE_CONNECTION = 'connection';
