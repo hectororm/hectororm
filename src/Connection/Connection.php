@@ -16,6 +16,7 @@ namespace Hector\Connection;
 
 use Exception;
 use Generator;
+use Hector\Connection\Bind\BindParamList;
 use Hector\Connection\Log\LogEntry;
 use Hector\Connection\Log\Logger;
 use PDO;
@@ -221,13 +222,13 @@ class Connection
      *
      * @param PDO $pdo
      * @param string $statement
-     * @param array $input_parameters
+     * @param BindParamList|array $input_parameters
      *
      * @return PDOStatement
      */
-    protected function pdoExecute(PDO $pdo, string $statement, array $input_parameters = []): PDOStatement
+    protected function pdoExecute(PDO $pdo, string $statement, BindParamList|array $input_parameters = []): PDOStatement
     {
-        $input_parameters = $this->prepareParameters($input_parameters);
+        is_array($input_parameters) && $input_parameters = new BindParamList($input_parameters);
         $logEntry = $this->logger?->newEntry(
             $this->name,
             $statement,
@@ -238,13 +239,10 @@ class Connection
         try {
             $stm = $pdo->prepare($statement);
 
-            $iParam = 0;
-            foreach ($input_parameters as $name => $parameter) {
-                is_int($name) && $name = ++$iParam;
-
+            foreach ($input_parameters as $parameter) {
                 $stm->bindValue(
-                    $name,
-                    $parameter->getVariable(),
+                    $parameter->getName(),
+                    $parameter->getValue(),
                     $parameter->getDataType()
                 );
             }
@@ -258,38 +256,15 @@ class Connection
     }
 
     /**
-     * Prepare parameters.
-     *
-     * @param array $input_parameters
-     *
-     * @return BindParam[]
-     */
-    private function prepareParameters(array $input_parameters): array
-    {
-        $result = [];
-
-        foreach ($input_parameters as $name => &$parameter) {
-            if (!$parameter instanceof BindParam) {
-                $result[$name] = new BindParam($parameter);
-                continue;
-            }
-
-            $result[$name] = $parameter;
-        }
-
-        return $result;
-    }
-
-    /**
      * Execute.
      *
      * @param string $statement
-     * @param array $input_parameters
+     * @param BindParamList|array $input_parameters
      *
      * @return int
      * @see \PDOStatement::execute()
      */
-    public function execute(string $statement, array $input_parameters = []): int
+    public function execute(string $statement, BindParamList|array $input_parameters = []): int
     {
         $stm = $this->pdoExecute($this->getPdo(), $statement, $input_parameters);
 
@@ -300,12 +275,12 @@ class Connection
      * Fetch all.
      *
      * @param string $statement
-     * @param array $input_parameters
+     * @param BindParamList|array $input_parameters
      *
      * @return Generator
      * @see \PDOStatement::fetchAll()
      */
-    public function fetchAll(string $statement, array $input_parameters = []): Generator
+    public function fetchAll(string $statement, BindParamList|array $input_parameters = []): Generator
     {
         $stm = $this->pdoExecute($this->getReadPdo(), $statement, $input_parameters);
 
@@ -318,12 +293,12 @@ class Connection
      * Fetch one.
      *
      * @param string $statement
-     * @param array $input_parameters
+     * @param BindParamList|array $input_parameters
      *
      * @return array|null
      * @see \PDOStatement::fetch()
      */
-    public function fetchOne(string $statement, array $input_parameters = []): ?array
+    public function fetchOne(string $statement, BindParamList|array $input_parameters = []): ?array
     {
         $stm = $this->pdoExecute($this->getReadPdo(), $statement, $input_parameters);
 
@@ -334,14 +309,17 @@ class Connection
      * Fetch column.
      *
      * @param string $statement
-     * @param array $input_parameters
+     * @param BindParamList|array $input_parameters
      * @param int $column
      *
      * @return Generator
      * @see \PDOStatement::fetchColumn()
      */
-    public function fetchColumn(string $statement, array $input_parameters = [], int $column = 0): Generator
-    {
+    public function fetchColumn(
+        string $statement,
+        BindParamList|array $input_parameters = [],
+        int $column = 0
+    ): Generator {
         $stm = $this->pdoExecute($this->getReadPdo(), $statement, $input_parameters);
 
         while (false !== ($row = $stm->fetchColumn($column))) {

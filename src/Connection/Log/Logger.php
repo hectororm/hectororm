@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace Hector\Connection\Log;
 
 use Countable;
+use Hector\Connection\Bind\BindParamList;
 
 /**
  * Class Logger.
@@ -56,7 +57,7 @@ class Logger implements Countable
      *
      * @param string $connection
      * @param string $statement
-     * @param array $parameters
+     * @param BindParamList|array $parameters
      * @param string|null $trace
      * @param string $type
      *
@@ -65,7 +66,7 @@ class Logger implements Countable
     public function newEntry(
         string $connection,
         string $statement,
-        array $parameters = [],
+        BindParamList|array $parameters = [],
         ?string $trace = null,
         string $type = LogEntry::TYPE_QUERY,
     ): LogEntry {

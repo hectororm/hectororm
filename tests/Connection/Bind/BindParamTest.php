@@ -3,17 +3,19 @@
  * This file is part of Hector ORM.
  *
  * @license   https://opensource.org/licenses/MIT MIT License
- * @copyright 2021 Ronan GIRON
+ * @copyright 2022 Ronan GIRON
  * @author    Ronan GIRON <https://github.com/ElGigi>
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code, to the root.
  */
 
-namespace Hector\Connection\Tests;
+namespace Hector\Connection\Tests\Bind;
 
 use BackedEnum;
-use Hector\Connection\BindParam;
+use Hector\Connection\Bind\BindParam;
+use Hector\Connection\Tests\FakeIntBackedEnum;
+use Hector\Connection\Tests\FakeStringBackedEnum;
 use PDO;
 use PHPUnit\Framework\TestCase;
 
@@ -26,20 +28,25 @@ class BindParamTest extends TestCase
         }
     }
 
-    public function testGetVariable()
+    public function testGetName()
     {
-        $var = 'foo';
-        $param = new BindParam($var, PDO::PARAM_INT);
+        $param = new BindParam('bar', 'foo', PDO::PARAM_INT);
 
-        $this->assertSame('foo', $param->getVariable());
+        $this->assertSame('bar', $param->getName());
+    }
+
+    public function testGetValue()
+    {
+        $param = new BindParam('name', 'foo', PDO::PARAM_INT);
+
+        $this->assertSame('foo', $param->getValue());
     }
 
     public function testGetVariableInteger()
     {
-        $var = 1;
-        $param = new BindParam($var, PDO::PARAM_INT);
+        $param = new BindParam('name', 1, PDO::PARAM_INT);
 
-        $this->assertSame(1, $param->getVariable());
+        $this->assertSame(1, $param->getValue());
     }
 
     public function testGetVariable_StringEnum()
@@ -47,9 +54,9 @@ class BindParamTest extends TestCase
         $this->enumCapability();
 
         $var = FakeStringBackedEnum::FOO;
-        $param = new BindParam($var);
+        $param = new BindParam('name', $var);
 
-        $this->assertSame(FakeStringBackedEnum::FOO->value, $param->getVariable());
+        $this->assertSame(FakeStringBackedEnum::FOO->value, $param->getValue());
         $this->assertSame(PDO::PARAM_STR, $param->getDataType());
     }
 
@@ -58,16 +65,16 @@ class BindParamTest extends TestCase
         $this->enumCapability();
 
         $var = FakeIntBackedEnum::FOO;
-        $param = new BindParam($var);
+        $param = new BindParam('name', $var);
 
-        $this->assertSame(FakeIntBackedEnum::FOO->value, $param->getVariable());
+        $this->assertSame(FakeIntBackedEnum::FOO->value, $param->getValue());
         $this->assertSame(PDO::PARAM_INT, $param->getDataType());
     }
 
     public function testGetDataType()
     {
         $var = '1';
-        $param = new BindParam($var, PDO::PARAM_INT);
+        $param = new BindParam('name', $var, PDO::PARAM_INT);
 
         $this->assertSame(PDO::PARAM_INT, $param->getDataType());
     }
@@ -75,7 +82,7 @@ class BindParamTest extends TestCase
     public function testGetDataTypeString()
     {
         $var = 'foo';
-        $param = new BindParam($var);
+        $param = new BindParam('name', $var);
 
         $this->assertSame(PDO::PARAM_STR, $param->getDataType());
     }
@@ -85,7 +92,7 @@ class BindParamTest extends TestCase
         $this->enumCapability();
 
         $var = FakeStringBackedEnum::BAR;
-        $param = new BindParam($var);
+        $param = new BindParam('name', $var);
 
         $this->assertSame(PDO::PARAM_STR, $param->getDataType());
     }
@@ -93,7 +100,7 @@ class BindParamTest extends TestCase
     public function testGetDataTypeInt()
     {
         $var = 1;
-        $param = new BindParam($var);
+        $param = new BindParam('name', $var);
 
         $this->assertSame(PDO::PARAM_INT, $param->getDataType());
     }
@@ -103,7 +110,7 @@ class BindParamTest extends TestCase
         $this->enumCapability();
 
         $var = FakeIntBackedEnum::BAR;
-        $param = new BindParam($var);
+        $param = new BindParam('name', $var);
 
         $this->assertSame(PDO::PARAM_INT, $param->getDataType());
     }
@@ -111,7 +118,7 @@ class BindParamTest extends TestCase
     public function testGetDataTypeLob()
     {
         $var = fopen('php://memory', 'r');
-        $param = new BindParam($var);
+        $param = new BindParam('name', $var);
 
         $this->assertSame(PDO::PARAM_LOB, $param->getDataType());
     }
@@ -119,7 +126,7 @@ class BindParamTest extends TestCase
     public function testGetDataTypeBool()
     {
         $var = false;
-        $param = new BindParam($var);
+        $param = new BindParam('name', $var);
 
         $this->assertSame(PDO::PARAM_BOOL, $param->getDataType());
     }

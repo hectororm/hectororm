@@ -3,7 +3,7 @@
  * This file is part of Hector ORM.
  *
  * @license   https://opensource.org/licenses/MIT MIT License
- * @copyright 2021 Ronan GIRON
+ * @copyright 2022 Ronan GIRON
  * @author    Ronan GIRON <https://github.com/ElGigi>
  *
  * For the full copyright and license information, please view the LICENSE
@@ -12,14 +12,11 @@
 
 declare(strict_types=1);
 
-namespace Hector\Connection;
+namespace Hector\Connection\Bind;
 
 use BackedEnum;
 use PDO;
 
-/**
- * Class BindParam.
- */
 class BindParam
 {
     private int $type;
@@ -27,11 +24,13 @@ class BindParam
     /**
      * BindParam constructor.
      *
+     * @param int|string $name
      * @param mixed $variable
      * @param int|null $type
      */
     public function __construct(
-        private mixed &$variable,
+        private int|string $name,
+        private mixed $variable,
         ?int $type = null
     ) {
         $this->type = $type ?? static::findDataType($variable);
@@ -44,7 +43,7 @@ class BindParam
      *
      * @return int
      */
-    public static function findDataType(mixed &$variable): int
+    public static function findDataType(mixed $variable): int
     {
         if (is_resource($variable)) {
             return PDO::PARAM_LOB;
@@ -68,11 +67,21 @@ class BindParam
     }
 
     /**
-     * Get variable.
+     * Get name.
+     *
+     * @return int|string
+     */
+    public function getName(): int|string
+    {
+        return $this->name;
+    }
+
+    /**
+     * Get value.
      *
      * @return mixed
      */
-    public function getVariable(): mixed
+    public function getValue(): mixed
     {
         if ($this->variable instanceof BackedEnum) {
             return $this->variable->value;

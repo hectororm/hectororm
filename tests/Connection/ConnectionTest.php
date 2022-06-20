@@ -13,7 +13,7 @@
 namespace Hector\Connection\Tests;
 
 use Generator;
-use Hector\Connection\BindParam;
+use Hector\Connection\Bind\BindParam;
 use Hector\Connection\Connection;
 use Hector\Connection\Log\Logger;
 use PDO;
@@ -293,7 +293,7 @@ class ConnectionTest extends TestCase
     public function testFetchAllWithParam()
     {
         $connection = new Connection('sqlite:' . realpath(__DIR__ . '/test.sqlite'));
-        $iterator = $connection->fetchAll('SELECT * FROM `table` WHERE `table_id` = ?;', [2]);
+        $iterator = $connection->fetchAll('SELECT * FROM `table` WHERE `table_id` = :p;', ['p' => 2]);
 
         $this->assertInstanceOf(Generator::class, $iterator);
         $this->assertCount(1, iterator_to_array($iterator));
@@ -303,7 +303,7 @@ class ConnectionTest extends TestCase
     {
         $connection = new Connection('sqlite:' . realpath(__DIR__ . '/test.sqlite'));
         $var = 2;
-        $iterator = $connection->fetchAll('SELECT * FROM `table` WHERE `table_id` = ?;', [new BindParam($var)]);
+        $iterator = $connection->fetchAll('SELECT * FROM `table` WHERE `table_id` = :_h_0;', [$var]);
 
         $this->assertInstanceOf(Generator::class, $iterator);
         $this->assertCount(1, iterator_to_array($iterator));
@@ -322,7 +322,7 @@ class ConnectionTest extends TestCase
     public function testFetchOneWithParam()
     {
         $connection = new Connection('sqlite:' . realpath(__DIR__ . '/test.sqlite'));
-        $result = $connection->fetchOne('SELECT * FROM `table` WHERE `table_id` = ?;', [2]);
+        $result = $connection->fetchOne('SELECT * FROM `table` WHERE `table_id` = :_h_0;', [2]);
 
         $this->assertNotNull($result);
         $this->assertEquals('Bar', $result['table_col']);

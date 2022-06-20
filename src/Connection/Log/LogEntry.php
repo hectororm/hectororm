@@ -14,6 +14,8 @@ declare(strict_types=1);
 
 namespace Hector\Connection\Log;
 
+use Hector\Connection\Bind\BindParamList;
+
 /**
  * Class LogEntry.
  */
@@ -30,14 +32,14 @@ class LogEntry
      *
      * @param string $connection
      * @param string|null $statement
-     * @param array $parameters
+     * @param BindParamList|array $parameters
      * @param string|null $trace
      * @param string $type
      */
     public function __construct(
         private string $connection,
         private ?string $statement,
-        private array $parameters = [],
+        private BindParamList|array $parameters = [],
         private ?string $trace = null,
         private string $type = self::TYPE_QUERY,
     ) {
@@ -134,9 +136,9 @@ class LogEntry
     /**
      * Get statement parameters.
      *
-     * @return array
+     * @return iterable
      */
-    public function getParameters(): array
+    public function getParameters(): iterable
     {
         return $this->parameters;
     }

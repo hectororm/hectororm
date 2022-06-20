@@ -12,6 +12,7 @@
 
 namespace Hector\Connection\Tests\Log;
 
+use Hector\Connection\Bind\BindParamList;
 use Hector\Connection\Connection;
 use Hector\Connection\Log\LogEntry;
 use PHPUnit\Framework\TestCase;
@@ -23,7 +24,7 @@ class LogEntryTest extends TestCase
         $logEntry = new LogEntry(
             $connection = Connection::DEFAULT_NAME,
             $statement = 'STATEMENT',
-            $parameters = ['foo' => 'bar']
+            $parameters = new BindParamList(['foo' => 'bar'])
         );
 
         $this->assertInstanceOf(LogEntry::class, $logEntry);
@@ -101,7 +102,11 @@ class LogEntryTest extends TestCase
 
     public function testGetParameters()
     {
-        $logEntry = new LogEntry(Connection::DEFAULT_NAME, 'STATEMENT', $parameters = ['foo' => 'bar', 'qux' => 'quux']);
+        $logEntry = new LogEntry(
+            Connection::DEFAULT_NAME,
+            'STATEMENT',
+            $parameters = new BindParamList(['foo' => 'bar', 'qux' => 'quux'])
+        );
 
         $this->assertEquals($parameters, $logEntry->getParameters());
     }
