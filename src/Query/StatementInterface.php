@@ -14,15 +14,17 @@ declare(strict_types=1);
 
 namespace Hector\Query;
 
+use Hector\Connection\Bind\BindParamList;
+
 interface StatementInterface
 {
     /**
      * Get statement.
      *
-     * @param array $binding Binding
+     * @param BindParamList $bindParams Bind parameters
      * @param bool $encapsulate Encapsulate statement? (default: false)
      *
      * @return string|null
      */
-    public function getStatement(array &$binding, bool $encapsulate = false): ?string;
+    public function getStatement(BindParamList $bindParams, bool $encapsulate = false): ?string;
 }

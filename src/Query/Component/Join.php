@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace Hector\Query\Component;
 
+use Hector\Connection\Bind\BindParamList;
 use Hector\Query\StatementInterface;
 
 /**
@@ -50,22 +51,40 @@ class Join extends AbstractComponent
     }
 
     /**
+     * Get alias of jointure table.
+     *
+     * @param StatementInterface|string $table
+     *
+     * @return string|false Return false if it does not exist, the alias name if it has one or true.
+     */
+    public function getAlias(StatementInterface|string $table): string|false
+    {
+        foreach ($this->joins as $join) {
+            if ($join['table'] == $table && $join['alias']) {
+                return $join['alias'];
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * @inheritDoc
      */
-    public function getStatement(array &$binding, bool $encapsulate = false): ?string
+    public function getStatement(BindParamList $bindParams, bool $encapsulate = false): ?string
     {
         return $this->encapsulate(
             implode(
                 ' ',
                 array_map(
-                    function ($join) use (&$binding) {
-                        $str = sprintf('%s JOIN %s', $join['join'], $this->getSubStatement($join['table'], $binding));
+                    function ($join) use (&$bindParams) {
+                        $str = sprintf('%s JOIN %s', $join['join'], $this->getSubStatement($join['table'], $bindParams));
 
                         if (null !== $join['alias']) {
                             $str .= sprintf(' AS %s', $join['alias']);
                         }
 
-                        $joinCondition = $this->getJoinCondition($join['condition'], $binding);
+                        $joinCondition = $this->getJoinCondition($join['condition'], $bindParams);
                         if (null !== $joinCondition) {
                             $str .= sprintf(' ON ( %s )', $joinCondition);
                         }
@@ -83,11 +102,11 @@ class Join extends AbstractComponent
      * Get join condition.
      *
      * @param StatementInterface|string|iterable|null $condition
-     * @param array $binding
+     * @param BindParamList $bindParams
      *
      * @return string|null
      */
-    private function getJoinCondition(StatementInterface|string|iterable|null $condition, array &$binding): ?string
+    private function getJoinCondition(StatementInterface|string|iterable|null $condition, BindParamList $bindParams): ?string
     {
         if (null === $condition) {
             return null;
@@ -98,20 +117,20 @@ class Join extends AbstractComponent
 
             foreach ($condition as $key => $value) {
                 if (is_numeric($key)) {
-                    $conditions[] = $this->getSubStatement($value, $binding, false);
+                    $conditions[] = $this->getSubStatement($value, $bindParams, false);
                     continue;
                 }
 
                 $conditions[] = sprintf(
                     '%s = %s',
-                    $this->getSubStatement($key, $binding, false),
-                    $this->getSubStatement($value, $binding, false)
+                    $this->getSubStatement($key, $bindParams, false),
+                    $this->getSubStatement($value, $bindParams, false)
                 );
             }
 
             return implode(' AND ', $conditions);
         }
 
-        return $this->getSubStatement($condition, $binding, false);
+        return $this->getSubStatement($condition, $bindParams, false);
     }
 }

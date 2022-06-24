@@ -12,6 +12,8 @@
 
 namespace Hector\Query\Tests;
 
+use Hector\Connection\Bind\BindParam;
+use Hector\Connection\Bind\BindParamList;
 use Hector\Query\Update;
 use PHPUnit\Framework\TestCase;
 
@@ -20,55 +22,64 @@ class UpdateTest extends TestCase
     public function testGetStatementEmpty()
     {
         $update = new Update();
-        $binding = [];
+        $binds = new BindParamList();
 
-        $this->assertNull($update->getStatement($binding));
-        $this->assertEmpty($binding);
+        $this->assertNull($update->getStatement($binds));
+        $this->assertEmpty($binds);
     }
 
     public function testGetStatementWithoutAssignment()
     {
         $update = new Update();
-        $binding = [];
+        $binds = new BindParamList();
         $update->from('foo');
 
-        $this->assertNull($update->getStatement($binding));
-        $this->assertEmpty($binding);
+        $this->assertNull($update->getStatement($binds));
+        $this->assertEmpty($binds);
     }
 
     public function testGetStatementWithOneAssignment()
     {
         $update = new Update();
-        $binding = [];
+        $binds = new BindParamList();
         $update->from('foo');
         $update->assign('bar', 'value_bar');
 
         $this->assertEquals(
-            'UPDATE foo SET bar = ?',
-            $update->getStatement($binding)
+            'UPDATE foo SET bar = :_h_0',
+            $update->getStatement($binds)
         );
-        $this->assertEquals(['value_bar'], $binding);
+        $this->assertEquals(
+            ['_h_0' => 'value_bar'],
+            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+        );
     }
 
     public function testGetStatementWithTwoAssignment()
     {
         $update = new Update();
-        $binding = [];
+        $binds = new BindParamList();
         $update->from('foo');
         $update->assign('bar', 'value_bar');
         $update->assign('baz', 'value_baz');
 
         $this->assertEquals(
-            'UPDATE foo SET bar = ?, baz = ?',
-            $update->getStatement($binding)
+            'UPDATE foo SET bar = :_h_0, baz = :_h_1',
+            $update->getStatement($binds)
         );
-        $this->assertEquals(['value_bar', 'value_baz'], $binding);
+        $this->assertEquals(
+            [
+                '_h_0' => 'value_bar',
+                '_h_1' => 'value_baz'
+            ],
+            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+        );
     }
 
     public function testGetStatementWithConditions()
     {
         $update = new Update();
-        $binding = [];
+        $binds = new BindParamList();
         $update->from('foo');
         $update->assign('bar', 'value_bar');
         $update->assign('baz', 'value_baz');
@@ -77,23 +88,33 @@ class UpdateTest extends TestCase
             ->orWhere('foo.foo_column IS NULL');
 
         $this->assertEquals(
-            'UPDATE foo SET bar = ?, baz = ? WHERE foo.foo_column = ? OR foo.foo_column IS NULL',
-            $update->getStatement($binding)
+            'UPDATE foo SET bar = :_h_0, baz = :_h_1 WHERE foo.foo_column = :_h_2 OR foo.foo_column IS NULL',
+            $update->getStatement($binds)
         );
-        $this->assertEquals(['value_bar', 'value_baz', 1], $binding);
+        $this->assertEquals(
+            [
+                '_h_0' => 'value_bar',
+                '_h_1' => 'value_baz',
+                '_h_2' => 1
+            ],
+            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+        );
     }
 
     public function testGetStatementWithEncapsulation()
     {
         $update = new Update();
-        $binding = [];
+        $binds = new BindParamList();
         $update->from('foo');
         $update->assign('bar', 'value_bar');
 
         $this->assertEquals(
-            '( UPDATE foo SET bar = ? )',
-            $update->getStatement($binding, true)
+            '( UPDATE foo SET bar = :_h_0 )',
+            $update->getStatement($binds, true)
         );
-        $this->assertEquals(['value_bar'], $binding);
+        $this->assertEquals(
+            ['_h_0' => 'value_bar'],
+            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+        );
     }
 }

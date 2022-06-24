@@ -12,6 +12,8 @@
 
 namespace Hector\Query\Tests\Statement;
 
+use Hector\Connection\Bind\BindParam;
+use Hector\Connection\Bind\BindParamList;
 use Hector\Query\Statement\Raw;
 use PHPUnit\Framework\TestCase;
 
@@ -20,18 +22,24 @@ class RawTest extends TestCase
     public function testGetStatement()
     {
         $raw = new Raw('UNIX_TIMESTAMP(?)', [$date = date('Y-m-d H:i:s')]);
-        $binding = [];
+        $binds = new BindParamList();
 
-        $this->assertEquals('UNIX_TIMESTAMP(?)', $raw->getStatement($binding));
-        $this->assertEquals([$date], $binding);
+        $this->assertEquals('UNIX_TIMESTAMP(?)', $raw->getStatement($binds));
+        $this->assertEquals(
+            [$date],
+            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+        );
     }
 
     public function testGetStatementWithEncapsulation()
     {
         $raw = new Raw('UNIX_TIMESTAMP(?)', [$date = date('Y-m-d H:i:s')]);
-        $binding = [];
+        $binds = new BindParamList();
 
-        $this->assertEquals('UNIX_TIMESTAMP(?)', $raw->getStatement($binding, true));
-        $this->assertEquals([$date], $binding);
+        $this->assertEquals('UNIX_TIMESTAMP(?)', $raw->getStatement($binds, true));
+        $this->assertEquals(
+            [$date],
+            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+        );
     }
 }

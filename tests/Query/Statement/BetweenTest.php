@@ -12,6 +12,8 @@
 
 namespace Hector\Query\Tests\Statement;
 
+use Hector\Connection\Bind\BindParam;
+use Hector\Connection\Bind\BindParamList;
 use Hector\Query\Select;
 use Hector\Query\Statement\Between;
 use PHPUnit\Framework\TestCase;
@@ -21,19 +23,25 @@ class BetweenTest extends TestCase
     public function testGetStatement()
     {
         $between = new Between('foo', 1, 10);
-        $binding = [];
+        $binds = new BindParamList();
 
-        $this->assertEquals('foo BETWEEN ? AND ?', $between->getStatement($binding));
-        $this->assertEquals([1, 10], $binding);
+        $this->assertEquals('foo BETWEEN :_h_0 AND :_h_1', $between->getStatement($binds));
+        $this->assertEquals(
+            ['_h_0' => 1, '_h_1' => 10],
+        array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+        );
     }
 
     public function testGetStatementWithEncapsulation()
     {
         $between = new Between('foo', 1, 10);
-        $binding = [];
+        $binds = new BindParamList();
 
-        $this->assertEquals('foo BETWEEN ? AND ?', $between->getStatement($binding, true));
-        $this->assertEquals([1, 10], $binding);
+        $this->assertEquals('foo BETWEEN :_h_0 AND :_h_1', $between->getStatement($binds, true));
+        $this->assertEquals(
+            ['_h_0' => 1, '_h_1' => 10],
+        array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+        );
     }
 
     public function testBetweenWithStatement()
@@ -45,12 +53,15 @@ class BetweenTest extends TestCase
             1,
             10
         );
-        $binding = [];
+        $binds = new BindParamList();
 
         $this->assertEquals(
-            '( SELECT * FROM foo WHERE bar = ? ) BETWEEN ? AND ?',
-            $between->getStatement($binding)
+            '( SELECT * FROM foo WHERE bar = :_h_0 ) BETWEEN :_h_1 AND :_h_2',
+            $between->getStatement($binds)
         );
-        $this->assertEquals(['qux', 1, 10], $binding);
+        $this->assertEquals(
+            ['_h_0' => 'qux', '_h_1' => 1, '_h_2' => 10],
+            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+        );
     }
 }

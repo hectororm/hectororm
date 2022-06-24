@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace Hector\Query\Component;
 
 use Countable;
+use Hector\Connection\Bind\BindParamList;
 use Hector\Query\StatementInterface;
 
 /**
@@ -56,7 +57,7 @@ class Group extends AbstractComponent implements Countable
     /**
      * @inheritDoc
      */
-    public function getStatement(array &$binding, bool $encapsulate = false): ?string
+    public function getStatement(BindParamList $bindParams, bool $encapsulate = false): ?string
     {
         if (empty($this->group)) {
             return null;
@@ -67,8 +68,8 @@ class Group extends AbstractComponent implements Countable
             implode(
                 ', ',
                 array_map(
-                    function ($group) use (&$binding) {
-                        return $this->getSubStatement($group, $binding);
+                    function ($group) use (&$bindParams) {
+                        return $this->getSubStatement($group, $bindParams);
                     },
                     $this->group
                 )

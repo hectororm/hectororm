@@ -12,6 +12,7 @@
 
 namespace Hector\Query\Tests\Clause;
 
+use Hector\Connection\Bind\BindParamList;
 use Hector\Query\Clause\Limit;
 use PHPUnit\Framework\TestCase;
 
@@ -22,18 +23,18 @@ class LimitTest extends TestCase
         $clause = new class {
             use Limit;
         };
-        $binding = [];
+        $binds = new BindParamList();
         $clause->resetLimit();
 
-        $this->assertEmpty($clause->limit->getStatement($binding));
+        $this->assertEmpty($clause->limit->getStatement($binds));
 
         $clause->limit(1);
 
-        $this->assertNotEmpty($clause->limit->getStatement($binding));
+        $this->assertNotEmpty($clause->limit->getStatement($binds));
 
         $clause->resetLimit();
 
-        $this->assertEmpty($clause->limit->getStatement($binding));
+        $this->assertEmpty($clause->limit->getStatement($binds));
     }
 
     public function testLimit()
@@ -41,15 +42,15 @@ class LimitTest extends TestCase
         $clause = new class {
             use Limit;
         };
-        $binding = [];
+        $binds = new BindParamList();
         $clause->resetLimit();
         $clause->limit(10);
 
         $this->assertEquals(
             'LIMIT 10',
-            $clause->limit->getStatement($binding)
+            $clause->limit->getStatement($binds)
         );
-        $this->assertEmpty($binding);
+        $this->assertEmpty($binds);
     }
 
     public function testLimitWithOffset()
@@ -57,15 +58,15 @@ class LimitTest extends TestCase
         $clause = new class {
             use Limit;
         };
-        $binding = [];
+        $binds = new BindParamList();
         $clause->resetLimit();
         $clause->limit(10, 5);
 
         $this->assertEquals(
             'LIMIT 10 OFFSET 5',
-            $clause->limit->getStatement($binding)
+            $clause->limit->getStatement($binds)
         );
-        $this->assertEmpty($binding);
+        $this->assertEmpty($binds);
     }
 
     public function testOffset()
@@ -73,16 +74,16 @@ class LimitTest extends TestCase
         $clause = new class {
             use Limit;
         };
-        $binding = [];
+        $binds = new BindParamList();
         $clause->resetLimit();
         $clause->limit(10);
         $clause->offset(5);
 
         $this->assertEquals(
             'LIMIT 10 OFFSET 5',
-            $clause->limit->getStatement($binding)
+            $clause->limit->getStatement($binds)
         );
-        $this->assertEmpty($binding);
+        $this->assertEmpty($binds);
     }
 
     public function testOffsetAlone()
@@ -90,11 +91,11 @@ class LimitTest extends TestCase
         $clause = new class {
             use Limit;
         };
-        $binding = [];
+        $binds = new BindParamList();
         $clause->resetLimit();
         $clause->offset(5);
 
-        $this->assertNull($clause->limit->getStatement($binding));
-        $this->assertEmpty($binding);
+        $this->assertNull($clause->limit->getStatement($binds));
+        $this->assertEmpty($binds);
     }
 }

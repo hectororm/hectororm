@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace Hector\Query\Component;
 
 use Closure;
+use Hector\Connection\Bind\BindParamList;
 use Hector\Query\StatementInterface;
 
 abstract class AbstractComponent implements StatementInterface
@@ -37,14 +38,14 @@ abstract class AbstractComponent implements StatementInterface
      * Get sub statement.
      *
      * @param Closure|StatementInterface|string|null $statement
-     * @param array $binding
+     * @param BindParamList $bindParams
      * @param bool $encapsulate
      *
      * @return string|null
      */
     protected function getSubStatement(
         Closure|StatementInterface|string|null $statement,
-        array &$binding,
+        BindParamList $bindParams,
         bool $encapsulate = true
     ): ?string {
         if (null === $statement) {
@@ -53,7 +54,7 @@ abstract class AbstractComponent implements StatementInterface
 
         // Statement
         if ($statement instanceof StatementInterface) {
-            return $statement->getStatement($binding, $encapsulate);
+            return $statement->getStatement($bindParams, $encapsulate);
         }
 
         // Callable statement
@@ -67,12 +68,12 @@ abstract class AbstractComponent implements StatementInterface
 
             foreach ($args as $arg) {
                 if ($arg instanceof StatementInterface) {
-                    $str .= $arg->getStatement($binding, $encapsulate);
+                    $str .= $arg->getStatement($bindParams, $encapsulate);
                 }
             }
 
             if (null !== $result) {
-                $str .= (string)$result;
+                $str .= $result;
             }
 
             return $str ?: null;
@@ -85,44 +86,40 @@ abstract class AbstractComponent implements StatementInterface
      * Get sub statement.
      *
      * @param mixed $value
-     * @param array $binding
+     * @param BindParamList $bindParams
      * @param bool $encapsulate
      *
      * @return string|null
      */
-    protected function getSubStatementValue(mixed $value, array &$binding, bool $encapsulate = true): ?string
+    protected function getSubStatementValue(mixed $value, BindParamList $bindParams, bool $encapsulate = true): ?string
     {
         // Statement value
         if ($value instanceof StatementInterface) {
-            return $value->getStatement($binding, $encapsulate);
+            return $value->getStatement($bindParams, $encapsulate);
         }
 
         // Callable statement value
         if ($value instanceof Closure) {
-            return $this->getSubStatementValue($value->call($this), $binding, $encapsulate);
+            return $this->getSubStatementValue($value->call($this), $bindParams, $encapsulate);
         }
 
         // Array statement value
         if (is_iterable($value)) {
             $statementValues = [];
-            foreach ($value as $subValue) {
-                // Binding
-                array_push($binding, ...array_values(!is_array($subValue) ? [$subValue] : $subValue));
-
+            foreach ($value as &$subValue) {
                 if (is_array($subValue)) {
-                    $statementValues[] = '(' . implode(', ', array_fill(0, count($subValue), '?')) . ')';
+                    $paramsName = array_map(fn($value) => $bindParams->add($value)->getName(), $subValue);
+                    $statementValues[] = '(' . implode(', ', array_map(fn($name) => ':' . $name, $paramsName)) . ')';
                     continue;
                 }
 
-                $statementValues[] = '?';
+                $statementValues[] = ':' . $bindParams->add($subValue)->getName();
             }
 
             return '( ' . implode(', ', $statementValues) . ' )';
         }
 
-        array_push($binding, $value);
-
-        return '?';
+        return ':' . $bindParams->add($value)->getName();
     }
 
     /**

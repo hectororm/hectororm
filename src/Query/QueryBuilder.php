@@ -15,14 +15,16 @@ declare(strict_types=1);
 namespace Hector\Query;
 
 use Generator;
+use Hector\Connection\Bind\BindParamList;
 use Hector\Connection\Connection;
 use Hector\Query\Statement\Exists;
 
 /**
  * Class QueryBuilder.
  */
-class QueryBuilder
+class QueryBuilder implements StatementInterface
 {
+    use Clause\BindParams;
     use Clause\Assignments;
     use Clause\Columns;
     use Clause\From;
@@ -50,6 +52,7 @@ class QueryBuilder
      */
     public function __clone(): void
     {
+        $this->binds = clone $this->binds;
         $this->assignments = clone $this->assignments;
         $this->columns = clone $this->columns;
         $this->from = clone $this->from;
@@ -79,6 +82,7 @@ class QueryBuilder
     public function reset(): static
     {
         $this
+            ->resetBindParams()
             ->resetAssignments()
             ->resetColumns()
             ->resetFrom()
@@ -134,7 +138,7 @@ class QueryBuilder
     {
         $queryBuilder = clone $this;
 
-        $select = new Select();
+        $select = new Select($this->getBindParams());
         $select->distinct($this->distinct);
         $select->columns = $queryBuilder->columns;
         $select->from = $queryBuilder->from;
@@ -203,7 +207,7 @@ class QueryBuilder
      */
     protected function makeInsert(): Insert
     {
-        $insert = new Insert();
+        $insert = new Insert($this->getBindParams());
         $insert->assignments = clone $this->assignments;
         $insert->from = clone $this->from;
         $insert->from->useAlias(false);
@@ -218,7 +222,7 @@ class QueryBuilder
      */
     protected function makeUpdate(): Update
     {
-        $update = new Update();
+        $update = new Update($this->getBindParams());
         $update->assignments = clone $this->assignments;
         $update->from = clone $this->from;
         $update->where = clone $this->where;
@@ -235,7 +239,7 @@ class QueryBuilder
      */
     protected function makeDelete(): Delete
     {
-        $delete = new Delete();
+        $delete = new Delete($this->getBindParams());
         $delete->from = clone $this->from;
         $delete->from->useAlias(false);
         $delete->where = clone $this->where;
@@ -258,10 +262,10 @@ class QueryBuilder
     {
         $select = $this->makeSelect();
 
-        $binding = [];
-        $statement = $select->getStatement($binding);
+        $binds = new BindParamList();
+        $statement = $select->getStatement($binds);
 
-        return $this->connection->fetchOne($statement, $binding);
+        return $this->connection->fetchOne($statement, $binds->getArrayCopy());
     }
 
     /**
@@ -273,10 +277,10 @@ class QueryBuilder
     {
         $select = $this->makeSelect();
 
-        $binding = [];
-        $statement = $select->getStatement($binding);
+        $binds = new BindParamList();
+        $statement = $select->getStatement($binds);
 
-        yield from $this->connection->fetchAll($statement, $binding);
+        yield from $this->connection->fetchAll($statement, $binds->getArrayCopy());
     }
 
     /**
@@ -290,10 +294,10 @@ class QueryBuilder
     {
         $select = $this->makeSelect();
 
-        $binding = [];
-        $statement = $select->getStatement($binding);
+        $binds = new BindParamList();
+        $statement = $select->getStatement($binds);
 
-        yield from $this->connection->fetchColumn($statement, $binding, $column);
+        yield from $this->connection->fetchColumn($statement, $binds->getArrayCopy(), $column);
     }
 
     /**
@@ -305,9 +309,9 @@ class QueryBuilder
     {
         $select = $this->makeCount();
 
-        $binding = [];
-        $statement = $select->getStatement($binding);
-        $result = $this->connection->fetchOne($statement, $binding);
+        $binds = new BindParamList();
+        $statement = $select->getStatement($binds);
+        $result = $this->connection->fetchOne($statement, $binds->getArrayCopy());
 
         if (null === $result) {
             return 0;
@@ -323,10 +327,10 @@ class QueryBuilder
      */
     public function exists(): bool
     {
-        $binding = [];
-        $statement = $this->makeExists()->getStatement($binding);
+        $binds = new BindParamList();
+        $statement = $this->makeExists()->getStatement($binds);
 
-        $result = $this->connection->fetchOne($statement, $binding);
+        $result = $this->connection->fetchOne($statement, $binds->getArrayCopy());
 
         if (null === $result) {
             return false;
@@ -347,10 +351,10 @@ class QueryBuilder
         $insert = $this->makeInsert();
         $insert->assigns($values);
 
-        $binding = [];
-        $statement = $insert->getStatement($binding);
+        $binds = new BindParamList();
+        $statement = $insert->getStatement($binds);
 
-        return $this->connection->execute($statement, $binding);
+        return $this->connection->execute($statement, $binds->getArrayCopy());
     }
 
     /**
@@ -365,10 +369,10 @@ class QueryBuilder
         $update = $this->makeUpdate();
         $update->assigns($values);
 
-        $binding = [];
-        $statement = $update->getStatement($binding);
+        $binds = new BindParamList();
+        $statement = $update->getStatement($binds);
 
-        return $this->connection->execute($statement, $binding);
+        return $this->connection->execute($statement, $binds->getArrayCopy());
     }
 
     /**
@@ -380,9 +384,17 @@ class QueryBuilder
     {
         $delete = $this->makeDelete();
 
-        $binding = [];
-        $statement = $delete->getStatement($binding);
+        $binds = new BindParamList();
+        $statement = $delete->getStatement($binds);
 
-        return $this->connection->execute($statement, $binding);
+        return $this->connection->execute($statement, $binds->getArrayCopy());
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getStatement(BindParamList $bindParams, bool $encapsulate = false): ?string
+    {
+        return $this->makeSelect()->getStatement($bindParams, $encapsulate);
     }
 }

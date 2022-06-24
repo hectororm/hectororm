@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace Hector\Query\Statement;
 
 use Closure;
+use Hector\Connection\Bind\BindParamList;
 use Hector\Query\StatementInterface;
 
 /**
@@ -40,14 +41,14 @@ class SqlFunction implements StatementInterface
     /**
      * @inheritDoc
      */
-    public function getStatement(array &$binding, bool $encapsulate = false): ?string
+    public function getStatement(BindParamList $bindParams, bool $encapsulate = false): ?string
     {
         if ($this->expression instanceof StatementInterface) {
             return
                 sprintf(
                     '%s( %s )',
                     $this->function,
-                    $this->expression->getStatement($binding, false)
+                    $this->expression->getStatement($bindParams, false)
                 );
         }
 

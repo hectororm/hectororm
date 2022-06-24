@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace Hector\Query\Component;
 
+use Hector\Connection\Bind\BindParamList;
 use Hector\Query\StatementInterface;
 
 /**
@@ -59,21 +60,21 @@ class Assignments extends AbstractComponent
     /**
      * @inheritDoc
      */
-    public function getStatement(array &$binding, bool $encapsulate = false): ?string
+    public function getStatement(BindParamList $bindParams, bool $encapsulate = false): ?string
     {
         return $this->encapsulate(
             implode(
                 ', ',
                 array_map(
-                    function ($assignment) use (&$binding) {
+                    function ($assignment) use (&$bindParams) {
                         if (!array_key_exists('value', $assignment)) {
-                            return $this->getSubStatement($assignment['column'], $binding);
+                            return $this->getSubStatement($assignment['column'], $bindParams);
                         }
 
                         return sprintf(
                             '%s = %s',
-                            $this->getSubStatement($assignment['column'], $binding),
-                            $this->getSubStatementValue($assignment['value'], $binding)
+                            $this->getSubStatement($assignment['column'], $bindParams),
+                            $this->getSubStatementValue($assignment['value'], $bindParams)
                         );
                     },
                     $this->assignments

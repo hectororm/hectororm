@@ -14,6 +14,8 @@ declare(strict_types=1);
 
 namespace Hector\Query;
 
+use Hector\Connection\Bind\BindParamList;
+
 class Union implements StatementInterface
 {
     use Clause\Order;
@@ -73,7 +75,7 @@ class Union implements StatementInterface
     /**
      * @inheritDoc
      */
-    public function getStatement(array &$binding, bool $encapsulate = false): ?string
+    public function getStatement(BindParamList $bindParams, bool $encapsulate = false): ?string
     {
         if (empty($this->selects)) {
             return null;
@@ -82,7 +84,7 @@ class Union implements StatementInterface
         $selectStatements = [];
         /** @var Select $select */
         foreach ($this->selects as $select) {
-            $selectStatements[] = $select->getStatement($binding, true);
+            $selectStatements[] = $select->getStatement($bindParams, true);
         }
 
         $str = implode(' UNION ' . ($this->all ? 'ALL ' : 'DISTINCT '), $selectStatements);
@@ -93,8 +95,8 @@ class Union implements StatementInterface
 
         if ($encapsulate) {
             $str = $this->encapsulate($str, $encapsulate);
-            $str .= rtrim(' ' . ($this->order->getStatement($binding) ?? ''));
-            $str .= rtrim(' ' . ($this->limit->getStatement($binding) ?? ''));
+            $str .= rtrim(' ' . ($this->order->getStatement($bindParams) ?? ''));
+            $str .= rtrim(' ' . ($this->limit->getStatement($bindParams) ?? ''));
         }
 
         return $str;

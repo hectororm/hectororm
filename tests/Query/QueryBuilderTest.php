@@ -12,6 +12,8 @@
 
 namespace Hector\Query\Tests;
 
+use Hector\Connection\Bind\BindParam;
+use Hector\Connection\Bind\BindParamList;
 use Hector\Connection\Connection;
 use Hector\Query\Delete;
 use Hector\Query\Insert;
@@ -84,30 +86,30 @@ class QueryBuilderTest extends TestCase
 
         $queryBuilder = new QueryBuilder($this->getConnection());
         $queryBuilder = $queryBuilder->select('foo', 'f');
-        $binding = [];
+        $binds = new BindParamList();
 
         $this->assertInstanceOf(QueryBuilder::class, $queryBuilder);
         $this->assertEquals(
             'SELECT * FROM foo AS f',
-            $reflectionMethod->invoke($queryBuilder)->getStatement($binding)
+            $reflectionMethod->invoke($queryBuilder)->getStatement($binds)
         );
-        $this->assertEmpty($binding);
+        $this->assertEmpty($binds);
     }
 
     public function testDistinct()
     {
         $queryBuilder = new FakeQueryBuilder($this->getConnection());
         $queryBuilder = $queryBuilder->from('foo', 'f')->orderBy('bar', 'DESC')->distinct();
-        $binding = [];
+        $binds = new BindParamList();
         $select = $queryBuilder->makeSelect();
 
         $this->assertInstanceOf(Select::class, $select);
         $this->assertInstanceOf(QueryBuilder::class, $queryBuilder);
         $this->assertEquals(
             'SELECT DISTINCT * FROM foo AS f ORDER BY bar DESC',
-            $select->getStatement($binding)
+            $select->getStatement($binds)
         );
-        $this->assertEmpty($binding);
+        $this->assertEmpty($binds);
     }
 
     public function testSelectWithClosureCondition()
@@ -123,19 +125,25 @@ class QueryBuilderTest extends TestCase
                 }
             );
 
-        $binding = [];
+        $binds = new BindParamList();
         $this->assertEquals(
-            'SELECT * FROM `foo` WHERE ( bar = ? )',
-            $reflectionMethod->invoke($queryBuilder)->getStatement($binding)
+            'SELECT * FROM `foo` WHERE ( bar = :_h_0 )',
+            $reflectionMethod->invoke($queryBuilder)->getStatement($binds)
         );
-        $this->assertEquals(['baz'], $binding);
+        $this->assertEquals(
+            ['_h_0' => 'baz'],
+            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+        );
 
-        $binding = [];
+        $binds = new BindParamList();
         $this->assertEquals(
-            'SELECT * FROM `foo` WHERE ( bar = ? )',
-            $reflectionMethod->invoke($queryBuilder)->getStatement($binding)
+            'SELECT * FROM `foo` WHERE ( bar = :_h_0 )',
+            $reflectionMethod->invoke($queryBuilder)->getStatement($binds)
         );
-        $this->assertEquals(['baz'], $binding);
+        $this->assertEquals(
+            ['_h_0' => 'baz'],
+            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+        );
     }
 
     public function testSelectWithClosureConditionWithReturnedValue()
@@ -152,12 +160,15 @@ class QueryBuilderTest extends TestCase
                 'test'
             );
 
-        $binding = [];
+        $binds = new BindParamList();
         $this->assertEquals(
-            'SELECT * FROM `foo` WHERE bar = ?',
-            $reflectionMethod->invoke($queryBuilder)->getStatement($binding)
+            'SELECT * FROM `foo` WHERE bar = :_h_0',
+            $reflectionMethod->invoke($queryBuilder)->getStatement($binds)
         );
-        $this->assertEquals(['test'], $binding);
+        $this->assertEquals(
+            ['_h_0' => 'test'],
+            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+        );
     }
 
     public function testSelectWithClosureConditionValue()
@@ -174,28 +185,31 @@ class QueryBuilderTest extends TestCase
                 }
             );
 
-        $binding = [];
+        $binds = new BindParamList();
         $this->assertEquals(
-            'SELECT * FROM `foo` WHERE bar = ?',
-            $reflectionMethod->invoke($queryBuilder)->getStatement($binding)
+            'SELECT * FROM `foo` WHERE bar = :_h_0',
+            $reflectionMethod->invoke($queryBuilder)->getStatement($binds)
         );
-        $this->assertEquals(['test'], $binding);
+        $this->assertEquals(
+            ['_h_0' => 'test'],
+            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+        );
     }
 
     public function testMakeSelect()
     {
         $queryBuilder = new FakeQueryBuilder($this->getConnection());
         $queryBuilder = $queryBuilder->from('foo', 'f')->orderBy('bar', 'DESC');
-        $binding = [];
+        $binds = new BindParamList();
         $select = $queryBuilder->makeSelect();
 
         $this->assertInstanceOf(Select::class, $select);
         $this->assertInstanceOf(QueryBuilder::class, $queryBuilder);
         $this->assertEquals(
             'SELECT * FROM foo AS f ORDER BY bar DESC',
-            $select->getStatement($binding)
+            $select->getStatement($binds)
         );
-        $this->assertEmpty($binding);
+        $this->assertEmpty($binds);
     }
 
     public function testMakeCount()
@@ -206,16 +220,16 @@ class QueryBuilderTest extends TestCase
             ->from('foo', 'f')
             ->orderBy('bar', 'DESC')
             ->limit(2);
-        $binding = [];
+        $binds = new BindParamList();
         $select = $queryBuilder->makeCount();
 
         $this->assertInstanceOf(Select::class, $select);
         $this->assertInstanceOf(QueryBuilder::class, $queryBuilder);
         $this->assertEquals(
             'SELECT COUNT(*) AS `count` FROM ( SELECT 1 FROM foo AS f ) AS countable',
-            $select->getStatement($binding)
+            $select->getStatement($binds)
         );
-        $this->assertEmpty($binding);
+        $this->assertEmpty($binds);
     }
 
     public function testMakeCount_withDistinct()
@@ -226,22 +240,22 @@ class QueryBuilderTest extends TestCase
             ->from('foo', 'f')
             ->orderBy('bar', 'DESC')
             ->limit(2);
-        $binding = [];
+        $binds = new BindParamList();
 
         $select = $queryBuilder->makeCount();
         $this->assertEquals(
             'SELECT COUNT(*) AS `count` FROM ( SELECT 1 FROM foo AS f ) AS countable',
-            $select->getStatement($binding)
+            $select->getStatement($binds)
         );
-        $this->assertEmpty($binding);
+        $this->assertEmpty($binds);
 
         $queryBuilder->distinct();
         $select = $queryBuilder->makeCount();
         $this->assertEquals(
             'SELECT COUNT(*) AS `count` FROM ( SELECT DISTINCT f.bar FROM foo AS f ) AS countable',
-            $select->getStatement($binding)
+            $select->getStatement($binds)
         );
-        $this->assertEmpty($binding);
+        $this->assertEmpty($binds);
     }
 
     public function testMakeCount_withHaving()
@@ -253,16 +267,16 @@ class QueryBuilderTest extends TestCase
             ->orderBy('bar', 'DESC')
             ->having('f.bar = 1')
             ->limit(2);
-        $binding = [];
+        $binds = new BindParamList();
         $select = $queryBuilder->makeCount();
 
         $this->assertInstanceOf(Select::class, $select);
         $this->assertInstanceOf(QueryBuilder::class, $queryBuilder);
         $this->assertEquals(
             'SELECT COUNT(*) AS `count` FROM ( SELECT f.bar FROM foo AS f HAVING f.bar = 1 ) AS countable',
-            $select->getStatement($binding)
+            $select->getStatement($binds)
         );
-        $this->assertEmpty($binding);
+        $this->assertEmpty($binds);
     }
 
     public function testMakeCount_withGroup()
@@ -272,16 +286,16 @@ class QueryBuilderTest extends TestCase
             ->from('foo', 'f')
             ->orderBy('bar', 'DESC')
             ->groupBy('foo');
-        $binding = [];
+        $binds = new BindParamList();
         $select = $queryBuilder->makeCount();
 
         $this->assertInstanceOf(Select::class, $select);
         $this->assertInstanceOf(QueryBuilder::class, $queryBuilder);
         $this->assertEquals(
             'SELECT COUNT(*) AS `count` FROM ( SELECT 1 FROM foo AS f GROUP BY foo ) AS countable',
-            $select->getStatement($binding)
+            $select->getStatement($binds)
         );
-        $this->assertEmpty($binding);
+        $this->assertEmpty($binds);
     }
 
     public function testMakeExists()
@@ -290,15 +304,18 @@ class QueryBuilderTest extends TestCase
         $queryBuilder->from('foo', 'f');
         $queryBuilder->where('f.bar', 'baz');
 
-        $binding = [];
+        $binds = new BindParamList();
         $select = $queryBuilder->makeExists();
 
         $this->assertInstanceOf(Select::class, $select);
         $this->assertEquals(
-            'SELECT EXISTS( SELECT 1 FROM foo AS f WHERE f.bar = ? ) AS `exists`',
-            $select->getStatement($binding)
+            'SELECT EXISTS( SELECT 1 FROM foo AS f WHERE f.bar = :_h_0 ) AS `exists`',
+            $select->getStatement($binds)
         );
-        $this->assertEquals(['baz'], $binding);
+        $this->assertEquals(
+            ['_h_0' => 'baz'],
+            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+        );
     }
 
     public function testMakeInsert()
@@ -307,15 +324,18 @@ class QueryBuilderTest extends TestCase
         $queryBuilder->from('foo', 'f');
         $queryBuilder->assign('bar', 'bar_value');
 
-        $binding = [];
+        $binds = new BindParamList();
         $insert = $queryBuilder->makeInsert();
 
         $this->assertInstanceOf(Insert::class, $insert);
         $this->assertEquals(
-            'INSERT INTO foo SET bar = ?',
-            $insert->getStatement($binding)
+            'INSERT INTO foo SET bar = :_h_0',
+            $insert->getStatement($binds)
         );
-        $this->assertEquals(['bar_value'], $binding);
+        $this->assertEquals(
+            ['_h_0' => 'bar_value'],
+            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+        );
     }
 
     public function testMakeUpdate()
@@ -324,15 +344,18 @@ class QueryBuilderTest extends TestCase
         $queryBuilder->from('foo', 'f');
         $queryBuilder->assign('bar', 'bar_value');
 
-        $binding = [];
+        $binds = new BindParamList();
         $update = $queryBuilder->makeUpdate();
 
         $this->assertInstanceOf(Update::class, $update);
         $this->assertEquals(
-            'UPDATE foo AS f SET bar = ?',
-            $update->getStatement($binding)
+            'UPDATE foo AS f SET bar = :_h_0',
+            $update->getStatement($binds)
         );
-        $this->assertEquals(['bar_value'], $binding);
+        $this->assertEquals(
+            ['_h_0' => 'bar_value'],
+            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+        );
     }
 
     public function testDelete()
@@ -341,14 +364,17 @@ class QueryBuilderTest extends TestCase
         $queryBuilder->from('foo', 'f');
         $queryBuilder->where('bar', 'bar_value');
 
-        $binding = [];
+        $binds = new BindParamList();
         $delete = $queryBuilder->makeDelete();
 
         $this->assertInstanceOf(Delete::class, $delete);
         $this->assertEquals(
-            'DELETE FROM foo WHERE bar = ?',
-            $delete->getStatement($binding)
+            'DELETE FROM foo WHERE bar = :_h_0',
+            $delete->getStatement($binds)
         );
-        $this->assertEquals(['bar_value'], $binding);
+        $this->assertEquals(
+            ['_h_0' => 'bar_value'],
+            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+        );
     }
 }

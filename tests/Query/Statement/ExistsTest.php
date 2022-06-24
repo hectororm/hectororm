@@ -12,6 +12,8 @@
 
 namespace Hector\Query\Tests\Statement;
 
+use Hector\Connection\Bind\BindParam;
+use Hector\Connection\Bind\BindParamList;
 use Hector\Query\Select;
 use Hector\Query\Statement\Exists;
 use PHPUnit\Framework\TestCase;
@@ -21,19 +23,19 @@ class ExistsTest extends TestCase
     public function testGetStatement()
     {
         $exists = new Exists('SELECT 1');
-        $binding = [];
+        $binds = new BindParamList();
 
-        $this->assertEquals('EXISTS( SELECT 1 )', $exists->getStatement($binding));
-        $this->assertEquals([], $binding);
+        $this->assertEquals('EXISTS( SELECT 1 )', $exists->getStatement($binds));
+        $this->assertEmpty($binds);
     }
 
     public function testGetStatementWithEncapsulation()
     {
         $exists = new Exists('SELECT 1');
-        $binding = [];
+        $binds = new BindParamList();
 
-        $this->assertEquals('EXISTS( SELECT 1 )', $exists->getStatement($binding, true));
-        $this->assertEquals([], $binding);
+        $this->assertEquals('EXISTS( SELECT 1 )', $exists->getStatement($binds, true));
+        $this->assertEmpty($binds);
     }
 
     public function testExistsWithStatement()
@@ -43,12 +45,15 @@ class ExistsTest extends TestCase
                 ->from('foo')
                 ->where('bar', '=', 'qux')
         );
-        $binding = [];
+        $binds = new BindParamList();
 
         $this->assertEquals(
-            'EXISTS( SELECT * FROM foo WHERE bar = ? )',
-            $exists->getStatement($binding)
+            'EXISTS( SELECT * FROM foo WHERE bar = :_h_0 )',
+            $exists->getStatement($binds)
         );
-        $this->assertEquals(['qux'], $binding);
+        $this->assertEquals(
+            ['_h_0' => 'qux'],
+            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+        );
     }
 }

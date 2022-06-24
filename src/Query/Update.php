@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace Hector\Query;
 
+use Hector\Connection\Bind\BindParamList;
 use Hector\Query\Clause;
 use Hector\Query\Component;
 
@@ -22,6 +23,7 @@ class Update implements StatementInterface
     public const ORDER_ASC = Component\Order::ORDER_ASC;
     public const ORDER_DESC = Component\Order::ORDER_DESC;
 
+    use Clause\BindParams;
     use Clause\From;
     use Clause\Assignments;
     use Clause\Where;
@@ -29,8 +31,9 @@ class Update implements StatementInterface
     use Clause\Limit;
     use Component\EncapsulateHelperTrait;
 
-    public function __construct()
+    public function __construct(?BindParamList $binds = null)
     {
+        $this->binds = $binds ?? new BindParamList();
         $this->reset();
     }
 
@@ -42,6 +45,7 @@ class Update implements StatementInterface
     public function reset(): static
     {
         $this
+            ->resetBindParams()
             ->resetFrom()
             ->resetAssignments()
             ->resetWhere()
@@ -54,24 +58,26 @@ class Update implements StatementInterface
     /**
      * @inheritDoc
      */
-    public function getStatement(array &$binding, bool $encapsulate = false): ?string
+    public function getStatement(BindParamList $bindParams, bool $encapsulate = false): ?string
     {
-        $fromStr = $this->from->getStatement($binding);
-        $assignmentsStr = $this->assignments->getStatement($binding);
+        $this->mergeBindParamsTo($bindParams);
+
+        $fromStr = $this->from->getStatement($bindParams);
+        $assignmentsStr = $this->assignments->getStatement($bindParams);
 
         if (null === $fromStr || null === $assignmentsStr) {
             return null;
         }
 
-        $str = 'UPDATE ' . ($this->from->getStatement($binding) ?? '') . ' SET ' . $assignmentsStr;
+        $str = 'UPDATE ' . ($this->from->getStatement($bindParams) ?? '') . ' SET ' . $assignmentsStr;
 
-        $whereStr = $this->where->getStatement($binding);
+        $whereStr = $this->where->getStatement($bindParams);
         if (null !== $whereStr) {
             $str .= ' WHERE ' . $whereStr;
         }
 
-        $str .= rtrim(' ' . ($this->order->getStatement($binding) ?? ''));
-        $str .= rtrim(' ' . ($this->limit->getStatement($binding) ?? ''));
+        $str .= rtrim(' ' . ($this->order->getStatement($bindParams) ?? ''));
+        $str .= rtrim(' ' . ($this->limit->getStatement($bindParams) ?? ''));
 
         return $this->encapsulate($str, $encapsulate);
     }

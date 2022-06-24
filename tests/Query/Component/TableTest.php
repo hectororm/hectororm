@@ -12,6 +12,8 @@
 
 namespace Hector\Query\Tests\Component;
 
+use Hector\Connection\Bind\BindParam;
+use Hector\Connection\Bind\BindParamList;
 use Hector\Query\Component\Table;
 use Hector\Query\Select;
 use PHPUnit\Framework\TestCase;
@@ -21,23 +23,23 @@ class TableTest extends TestCase
     public function testGetStatement()
     {
         $table = new Table();
-        $binding = [];
+        $binds = new BindParamList();
 
-        $this->assertNull($table->getStatement($binding));
-        $this->assertEmpty($binding);
+        $this->assertNull($table->getStatement($binds));
+        $this->assertEmpty($binds);
     }
 
     public function testTableOne()
     {
         $table = new Table();
         $table->table('foo', 'f');
-        $binding = [];
+        $binds = new BindParamList();
 
         $this->assertEquals(
             'foo AS f',
-            $table->getStatement($binding)
+            $table->getStatement($binds)
         );
-        $this->assertEmpty($binding);
+        $this->assertEmpty($binds);
     }
 
     public function testTableTwo()
@@ -45,13 +47,13 @@ class TableTest extends TestCase
         $table = new Table();
         $table->table('foo', 'f');
         $table->table('bar', 'b');
-        $binding = [];
+        $binds = new BindParamList();
 
         $this->assertEquals(
             'foo AS f, bar AS b',
-            $table->getStatement($binding)
+            $table->getStatement($binds)
         );
-        $this->assertEmpty($binding);
+        $this->assertEmpty($binds);
     }
 
     public function testTableWithStatement()
@@ -64,12 +66,15 @@ class TableTest extends TestCase
                 ->where('bar.qux', '=', 1),
             'table'
         );
-        $binding = [];
+        $binds = new BindParamList();
 
         $this->assertEquals(
-            'foo AS f, ( SELECT * FROM bar WHERE bar.qux = ? ) AS table',
-            $table->getStatement($binding)
+            'foo AS f, ( SELECT * FROM bar WHERE bar.qux = :_h_0 ) AS table',
+            $table->getStatement($binds)
         );
-        $this->assertEquals([1], $binding);
+        $this->assertEquals(
+            ['_h_0' => 1],
+            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+        );
     }
 }

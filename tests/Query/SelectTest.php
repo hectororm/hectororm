@@ -12,6 +12,8 @@
 
 namespace Hector\Query\Tests;
 
+use Hector\Connection\Bind\BindParam;
+use Hector\Connection\Bind\BindParamList;
 use Hector\Query\Select;
 use PHPUnit\Framework\TestCase;
 
@@ -20,103 +22,106 @@ class SelectTest extends TestCase
     public function testGetStatementEmpty()
     {
         $select = new Select();
-        $binding = [];
+        $binds = new BindParamList();
 
-        $this->assertNull($select->getStatement($binding));
-        $this->assertEmpty($binding);
+        $this->assertNull($select->getStatement($binds));
+        $this->assertEmpty($binds);
     }
 
     public function testGetStatementWithoutTable()
     {
         $select = new Select();
-        $binding = [];
+        $binds = new BindParamList();
         $select->leftJoin('bar', 'bar.bar_id = f.foo_id');
 
-        $this->assertNull($select->getStatement($binding));
-        $this->assertEmpty($binding);
+        $this->assertNull($select->getStatement($binds));
+        $this->assertEmpty($binds);
     }
 
     public function testGetStatementWithTable()
     {
         $select = new Select();
-        $binding = [];
+        $binds = new BindParamList();
         $select->from('foo', 'f');
 
         $this->assertEquals(
             'SELECT * FROM foo AS f',
-            $select->getStatement($binding)
+            $select->getStatement($binds)
         );
-        $this->assertEmpty($binding);
+        $this->assertEmpty($binds);
     }
 
     public function testGetStatementWithDistinct()
     {
         $select = new Select();
-        $binding = [];
+        $binds = new BindParamList();
         $select->from('foo', 'f');
         $select->distinct(true);
 
         $this->assertEquals(
             'SELECT DISTINCT * FROM foo AS f',
-            $select->getStatement($binding)
+            $select->getStatement($binds)
         );
-        $this->assertEmpty($binding);
+        $this->assertEmpty($binds);
 
         $select->distinct(false);
 
         $this->assertEquals(
             'SELECT * FROM foo AS f',
-            $select->getStatement($binding)
+            $select->getStatement($binds)
         );
-        $this->assertEmpty($binding);
+        $this->assertEmpty($binds);
     }
 
     public function testGetStatementWithTableAndJointures()
     {
         $select = new Select();
-        $binding = [];
+        $binds = new BindParamList();
         $select->from('foo', 'f');
         $select->leftJoin('bar', 'bar.bar_id = f.foo_id');
 
         $this->assertEquals(
             'SELECT * FROM foo AS f LEFT JOIN bar ON ( bar.bar_id = f.foo_id )',
-            $select->getStatement($binding)
+            $select->getStatement($binds)
         );
-        $this->assertEmpty($binding);
+        $this->assertEmpty($binds);
     }
 
     public function testGetStatementWithColumn()
     {
         $select = new Select();
-        $binding = [];
+        $binds = new BindParamList();
         $select->from('foo', 'f');
         $select->columns('baz', 'qux');
 
         $this->assertEquals(
             'SELECT baz, qux FROM foo AS f',
-            $select->getStatement($binding)
+            $select->getStatement($binds)
         );
-        $this->assertEmpty($binding);
+        $this->assertEmpty($binds);
     }
 
     public function testGetStatementWithCondition()
     {
         $select = new Select();
-        $binding = [];
+        $binds = new BindParamList();
         $select->from('foo', 'f');
         $select->where('baz', '=', 'baz_value');
 
         $this->assertEquals(
-            'SELECT * FROM foo AS f WHERE baz = ?',
-            $select->getStatement($binding)
+            'SELECT * FROM foo AS f WHERE baz = :_h_0',
+            $select->getStatement($binds)
         );
-        $this->assertEquals(['baz_value'], $binding);
+        $this->assertEquals(
+            ['_h_0' => 'baz_value'],
+            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+        );
     }
 
     public function testGetStatementWithJoinAndConditions()
     {
         $select = new Select();
-        $binding = [];
+        $binds = new BindParamList();
         $select->from('foo', 'f');
         $select->where('baz', '=', 'baz_value');
         $select->leftJoin('bar', 'bar.bar_id = f.foo_id');
@@ -125,16 +130,19 @@ class SelectTest extends TestCase
             ->orWhere('bar.bar_column IS NULL');
 
         $this->assertEquals(
-            'SELECT * FROM foo AS f LEFT JOIN bar ON ( bar.bar_id = f.foo_id ) WHERE baz = ? AND bar.bar_column = TIME() OR bar.bar_column IS NULL',
-            $select->getStatement($binding)
+            'SELECT * FROM foo AS f LEFT JOIN bar ON ( bar.bar_id = f.foo_id ) WHERE baz = :_h_0 AND bar.bar_column = TIME() OR bar.bar_column IS NULL',
+            $select->getStatement($binds)
         );
-        $this->assertEquals(['baz_value'], $binding);
+        $this->assertEquals(
+            ['_h_0' => 'baz_value'],
+            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+        );
     }
 
     public function testGetStatementWithGroupAndHaving()
     {
         $select = new Select();
-        $binding = [];
+        $binds = new BindParamList();
         $select
             ->from('`foo`')
             ->where('baz', '=', 'baz_value')
@@ -143,22 +151,25 @@ class SelectTest extends TestCase
             ->having('bar', '=', 'bar_value');
 
         $this->assertEquals(
-            'SELECT * FROM `foo` WHERE baz = ? GROUP BY baz WITH ROLLUP HAVING bar = ?',
-            $select->getStatement($binding)
+            'SELECT * FROM `foo` WHERE baz = :_h_0 GROUP BY baz WITH ROLLUP HAVING bar = :_h_1',
+            $select->getStatement($binds)
         );
-        $this->assertEquals(['baz_value', 'bar_value'], $binding);
+        $this->assertEquals(
+            ['_h_0' => 'baz_value', '_h_1' => 'bar_value'],
+            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+        );
     }
 
     public function testGetStatementWithEncapsulation()
     {
         $select = new Select();
-        $binding = [];
+        $binds = new BindParamList();
         $select->from('foo', 'f');
 
         $this->assertEquals(
             '( SELECT * FROM foo AS f )',
-            $select->getStatement($binding, true)
+            $select->getStatement($binds, true)
         );
-        $this->assertEmpty($binding);
+        $this->assertEmpty($binds);
     }
 }

@@ -12,6 +12,8 @@
 
 namespace Hector\Query\Tests;
 
+use Hector\Connection\Bind\BindParam;
+use Hector\Connection\Bind\BindParamList;
 use Hector\Query\Component\Order;
 use Hector\Query\Delete;
 use PHPUnit\Framework\TestCase;
@@ -21,79 +23,94 @@ class DeleteTest extends TestCase
     public function testGetStatementEmpty()
     {
         $delete = new Delete();
-        $binding = [];
+        $binds = new BindParamList();
 
-        $this->assertNull($delete->getStatement($binding));
-        $this->assertEmpty($binding);
+        $this->assertNull($delete->getStatement($binds));
+        $this->assertEmpty($binds);
     }
 
     public function testGetStatementWithoutCondition()
     {
         $delete = new Delete();
-        $binding = [];
+        $binds = new BindParamList();
         $delete->from('`foo`');
 
         $this->assertEquals(
             'DELETE FROM `foo`',
-            $delete->getStatement($binding)
+            $delete->getStatement($binds)
         );
-        $this->assertEquals([], $binding);
+        $this->assertEquals(
+            [],
+            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+        );
     }
 
     public function testGetStatementWithEncapsulation()
     {
         $delete = new Delete();
-        $binding = [];
+        $binds = new BindParamList();
         $delete->from('`foo`');
 
         $this->assertEquals(
             '( DELETE FROM `foo` )',
-            $delete->getStatement($binding, true)
+            $delete->getStatement($binds, true)
         );
-        $this->assertEquals([], $binding);
+        $this->assertEquals(
+            [],
+            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+        );
     }
 
     public function testGetStatementWithCondition()
     {
         $delete = new Delete();
-        $binding = [];
+        $binds = new BindParamList();
         $delete->from('`foo`');
         $delete->where('`bar`', '=', 'value');
 
         $this->assertEquals(
-            'DELETE FROM `foo` WHERE `bar` = ?',
-            $delete->getStatement($binding)
+            'DELETE FROM `foo` WHERE `bar` = :_h_0',
+            $delete->getStatement($binds)
         );
-        $this->assertEquals(['value'], $binding);
+        $this->assertEquals(
+            ['_h_0' => 'value'],
+            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+        );
     }
 
     public function testGetStatementWithLimit()
     {
         $delete = new Delete();
-        $binding = [];
+        $binds = new BindParamList();
         $delete->from('`foo`');
         $delete->where('`bar`', '=', 'value');
         $delete->limit(2, 5);
 
         $this->assertEquals(
-            'DELETE FROM `foo` WHERE `bar` = ? LIMIT 2 OFFSET 5',
-            $delete->getStatement($binding)
+            'DELETE FROM `foo` WHERE `bar` = :_h_0 LIMIT 2 OFFSET 5',
+            $delete->getStatement($binds)
         );
-        $this->assertEquals(['value'], $binding);
+        $this->assertEquals(
+            ['_h_0' => 'value'],
+            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+        );
     }
 
     public function testGetStatementWithOrderAndLimit()
     {
         $delete = new Delete();
-        $binding = [];
+        $binds = new BindParamList();
         $delete->from('`foo`');
         $delete->orderBy('`bar`', Order::ORDER_DESC);
         $delete->limit(2, 5);
 
         $this->assertEquals(
             'DELETE FROM `foo` ORDER BY `bar` DESC LIMIT 2 OFFSET 5',
-            $delete->getStatement($binding)
+            $delete->getStatement($binds)
         );
-        $this->assertEquals([], $binding);
+        $this->assertEquals(
+            [],
+            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+        );
     }
 }

@@ -12,6 +12,7 @@
 
 namespace Hector\Query\Tests\Clause;
 
+use Hector\Connection\Bind\BindParamList;
 use Hector\Query\Clause\Order;
 use PHPUnit\Framework\TestCase;
 
@@ -22,18 +23,18 @@ class OrderTest extends TestCase
         $clause = new class {
             use Order;
         };
-        $binding = [];
+        $binds = new BindParamList();
         $clause->resetOrder();
 
-        $this->assertEmpty($clause->order->getStatement($binding));
+        $this->assertEmpty($clause->order->getStatement($binds));
 
         $clause->orderBy('foo');
 
-        $this->assertNotEmpty($clause->order->getStatement($binding));
+        $this->assertNotEmpty($clause->order->getStatement($binds));
 
         $clause->resetOrder();
 
-        $this->assertEmpty($clause->order->getStatement($binding));
+        $this->assertEmpty($clause->order->getStatement($binds));
     }
 
     public function testOrderBy()
@@ -41,16 +42,16 @@ class OrderTest extends TestCase
         $clause = new class {
             use Order;
         };
-        $binding = [];
+        $binds = new BindParamList();
         $clause->resetOrder();
         $clause->orderBy('foo');
         $clause->orderBy('bar', \Hector\Query\Component\Order::ORDER_DESC);
 
         $this->assertEquals(
             'ORDER BY foo, bar DESC',
-            $clause->order->getStatement($binding)
+            $clause->order->getStatement($binds)
         );
-        $this->assertEmpty($binding);
+        $this->assertEmpty($binds);
     }
 
     public function testRandom()
@@ -58,14 +59,14 @@ class OrderTest extends TestCase
         $clause = new class {
             use Order;
         };
-        $binding = [];
+        $binds = new BindParamList();
         $clause->resetOrder();
         $clause->random();
 
         $this->assertEquals(
             'ORDER BY RAND()',
-            $clause->order->getStatement($binding)
+            $clause->order->getStatement($binds)
         );
-        $this->assertEmpty($binding);
+        $this->assertEmpty($binds);
     }
 }

@@ -14,14 +14,18 @@ declare(strict_types=1);
 
 namespace Hector\Query;
 
+use Hector\Connection\Bind\BindParamList;
+
 class Insert implements StatementInterface
 {
+    use Clause\BindParams;
     use Clause\From;
     use Clause\Assignments;
     use Component\EncapsulateHelperTrait;
 
-    public function __construct()
+    public function __construct(?BindParamList $binds = null)
     {
+        $this->binds = $binds ?? new BindParamList();
         $this->reset();
     }
 
@@ -33,6 +37,7 @@ class Insert implements StatementInterface
     public function reset(): static
     {
         $this
+            ->resetBindParams()
             ->resetFrom()
             ->resetAssignments();
 
@@ -42,16 +47,18 @@ class Insert implements StatementInterface
     /**
      * @inheritDoc
      */
-    public function getStatement(array &$binding, bool $encapsulate = false): ?string
+    public function getStatement(BindParamList $bindParams, bool $encapsulate = false): ?string
     {
-        $fromStr = $this->from->getStatement($binding);
-        $assignmentsStr = $this->assignments->getStatement($binding);
+        $this->mergeBindParamsTo($bindParams);
+
+        $fromStr = $this->from->getStatement($bindParams);
+        $assignmentsStr = $this->assignments->getStatement($bindParams);
 
         if (null === $fromStr || null === $assignmentsStr) {
             return null;
         }
 
-        $str = 'INSERT INTO ' . ($this->from->getStatement($binding) ?? '') . ' SET ' . $assignmentsStr;
+        $str = 'INSERT INTO ' . ($this->from->getStatement($bindParams) ?? '') . ' SET ' . $assignmentsStr;
 
         return $this->encapsulate($str, $encapsulate);
     }

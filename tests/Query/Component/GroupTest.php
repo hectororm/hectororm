@@ -12,6 +12,8 @@
 
 namespace Hector\Query\Tests\Component;
 
+use Hector\Connection\Bind\BindParam;
+use Hector\Connection\Bind\BindParamList;
 use Hector\Query\Component\Group;
 use Hector\Query\Statement\Raw;
 use PHPUnit\Framework\TestCase;
@@ -33,37 +35,40 @@ class GroupTest extends TestCase
     public function testGetStatement()
     {
         $group = new Group();
-        $binding = [];
+        $binds = new BindParamList();
 
-        $this->assertNull($group->getStatement($binding));
-        $this->assertEquals([], $binding);
+        $this->assertNull($group->getStatement($binds));
+        $this->assertEmpty($binds);
     }
 
     public function testGroupBy()
     {
         $group = new Group();
         $group->groupBy('foo');
-        $binding = [];
+        $binds = new BindParamList();
 
         $this->assertEquals(
             'GROUP BY foo',
-            $group->getStatement($binding)
+            $group->getStatement($binds)
         );
-        $this->assertEquals([], $binding);
+        $this->assertEmpty($binds);
     }
 
     public function testGroupByRaw()
     {
         $group = new Group();
         $group->groupBy('foo');
-        $group->groupBy(new Raw('FUNCTION(?)', ['value']));
-        $binding = [];
+        $group->groupBy(new Raw('FUNCTION(:test)', ['test' => 'value']));
+        $binds = new BindParamList();
 
         $this->assertEquals(
-            'GROUP BY foo, FUNCTION(?)',
-            $group->getStatement($binding)
+            'GROUP BY foo, FUNCTION(:test)',
+            $group->getStatement($binds)
         );
-        $this->assertEquals(['value'], $binding);
+        $this->assertEquals(
+            ['test' => 'value'],
+            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+        );
     }
 
     public function testWithRollup()
@@ -72,12 +77,12 @@ class GroupTest extends TestCase
         $group->groupBy('foo');
         $group->groupBy('bar');
         $group->withRollup();
-        $binding = [];
+        $binds = new BindParamList();
 
         $this->assertEquals(
             'GROUP BY foo, bar WITH ROLLUP',
-            $group->getStatement($binding)
+            $group->getStatement($binds)
         );
-        $this->assertEquals([], $binding);
+        $this->assertEmpty($binds);
     }
 }

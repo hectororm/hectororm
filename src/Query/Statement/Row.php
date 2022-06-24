@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace Hector\Query\Statement;
 
+use Hector\Connection\Bind\BindParamList;
 use Hector\Query\StatementInterface;
 
 class Row implements StatementInterface
@@ -33,7 +34,7 @@ class Row implements StatementInterface
     /**
      * @inheritDoc
      */
-    public function getStatement(array &$binding, bool $encapsulate = false): ?string
+    public function getStatement(BindParamList $bindParams, bool $encapsulate = false): ?string
     {
         $str = implode(', ', $this->values);
 

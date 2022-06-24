@@ -12,6 +12,8 @@
 
 namespace Hector\Query\Tests\Component;
 
+use Hector\Connection\Bind\BindParam;
+use Hector\Connection\Bind\BindParamList;
 use Hector\Query\Component\Join;
 use Hector\Query\Select;
 use Hector\Query\Statement\Raw;
@@ -22,22 +24,22 @@ class JoinTest extends TestCase
     public function testGetStatement()
     {
         $join = new Join();
-        $binding = [];
+        $binds = new BindParamList();
 
-        $this->assertNull($join->getStatement($binding));
+        $this->assertNull($join->getStatement($binds));
     }
 
     public function testJoinOne()
     {
         $join = new Join();
         $join->join(Join::INNER_JOIN, 'bar', null);
-        $binding = [];
+        $binds = new BindParamList();
 
         $this->assertEquals(
             'INNER JOIN bar',
-            $join->getStatement($binding)
+            $join->getStatement($binds)
         );
-        $this->assertEmpty($binding);
+        $this->assertEmpty($binds);
     }
 
     public function testJoinTwo()
@@ -45,13 +47,13 @@ class JoinTest extends TestCase
         $join = new Join();
         $join->join(Join::INNER_JOIN, 'bar', null);
         $join->join(Join::LEFT_JOIN, 'baz', 'q.id = baz.id');
-        $binding = [];
+        $binds = new BindParamList();
 
         $this->assertEquals(
             'INNER JOIN bar LEFT JOIN baz ON ( q.id = baz.id )',
-            $join->getStatement($binding)
+            $join->getStatement($binds)
         );
-        $this->assertEmpty($binding);
+        $this->assertEmpty($binds);
     }
 
     public function testJoinStatement()
@@ -61,13 +63,13 @@ class JoinTest extends TestCase
             Join::LEFT_JOIN,
             (new Select())->from('`foo`')
         );
-        $binding = [];
+        $binds = new BindParamList();
 
         $this->assertEquals(
             'LEFT JOIN ( SELECT * FROM `foo` )',
-            $join->getStatement($binding)
+            $join->getStatement($binds)
         );
-        $this->assertEquals([], $binding);
+        $this->assertEmpty($binds);
     }
 
     public function testJoinRawStatement()
@@ -76,14 +78,17 @@ class JoinTest extends TestCase
         $join->join(
             Join::LEFT_JOIN,
             '`foo`',
-            new Raw('UNIX_TIMESTAMP(?)', [$date = date('Y-m-d H:i:s')])
+            new Raw('UNIX_TIMESTAMP(:_h_0)', [$date = date('Y-m-d H:i:s')])
         );
-        $binding = [];
+        $binds = new BindParamList();
 
         $this->assertEquals(
-            'LEFT JOIN `foo` ON ( UNIX_TIMESTAMP(?) )',
-            $join->getStatement($binding)
+            'LEFT JOIN `foo` ON ( UNIX_TIMESTAMP(:_h_0) )',
+            $join->getStatement($binds)
         );
-        $this->assertEquals([$date], $binding);
+        $this->assertEquals(
+            [$date],
+            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+        );
     }
 }

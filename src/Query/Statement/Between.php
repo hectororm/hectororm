@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace Hector\Query\Statement;
 
+use Hector\Connection\Bind\BindParamList;
 use Hector\Query\StatementInterface;
 
 /**
@@ -24,8 +25,8 @@ class Between implements StatementInterface
     protected const EXPRESSION = 'BETWEEN';
 
     protected StatementInterface|string $column;
-    protected $value1;
-    protected $value2;
+    protected mixed $value1;
+    protected mixed $value2;
 
     /**
      * Between constructor.
@@ -44,20 +45,24 @@ class Between implements StatementInterface
     /**
      * @inheritDoc
      */
-    public function getStatement(array &$binding, bool $encapsulate = false): ?string
+    public function getStatement(BindParamList $bindParams, bool $encapsulate = false): ?string
     {
         if ($this->column instanceof StatementInterface) {
-            $statement = sprintf('%s %s ? AND ?', $this->column->getStatement($binding, true), static::EXPRESSION);
-
-            $binding[] = $this->value1;
-            $binding[] = $this->value2;
-
-            return $statement;
+            return sprintf(
+                '%s %s :%s AND :%s',
+                $this->column->getStatement($bindParams, true),
+                static::EXPRESSION,
+                $bindParams->add($this->value1)->getName(),
+                $bindParams->add($this->value2)->getName(),
+            );
         }
 
-        $binding[] = $this->value1;
-        $binding[] = $this->value2;
-
-        return sprintf('%s %s ? AND ?', $this->column, static::EXPRESSION);
+        return sprintf(
+            '%s %s :%s AND :%s',
+            $this->column,
+            static::EXPRESSION,
+            $bindParams->add($this->value1)->getName(),
+            $bindParams->add($this->value2)->getName(),
+        );
     }
 }

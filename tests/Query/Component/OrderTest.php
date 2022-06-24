@@ -12,6 +12,8 @@
 
 namespace Hector\Query\Tests\Component;
 
+use Hector\Connection\Bind\BindParam;
+use Hector\Connection\Bind\BindParamList;
 use Hector\Query\Component\Order;
 use Hector\Query\Statement\Raw;
 use PHPUnit\Framework\TestCase;
@@ -33,22 +35,22 @@ class OrderTest extends TestCase
     public function testGetStatement()
     {
         $orderBy = new Order();
-        $binding = [];
+        $binds = new BindParamList();
 
-        $this->assertNull($orderBy->getStatement($binding));
+        $this->assertNull($orderBy->getStatement($binds));
     }
 
     public function testOrderByOne()
     {
         $orderBy = new Order();
         $orderBy->orderBy('foo', Order::ORDER_DESC);
-        $binding = [];
+        $binds = new BindParamList();
 
         $this->assertEquals(
             'ORDER BY foo DESC',
-            $orderBy->getStatement($binding)
+            $orderBy->getStatement($binds)
         );
-        $this->assertEmpty($binding);
+        $this->assertEmpty($binds);
     }
 
     public function testOrderByTwo()
@@ -56,24 +58,24 @@ class OrderTest extends TestCase
         $orderBy = new Order();
         $orderBy->orderBy('foo', Order::ORDER_DESC);
         $orderBy->orderBy('bar');
-        $binding = [];
+        $binds = new BindParamList();
 
         $this->assertEquals(
             'ORDER BY foo DESC, bar',
-            $orderBy->getStatement($binding)
+            $orderBy->getStatement($binds)
         );
-        $this->assertEmpty($binding);
+        $this->assertEmpty($binds);
     }
 
     public function testOrderByAsc()
     {
         $orderBy = new Order();
         $orderBy->orderBy('baz', Order::ORDER_ASC);
-        $binding = [];
+        $binds = new BindParamList();
 
         $this->assertEquals(
             'ORDER BY baz ASC',
-            $orderBy->getStatement($binding)
+            $orderBy->getStatement($binds)
         );
     }
 
@@ -81,13 +83,16 @@ class OrderTest extends TestCase
     {
         $orderBy = new Order();
         $orderBy->orderBy('baz', Order::ORDER_ASC);
-        $orderBy->orderBy(new Raw('IF(? IS NULL, 1, 0)', ['foo']));
-        $binding = [];
+        $orderBy->orderBy(new Raw('IF(:_h_0 IS NULL, 1, 0)', ['foo']));
+        $binds = new BindParamList();
 
         $this->assertEquals(
-            'ORDER BY baz ASC, IF(? IS NULL, 1, 0)',
-            $orderBy->getStatement($binding)
+            'ORDER BY baz ASC, IF(:_h_0 IS NULL, 1, 0)',
+            $orderBy->getStatement($binds)
         );
-        $this->assertEquals(['foo'], $binding);
+        $this->assertEquals(
+            ['foo'],
+            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+        );
     }
 }

@@ -14,19 +14,23 @@ declare(strict_types=1);
 
 namespace Hector\Query;
 
+use Hector\Connection\Bind\BindParamList;
+
 class Delete implements StatementInterface
 {
     public const ORDER_ASC = Component\Order::ORDER_ASC;
     public const ORDER_DESC = Component\Order::ORDER_DESC;
 
+    use Clause\BindParams;
     use Clause\From;
     use Clause\Where;
     use Clause\Order;
     use Clause\Limit;
     use Component\EncapsulateHelperTrait;
 
-    public function __construct()
+    public function __construct(?BindParamList $binds = null)
     {
+        $this->binds = $binds ?? new BindParamList();
         $this->reset();
     }
 
@@ -38,6 +42,7 @@ class Delete implements StatementInterface
     public function reset(): static
     {
         $this
+            ->resetBindParams()
             ->resetFrom()
             ->resetWhere()
             ->resetOrder()
@@ -49,22 +54,24 @@ class Delete implements StatementInterface
     /**
      * @inheritDoc
      */
-    public function getStatement(array &$binding, bool $encapsulate = false): ?string
+    public function getStatement(BindParamList $bindParams, bool $encapsulate = false): ?string
     {
-        $fromStr = $this->from->getStatement($binding);
+        $this->mergeBindParamsTo($bindParams);
+
+        $fromStr = $this->from->getStatement($bindParams);
 
         if (null === $fromStr) {
             return null;
         }
 
-        $str = 'DELETE FROM ' . ($this->from->getStatement($binding) ?? '');
+        $str = 'DELETE FROM ' . ($this->from->getStatement($bindParams) ?? '');
 
-        if (null !== ($whereStr = $this->where->getStatement($binding))) {
+        if (null !== ($whereStr = $this->where->getStatement($bindParams))) {
             $str .= ' WHERE ' . $whereStr;
         }
 
-        $str .= rtrim(' ' . ($this->order->getStatement($binding) ?? ''));
-        $str .= rtrim(' ' . ($this->limit->getStatement($binding) ?? ''));
+        $str .= rtrim(' ' . ($this->order->getStatement($bindParams) ?? ''));
+        $str .= rtrim(' ' . ($this->limit->getStatement($bindParams) ?? ''));
 
         return $this->encapsulate($str, $encapsulate);
     }

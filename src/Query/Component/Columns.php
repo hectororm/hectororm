@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace Hector\Query\Component;
 
 use Countable;
+use Hector\Connection\Bind\BindParamList;
 use Hector\Query\StatementInterface;
 
 /**
@@ -70,22 +71,22 @@ class Columns extends AbstractComponent implements Countable
     /**
      * @inheritDoc
      */
-    public function getStatement(array &$binding, bool $encapsulate = false): ?string
+    public function getStatement(BindParamList $bindParams, bool $encapsulate = false): ?string
     {
         return $this->encapsulate(
             implode(
                 ', ',
                 array_map(
-                    function ($column) use (&$binding) {
+                    function ($column) use ($bindParams) {
                         if ($column['alias']) {
                             return sprintf(
                                 '%s AS %s',
-                                rtrim($this->getSubStatement($column['column'], $binding)),
+                                rtrim($this->getSubStatement($column['column'], $bindParams)),
                                 $column['alias']
                             );
                         }
 
-                        return $this->getSubStatement($column['column'], $binding);
+                        return $this->getSubStatement($column['column'], $bindParams);
                     },
                     $this->columns
                 )

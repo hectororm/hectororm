@@ -12,6 +12,8 @@
 
 namespace Hector\Query\Tests\Clause;
 
+use Hector\Connection\Bind\BindParam;
+use Hector\Connection\Bind\BindParamList;
 use Hector\Query\Clause\Assignments;
 use PHPUnit\Framework\TestCase;
 
@@ -35,18 +37,20 @@ class AssignmentsTest extends TestCase
         $clause = new class {
             use Assignments;
         };
-        $binding = [];
+        $binds = new BindParamList();
         $clause->resetAssignments();
 
         $clause->assign('foo', 'bar');
 
         $this->assertEquals(
-            'foo = ?',
-            $clause->assignments->getStatement($binding)
+            'foo = :_h_0',
+            $clause->assignments->getStatement($binds)
         );
         $this->assertEquals(
-            ['bar'],
-            $binding
+            [
+                '_h_0' => 'bar',
+            ],
+            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy()),
         );
     }
 
@@ -55,18 +59,21 @@ class AssignmentsTest extends TestCase
         $clause = new class {
             use Assignments;
         };
-        $binding = [];
+        $binds = new BindParamList();
         $clause->resetAssignments();
 
         $clause->assigns(['foo' => 'qux', 'bar' => 'baz']);
 
         $this->assertEquals(
-            'foo = ?, bar = ?',
-            $clause->assignments->getStatement($binding)
+            'foo = :_h_0, bar = :_h_1',
+            $clause->assignments->getStatement($binds)
         );
         $this->assertEquals(
-            ['qux', 'baz'],
-            $binding
+            [
+                '_h_0' => 'qux',
+                '_h_1' => 'baz'
+            ],
+            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy()),
         );
     }
 }

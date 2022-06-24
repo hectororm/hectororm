@@ -12,6 +12,8 @@
 
 namespace Hector\Query\Tests;
 
+use Hector\Connection\Bind\BindParam;
+use Hector\Connection\Bind\BindParamList;
 use Hector\Query\Insert;
 use Hector\Query\Statement\Raw;
 use PHPUnit\Framework\TestCase;
@@ -21,40 +23,43 @@ class InsertTest extends TestCase
     public function testGetStatementEmpty()
     {
         $insert = new Insert();
-        $binding = [];
+        $binds = new BindParamList();
 
-        $this->assertNull($insert->getStatement($binding));
-        $this->assertEmpty($binding);
+        $this->assertNull($insert->getStatement($binds));
+        $this->assertEmpty($binds);
     }
 
     public function testGetStatementWithoutAssignment()
     {
         $insert = new Insert();
-        $binding = [];
+        $binds = new BindParamList();
         $insert->from('`foo`');
 
-        $this->assertNull($insert->getStatement($binding));
-        $this->assertEmpty($binding);
+        $this->assertNull($insert->getStatement($binds));
+        $this->assertEmpty($binds);
     }
 
     public function testGetStatementWithOneAssignment()
     {
         $insert = new Insert();
-        $binding = [];
+        $binds = new BindParamList();
         $insert->from('`foo`');
         $insert->assign('`bar`', 'value_bar');
 
         $this->assertEquals(
-            'INSERT INTO `foo` SET `bar` = ?',
-            $insert->getStatement($binding)
+            'INSERT INTO `foo` SET `bar` = :_h_0',
+            $insert->getStatement($binds)
         );
-        $this->assertEquals(['value_bar'], $binding);
+        $this->assertEquals(
+            ['_h_0' => 'value_bar'],
+            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+        );
     }
 
     public function testGetStatementWithMultipleAssignments()
     {
         $insert = new Insert();
-        $binding = [];
+        $binds = new BindParamList();
         $insert->from('`foo`');
         $insert->assign('`bar`', 'value_bar');
         $insert->assigns(
@@ -66,23 +71,29 @@ class InsertTest extends TestCase
         );
 
         $this->assertEquals(
-            'INSERT INTO `foo` SET `bar` = ?, foo = CURRENT_TIMESTAMP(), baz = ?, `qux` = NOW()',
-            $insert->getStatement($binding)
+            'INSERT INTO `foo` SET `bar` = :_h_0, foo = CURRENT_TIMESTAMP(), baz = :_h_1, `qux` = NOW()',
+            $insert->getStatement($binds)
         );
-        $this->assertEquals(['value_bar', 'baz_value'], $binding);
+        $this->assertEquals(
+            ['_h_0' => 'value_bar', '_h_1' => 'baz_value'],
+            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+        );
     }
 
     public function testGetStatementWithEncapsulation()
     {
         $insert = new Insert();
-        $binding = [];
+        $binds = new BindParamList();
         $insert->from('`foo`');
         $insert->assign('`bar`', 'value_bar');
 
         $this->assertEquals(
-            '( INSERT INTO `foo` SET `bar` = ? )',
-            $insert->getStatement($binding, true)
+            '( INSERT INTO `foo` SET `bar` = :_h_0 )',
+            $insert->getStatement($binds, true)
         );
-        $this->assertEquals(['value_bar'], $binding);
+        $this->assertEquals(
+            ['_h_0' => 'value_bar'],
+            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+        );
     }
 }

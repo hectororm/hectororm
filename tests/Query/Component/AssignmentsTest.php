@@ -12,6 +12,8 @@
 
 namespace Hector\Query\Tests\Component;
 
+use Hector\Connection\Bind\BindParam;
+use Hector\Connection\Bind\BindParamList;
 use Hector\Query\Component\Assignments;
 use Hector\Query\Select;
 use Hector\Query\Statement\Raw;
@@ -22,23 +24,26 @@ class AssignmentsTest extends TestCase
     public function testGetStatement()
     {
         $assignments = new Assignments();
-        $binding = [];
+        $binds = new BindParamList();
 
-        $this->assertNull($assignments->getStatement($binding));
-        $this->assertEmpty($binding);
+        $this->assertNull($assignments->getStatement($binds));
+        $this->assertEmpty($binds);
     }
 
     public function testAssignmentOne()
     {
         $assignments = new Assignments();
         $assignments->assignment('foo', 'value');
-        $binding = [];
+        $binds = new BindParamList();
 
         $this->assertEquals(
-            'foo = ?',
-            $assignments->getStatement($binding)
+            'foo = :_h_0',
+            $assignments->getStatement($binds)
         );
-        $this->assertEquals(['value'], $binding);
+        $this->assertEquals(
+            ['_h_0' => 'value'],
+            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+        );
     }
 
     public function testAssignmentTwo()
@@ -46,13 +51,16 @@ class AssignmentsTest extends TestCase
         $assignments = new Assignments();
         $assignments->assignment('foo', 'value');
         $assignments->assignment('bar', 'value2');
-        $binding = [];
+        $binds = new BindParamList();
 
         $this->assertEquals(
-            'foo = ?, bar = ?',
-            $assignments->getStatement($binding)
+            'foo = :_h_0, bar = :_h_1',
+            $assignments->getStatement($binds)
         );
-        $this->assertEquals(['value', 'value2'], $binding);
+        $this->assertEquals(
+            ['_h_0' => 'value', '_h_1' => 'value2'],
+            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+        );
     }
 
     public function testAssignments()
@@ -65,13 +73,16 @@ class AssignmentsTest extends TestCase
                 'qux' => 'value3'
             ]
         );
-        $binding = [];
+        $binds = new BindParamList();
 
         $this->assertEquals(
-            'foo = ?, `baz` = UNIX_TIMESTAMP(?), qux = ?',
-            $assignments->getStatement($binding)
+            'foo = :_h_0, `baz` = UNIX_TIMESTAMP(?), qux = :_h_1',
+            $assignments->getStatement($binds)
         );
-        $this->assertEquals(['value', '2020-04-10', 'value3'], $binding);
+        $this->assertEquals(
+            ['_h_0' => 'value', '2020-04-10', '_h_1' => 'value3'],
+            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+        );
     }
 
     public function testAssignStatement()
@@ -84,13 +95,16 @@ class AssignmentsTest extends TestCase
                     ->where('bar.qux', '=', 1)
             ]
         );
-        $binding = [];
+        $binds = new BindParamList();
 
         $this->assertEquals(
-            '( SELECT * FROM bar WHERE bar.qux = ? )',
-            $assignments->getStatement($binding)
+            '( SELECT * FROM bar WHERE bar.qux = :_h_0 )',
+            $assignments->getStatement($binds)
         );
-        $this->assertEquals([1], $binding);
+        $this->assertEquals(
+            ['_h_0' => 1],
+            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+        );
     }
 
     public function testAssignNull()
@@ -102,12 +116,15 @@ class AssignmentsTest extends TestCase
                 'bar' => 'baz'
             ]
         );
-        $binding = [];
+        $binds = new BindParamList();
 
         $this->assertEquals(
-            '`foo` = ?, bar = ?',
-            $assignments->getStatement($binding)
+            '`foo` = :_h_0, bar = :_h_1',
+            $assignments->getStatement($binds)
         );
-        $this->assertEquals([null, 'baz'], $binding);
+        $this->assertEquals(
+            ['_h_0' => null, '_h_1' => 'baz'],
+            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+        );
     }
 }

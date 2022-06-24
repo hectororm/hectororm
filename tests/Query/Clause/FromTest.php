@@ -12,6 +12,7 @@
 
 namespace Hector\Query\Tests\Clause;
 
+use Hector\Connection\Bind\BindParamList;
 use Hector\Query\Clause\From;
 use PHPUnit\Framework\TestCase;
 
@@ -22,18 +23,18 @@ class FromTest extends TestCase
         $clause = new class {
             use From;
         };
-        $binding = [];
+        $binds = new BindParamList();
         $clause->resetFrom();
 
-        $this->assertEmpty($clause->from->getStatement($binding));
+        $this->assertEmpty($clause->from->getStatement($binds));
 
         $clause->from('foo');
 
-        $this->assertNotEmpty($clause->from->getStatement($binding));
+        $this->assertNotEmpty($clause->from->getStatement($binds));
 
         $clause->resetFrom();
 
-        $this->assertEmpty($clause->from->getStatement($binding));
+        $this->assertEmpty($clause->from->getStatement($binds));
     }
 
     public function testFrom()
@@ -41,15 +42,15 @@ class FromTest extends TestCase
         $clause = new class {
             use From;
         };
-        $binding = [];
+        $binds = new BindParamList();
         $clause->resetFrom();
         $clause->from('foo', 'f');
         $clause->from('baz');
 
         $this->assertEquals(
             'foo AS f, baz',
-            $clause->from->getStatement($binding)
+            $clause->from->getStatement($binds)
         );
-        $this->assertEmpty($binding);
+        $this->assertEmpty($binds);
     }
 }

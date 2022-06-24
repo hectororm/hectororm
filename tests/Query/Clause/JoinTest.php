@@ -12,6 +12,7 @@
 
 namespace Hector\Query\Tests\Clause;
 
+use Hector\Connection\Bind\BindParamList;
 use Hector\Query\Clause\Join;
 use PHPUnit\Framework\TestCase;
 
@@ -22,18 +23,18 @@ class JoinTest extends TestCase
         $clause = new class {
             use Join;
         };
-        $binding = [];
+        $binds = new BindParamList();
         $clause->resetJoin();
 
-        $this->assertEmpty($clause->join->getStatement($binding));
+        $this->assertEmpty($clause->join->getStatement($binds));
 
         $clause->innerJoin('foo');
 
-        $this->assertNotEmpty($clause->join->getStatement($binding));
+        $this->assertNotEmpty($clause->join->getStatement($binds));
 
         $clause->resetJoin();
 
-        $this->assertEmpty($clause->join->getStatement($binding));
+        $this->assertEmpty($clause->join->getStatement($binds));
     }
 
     public function testInnerJoin()
@@ -41,16 +42,16 @@ class JoinTest extends TestCase
         $clause = new class {
             use Join;
         };
-        $binding = [];
+        $binds = new BindParamList();
         $clause->resetJoin();
         $clause->innerJoin('foo', 'foo.bar IS NULL');
         $clause->innerJoin('baz');
 
         $this->assertEquals(
             'INNER JOIN foo ON ( foo.bar IS NULL ) INNER JOIN baz',
-            $clause->join->getStatement($binding)
+            $clause->join->getStatement($binds)
         );
-        $this->assertEmpty($binding);
+        $this->assertEmpty($binds);
     }
 
     public function testLeftJoin()
@@ -58,16 +59,16 @@ class JoinTest extends TestCase
         $clause = new class {
             use Join;
         };
-        $binding = [];
+        $binds = new BindParamList();
         $clause->resetJoin();
         $clause->leftJoin('foo', 'foo.bar IS NULL');
         $clause->leftJoin('baz');
 
         $this->assertEquals(
             'LEFT JOIN foo ON ( foo.bar IS NULL ) LEFT JOIN baz',
-            $clause->join->getStatement($binding)
+            $clause->join->getStatement($binds)
         );
-        $this->assertEmpty($binding);
+        $this->assertEmpty($binds);
     }
 
     public function testRightJoin()
@@ -75,16 +76,16 @@ class JoinTest extends TestCase
         $clause = new class {
             use Join;
         };
-        $binding = [];
+        $binds = new BindParamList();
         $clause->resetJoin();
         $clause->rightJoin('foo', 'foo.bar IS NULL');
         $clause->rightJoin('baz');
 
         $this->assertEquals(
             'RIGHT JOIN foo ON ( foo.bar IS NULL ) RIGHT JOIN baz',
-            $clause->join->getStatement($binding)
+            $clause->join->getStatement($binds)
         );
-        $this->assertEmpty($binding);
+        $this->assertEmpty($binds);
     }
 
     public function testJoinWithArrayConditions()
@@ -92,16 +93,16 @@ class JoinTest extends TestCase
         $clause = new class {
             use Join;
         };
-        $binding = [];
+        $binds = new BindParamList();
         $clause->resetJoin();
         $clause->innerJoin('table', ['foo.bar IS NULL', 'baz' => 'qux']);
         $clause->rightJoin('baz');
 
         $this->assertEquals(
             'INNER JOIN table ON ( foo.bar IS NULL AND baz = qux ) RIGHT JOIN baz',
-            $clause->join->getStatement($binding)
+            $clause->join->getStatement($binds)
         );
-        $this->assertEmpty($binding);
+        $this->assertEmpty($binds);
     }
 
     public function testInnerJoinWithAlias()
@@ -109,14 +110,14 @@ class JoinTest extends TestCase
         $clause = new class {
             use Join;
         };
-        $binding = [];
+        $binds = new BindParamList();
         $clause->resetJoin();
         $clause->innerJoin('foo', 'alias.bar IS NULL', 'alias');
 
         $this->assertEquals(
             'INNER JOIN foo AS alias ON ( alias.bar IS NULL )',
-            $clause->join->getStatement($binding)
+            $clause->join->getStatement($binds)
         );
-        $this->assertEmpty($binding);
+        $this->assertEmpty($binds);
     }
 }

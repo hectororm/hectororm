@@ -14,6 +14,8 @@ declare(strict_types=1);
 
 namespace Hector\Query\Component;
 
+use Hector\Connection\Bind\BindParamList;
+
 /**
  * Class Limit.
  */
@@ -65,7 +67,7 @@ class Limit extends AbstractComponent
     /**
      * @inheritDoc
      */
-    public function getStatement(array &$binding, bool $encapsulate = false): ?string
+    public function getStatement(BindParamList $bindParams, bool $encapsulate = false): ?string
     {
         if (null === $this->limit) {
             return null;

@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace Hector\Query\Component;
 
+use Hector\Connection\Bind\BindParamList;
 use Hector\Query\StatementInterface;
 
 /**
@@ -51,22 +52,22 @@ class Table extends AbstractComponent
     /**
      * @inheritDoc
      */
-    public function getStatement(array &$binding, bool $encapsulate = false): ?string
+    public function getStatement(BindParamList $bindParams, bool $encapsulate = false): ?string
     {
         return $this->encapsulate(
             implode(
                 ', ',
                 array_map(
-                    function ($from) use (&$binding) {
+                    function ($from) use (&$bindParams) {
                         if ($from['alias'] && $this->alias) {
                             return sprintf(
                                 '%s AS %s',
-                                $this->getSubStatement($from['table'], $binding),
+                                $this->getSubStatement($from['table'], $bindParams),
                                 $from['alias']
                             );
                         }
 
-                        return $this->getSubStatement($from['table'], $binding);
+                        return $this->getSubStatement($from['table'], $bindParams);
                     },
                     $this->tables
                 )

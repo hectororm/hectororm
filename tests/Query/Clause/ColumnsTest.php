@@ -12,6 +12,7 @@
 
 namespace Hector\Query\Tests\Clause;
 
+use Hector\Connection\Bind\BindParamList;
 use Hector\Query\Clause\Columns;
 use PHPUnit\Framework\TestCase;
 
@@ -22,18 +23,18 @@ class ColumnsTest extends TestCase
         $clause = new class {
             use Columns;
         };
-        $binding = [];
+        $binds = new BindParamList();
         $clause->resetColumns();
 
-        $this->assertEmpty($clause->columns->getStatement($binding));
+        $this->assertEmpty($clause->columns->getStatement($binds));
 
         $clause->column('foo');
 
-        $this->assertNotEmpty($clause->columns->getStatement($binding));
+        $this->assertNotEmpty($clause->columns->getStatement($binds));
 
         $clause->resetColumns();
 
-        $this->assertEmpty($clause->columns->getStatement($binding));
+        $this->assertEmpty($clause->columns->getStatement($binds));
     }
 
     public function testColumn()
@@ -41,16 +42,16 @@ class ColumnsTest extends TestCase
         $clause = new class {
             use Columns;
         };
-        $binding = [];
+        $binds = new BindParamList();
         $clause->resetColumns();
         $clause->column('foo', 'f');
         $clause->column('bar', 'b');
 
         $this->assertEquals(
             'foo AS f, bar AS b',
-            $clause->columns->getStatement($binding)
+            $clause->columns->getStatement($binds)
         );
-        $this->assertEmpty($binding);
+        $this->assertEmpty($binds);
     }
 
     public function testColumns()
@@ -58,14 +59,14 @@ class ColumnsTest extends TestCase
         $clause = new class {
             use Columns;
         };
-        $binding = [];
+        $binds = new BindParamList();
         $clause->resetColumns();
         $clause->columns('foo', 'bar');
 
         $this->assertEquals(
             'foo, bar',
-            $clause->columns->getStatement($binding)
+            $clause->columns->getStatement($binds)
         );
-        $this->assertEmpty($binding);
+        $this->assertEmpty($binds);
     }
 }

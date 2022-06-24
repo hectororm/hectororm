@@ -16,6 +16,7 @@ namespace Hector\Query\Component;
 
 use Closure;
 use Countable;
+use Hector\Connection\Bind\BindParamList;
 use Hector\Query\Clause\Having;
 use Hector\Query\Clause\Where;
 use Hector\Query\Select;
@@ -136,11 +137,11 @@ class Conditions extends AbstractComponent implements Countable
             /**
              * @inheritDoc
              */
-            public function getStatement(array &$binding, bool $encapsulate = false): ?string
+            public function getStatement(BindParamList $bindParams, bool $encapsulate = false): ?string
             {
                 return
-                    $this->where->getStatement($binding, $encapsulate) .
-                    $this->having->getStatement($binding, $encapsulate);
+                    $this->where->getStatement($bindParams, $encapsulate) .
+                    $this->having->getStatement($bindParams, $encapsulate);
             }
         };
         $group->resetWhere();
@@ -153,14 +154,14 @@ class Conditions extends AbstractComponent implements Countable
     /**
      * @inheritDoc
      */
-    public function getStatement(array &$binding, bool $encapsulate = false): ?string
+    public function getStatement(BindParamList $bindParams, bool $encapsulate = false): ?string
     {
         $statement = '';
 
         for ($iCondition = 0; $iCondition < count($this->conditions); $iCondition++) {
             $condition = $this->conditions[$iCondition];
 
-            if (null === ($subStatement = $this->getSubStatement($condition['column'], $binding, true))) {
+            if (null === ($subStatement = $this->getSubStatement($condition['column'], $bindParams, true))) {
                 continue;
             }
 
@@ -177,7 +178,7 @@ class Conditions extends AbstractComponent implements Countable
             $statement .= ' ' . $condition['operator'];
 
             if (null !== $condition['value']) {
-                $statement .= ' ' . $this->getSubStatementValue($condition['value'], $binding, true);
+                $statement .= ' ' . $this->getSubStatementValue($condition['value'], $bindParams, true);
             }
         }
 

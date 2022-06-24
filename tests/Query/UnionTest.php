@@ -12,6 +12,8 @@
 
 namespace Hector\Query\Tests;
 
+use Hector\Connection\Bind\BindParam;
+use Hector\Connection\Bind\BindParamList;
 use Hector\Query\Select;
 use Hector\Query\Union;
 use PHPUnit\Framework\TestCase;
@@ -20,16 +22,16 @@ class UnionTest extends TestCase
 {
     public function testStatementEmpty()
     {
-        $binding = [];
+        $binds = new BindParamList();
         $union = new Union();
 
-        $this->assertNull($union->getStatement($binding));
-        $this->assertEmpty($binding);
+        $this->assertNull($union->getStatement($binds));
+        $this->assertEmpty($binds);
     }
 
     public function testStatement()
     {
-        $binding = [];
+        $binds = new BindParamList();
         $select = new Select();
         $select->from('foo', 'f')->where('bar', 'baz');
         $select2 = new Select();
@@ -39,17 +41,20 @@ class UnionTest extends TestCase
         $union->addSelect($select, $select2);
 
         $this->assertEquals(
-            '( SELECT * FROM foo AS f WHERE bar = ? )' .
+            '( SELECT * FROM foo AS f WHERE bar = :_h_0 )' .
             ' UNION DISTINCT ' .
-            '( SELECT * FROM foo2 AS f WHERE bar = ? )',
-            $union->getStatement($binding)
+            '( SELECT * FROM foo2 AS f WHERE bar = :_h_1 )',
+            $union->getStatement($binds)
         );
-        $this->assertEquals(['baz', 'baz'], $binding);
+        $this->assertEquals(
+            ['_h_0' => 'baz', '_h_1' => 'baz'],
+            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+        );
     }
 
     public function testStatementEncapsulate()
     {
-        $binding = [];
+        $binds = new BindParamList();
         $select = new Select();
         $select->from('foo', 'f')->where('bar', 'baz');
         $select2 = new Select();
@@ -62,18 +67,21 @@ class UnionTest extends TestCase
 
         $this->assertEquals(
             '( ' .
-            '( SELECT * FROM foo AS f WHERE bar = ? )' .
+            '( SELECT * FROM foo AS f WHERE bar = :_h_0 )' .
             ' UNION DISTINCT ' .
-            '( SELECT * FROM foo2 AS f WHERE bar = ? )' .
+            '( SELECT * FROM foo2 AS f WHERE bar = :_h_1 )' .
             ' )',
-            $union->getStatement($binding, true)
+            $union->getStatement($binds, true)
         );
-        $this->assertEquals(['baz', 'baz'], $binding);
+        $this->assertEquals(
+            ['_h_0' => 'baz', '_h_1' => 'baz'],
+            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+        );
     }
 
     public function testStatementUnionAll()
     {
-        $binding = [];
+        $binds = new BindParamList();
         $select = new Select();
         $select->from('foo', 'f')->where('bar', 'baz');
         $select2 = new Select();
@@ -86,17 +94,20 @@ class UnionTest extends TestCase
             ->addSelect($select2);
 
         $this->assertEquals(
-            '( SELECT * FROM foo AS f WHERE bar = ? )' .
+            '( SELECT * FROM foo AS f WHERE bar = :_h_0 )' .
             ' UNION ALL ' .
-            '( SELECT * FROM foo2 AS f WHERE bar = ? )',
-            $union->getStatement($binding)
+            '( SELECT * FROM foo2 AS f WHERE bar = :_h_1 )',
+            $union->getStatement($binds)
         );
-        $this->assertEquals(['baz', 'baz'], $binding);
+        $this->assertEquals(
+            ['_h_0' => 'baz', '_h_1' => 'baz'],
+            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+        );
     }
 
     public function testStatementWithOrderAndLimit()
     {
-        $binding = [];
+        $binds = new BindParamList();
         $select = new Select();
         $select->from('foo', 'f')->where('bar', 'baz');
         $select2 = new Select();
@@ -112,13 +123,16 @@ class UnionTest extends TestCase
 
         $this->assertEquals(
             '( ' .
-            '( SELECT * FROM foo AS f WHERE bar = ? )' .
+            '( SELECT * FROM foo AS f WHERE bar = :_h_0 )' .
             ' UNION ALL ' .
-            '( SELECT * FROM foo2 AS f WHERE bar = ? )' .
+            '( SELECT * FROM foo2 AS f WHERE bar = :_h_1 )' .
             ' ) ' .
             'ORDER BY a LIMIT 10',
-            $union->getStatement($binding)
+            $union->getStatement($binds)
         );
-        $this->assertEquals(['baz', 'baz'], $binding);
+        $this->assertEquals(
+            ['_h_0' => 'baz', '_h_1' => 'baz'],
+            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+        );
     }
 }

@@ -12,6 +12,7 @@
 
 namespace Hector\Query\Tests\Clause;
 
+use Hector\Connection\Bind\BindParamList;
 use Hector\Query\Clause\Group;
 use PHPUnit\Framework\TestCase;
 
@@ -22,18 +23,18 @@ class GroupTest extends TestCase
         $clause = new class {
             use Group;
         };
-        $binding = [];
+        $binds = new BindParamList();
         $clause->resetGroup();
 
-        $this->assertEmpty($clause->group->getStatement($binding));
+        $this->assertEmpty($clause->group->getStatement($binds));
 
         $clause->groupBy('foo');
 
-        $this->assertNotEmpty($clause->group->getStatement($binding));
+        $this->assertNotEmpty($clause->group->getStatement($binds));
 
         $clause->resetGroup();
 
-        $this->assertEmpty($clause->group->getStatement($binding));
+        $this->assertEmpty($clause->group->getStatement($binds));
     }
 
     public function testGroupBy()
@@ -41,16 +42,16 @@ class GroupTest extends TestCase
         $clause = new class {
             use Group;
         };
-        $binding = [];
+        $binds = new BindParamList();
         $clause->resetGroup();
         $clause->groupBy('foo');
         $clause->groupBy('bar');
 
         $this->assertEquals(
             'GROUP BY foo, bar',
-            $clause->group->getStatement($binding)
+            $clause->group->getStatement($binds)
         );
-        $this->assertEmpty($binding);
+        $this->assertEmpty($binds);
     }
 
     public function testGroupByWithRollup()
@@ -58,7 +59,7 @@ class GroupTest extends TestCase
         $clause = new class {
             use Group;
         };
-        $binding = [];
+        $binds = new BindParamList();
         $clause->resetGroup();
         $clause->groupBy('foo');
         $clause->groupBy('bar');
@@ -66,8 +67,8 @@ class GroupTest extends TestCase
 
         $this->assertEquals(
             'GROUP BY foo, bar WITH ROLLUP',
-            $clause->group->getStatement($binding)
+            $clause->group->getStatement($binds)
         );
-        $this->assertEmpty($binding);
+        $this->assertEmpty($binds);
     }
 }
