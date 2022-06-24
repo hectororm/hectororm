@@ -12,11 +12,12 @@
 
 namespace Hector\Orm\Tests\Relationship;
 
-use Hector\Orm\Exception\RelationException;
+use Hector\Connection\Bind\BindParam;
+use Hector\Connection\Bind\BindParamList;
 use Hector\Orm\Query\Builder;
+use Hector\Orm\Relationship\ManyToOne;
 use Hector\Orm\Relationship\RegularRelationship;
 use Hector\Orm\Relationship\Relationship;
-use Hector\Orm\Relationship\ManyToOne;
 use Hector\Orm\Tests\AbstractTestCase;
 use Hector\Orm\Tests\Fake\Entity\Film;
 use Hector\Orm\Tests\Fake\Entity\Language;
@@ -158,11 +159,14 @@ class AbstractRegularRelationshipTest extends AbstractTestCase
             ['language_id' => 'language_id']
         );
         $builder = $relationship->getBuilder(Film::get(1));
-        $binding = [];
+        $binds = new BindParamList();
 
         $this->assertInstanceOf(Builder::class, $builder);
-        $this->assertEquals('(language_id) IN ( (?) )', $builder->where->getStatement($binding));
-        $this->assertEquals([1], $binding);
+        $this->assertEquals('(language_id) IN ( (:_h_0) )', $builder->where->getStatement($binds));
+        $this->assertEquals(
+            ['_h_0' => 1],
+            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+        );
     }
 
     public function testGetBuilderWithBadEntity()
@@ -186,10 +190,10 @@ class AbstractRegularRelationshipTest extends AbstractTestCase
             Language::class,
             ['language_id' => 'language_id']
         );
-        $binding = [];
+        $binds = new BindParamList();
 
         $this->assertInstanceOf(Builder::class, $relationship->getBuilder());
-        $this->assertNull($relationship->getBuilder()->where->getStatement($binding));
+        $this->assertNull($relationship->getBuilder()->where->getStatement($binds));
     }
 
     public function testGetBuilderWithClauses()

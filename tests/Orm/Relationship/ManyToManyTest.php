@@ -12,6 +12,8 @@
 
 namespace Hector\Orm\Tests\Relationship;
 
+use Hector\Connection\Bind\BindParam;
+use Hector\Connection\Bind\BindParamList;
 use Hector\Orm\Collection\Collection;
 use Hector\Orm\Query\Builder;
 use Hector\Orm\Relationship\ManyToMany;
@@ -78,19 +80,19 @@ class ManyToManyTest extends AbstractTestCase
     {
         $relationship = new ManyToMany('actors', Film::class, Actor::class);
         $builder = $relationship->getBuilder(Film::find(1), Film::find(2));
-        $binding = [];
+        $binds = new BindParamList();
 
         $this->assertInstanceOf(Builder::class, $builder);
         $this->assertEquals(
-            '(film_id) IN ( (?), (?) )',
-            $builder->where->getStatement($binding)
+            '(film_id) IN ( (:_h_0), (:_h_1) )',
+            $builder->where->getStatement($binds)
         );
         $this->assertEquals(
             [
-                1,
-                2,
+                '_h_0' => 1,
+                '_h_1' => 2,
             ],
-            $binding
+            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 

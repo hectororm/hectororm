@@ -42,6 +42,6 @@ class GeometryType extends AbstractType
      */
     public function toSchema(mixed $value, ?ExpectedType $expected = null): SqlFunction
     {
-        return new SqlFunction('ST_GeomFromText', new Raw('?', [$value]));
+        return new SqlFunction('ST_GeomFromText', new Raw(':position', ['position' => $value]));
     }
 }

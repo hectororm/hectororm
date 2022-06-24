@@ -12,6 +12,7 @@
 
 namespace Hector\Orm\Tests\Query;
 
+use Hector\Connection\Bind\BindParamList;
 use Hector\Orm\Collection\Collection;
 use Hector\Orm\Entity\Entity;
 use Hector\Orm\Exception\MapperException;
@@ -30,14 +31,14 @@ class BuilderTest extends AbstractTestCase
     public function testConstruct()
     {
         $builder = new Builder(Staff::class);
-        $binding = [];
+        $binds = new BindParamList();
 
         $this->assertInstanceOf(Conditions::class, $builder->where);
         $this->assertInstanceOf(Order::class, $builder->order);
         $this->assertInstanceOf(Limit::class, $builder->limit);
-        $this->assertNull($builder->where->getStatement($binding));
-        $this->assertNull($builder->order->getStatement($binding));
-        $this->assertNull($builder->limit->getStatement($binding));
+        $this->assertNull($builder->where->getStatement($binds));
+        $this->assertNull($builder->order->getStatement($binds));
+        $this->assertNull($builder->limit->getStatement($binds));
     }
 
     public function testWith()
