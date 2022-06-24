@@ -206,47 +206,50 @@ class ManyToMany extends Relationship
         $sourceTable = $this->sourceEntity->getTable();
         $pivotTable = $this->resolvePivotTable($this->pivotTable);
         $targetTable = $this->targetEntity->getTable();
+        $tableName = $targetTable->getFullName(true);
 
-        $alias = 'alias' . ++Orm::$alias;
-        $aliasPivot = 'pivot' . ++Orm::$alias;
+        if (false === ($alias = $builder->join->getAlias($tableName))) {
+            $alias = 'alias' . ++Orm::$alias;
+            $aliasPivot = 'pivot' . ++Orm::$alias;
 
-        try {
-            $builder->innerJoin(
-                $pivotTable->getFullName(true),
-                array_combine(
-                    array_map(
-                        fn($value) => $sourceTable->getColumn($value)->getName(true, $initialAlias),
-                        $this->getSourceColumns()
+            try {
+                $builder->innerJoin(
+                    $pivotTable->getFullName(true),
+                    array_combine(
+                        array_map(
+                            fn($value) => $sourceTable->getColumn($value)->getName(true, $initialAlias),
+                            $this->getSourceColumns()
+                        ),
+                        array_map(
+                            fn($value) => $pivotTable->getColumn($value)->getName(true, $aliasPivot),
+                            $this->getPivotTargetColumns()
+                        ),
                     ),
-                    array_map(
-                        fn($value) => $pivotTable->getColumn($value)->getName(true, $aliasPivot),
-                        $this->getPivotTargetColumns()
+                    $aliasPivot
+                )->innerJoin(
+                    $tableName,
+                    array_combine(
+                        array_map(
+                            fn($value) => $pivotTable->getColumn($value)->getName(true, $aliasPivot),
+                            $this->getPivotSourceColumns()
+                        ),
+                        array_map(
+                            fn($value) => $targetTable->getColumn($value)->getName(true, $alias),
+                            $this->getTargetColumns()
+                        ),
                     ),
-                ),
-                $aliasPivot
-            )->innerJoin(
-                $targetTable->getFullName(true),
-                array_combine(
-                    array_map(
-                        fn($value) => $pivotTable->getColumn($value)->getName(true, $aliasPivot),
-                        $this->getPivotSourceColumns()
+                    $alias
+                );
+            } catch (SchemaException $exception) {
+                throw new OrmException(
+                    sprintf(
+                        'Unable to resolve schema to add join for relationship "%s" of entity "%s"',
+                        $this->name,
+                        $this->getSourceEntity()
                     ),
-                    array_map(
-                        fn($value) => $targetTable->getColumn($value)->getName(true, $alias),
-                        $this->getTargetColumns()
-                    ),
-                ),
-                $alias
-            );
-        } catch (SchemaException $exception) {
-            throw new OrmException(
-                sprintf(
-                    'Unable to resolve schema to add join for relationship "%s" of entity "%s"',
-                    $this->name,
-                    $this->getSourceEntity()
-                ),
-                previous: $exception
-            );
+                    previous: $exception
+                );
+            }
         }
 
         return $alias;

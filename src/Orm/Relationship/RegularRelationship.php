@@ -91,22 +91,25 @@ abstract class RegularRelationship extends Relationship
     {
         $sourceTable = $this->sourceEntity->getTable();
         $targetTable = $this->targetEntity->getTable();
+        $tableName = $targetTable->getFullName(true);
 
-        $alias = 'a' . ++Orm::$alias;
-        $builder->innerJoin(
-            $targetTable->getFullName(true),
-            array_combine(
-                array_map(
-                    fn($value) => $sourceTable->getColumn($value)->getName(true, $initialAlias),
-                    $this->getSourceColumns()
+        if (false === ($alias = $builder->join->getAlias($tableName))) {
+            $alias = 'alias' . ++Orm::$alias;
+            $builder->innerJoin(
+                $tableName,
+                array_combine(
+                    array_map(
+                        fn($value) => $sourceTable->getColumn($value)->getName(true, $initialAlias),
+                        $this->getSourceColumns()
+                    ),
+                    array_map(
+                        fn($value) => $targetTable->getColumn($value)->getName(true, $alias),
+                        $this->getTargetColumns()
+                    ),
                 ),
-                array_map(
-                    fn($value) => $targetTable->getColumn($value)->getName(true, $alias),
-                    $this->getTargetColumns()
-                ),
-            ),
-            $alias
-        );
+                $alias
+            );
+        }
 
         return $alias;
     }
