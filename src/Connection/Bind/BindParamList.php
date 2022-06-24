@@ -17,6 +17,7 @@ namespace Hector\Connection\Bind;
 use ArrayIterator;
 use Countable;
 use IteratorAggregate;
+use Traversable;
 use ValueError;
 
 class BindParamList implements Countable, IteratorAggregate
@@ -52,7 +53,7 @@ class BindParamList implements Countable, IteratorAggregate
     /**
      * @inheritDoc
      */
-    public function getIterator(): iterable
+    public function getIterator(): Traversable
     {
         return new ArrayIterator($this->parameters);
     }
