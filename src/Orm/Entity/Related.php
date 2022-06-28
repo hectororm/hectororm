@@ -246,10 +246,6 @@ class Related implements Countable
     public function linkForeign(): void
     {
         foreach ($this->related as $relationshipName => $value) {
-            if (null === $value) {
-                continue;
-            }
-
             $this->getRelationships()->get($relationshipName)->linkForeign($this->entity, $value);
         }
     }
@@ -264,10 +260,6 @@ class Related implements Countable
     public function linkNative(): void
     {
         foreach ($this->related as $relationshipName => $value) {
-            if (null === $value) {
-                continue;
-            }
-
             $this->getRelationships()->get($relationshipName)->linkNative($this->entity, $value);
         }
     }

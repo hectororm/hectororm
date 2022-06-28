@@ -88,12 +88,13 @@ class ManyToOne extends RegularRelationship
         }
 
         $entityReflection = ReflectionEntity::get($entity::class);
-        $foreignReflection = ReflectionEntity::get($foreign::class);
 
         if (null === $foreign) {
             $entityReflection->getMapper()->hydrateEntity($entity, array_fill_keys($this->getSourceColumns(), null));
             return;
         }
+
+        $foreignReflection = ReflectionEntity::get($foreign::class);
 
         // Save foreign entity to get collect columns ; ONLY IF ALTERED!
         if ($foreign->isAltered(...$this->getTargetColumns())) {
