@@ -90,6 +90,23 @@ class MagicMapperTest extends AbstractTestCase
         );
     }
 
+    public function testCollectEntityWithSpecifiedColumnsOrdered()
+    {
+        $entity = new FilmMagic();
+        $entity->film_id = 123;
+        $entity->title = 'Foo';
+        $entity->description = 'Bar';
+        $mapper = new MagicMapper(FilmMagic::class, $this->getOrm()->getStorage());
+
+        $this->assertSame(
+            [
+                'title' => 'Foo',
+                'film_id' => 123,
+            ],
+            $mapper->collectEntity($entity, ['title', 'film_id'])
+        );
+    }
+
     public function testCollectEntityWithBadEntity()
     {
         $this->expectException(MapperException::class);

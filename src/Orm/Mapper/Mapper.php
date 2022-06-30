@@ -135,6 +135,8 @@ interface Mapper
     /**
      * Collect data from entity.
      *
+     * If columns parameter specified, MUST return ordered data like columns array.
+     *
      * @param Entity $entity
      * @param array|null $columns
      *

@@ -12,7 +12,6 @@
 
 namespace Hector\Orm\Tests\Mapper;
 
-use Hector\Orm\Exception\MapperException;
 use Hector\Orm\Mapper\GenericMapper;
 use Hector\Orm\Tests\AbstractTestCase;
 use Hector\Orm\Tests\Fake\Entity\Film;
@@ -92,6 +91,23 @@ class GenericMapperTest extends AbstractTestCase
                 'title' => 'Foo',
             ],
             $mapper->collectEntity($entity, ['film_id', 'title'])
+        );
+    }
+
+    public function testCollectEntityWithSpecifiedColumnsOrdered()
+    {
+        $entity = new Film();
+        $entity->film_id = 123;
+        $entity->title = 'Foo';
+        $entity->description = 'Bar';
+        $mapper = new GenericMapper(Film::class, $this->getOrm()->getStorage());
+
+        $this->assertSame(
+            [
+                'title' => 'Foo',
+                'film_id' => 123,
+            ],
+            $mapper->collectEntity($entity, ['title', 'film_id'])
         );
     }
 

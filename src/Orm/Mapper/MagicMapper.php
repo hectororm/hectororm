@@ -14,13 +14,13 @@ declare(strict_types=1);
 
 namespace Hector\Orm\Mapper;
 
-use Hector\DataTypes\TypeException;
 use Hector\Orm\Entity\Entity;
 use Hector\Orm\Entity\MagicEntity;
 use Hector\Orm\Exception\MapperException;
 use Hector\Orm\Exception\OrmException;
 use Hector\Orm\Storage\EntityStorage;
 use Hector\Schema\Exception\SchemaException;
+use ValueError;
 
 class MagicMapper extends AbstractMapper
 {
@@ -72,7 +72,7 @@ class MagicMapper extends AbstractMapper
             $propertyData = $reflectionProperty->getValue($entity);
             $propertyData = array_replace($propertyData, $data);
             $reflectionProperty->setValue($entity, $propertyData);
-        } catch (OrmException|TypeException $e) {
+        } catch (OrmException|ValueError $e) {
             throw new MapperException(sprintf('Unable to hydrate entity "%s"', $this->reflection->class), 0, $e);
         }
     }
@@ -108,7 +108,7 @@ class MagicMapper extends AbstractMapper
             );
 
             // Filter columns
-            return array_filter(
+            $data = array_filter(
                 $data,
                 function ($value, $key) {
                     $column = $this->reflection->getTable()->getColumn($key);
@@ -129,7 +129,14 @@ class MagicMapper extends AbstractMapper
                 },
                 ARRAY_FILTER_USE_BOTH
             );
-        } catch (OrmException|SchemaException|TypeException $e) {
+
+            // Return reordered columns
+            if (null !== $columns) {
+                return array_replace(array_fill_keys($columns, null), $data);
+            }
+
+            return $data;
+        } catch (OrmException|SchemaException|ValueError $e) {
             throw new MapperException(sprintf('Unable to collect entity "%s"', $this->reflection->class), 0, $e);
         }
     }

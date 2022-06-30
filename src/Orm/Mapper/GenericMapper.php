@@ -15,11 +15,11 @@ declare(strict_types=1);
 namespace Hector\Orm\Mapper;
 
 use Hector\DataTypes\ExpectedType;
-use Hector\DataTypes\TypeException;
 use Hector\Orm\Entity\Entity;
 use Hector\Orm\Exception\MapperException;
 use Hector\Orm\Exception\OrmException;
 use ReflectionNamedType;
+use ValueError;
 
 class GenericMapper extends AbstractMapper
 {
@@ -66,7 +66,7 @@ class GenericMapper extends AbstractMapper
                 $reflectionProperty->setAccessible(true);
                 $reflectionProperty->setValue($entity, $value);
             }
-        } catch (OrmException|TypeException $e) {
+        } catch (OrmException|ValueError $e) {
             throw new MapperException(sprintf('Unable to hydrate entity "%s"', $this->reflection->class), 0, $e);
         }
     }
@@ -79,9 +79,10 @@ class GenericMapper extends AbstractMapper
         $this->assertEntityType($entity, $this->reflection->class);
 
         try {
-            $data = [];
+            // Init data with columns
+            $data = array_fill_keys($columns ?? $this->reflection->getTable()->getColumnsName(), null);
 
-            foreach ($this->reflection->getTable()->getColumnsName() as $column) {
+            foreach ($data as $column => &$value) {
                 // Not attempted column
                 if (null !== $columns && !in_array($column, $columns)) {
                     continue;
@@ -91,9 +92,6 @@ class GenericMapper extends AbstractMapper
                 if (!$this->reflection->getClass()->hasProperty($column)) {
                     continue;
                 }
-
-                // Set default NULL value
-                $data[$column] = null;
 
                 $reflectionProperty = $this->reflection->getProperty($column);
 
@@ -109,7 +107,7 @@ class GenericMapper extends AbstractMapper
 
                     // Convert type
                     if ($reflectionType instanceof ReflectionNamedType) {
-                        $data[$column] = $this->reflection->getType($column)->toSchema(
+                        $value = $this->reflection->getType($column)->toSchema(
                             $value,
                             ExpectedType::fromReflection($reflectionType)
                         );
@@ -118,7 +116,7 @@ class GenericMapper extends AbstractMapper
             }
 
             return $data;
-        } catch (OrmException|TypeException $e) {
+        } catch (OrmException|ValueError $e) {
             throw new MapperException(sprintf('Unable to collect entity "%s"', $this->reflection->class), 0, $e);
         }
     }
