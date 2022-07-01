@@ -336,24 +336,15 @@ abstract class AbstractMapper implements Mapper
      */
     public function getEntityAlteration(Entity $entity, ?array $columns = null): array
     {
+        $columns = $columns ?? $this->reflection->getTable()->getColumnsName();
         $originalData = $this->reflection->getHectorData($entity)->get('original');
         $currentData = $this->collectEntity($entity, $columns);
 
         if (null === $originalData) {
-            if (null !== $columns) {
-                return $columns;
-            }
-
-            if (false === empty($currentData)) {
-                return array_keys($currentData);
-            }
-
-            return $this->reflection->getTable()->getColumnsName();
+            return $columns;
         }
 
-        if (null !== $columns) {
-            $originalData = array_intersect_key($originalData, array_fill_keys($columns, null));
-        }
+        $originalData = array_intersect_key($originalData, array_fill_keys($columns, null));
 
         ksort($originalData);
         ksort($currentData);
