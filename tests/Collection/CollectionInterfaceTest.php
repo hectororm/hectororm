@@ -225,6 +225,20 @@ class CollectionInterfaceTest extends TestCase
     /**
      * @dataProvider collectionTypeProvider
      */
+    public function testEach(string $class)
+    {
+        $result = 0;
+        $callback = fn($value) => $result++;
+        $collection = new $class($arr = ['foo', 'bar', 'baz', 'qux', 'quxx']);
+
+        $collection = $collection->each($callback);
+
+        $this->assertEquals($arr, $collection->getArrayCopy());
+    }
+
+    /**
+     * @dataProvider collectionTypeProvider
+     */
     public function testGet(string $class)
     {
         $arr = ['foo', 'bar' => 'baz', 'qux', 'quxx'];

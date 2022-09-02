@@ -231,6 +231,17 @@ class Collection implements CollectionInterface, ArrayAccess, Countable
     /**
      * @inheritDoc
      */
+    public function each(callable $callback): static
+    {
+        $keys = array_keys($this->items);
+        array_map($callback, $this->items, $keys);
+
+        return $this;
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function search(callable $callback): mixed
     {
         return $this->first($callback);

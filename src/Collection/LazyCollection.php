@@ -249,6 +249,22 @@ class LazyCollection implements CollectionInterface
     /**
      * @inheritDoc
      */
+    public function each(callable $callback): static
+    {
+        $generator = function ($callback): Generator {
+            foreach ($this->items as $key => $item) {
+                $callback($item, $key);
+
+                yield $key => $item;
+            }
+        };
+
+        return new static($generator($callback));
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function search(callable $callback): mixed
     {
         return $this->first($callback);

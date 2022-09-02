@@ -59,7 +59,7 @@ interface CollectionInterface extends IteratorAggregate, JsonSerializable
     public function isEmpty(): bool;
 
     /**
-     * Collect data in new collection.
+     * Collect all data from current collection into another one.
      *
      * @return self
      */
@@ -104,7 +104,7 @@ interface CollectionInterface extends IteratorAggregate, JsonSerializable
     public function filterInstanceOf(string|object ...$class): self;
 
     /**
-     * Apply callback on items.
+     * Apply callback on items and return result of callback.
      *
      * @param callable $callback
      *
@@ -112,6 +112,16 @@ interface CollectionInterface extends IteratorAggregate, JsonSerializable
      * @see array_map()
      */
     public function map(callable $callback): self;
+
+    /**
+     * Apply callback on items and return items.
+     *
+     * @param callable $callback
+     *
+     * @return static
+     * @see array_walk()
+     */
+    public function each(callable $callback): self;
 
     /**
      * Search item with callback.
@@ -206,7 +216,7 @@ interface CollectionInterface extends IteratorAggregate, JsonSerializable
     public function values(): self;
 
     /**
-     * Get unique items of collection.
+     * Get uniques items of collection.
      *
      * @return self
      * @see array_unique()
