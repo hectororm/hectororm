@@ -90,19 +90,19 @@ class LazyCollection implements CollectionInterface
         return $iterable;
     }
 
-    /**
-     * Count number of items and return new collection.
-     *
-     * @param int $length
-     *
-     * @return CollectionInterface
-     */
-    public function count(int &$length = 0): CollectionInterface
-    {
-        $collection = $this->collect();
-        $length = $collection->count();
+    /////////////////
+    /// Countable ///
+    /////////////////
 
-        return $collection;
+    /**
+     * @inheritDoc
+     */
+    public function count(): int
+    {
+        $arr = $this->all();
+        $this->items = (fn(): Generator => yield from $arr)();
+
+        return count($arr);
     }
 
     ///////////////////////////
@@ -124,7 +124,7 @@ class LazyCollection implements CollectionInterface
      */
     public function __debugInfo(): array
     {
-        $arr = $this->getArrayCopy();
+        $arr = $this->all();
         $this->items = (fn(): Generator => yield from $arr)();
 
         return $arr;
@@ -135,7 +135,7 @@ class LazyCollection implements CollectionInterface
      */
     public function jsonSerialize(): array
     {
-        return $this->getArrayCopy();
+        return $this->all();
     }
 
     /**
@@ -158,6 +158,14 @@ class LazyCollection implements CollectionInterface
     /**
      * @inheritDoc
      */
+    public function all(): array
+    {
+        return iterator_to_array($this->items);
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function isEmpty(): bool
     {
         return !$this->items->valid();
@@ -168,7 +176,7 @@ class LazyCollection implements CollectionInterface
      */
     public function collect(): CollectionInterface
     {
-        return $this->newDefault($this->getArrayCopy());
+        return $this->newDefault($this->all());
     }
 
     /**

@@ -64,16 +64,6 @@ class LazyCollectionTest extends TestCase
         new LazyCollection(fn() => new stdClass());
     }
 
-    public function testCount()
-    {
-        $collection = new LazyCollection($arr = ['foo', 'bar', 'baz', 'qux', 'quxx']);
-        $length = 0;
-        $collection = $collection->count($length);
-
-        $this->assertEquals(count($arr), $length);
-        $this->assertEquals($arr, $collection->getArrayCopy());
-    }
-
     public function testGetIterator()
     {
         $collection = new LazyCollection($arr = ['foo', 'bar', 'baz', 'qux', 'quxx']);

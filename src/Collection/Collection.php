@@ -17,10 +17,9 @@ namespace Hector\Collection;
 use ArrayAccess;
 use ArrayIterator;
 use Closure;
-use Countable;
 use Traversable;
 
-class Collection implements CollectionInterface, ArrayAccess, Countable
+class Collection implements CollectionInterface, ArrayAccess
 {
     private array $items;
 
@@ -119,6 +118,14 @@ class Collection implements CollectionInterface, ArrayAccess, Countable
     /**
      * @inheritDoc
      */
+    public function all(): array
+    {
+        return $this->items;
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function isEmpty(): bool
     {
         return empty($this->items);
@@ -129,7 +136,7 @@ class Collection implements CollectionInterface, ArrayAccess, Countable
      */
     public function collect(): CollectionInterface
     {
-        return new static($this->getArrayCopy());
+        return new static($this->all());
     }
 
     /**
@@ -147,7 +154,7 @@ class Collection implements CollectionInterface, ArrayAccess, Countable
      */
     public function jsonSerialize(): array
     {
-        return $this->getArrayCopy();
+        return $this->all();
     }
 
     /**
@@ -418,7 +425,7 @@ class Collection implements CollectionInterface, ArrayAccess, Countable
             return 0;
         }
 
-        $items = $this->values()->sort()->getArrayCopy();
+        $items = $this->values()->sort()->all();
         $middleIndex = $count / 2;
 
         if (is_float($middleIndex)) {
@@ -437,7 +444,7 @@ class Collection implements CollectionInterface, ArrayAccess, Countable
             return .0;
         }
 
-        $items = $this->values()->sort()->getArrayCopy();
+        $items = $this->values()->sort()->all();
         $count = $this->count();
         $avg = $this->avg();
         $variance = .0;

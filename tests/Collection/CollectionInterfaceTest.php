@@ -56,12 +56,52 @@ class CollectionInterfaceTest extends TestCase
      */
     public function testGetArrayCopy_recursive(string $class)
     {
-        $collection = new $class([
+        $collection = new $class($arr = [
             new $class($arr1 = ['foo', 'bar', 'baz']),
             new $class($arr2 = ['qux', 'quxx'])
         ]);
 
-        $this->assertSame([$arr1, $arr2], $collection->getArrayCopy());
+        $result = $collection->getArrayCopy();
+        $this->assertNotSame($arr, $result);
+        $this->assertSame([$arr1, $arr2], $result);
+    }
+
+    /**
+     * @dataProvider collectionTypeProvider
+     */
+    public function testAll(string $class)
+    {
+        $collection = new $class($arr = ['foo', 'bar', 'baz', 'qux', 'quxx']);
+
+        $this->assertSame($arr, $collection->all());
+    }
+
+    /**
+     * @dataProvider collectionTypeProvider
+     */
+    public function testAll_recursive(string $class)
+    {
+        $collection = new $class($arr = [
+            new $class(['foo', 'bar', 'baz']),
+            new $class(['qux', 'quxx'])
+        ]);
+
+        $this->assertSame($arr, $collection->all());
+    }
+
+    /**
+     * @dataProvider collectionTypeProvider
+     */
+    public function testCount(string $class)
+    {
+        $collection = new $class($arr = ['foo', 'bar', 'baz', 'qux', 'quxx']);
+
+        $this->assertCount(count($arr), $collection);
+        $this->assertSame($arr, $collection->all());
+
+        $collection = new $class();
+
+        $this->assertCount(0, $collection);
     }
 
     /**
@@ -103,6 +143,18 @@ class CollectionInterfaceTest extends TestCase
 
         $this->assertNotSame($collection, $newCollection);
         $this->assertEquals($arr, $newCollection->getArrayCopy());
+    }
+
+    /**
+     * @dataProvider collectionTypeProvider
+     */
+    public function testCollect_multiDimensional(string $class)
+    {
+        $collection = new $class($arr = [['foo', 'bar'], new $class(['baz', 'qux']), ['quxx']]);
+        $newCollection = $collection->collect();
+
+        $this->assertNotSame($collection, $newCollection);
+        $this->assertEquals($arr, $newCollection->all());
     }
 
     /**

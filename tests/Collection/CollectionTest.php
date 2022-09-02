@@ -28,17 +28,6 @@ class CollectionTest extends TestCase
         $this->assertEquals($collection->getArrayCopy(), $collection2->getArrayCopy());
     }
 
-    public function testCount()
-    {
-        $collection = new Collection($arr = ['foo', 'bar', 'baz', 'qux', 'quxx']);
-
-        $this->assertCount(count($arr), $collection);
-
-        $collection = new Collection();
-
-        $this->assertCount(0, $collection);
-    }
-
     public function testGetIterator()
     {
         $collection = new Collection(['foo', 'bar', 'baz', 'qux', 'quxx']);

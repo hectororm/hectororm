@@ -15,10 +15,11 @@ declare(strict_types=1);
 namespace Hector\Collection;
 
 use Closure;
+use Countable;
 use IteratorAggregate;
 use JsonSerializable;
 
-interface CollectionInterface extends IteratorAggregate, JsonSerializable
+interface CollectionInterface extends IteratorAggregate, JsonSerializable, Countable
 {
     /**
      * Init new collection.
@@ -40,16 +41,18 @@ interface CollectionInterface extends IteratorAggregate, JsonSerializable
     public function __debugInfo(): array;
 
     /**
-     * @inheritDoc
-     */
-    public function jsonSerialize(): array;
-
-    /**
      * Get an array representation.
      *
      * @return array
      */
     public function getArrayCopy(): array;
+
+    /**
+     * Get values as array.
+     *
+     * @return array
+     */
+    public function all(): array;
 
     /**
      * Is empty?
