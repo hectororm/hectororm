@@ -198,7 +198,7 @@ class Sqlite extends AbstractGenerator
 
             // Get columns
             $indexInfoStm = 'PRAGMA index_info(\'' . $result['name'] . '\');';
-            $resultsIndexInfo = iterator_to_array($this->connection->fetchAll($indexInfoStm));
+            $resultsIndexInfo = $this->connection->fetchAll($indexInfoStm);
 
             $indexesInfo[] = [
                 'table_name' => $table,
