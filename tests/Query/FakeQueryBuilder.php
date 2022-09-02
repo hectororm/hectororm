@@ -12,6 +12,7 @@
 
 namespace Hector\Query\Tests;
 
+use Hector\Connection\Bind\BindParamList;
 use Hector\Query\Delete;
 use Hector\Query\Insert;
 use Hector\Query\QueryBuilder;
@@ -20,6 +21,17 @@ use Hector\Query\Update;
 
 class FakeQueryBuilder extends QueryBuilder
 {
+    public string $statement;
+    public BindParamList|array $input_parameters;
+
+    protected function execute(string $statement, BindParamList|array $input_parameters = []): int
+    {
+        $this->statement = $statement;
+        $this->input_parameters = $input_parameters;
+
+        return 1;
+    }
+
     public function makeSelect(): Select
     {
         return parent::makeSelect();

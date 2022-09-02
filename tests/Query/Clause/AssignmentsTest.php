@@ -15,6 +15,7 @@ namespace Hector\Query\Tests\Clause;
 use Hector\Connection\Bind\BindParam;
 use Hector\Connection\Bind\BindParamList;
 use Hector\Query\Clause\Assignments;
+use Hector\Query\Select;
 use PHPUnit\Framework\TestCase;
 
 class AssignmentsTest extends TestCase
@@ -72,6 +73,32 @@ class AssignmentsTest extends TestCase
             [
                 '_h_0' => 'qux',
                 '_h_1' => 'baz'
+            ],
+            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy()),
+        );
+    }
+
+    public function testAssignsSelect()
+    {
+        $clause = new class {
+            use Assignments;
+        };
+        $binds = new BindParamList();
+        $clause->resetAssignments();
+
+        $clause->assigns(
+            (new Select())
+                ->from('bar')
+                ->where('bar.qux', '=', 1)
+        );
+
+        $this->assertEquals(
+            'SELECT * FROM bar WHERE bar.qux = :_h_0',
+            $clause->assignments->getStatement($binds)
+        );
+        $this->assertEquals(
+            [
+                '_h_0' => 1,
             ],
             array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy()),
         );

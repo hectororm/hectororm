@@ -268,7 +268,7 @@ class QueryBuilder implements StatementInterface
     /**
      * Fetch all.
      *
-     * @return Generator
+     * @return Generator<array>
      */
     public function fetchAll(): Generator
     {
@@ -285,7 +285,7 @@ class QueryBuilder implements StatementInterface
      *
      * @param int $column
      *
-     * @return Generator
+     * @return Generator<mixed>
      */
     public function fetchColumn(int $column = 0): Generator
     {
@@ -337,13 +337,26 @@ class QueryBuilder implements StatementInterface
     }
 
     /**
-     * Insert.
+     * Execute statement on connection.
      *
-     * @param array $values
+     * @param string $statement
+     * @param BindParamList|array $input_parameters
      *
      * @return int
      */
-    public function insert(array $values = []): int
+    protected function execute(string $statement, BindParamList|array $input_parameters = []): int
+    {
+        return $this->connection->execute($statement, $input_parameters);
+    }
+
+    /**
+     * Insert.
+     *
+     * @param array|StatementInterface $values
+     *
+     * @return int
+     */
+    public function insert(array|StatementInterface $values = []): int
     {
         $insert = $this->makeInsert();
         $insert->assigns($values);
@@ -351,7 +364,7 @@ class QueryBuilder implements StatementInterface
         $binds = new BindParamList();
         $statement = $insert->getStatement($binds);
 
-        return $this->connection->execute($statement, $binds->getArrayCopy());
+        return $this->execute($statement, $binds->getArrayCopy());
     }
 
     /**
@@ -369,7 +382,7 @@ class QueryBuilder implements StatementInterface
         $binds = new BindParamList();
         $statement = $update->getStatement($binds);
 
-        return $this->connection->execute($statement, $binds->getArrayCopy());
+        return $this->execute($statement, $binds->getArrayCopy());
     }
 
     /**
@@ -384,7 +397,7 @@ class QueryBuilder implements StatementInterface
         $binds = new BindParamList();
         $statement = $delete->getStatement($binds);
 
-        return $this->connection->execute($statement, $binds->getArrayCopy());
+        return $this->execute($statement, $binds->getArrayCopy());
     }
 
     /**

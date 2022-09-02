@@ -338,6 +338,38 @@ class QueryBuilderTest extends TestCase
         );
     }
 
+    public function testInsert()
+    {
+        $queryBuilder = new FakeQueryBuilder($this->getConnection());
+        $queryBuilder->from('foo', 'f');
+        $queryBuilder->insert(['bar' => 'bar_value']);
+
+        $this->assertEquals(
+            'INSERT INTO foo SET bar = :_h_0',
+            $queryBuilder->statement
+        );
+        $this->assertEquals(
+            ['_h_0' => 'bar_value'],
+            array_map(fn(BindParam $bind) => $bind->getValue(), $queryBuilder->input_parameters)
+        );
+    }
+
+    public function testInsertSelect()
+    {
+        $queryBuilder = new FakeQueryBuilder($this->getConnection());
+        $queryBuilder->from('foo', 'f');
+        $queryBuilder->insert((new Select())->from('baz')->where('bar', 'bar_value'));
+
+        $this->assertEquals(
+            'INSERT INTO foo SELECT * FROM baz WHERE bar = :_h_0',
+            $queryBuilder->statement
+        );
+        $this->assertEquals(
+            ['_h_0' => 'bar_value'],
+            array_map(fn(BindParam $bind) => $bind->getValue(), $queryBuilder->input_parameters)
+        );
+    }
+
     public function testMakeUpdate()
     {
         $queryBuilder = new FakeQueryBuilder($this->getConnection());
@@ -358,7 +390,7 @@ class QueryBuilderTest extends TestCase
         );
     }
 
-    public function testDelete()
+    public function testMakeDelete()
     {
         $queryBuilder = new FakeQueryBuilder($this->getConnection());
         $queryBuilder->from('foo', 'f');

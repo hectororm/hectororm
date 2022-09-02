@@ -89,16 +89,14 @@ class AssignmentsTest extends TestCase
     {
         $assignments = new Assignments();
         $assignments->assignments(
-            [
-                (new Select())
-                    ->from('bar')
-                    ->where('bar.qux', '=', 1)
-            ]
+            (new Select())
+                ->from('bar')
+                ->where('bar.qux', '=', 1)
         );
         $binds = new BindParamList();
 
         $this->assertEquals(
-            '( SELECT * FROM bar WHERE bar.qux = :_h_0 )',
+            'SELECT * FROM bar WHERE bar.qux = :_h_0',
             $assignments->getStatement($binds)
         );
         $this->assertEquals(

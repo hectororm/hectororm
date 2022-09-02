@@ -52,11 +52,11 @@ trait Assignments
     /**
      * Assignments.
      *
-     * @param array $values
+     * @param array|StatementInterface $values
      *
      * @return static
      */
-    public function assigns(array $values): static
+    public function assigns(array|StatementInterface $values): static
     {
         $this->assignments->assignments($values);
 

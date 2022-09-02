@@ -15,6 +15,7 @@ namespace Hector\Query\Tests;
 use Hector\Connection\Bind\BindParam;
 use Hector\Connection\Bind\BindParamList;
 use Hector\Query\Insert;
+use Hector\Query\Select;
 use Hector\Query\Statement\Raw;
 use PHPUnit\Framework\TestCase;
 
@@ -52,6 +53,23 @@ class InsertTest extends TestCase
         );
         $this->assertEquals(
             ['_h_0' => 'value_bar'],
+            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+        );
+    }
+
+    public function testGetStatementWithSelect()
+    {
+        $insert = new Insert();
+        $binds = new BindParamList();
+        $insert->from('`foo`');
+        $insert->assigns((new Select())->from('`bar`')->where('`baz`', 'value_baz'));
+
+        $this->assertEquals(
+            'INSERT INTO `foo` SELECT * FROM `bar` WHERE `baz` = :_h_0',
+            $insert->getStatement($binds)
+        );
+        $this->assertEquals(
+            ['_h_0' => 'value_baz'],
             array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
         );
     }

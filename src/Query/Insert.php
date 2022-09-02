@@ -19,9 +19,12 @@ use Hector\Connection\Bind\BindParamList;
 class Insert implements StatementInterface
 {
     use Clause\BindParams;
+    use Clause\Columns;
     use Clause\From;
     use Clause\Assignments;
     use Component\EncapsulateHelperTrait;
+
+    protected ?Select $select;
 
     public function __construct(?BindParamList $binds = null)
     {
@@ -38,8 +41,36 @@ class Insert implements StatementInterface
     {
         $this
             ->resetBindParams()
+            ->resetColumns()
             ->resetFrom()
-            ->resetAssignments();
+            ->resetAssignments()
+            ->resetSelect();
+
+        return $this;
+    }
+
+    /**
+     * Reset select.
+     *
+     * @return static
+     */
+    public function resetSelect(): static
+    {
+        $this->select = null;
+
+        return $this;
+    }
+
+    /**
+     * Select assignment.
+     *
+     * @param Select $select
+     *
+     * @return static
+     */
+    public function select(Select $select): static
+    {
+        $this->select = $select;
 
         return $this;
     }
@@ -58,7 +89,9 @@ class Insert implements StatementInterface
             return null;
         }
 
-        $str = 'INSERT INTO ' . ($this->from->getStatement($bindParams) ?? '') . ' SET ' . $assignmentsStr;
+        $str = 'INSERT INTO ' . ($this->from->getStatement($bindParams) ?? '') . ' ' .
+            (false === $this->assignments->isStatement() ? 'SET ' : '') .
+            $assignmentsStr;
 
         return $this->encapsulate($str, $encapsulate);
     }

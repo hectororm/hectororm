@@ -19,7 +19,17 @@ use Hector\Query\StatementInterface;
 
 class Assignments extends AbstractComponent
 {
-    private array $assignments = [];
+    private array|StatementInterface $assignments = [];
+
+    /**
+     * Is statement assignment.
+     *
+     * @return bool
+     */
+    public function isStatement(): bool
+    {
+        return !is_array($this->assignments);
+    }
 
     /**
      * Assignment.
@@ -30,6 +40,10 @@ class Assignments extends AbstractComponent
      */
     public function assignment(StatementInterface|string $column, mixed $value, ?int $type = null): void
     {
+        if (!is_array($this->assignments)) {
+            $this->assignments = [];
+        }
+
         $this->assignments[] = [
             'column' => $column,
             'value' => $value,
@@ -40,10 +54,15 @@ class Assignments extends AbstractComponent
     /**
      * Assignments.
      *
-     * @param array $values
+     * @param array|StatementInterface $values
      */
-    public function assignments(array $values): void
+    public function assignments(array|StatementInterface $values): void
     {
+        if ($values instanceof StatementInterface) {
+            $this->assignments = $values;
+            return;
+        }
+
         foreach ($values as $column => $value) {
             if (is_int($column)) {
                 $this->assignments[] = ['column' => $value];
@@ -59,6 +78,10 @@ class Assignments extends AbstractComponent
      */
     public function getStatement(BindParamList $bindParams, bool $encapsulate = false): ?string
     {
+        if ($this->assignments instanceof StatementInterface) {
+            return $this->assignments->getStatement($bindParams, $encapsulate);
+        }
+
         return $this->encapsulate(
             implode(
                 ', ',
