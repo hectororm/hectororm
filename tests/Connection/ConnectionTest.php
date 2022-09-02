@@ -283,27 +283,54 @@ class ConnectionTest extends TestCase
     public function testFetchAll()
     {
         $connection = new Connection('sqlite:' . realpath(__DIR__ . '/test.sqlite'));
+        $result = $connection->fetchAll('SELECT * FROM `table` LIMIT 2;');
 
-        $iterator = $connection->fetchAll('SELECT * FROM `table` LIMIT 2;');
-
-        $this->assertInstanceOf(Generator::class, $iterator);
-        $this->assertCount(2, iterator_to_array($iterator));
+        $this->assertIsArray($result);
+        $this->assertCount(2, $result);
     }
 
     public function testFetchAllWithParam()
     {
         $connection = new Connection('sqlite:' . realpath(__DIR__ . '/test.sqlite'));
-        $iterator = $connection->fetchAll('SELECT * FROM `table` WHERE `table_id` = :p;', ['p' => 2]);
+        $result = $connection->fetchAll('SELECT * FROM `table` WHERE `table_id` = :p;', ['p' => 2]);
 
-        $this->assertInstanceOf(Generator::class, $iterator);
-        $this->assertCount(1, iterator_to_array($iterator));
+        $this->assertIsArray($result);
+        $this->assertCount(1, $result);
     }
 
     public function testFetchAllWithBindParam()
     {
         $connection = new Connection('sqlite:' . realpath(__DIR__ . '/test.sqlite'));
         $var = 2;
-        $iterator = $connection->fetchAll('SELECT * FROM `table` WHERE `table_id` = :_h_0;', [$var]);
+        $result = $connection->fetchAll('SELECT * FROM `table` WHERE `table_id` = :_h_0;', [$var]);
+
+        $this->assertIsArray($result);
+        $this->assertCount(1, $result);
+    }
+
+    public function testYieldAll()
+    {
+        $connection = new Connection('sqlite:' . realpath(__DIR__ . '/test.sqlite'));
+        $iterator = $connection->yieldAll('SELECT * FROM `table` LIMIT 2;');
+
+        $this->assertInstanceOf(Generator::class, $iterator);
+        $this->assertCount(2, iterator_to_array($iterator));
+    }
+
+    public function testYieldAllWithParam()
+    {
+        $connection = new Connection('sqlite:' . realpath(__DIR__ . '/test.sqlite'));
+        $iterator = $connection->yieldAll('SELECT * FROM `table` WHERE `table_id` = :p;', ['p' => 2]);
+
+        $this->assertInstanceOf(Generator::class, $iterator);
+        $this->assertCount(1, iterator_to_array($iterator));
+    }
+
+    public function testYieldAllWithBindParam()
+    {
+        $connection = new Connection('sqlite:' . realpath(__DIR__ . '/test.sqlite'));
+        $var = 2;
+        $iterator = $connection->yieldAll('SELECT * FROM `table` WHERE `table_id` = :_h_0;', [$var]);
 
         $this->assertInstanceOf(Generator::class, $iterator);
         $this->assertCount(1, iterator_to_array($iterator));
@@ -340,8 +367,18 @@ class ConnectionTest extends TestCase
     public function testFetchColumn()
     {
         $connection = new Connection('sqlite:' . realpath(__DIR__ . '/test.sqlite'));
+        $result = $connection->fetchColumn('SELECT * FROM `table`;', [], 1);
 
-        $iterator = $connection->fetchColumn('SELECT * FROM `table`;', [], 1);
+        $this->assertIsArray( $result);
+        $this->assertCount(2, $result);
+        $this->assertEquals('Foo', $result[0]);
+        $this->assertEquals('Bar', $result[1]);
+    }
+
+    public function testYieldColumn()
+    {
+        $connection = new Connection('sqlite:' . realpath(__DIR__ . '/test.sqlite'));
+        $iterator = $connection->yieldColumn('SELECT * FROM `table`;', [], 1);
 
         $this->assertInstanceOf(Generator::class, $iterator);
         $this->assertCount(2, $result = iterator_to_array($iterator));
@@ -353,7 +390,17 @@ class ConnectionTest extends TestCase
     public function testFetchColumnWithParam()
     {
         $connection = new Connection('sqlite:' . realpath(__DIR__ . '/test.sqlite'));
-        $iterator = $connection->fetchColumn('SELECT * FROM `table` WHERE `table_id` = ?;', [2], 1);
+        $result = $connection->fetchColumn('SELECT * FROM `table` WHERE `table_id` = ?;', [2], 1);
+
+        $this->assertIsArray($result);
+        $this->assertCount(1, $result);
+        $this->assertEquals('Bar', $result[0]);
+    }
+
+    public function testYieldColumnWithParam()
+    {
+        $connection = new Connection('sqlite:' . realpath(__DIR__ . '/test.sqlite'));
+        $iterator = $connection->yieldColumn('SELECT * FROM `table` WHERE `table_id` = ?;', [2], 1);
 
         $this->assertInstanceOf(Generator::class, $iterator);
         $this->assertCount(1, $result = iterator_to_array($iterator));

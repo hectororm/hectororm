@@ -48,7 +48,7 @@ class LogEntryTest extends TestCase
     {
         $time1 = microtime(true);
         $logEntry = new LogEntry(Connection::DEFAULT_NAME, 'STATEMENT');
-        usleep(100); // force wait for very fast processor :)
+        usleep(200); // force wait for very fast processor :)
         $time2 = microtime(true);
 
         $this->assertGreaterThan($time1, $logEntry->getStart());

@@ -46,7 +46,7 @@ class LogEntry
     /**
      * End timer.
      */
-    public function end()
+    public function end(): void
     {
         $this->end = microtime(true);
     }

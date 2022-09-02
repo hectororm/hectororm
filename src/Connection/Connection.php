@@ -274,10 +274,25 @@ class Connection
      * @param string $statement
      * @param BindParamList|array $input_parameters
      *
-     * @return Generator
+     * @return array<array>
      * @see \PDOStatement::fetchAll()
      */
-    public function fetchAll(string $statement, BindParamList|array $input_parameters = []): Generator
+    public function fetchAll(string $statement, BindParamList|array $input_parameters = []): array
+    {
+        $stm = $this->pdoExecute($this->getReadPdo(), $statement, $input_parameters);
+
+        return $stm->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Yield all.
+     *
+     * @param string $statement
+     * @param BindParamList|array $input_parameters
+     *
+     * @return Generator<array>
+     */
+    public function yieldAll(string $statement, BindParamList|array $input_parameters = []): Generator
     {
         $stm = $this->pdoExecute($this->getReadPdo(), $statement, $input_parameters);
 
@@ -309,10 +324,30 @@ class Connection
      * @param BindParamList|array $input_parameters
      * @param int $column
      *
-     * @return Generator
+     * @return array
      * @see \PDOStatement::fetchColumn()
      */
     public function fetchColumn(
+        string $statement,
+        BindParamList|array $input_parameters = [],
+        int $column = 0
+    ): array {
+        $stm = $this->pdoExecute($this->getReadPdo(), $statement, $input_parameters);
+
+        return $stm->fetchAll(PDO::FETCH_COLUMN, $column);
+    }
+
+    /**
+     * Yield column.
+     *
+     * @param string $statement
+     * @param BindParamList|array $input_parameters
+     * @param int $column
+     *
+     * @return Generator
+     * @see \PDOStatement::fetchColumn()
+     */
+    public function yieldColumn(
         string $statement,
         BindParamList|array $input_parameters = [],
         int $column = 0
