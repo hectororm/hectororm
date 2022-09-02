@@ -16,9 +16,6 @@ namespace Hector\Query\Component;
 
 use Hector\Connection\Bind\BindParamList;
 
-/**
- * Class Limit.
- */
 class Limit extends AbstractComponent
 {
     private ?int $offset = null;

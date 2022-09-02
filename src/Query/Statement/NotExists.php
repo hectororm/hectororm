@@ -16,9 +16,6 @@ namespace Hector\Query\Statement;
 
 use Hector\Query\StatementInterface;
 
-/**
- * Class NotExists.
- */
 class NotExists extends SqlFunction
 {
     /**

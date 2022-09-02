@@ -19,9 +19,6 @@ use Countable;
 use Hector\Connection\Bind\BindParamList;
 use Hector\Query\StatementInterface;
 
-/**
- * Class Order.
- */
 class Order extends AbstractComponent implements Countable
 {
     public const ORDER_ASC = 'ASC';

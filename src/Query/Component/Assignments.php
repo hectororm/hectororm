@@ -17,9 +17,6 @@ namespace Hector\Query\Component;
 use Hector\Connection\Bind\BindParamList;
 use Hector\Query\StatementInterface;
 
-/**
- * Class Assignments.
- */
 class Assignments extends AbstractComponent
 {
     private array $assignments = [];

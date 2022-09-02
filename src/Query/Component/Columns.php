@@ -18,9 +18,6 @@ use Countable;
 use Hector\Connection\Bind\BindParamList;
 use Hector\Query\StatementInterface;
 
-/**
- * Class Columns.
- */
 class Columns extends AbstractComponent implements Countable
 {
     private array $columns = [];

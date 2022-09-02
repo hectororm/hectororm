@@ -18,9 +18,6 @@ use Closure;
 use Hector\Connection\Bind\BindParamList;
 use Hector\Query\StatementInterface;
 
-/**
- * Class SqlFunction.
- */
 class SqlFunction implements StatementInterface
 {
     protected string $function;

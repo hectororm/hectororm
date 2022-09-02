@@ -14,9 +14,6 @@ declare(strict_types=1);
 
 namespace Hector\Query\Statement;
 
-/**
- * Class NotBetween.
- */
 class NotBetween extends Between
 {
     protected const EXPRESSION = 'NOT BETWEEN';

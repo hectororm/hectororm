@@ -19,9 +19,6 @@ use Hector\Connection\Bind\BindParamList;
 use Hector\Connection\Connection;
 use Hector\Query\Statement\Exists;
 
-/**
- * Class QueryBuilder.
- */
 class QueryBuilder implements StatementInterface
 {
     use Clause\BindParams;

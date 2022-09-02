@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace Hector\Query\Component;
 
-/**
- * Class EncapsulateHelperTrait.
- */
 trait EncapsulateHelperTrait
 {
     /**

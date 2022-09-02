@@ -17,9 +17,6 @@ namespace Hector\Query\Component;
 use Hector\Connection\Bind\BindParamList;
 use Hector\Query\StatementInterface;
 
-/**
- * Class Table.
- */
 class Table extends AbstractComponent
 {
     private array $tables = [];

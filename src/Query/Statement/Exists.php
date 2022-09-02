@@ -17,9 +17,6 @@ namespace Hector\Query\Statement;
 use Closure;
 use Hector\Query\StatementInterface;
 
-/**
- * Class Exists.
- */
 class Exists extends SqlFunction
 {
     /**

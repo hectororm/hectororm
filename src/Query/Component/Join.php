@@ -17,9 +17,6 @@ namespace Hector\Query\Component;
 use Hector\Connection\Bind\BindParamList;
 use Hector\Query\StatementInterface;
 
-/**
- * Class Join.
- */
 class Join extends AbstractComponent
 {
     public const INNER_JOIN = 'INNER';

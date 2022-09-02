@@ -22,9 +22,6 @@ use Hector\Query\Clause\Where;
 use Hector\Query\Select;
 use Hector\Query\StatementInterface;
 
-/**
- * Class Conditions.
- */
 class Conditions extends AbstractComponent implements Countable
 {
     public const LINK_AND = 'AND';

@@ -17,9 +17,6 @@ namespace Hector\Query\Statement;
 use Hector\Connection\Bind\BindParamList;
 use Hector\Query\StatementInterface;
 
-/**
- * Class Between.
- */
 class Between implements StatementInterface
 {
     protected const EXPRESSION = 'BETWEEN';
