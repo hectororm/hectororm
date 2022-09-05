@@ -14,6 +14,7 @@ namespace Hector\Orm\Tests\Query;
 
 use Hector\Connection\Bind\BindParamList;
 use Hector\Orm\Collection\Collection;
+use Hector\Orm\Collection\LazyCollection;
 use Hector\Orm\Entity\Entity;
 use Hector\Orm\Exception\MapperException;
 use Hector\Orm\Exception\NotFoundException;
@@ -307,8 +308,8 @@ class BuilderTest extends AbstractTestCase
         $builder = new Builder(Film::class);
         $iterator = $builder->yield();
 
-        $this->assertInstanceOf(\Generator::class, $iterator);
-        $this->assertEquals($builder->count(), count(iterator_to_array($iterator)));
+        $this->assertInstanceOf(LazyCollection::class, $iterator);
+        $this->assertCount($builder->count(), $iterator);
     }
 
     public function testCount()

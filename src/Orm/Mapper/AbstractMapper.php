@@ -18,6 +18,7 @@ use Generator;
 use Hector\Orm\Assert\EntityAssert;
 use Hector\Orm\Attributes;
 use Hector\Orm\Collection\Collection;
+use Hector\Orm\Collection\LazyCollection;
 use Hector\Orm\Entity\Entity;
 use Hector\Orm\Entity\PivotData;
 use Hector\Orm\Entity\ReflectionEntity;
@@ -187,17 +188,21 @@ abstract class AbstractMapper implements Mapper
     /**
      * @inheritDoc
      */
-    public function yieldWithBuilder(Builder $builder): Generator
+    public function yieldWithBuilder(Builder $builder): LazyCollection
     {
-        foreach ($builder->fetchAll() as $data) {
-            $entity = new $this->reflection->class();
-            $this->hydrateEntity($entity, $data);
-            $this->updateOriginalData($entity, $data, true);
-            $this->updatePivotData($entity, $data);
-            $this->storage->attach($entity);
+        $generator = function (Builder $builder): Generator {
+            foreach ($builder->fetchAll() as $data) {
+                $entity = new $this->reflection->class();
+                $this->hydrateEntity($entity, $data);
+                $this->updateOriginalData($entity, $data, true);
+                $this->updatePivotData($entity, $data);
+                $this->storage->attach($entity);
 
-            yield $entity;
-        }
+                yield $entity;
+            }
+        };
+
+        return new LazyCollection($generator($builder));
     }
 
     ////////////////////////////////

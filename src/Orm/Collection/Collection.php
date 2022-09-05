@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace Hector\Orm\Collection;
 
+use Closure;
 use Hector\Orm\Entity\Entity;
 use Hector\Orm\Entity\ReflectionEntity;
 use Hector\Orm\Exception\OrmException;
@@ -24,13 +25,11 @@ class Collection extends \Hector\Collection\Collection
     private array $detached = [];
 
     /**
-     * Collection constructor.
-     *
-     * @param iterable $iterable
+     * @inheritDoc
      */
-    public function __construct(iterable $iterable = [])
+    protected function newLazy(iterable|Closure $iterable): LazyCollection
     {
-        parent::__construct($iterable);
+        return new LazyCollection($iterable);
     }
 
     /**

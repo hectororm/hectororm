@@ -13,6 +13,7 @@
 namespace Hector\Orm\Tests\Entity;
 
 use Generator;
+use Hector\Orm\Collection\Collection;
 use Hector\Orm\Entity\ReflectionEntity;
 use Hector\Orm\Exception\NotFoundException;
 use Hector\Orm\Exception\OrmException;
@@ -22,6 +23,7 @@ use Hector\Orm\Tests\Fake\Entity\Actor;
 use Hector\Orm\Tests\Fake\Entity\Film;
 use Hector\Orm\Tests\Fake\Entity\FilmMagic;
 use Hector\Orm\Tests\Fake\Entity\Language;
+use ReflectionProperty;
 
 class EntityTest extends AbstractTestCase
 {
@@ -191,7 +193,7 @@ class EntityTest extends AbstractTestCase
     {
         $collection = $class::all();
 
-        $this->assertInstanceOf(\Hector\Orm\Collection\Collection::class, $collection);
+        $this->assertInstanceOf(Collection::class, $collection);
         $this->assertGreaterThan(1, count($collection));
         $this->assertContainsOnlyInstancesOf($class, $collection);
     }
@@ -204,7 +206,7 @@ class EntityTest extends AbstractTestCase
         $total = 0;
         $class::chunk(
             50,
-            function (\Hector\Orm\Collection\Collection $collection) use ($class, &$total) {
+            function (Collection $collection) use ($class, &$total) {
                 $this->assertGreaterThan(0, count($collection));
                 $this->assertLessThanOrEqual(50, count($collection));
                 $this->assertContainsOnlyInstancesOf($class, $collection);
@@ -245,7 +247,7 @@ class EntityTest extends AbstractTestCase
 
         $this->assertInstanceOf(Builder::class, $entityBuilder);
 
-        $reflectionProperty = new \ReflectionProperty(Builder::class, 'entityReflection');
+        $reflectionProperty = new ReflectionProperty(Builder::class, 'entityReflection');
         $reflectionProperty->setAccessible(true);
         /** @var ReflectionEntity $entityReflection */
         $entityReflection = $reflectionProperty->getValue($entityBuilder);

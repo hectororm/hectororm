@@ -14,8 +14,8 @@ declare(strict_types=1);
 
 namespace Hector\Orm\Query;
 
-use Generator;
 use Hector\Orm\Collection\Collection;
+use Hector\Orm\Collection\LazyCollection;
 use Hector\Orm\Entity\Entity;
 use Hector\Orm\Entity\ReflectionEntity;
 use Hector\Orm\Exception\MapperException;
@@ -332,6 +332,17 @@ class Builder extends QueryBuilder
     }
 
     /**
+     * Iterate result with Generator.
+     *
+     * @return LazyCollection<T>
+     * @throws OrmException
+     */
+    public function yield(): LazyCollection
+    {
+        return $this->entityReflection->getMapper()->yieldWithBuilder($this);
+    }
+
+    /**
      * Chunk results.
      *
      * @param int $limit
@@ -342,32 +353,8 @@ class Builder extends QueryBuilder
      */
     public function chunk(int $limit, callable $callback): void
     {
-        $offset = 0;
-        do {
-            // Get collection
-            $this->limit($limit, $offset);
-            $collection = $this->all();
-            if (count($collection) === 0) {
-                continue;
-            }
-
-            // Call closure if result
-            // @todo: Create a lazy collection
-            $callback($collection);
-
-            $offset += $limit;
-        } while (count($collection) > 0);
-    }
-
-    /**
-     * Iterate result with Generator.
-     *
-     * @return Generator<T>
-     * @throws OrmException
-     */
-    public function yield(): Generator
-    {
-        return $this->entityReflection->getMapper()->yieldWithBuilder($this);
+        foreach ($this->yield()->chunk($limit)->map($callback) as $item) {
+        }
     }
 
     /**

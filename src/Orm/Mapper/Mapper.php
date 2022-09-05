@@ -14,8 +14,8 @@ declare(strict_types=1);
 
 namespace Hector\Orm\Mapper;
 
-use Generator;
 use Hector\Orm\Collection\Collection;
+use Hector\Orm\Collection\LazyCollection;
 use Hector\Orm\Entity\Entity;
 use Hector\Orm\Exception\OrmException;
 use Hector\Orm\Query\Builder;
@@ -67,7 +67,7 @@ interface Mapper
      *
      * @param Builder $builder
      *
-     * @return Collection
+     * @return Collection<Entity>
      * @throws OrmException
      */
     public function fetchAllWithBuilder(Builder $builder): Collection;
@@ -77,10 +77,10 @@ interface Mapper
      *
      * @param Builder $builder
      *
-     * @return Generator<Entity>
+     * @return LazyCollection<Entity>
      * @throws OrmException
      */
-    public function yieldWithBuilder(Builder $builder): Generator;
+    public function yieldWithBuilder(Builder $builder): LazyCollection;
 
     /**
      * Update entity.
