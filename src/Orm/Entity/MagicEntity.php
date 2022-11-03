@@ -41,7 +41,7 @@ abstract class MagicEntity extends Entity implements JsonSerializable
     /**
      * @inheritDoc
      */
-    public function jsonSerialize(): array
+    public function jsonSerialize(): mixed
     {
         return $this->_hectorAttributes;
     }
