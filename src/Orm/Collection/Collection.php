@@ -147,6 +147,18 @@ class Collection extends \Hector\Collection\Collection
     }
 
     /**
+     * @inheritDoc
+     */
+    public function offsetUnset(mixed $offset): void
+    {
+        if ($this->offsetExists($offset)) {
+            $this->detached[] = $this->offsetGet($offset);
+        }
+
+        parent::offsetUnset($offset);
+    }
+
+    /**
      * Get detached entities.
      *
      * @return iterable
