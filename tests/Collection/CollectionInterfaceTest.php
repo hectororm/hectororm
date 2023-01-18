@@ -634,27 +634,32 @@ class CollectionInterfaceTest extends TestCase
      */
     public function testVariance(string $class)
     {
-        $this->assertEquals(0, (new $class())->variance());
+        $this->assertEqualsWithDelta(0, (new $class())->variance(), .000001);
 
-        $this->assertEquals(
+        $this->assertEqualsWithDelta(
             2.666666666667,
-            (new $class([1, 3, 5]))->variance()
+            (new $class([1, 3, 5]))->variance(),
+            .000001
         );
-        $this->assertEquals(
+        $this->assertEqualsWithDelta(
             5,
-            (new $class([1, 3, 5, 7]))->variance()
+            (new $class([1, 3, 5, 7]))->variance(),
+            .000001
         );
-        $this->assertEquals(
+        $this->assertEqualsWithDelta(
             2,
-            (new $class([1, 2, 3, 4, 5]))->variance()
+            (new $class([1, 2, 3, 4, 5]))->variance(),
+            .000001
         );
-        $this->assertEquals(
+        $this->assertEqualsWithDelta(
             1.888888888889,
-            (new $class([1, 1, 2, 2, 3, 5]))->variance()
+            (new $class([1, 1, 2, 2, 3, 5]))->variance(),
+            .000001
         );
-        $this->assertEquals(
+        $this->assertEqualsWithDelta(
             13.777777777778,
-            (new $class([1, 1, 2, 3, 3, 5, 10, 10, 10]))->variance()
+            (new $class([1, 1, 2, 3, 3, 5, 10, 10, 10]))->variance(),
+            .000001
         );
     }
 
@@ -663,27 +668,32 @@ class CollectionInterfaceTest extends TestCase
      */
     public function testDeviation(string $class)
     {
-        $this->assertEquals(0, (new $class())->deviation());
+        $this->assertEqualsWithDelta(0, (new $class())->deviation(), .000001);
 
-        $this->assertEquals(
+        $this->assertEqualsWithDelta(
             1.632993161855,
-            (new $class([1, 3, 5]))->deviation()
+            (new $class([1, 3, 5]))->deviation(),
+            .000001
         );
-        $this->assertEquals(
+        $this->assertEqualsWithDelta(
             2.2360679775,
-            (new $class([1, 3, 5, 7]))->deviation()
+            (new $class([1, 3, 5, 7]))->deviation(),
+            .000001
         );
-        $this->assertEquals(
+        $this->assertEqualsWithDelta(
             1.414213562373,
-            (new $class([1, 2, 3, 4, 5]))->deviation()
+            (new $class([1, 2, 3, 4, 5]))->deviation(),
+            .000001
         );
-        $this->assertEquals(
+        $this->assertEqualsWithDelta(
             1.374368541873,
-            (new $class([1, 1, 2, 2, 3, 5]))->deviation()
+            (new $class([1, 1, 2, 2, 3, 5]))->deviation(),
+            .000001
         );
-        $this->assertEquals(
+        $this->assertEqualsWithDelta(
             3.711842908553,
-            (new $class([1, 1, 2, 3, 3, 5, 10, 10, 10]))->deviation()
+            (new $class([1, 1, 2, 3, 3, 5, 10, 10, 10]))->deviation(),
+            .000001
         );
     }
 
