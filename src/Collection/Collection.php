@@ -134,7 +134,7 @@ class Collection implements CollectionInterface, ArrayAccess
     /**
      * @inheritDoc
      */
-    public function collect(): CollectionInterface
+    public function collect(): static
     {
         return new static($this->all());
     }

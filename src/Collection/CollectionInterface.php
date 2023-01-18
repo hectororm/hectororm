@@ -73,48 +73,48 @@ interface CollectionInterface extends IteratorAggregate, JsonSerializable, Count
      *
      * @param int|callable|null $callback
      *
-     * @return self
+     * @return static
      */
-    public function sort(int|callable|null $callback = null): self;
+    public function sort(int|callable|null $callback = null): static;
 
     /**
      * Multiple sort.
      *
      * @param callable ...$callback
      *
-     * @return self
+     * @return static
      */
-    public function multiSort(callable ...$callback): self;
+    public function multiSort(callable ...$callback): static;
 
     /**
      * Filter items with function.
      *
      * @param callable|null $callback
      *
-     * @return self
+     * @return static
      * @see array_filter()
      */
-    public function filter(?callable $callback = null): self;
+    public function filter(?callable $callback = null): static;
 
     /**
      * Filter items with object instance comparison.
      *
      * @param string|object ...$class
      *
-     * @return self
+     * @return static
      * @see array_filter()
      */
-    public function filterInstanceOf(string|object ...$class): self;
+    public function filterInstanceOf(string|object ...$class): static;
 
     /**
      * Apply callback on items and return result of callback.
      *
      * @param callable $callback
      *
-     * @return self
+     * @return static
      * @see array_map()
      */
-    public function map(callable $callback): self;
+    public function map(callable $callback): static;
 
     /**
      * Apply callback on items and return items.
@@ -124,7 +124,7 @@ interface CollectionInterface extends IteratorAggregate, JsonSerializable, Count
      * @return static
      * @see array_walk()
      */
-    public function each(callable $callback): self;
+    public function each(callable $callback): static;
 
     /**
      * Search item with callback.
@@ -175,9 +175,9 @@ interface CollectionInterface extends IteratorAggregate, JsonSerializable, Count
      * @param int $offset
      * @param int|null $length
      *
-     * @return self
+     * @return static
      */
-    public function slice(int $offset, int|null $length = null): self;
+    public function slice(int $offset, int|null $length = null): static;
 
     /**
      * Chunk collection items into collection of fixed length.
@@ -186,10 +186,10 @@ interface CollectionInterface extends IteratorAggregate, JsonSerializable, Count
      *
      * @param int $length
      *
-     * @return self
+     * @return static
      * @see array_chunk()
      */
-    public function chunk(int $length): self;
+    public function chunk(int $length): static;
 
     /**
      * Collection contains value?
@@ -205,34 +205,34 @@ interface CollectionInterface extends IteratorAggregate, JsonSerializable, Count
     /**
      * Get keys of collection items.
      *
-     * @return self
+     * @return static
      * @see array_keys()
      */
-    public function keys(): self;
+    public function keys(): static;
 
     /**
      * Get values of collection.
      *
-     * @return self
+     * @return static
      * @see array_values()
      */
-    public function values(): self;
+    public function values(): static;
 
     /**
      * Get uniques items of collection.
      *
-     * @return self
+     * @return static
      * @see array_unique()
      */
-    public function unique(): self;
+    public function unique(): static;
 
     /**
      * Flip keys and values.
      *
-     * @return self
+     * @return static
      * @see array_flip()
      */
-    public function flip(): self;
+    public function flip(): static;
 
     /**
      * Get column value or reindex collection.
@@ -240,21 +240,21 @@ interface CollectionInterface extends IteratorAggregate, JsonSerializable, Count
      * @param string|int|Closure|null $column_key
      * @param string|int|Closure|null $index_key
      *
-     * @return self
+     * @return static
      * @see array_column()
      * @see b_array_column()
      */
-    public function column(string|int|Closure|null $column_key, string|int|Closure|null $index_key = null): self;
+    public function column(string|int|Closure|null $column_key, string|int|Closure|null $index_key = null): static;
 
     /**
      * Get random values of collection.
      *
      * @param int $length
      *
-     * @return self
+     * @return static
      * @see array_rand()
      */
-    public function rand(int $length = 1): self;
+    public function rand(int $length = 1): static;
 
     /**
      * Get sum of values.

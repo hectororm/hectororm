@@ -192,7 +192,7 @@ class LazyCollection implements CollectionInterface
     /**
      * @inheritDoc
      */
-    public function multiSort(callable ...$callback): CollectionInterface
+    public function multiSort(callable ...$callback): static
     {
         $collection = $this->newDefault($this->items);
 
@@ -323,7 +323,7 @@ class LazyCollection implements CollectionInterface
     /**
      * @inheritDoc
      */
-    public function slice(int $offset, ?int $length = null): CollectionInterface
+    public function slice(int $offset, ?int $length = null): static
     {
         $generator = function ($offset, $length): Generator {
             $stack = [];
