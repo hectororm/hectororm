@@ -257,9 +257,19 @@ class Collection implements CollectionInterface, ArrayAccess
     /**
      * @inheritDoc
      */
-    public function search(callable $callback): mixed
+    public function search(mixed $needle, bool $strict = false): int|string|false
     {
-        return $this->first($callback);
+        if (is_callable($needle)) {
+            foreach ($this as $key => $value) {
+                if ($needle($value, $key)) {
+                    return $key;
+                }
+            }
+
+            return false;
+        }
+
+        return array_search($needle, $this->items, $strict);
     }
 
     /**

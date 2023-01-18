@@ -284,9 +284,22 @@ class LazyCollection implements CollectionInterface
     /**
      * @inheritDoc
      */
-    public function search(callable $callback): mixed
+    public function search(mixed $needle, bool $strict = false): int|string|false
     {
-        return $this->first($callback);
+        if (false === is_callable($needle)) {
+            $needle = match ($strict) {
+                true => fn(mixed $value) => $value === $needle,
+                false => fn(mixed $value) => $value == $needle
+            };
+        }
+
+        foreach ($this as $key => $item) {
+            if ($needle($item, $key)) {
+                return $key;
+            }
+        }
+
+        return false;
     }
 
     /**

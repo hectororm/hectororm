@@ -304,6 +304,19 @@ class CollectionInterfaceTest extends TestCase
     /**
      * @dataProvider collectionTypeProvider
      */
+    public function testSearch(string $class)
+    {
+        $arr = ['foo', 'bar', '1', 1, 'quxx'];
+        $callback = fn($value) => str_starts_with($value, 'ba');
+
+        $this->assertSame(2, (new $class($arr))->search(1));
+        $this->assertSame(3, (new $class($arr))->search(1, true));
+        $this->assertSame(1, (new $class($arr))->search($callback));
+    }
+
+    /**
+     * @dataProvider collectionTypeProvider
+     */
     public function testGet(string $class)
     {
         $arr = ['foo', 'bar' => 'baz', 'qux', 'quxx'];
@@ -324,7 +337,6 @@ class CollectionInterfaceTest extends TestCase
         $arr = ['foo', 'bar', 'baz', 'qux', 'quxx'];
         $callback = fn($value) => str_starts_with($value, 'ba');
 
-        $this->assertEquals('bar', (new $class($arr))->search($callback));
         $this->assertEquals('bar', (new $class($arr))->first($callback));
         $this->assertEquals('foo', (new $class($arr))->first());
 

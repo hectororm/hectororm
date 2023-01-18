@@ -134,13 +134,14 @@ interface CollectionInterface extends IteratorAggregate, JsonSerializable, Count
     public function each(callable $callback): static;
 
     /**
-     * Search item with callback.
+     * Search key of item with callback or value.
      *
-     * @param callable $callback
+     * @param callable|mixed $needle
+     * @param bool $strict
      *
-     * @return mixed
+     * @return int|string|false
      */
-    public function search(callable $callback): mixed;
+    public function search(mixed $needle, bool $strict = false): int|string|false;
 
     /**
      * Get item at index.
