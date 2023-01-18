@@ -120,6 +120,15 @@ class CollectionInterfaceTest extends TestCase
     /**
      * @dataProvider collectionTypeProvider
      */
+    public function testIsList(string $class)
+    {
+        $this->assertFalse((new $class(['foo', 2 => 'bar', 'baz']))->isList());
+        $this->assertTrue((new $class(['foo', 'bar', 'baz']))->isList());
+    }
+
+    /**
+     * @dataProvider collectionTypeProvider
+     */
     public function testDebugInfo(string $class)
     {
         $collection = new $class($arr = ['foo', 'bar', 'baz', 'qux', 'quxx']);

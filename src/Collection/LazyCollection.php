@@ -174,6 +174,17 @@ class LazyCollection implements CollectionInterface
     /**
      * @inheritDoc
      */
+    public function isList(): bool
+    {
+        $arr = $this->all();
+        $this->items = (fn(): Generator => yield from $arr)();
+
+        return b_array_is_list($arr);
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function collect(): CollectionInterface
     {
         return $this->newDefault($this->all());

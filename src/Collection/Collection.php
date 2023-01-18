@@ -134,6 +134,14 @@ class Collection implements CollectionInterface, ArrayAccess
     /**
      * @inheritDoc
      */
+    public function isList(): bool
+    {
+        return b_array_is_list($this->items);
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function collect(): static
     {
         return new static($this->all());

@@ -62,6 +62,13 @@ interface CollectionInterface extends IteratorAggregate, JsonSerializable, Count
     public function isEmpty(): bool;
 
     /**
+     * Is list?
+     *
+     * @return bool
+     */
+    public function isList(): bool;
+
+    /**
      * Collect all data from current collection into another one.
      *
      * @return self
