@@ -377,6 +377,14 @@ class Collection implements CollectionInterface, ArrayAccess
     /**
      * @inheritDoc
      */
+    public function reverse(bool $preserve_keys = false): static
+    {
+        return new static(array_reverse($this->items, $preserve_keys));
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function column(string|int|Closure|null $column_key, string|int|Closure|null $index_key = null): static
     {
         return new static(b_array_column($this->items, $column_key, $index_key));

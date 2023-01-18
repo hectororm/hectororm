@@ -56,10 +56,12 @@ class CollectionInterfaceTest extends TestCase
      */
     public function testGetArrayCopy_recursive(string $class)
     {
-        $collection = new $class($arr = [
-            new $class($arr1 = ['foo', 'bar', 'baz']),
-            new $class($arr2 = ['qux', 'quxx'])
-        ]);
+        $collection = new $class(
+            $arr = [
+                new $class($arr1 = ['foo', 'bar', 'baz']),
+                new $class($arr2 = ['qux', 'quxx'])
+            ]
+        );
 
         $result = $collection->getArrayCopy();
         $this->assertNotSame($arr, $result);
@@ -81,10 +83,12 @@ class CollectionInterfaceTest extends TestCase
      */
     public function testAll_recursive(string $class)
     {
-        $collection = new $class($arr = [
-            new $class(['foo', 'bar', 'baz']),
-            new $class(['qux', 'quxx'])
-        ]);
+        $collection = new $class(
+            $arr = [
+                new $class(['foo', 'bar', 'baz']),
+                new $class(['qux', 'quxx'])
+            ]
+        );
 
         $this->assertSame($arr, $collection->all());
     }
@@ -470,6 +474,23 @@ class CollectionInterfaceTest extends TestCase
         $this->assertEquals(
             array_flip($arr),
             (new $class($arr))->flip()->getArrayCopy()
+        );
+    }
+
+    /**
+     * @dataProvider collectionTypeProvider
+     */
+    public function testReverse(string $class)
+    {
+        $arr = ['key1' => 'value1', 'key2' => 'value2', 'key3' => 'value3'];
+
+        $this->assertEquals(
+            array_reverse($arr),
+            (new $class($arr))->reverse()->getArrayCopy()
+        );
+        $this->assertEquals(
+            array_reverse($arr, true),
+            (new $class($arr))->reverse(true)->getArrayCopy()
         );
     }
 

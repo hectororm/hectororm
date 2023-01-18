@@ -235,6 +235,16 @@ interface CollectionInterface extends IteratorAggregate, JsonSerializable, Count
     public function flip(): static;
 
     /**
+     * Reverse order of items.
+     *
+     * @param bool $preserve_keys If set to true numeric keys are preserved. Non-numeric keys are not affected by this setting and will always be preserved.
+     *
+     * @return static
+     * @see array_reverse()
+     */
+    public function reverse(bool $preserve_keys = false): static;
+
+    /**
      * Get column value or reindex collection.
      *
      * @param string|int|Closure|null $column_key

@@ -472,6 +472,14 @@ class LazyCollection implements CollectionInterface
     /**
      * @inheritDoc
      */
+    public function reverse(bool $preserve_keys = false): static
+    {
+        return new static($this->collect()->reverse($preserve_keys));
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function column(int|Closure|string|null $column_key, int|Closure|string|null $index_key = null): static
     {
         $generator = function ($column_key, $index_key): Generator {
