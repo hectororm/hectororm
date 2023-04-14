@@ -347,14 +347,30 @@ class Builder extends QueryBuilder
      *
      * @param int $limit
      * @param callable $callback
+     * @param bool $lazy
      *
      * @return void
      * @throws OrmException
      */
-    public function chunk(int $limit, callable $callback): void
+    public function chunk(int $limit, callable $callback, bool $lazy = true): void
     {
-        foreach ($this->yield()->chunk($limit)->map($callback) as $item) {
+        if (true === $lazy) {
+            foreach ($this->yield()->chunk($limit)->map($callback) as $item) {
+            }
+            return;
         }
+
+        $offset = 0;
+        do {
+            // Get collection
+            $this->limit($limit, $offset);
+            $collection = $this->all();
+
+            if (false === $collection->isEmpty()) {
+                $callback($collection);
+                $offset += $limit;
+            }
+        } while (false === $collection->isEmpty());
     }
 
     /**

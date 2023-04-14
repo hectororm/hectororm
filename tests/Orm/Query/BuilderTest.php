@@ -303,6 +303,24 @@ class BuilderTest extends AbstractTestCase
         $this->assertEquals($builder->count(), $total);
     }
 
+    public function testChunk_eager()
+    {
+        $builder = new Builder(Film::class);
+        $total = 0;
+        $builder->chunk(
+            50,
+            function (Collection $collection) use (&$total) {
+                $this->assertGreaterThan(0, count($collection));
+                $this->assertLessThanOrEqual(50, count($collection));
+                $this->assertContainsOnlyInstancesOf(Film::class, $collection);
+                $total += count($collection);
+            },
+            false
+        );
+
+        $this->assertEquals($builder->count(), $total);
+    }
+
     public function testYield()
     {
         $builder = new Builder(Film::class);
