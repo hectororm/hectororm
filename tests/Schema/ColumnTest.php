@@ -44,6 +44,7 @@ class ColumnTest extends AbstractTestCase
 
         $this->assertEquals('first_name', $column->getName());
         $this->assertEquals($column->getName(), $column->getName(false));
+        $this->assertEquals('foo.first_name', $column->getName(false, 'foo'));
     }
 
     public function testGetNameQuoted()
@@ -52,6 +53,7 @@ class ColumnTest extends AbstractTestCase
         $column = $table->getColumn('first_name');
 
         $this->assertEquals('`first_name`', $column->getName(true));
+        $this->assertEquals('`foo`.`first_name`', $column->getName(true, 'foo'));
     }
 
     public function testGetFullName()

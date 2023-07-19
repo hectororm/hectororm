@@ -97,10 +97,7 @@ class Column
     {
         $name = $this->name;
 
-        $quoted && $name = $this->quoteName($name);
-        null !== $tableAlias && $name = $this->addAliasToName($name, $tableAlias);
-
-        return $name;
+        return $this->addAliasToName($name, $tableAlias, $quoted);
     }
 
     /**

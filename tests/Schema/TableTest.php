@@ -206,15 +206,15 @@ class TableTest extends AbstractTestCase
 
         $this->assertEquals(
             [
-                'alias.`customer_id`',
-                'alias.`store_id`',
-                'alias.`first_name`',
-                'alias.`last_name`',
-                'alias.`email`',
-                'alias.`address_id`',
-                'alias.`active`',
-                'alias.`create_date`',
-                'alias.`last_update`'
+                '`alias`.`customer_id`',
+                '`alias`.`store_id`',
+                '`alias`.`first_name`',
+                '`alias`.`last_name`',
+                '`alias`.`email`',
+                '`alias`.`address_id`',
+                '`alias`.`active`',
+                '`alias`.`create_date`',
+                '`alias`.`last_update`'
             ],
             $columnsName
         );

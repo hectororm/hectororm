@@ -20,6 +20,22 @@ namespace Hector\Schema;
 trait NameHelperTrait
 {
     /**
+     * Trim name.
+     *
+     * @param string|null $name
+     *
+     * @return string|null
+     */
+    protected function trimName(?string $name): ?string
+    {
+        if (null === $name) {
+            return null;
+        }
+
+        return trim($name, " \t\n\r\0\x0B`") ?: null;
+    }
+
+    /**
      * Quote names.
      *
      * @param string[] $names
@@ -40,7 +56,7 @@ trait NameHelperTrait
      */
     protected function quoteName(string $name): string
     {
-        return sprintf('`%s`', $name);
+        return sprintf('`%s`', $this->trimName($name));
     }
 
     /**
@@ -48,12 +64,13 @@ trait NameHelperTrait
      *
      * @param string[] $names
      * @param string|null $alias
+     * @param bool $quote
      *
      * @return string[]
      */
-    protected function addAliasToNames(array $names, ?string $alias): array
+    protected function addAliasToNames(array $names, ?string $alias, bool $quote = false): array
     {
-        return array_values(array_map(fn(string $name) => $this->addAliasToName($name, $alias), $names));
+        return array_values(array_map(fn(string $name) => $this->addAliasToName($name, $alias, $quote), $names));
     }
 
     /**
@@ -61,15 +78,22 @@ trait NameHelperTrait
      *
      * @param string $name
      * @param string|null $alias
+     * @param bool $quoted
      *
      * @return string
      */
-    protected function addAliasToName(string $name, ?string $alias): string
+    protected function addAliasToName(string $name, ?string $alias, bool $quoted = false): string
     {
         if (null === $alias) {
-            return $name;
+            return match ($quoted) {
+                true => $this->quoteName($name),
+                false => $this->trimName($name),
+            };
         }
 
-        return sprintf('%s.%s', $alias, $name);
+        return match ($quoted) {
+            true => sprintf('%s.%s', $this->quoteName($alias), $this->quoteName($name)),
+            false => sprintf('%s.%s', $this->trimName($alias), $this->trimName($name)),
+        };
     }
 }
