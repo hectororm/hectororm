@@ -78,7 +78,7 @@ class MySQL extends AbstractGenerator
             'FROM `information_schema`.`tables` t ' .
             'LEFT JOIN `information_schema`.`collation_character_set_applicability` c ON ( c.`collation_name` = t.`table_collation` ) ' .
             'WHERE t.`table_schema` = :schema ' .
-            '  AND t.`table_type` IN ("BASE TABLE", "VIEW") ' .
+            '  AND t.`table_type` IN (\'BASE TABLE\', \'VIEW\') ' .
             ';';
 
         $results = $this->connection->fetchAll($stm, ['schema' => $name]);
