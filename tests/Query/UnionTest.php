@@ -41,9 +41,9 @@ class UnionTest extends TestCase
         $union->addSelect($select, $select2);
 
         $this->assertEquals(
-            '( SELECT * FROM foo AS f WHERE bar = :_h_0 )' .
+            '( SELECT * FROM foo AS `f` WHERE bar = :_h_0 )' .
             ' UNION DISTINCT ' .
-            '( SELECT * FROM foo2 AS f WHERE bar = :_h_1 )',
+            '( SELECT * FROM foo2 AS `f` WHERE bar = :_h_1 )',
             $union->getStatement($binds)
         );
         $this->assertEquals(
@@ -67,9 +67,9 @@ class UnionTest extends TestCase
 
         $this->assertEquals(
             '( ' .
-            '( SELECT * FROM foo AS f WHERE bar = :_h_0 )' .
+            '( SELECT * FROM foo AS `f` WHERE bar = :_h_0 )' .
             ' UNION DISTINCT ' .
-            '( SELECT * FROM foo2 AS f WHERE bar = :_h_1 )' .
+            '( SELECT * FROM foo2 AS `f` WHERE bar = :_h_1 )' .
             ' )',
             $union->getStatement($binds, true)
         );
@@ -94,9 +94,9 @@ class UnionTest extends TestCase
             ->addSelect($select2);
 
         $this->assertEquals(
-            '( SELECT * FROM foo AS f WHERE bar = :_h_0 )' .
+            '( SELECT * FROM foo AS `f` WHERE bar = :_h_0 )' .
             ' UNION ALL ' .
-            '( SELECT * FROM foo2 AS f WHERE bar = :_h_1 )',
+            '( SELECT * FROM foo2 AS `f` WHERE bar = :_h_1 )',
             $union->getStatement($binds)
         );
         $this->assertEquals(
@@ -123,9 +123,9 @@ class UnionTest extends TestCase
 
         $this->assertEquals(
             '( ' .
-            '( SELECT * FROM foo AS f WHERE bar = :_h_0 )' .
+            '( SELECT * FROM foo AS `f` WHERE bar = :_h_0 )' .
             ' UNION ALL ' .
-            '( SELECT * FROM foo2 AS f WHERE bar = :_h_1 )' .
+            '( SELECT * FROM foo2 AS `f` WHERE bar = :_h_1 )' .
             ' ) ' .
             'ORDER BY a LIMIT 10',
             $union->getStatement($binds)

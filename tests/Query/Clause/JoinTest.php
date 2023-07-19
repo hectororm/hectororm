@@ -115,7 +115,7 @@ class JoinTest extends TestCase
         $clause->innerJoin('foo', 'alias.bar IS NULL', 'alias');
 
         $this->assertEquals(
-            'INNER JOIN foo AS alias ON ( alias.bar IS NULL )',
+            'INNER JOIN foo AS `alias` ON ( alias.bar IS NULL )',
             $clause->join->getStatement($binds)
         );
         $this->assertEmpty($binds);

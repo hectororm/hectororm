@@ -48,7 +48,7 @@ class ColumnsTest extends TestCase
         $clause->column('bar', 'b');
 
         $this->assertEquals(
-            'foo AS f, bar AS b',
+            'foo AS `f`, bar AS `b`',
             $clause->columns->getStatement($binds)
         );
         $this->assertEmpty($binds);

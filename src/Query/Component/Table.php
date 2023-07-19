@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace Hector\Query\Component;
 
 use Hector\Connection\Bind\BindParamList;
+use Hector\Query\Helper;
 use Hector\Query\StatementInterface;
 
 class Table extends AbstractComponent
@@ -32,7 +33,7 @@ class Table extends AbstractComponent
     {
         $this->tables[] = [
             'table' => $table,
-            'alias' => $alias,
+            'alias' => Helper::trim($alias),
         ];
     }
 
@@ -41,7 +42,7 @@ class Table extends AbstractComponent
      *
      * @param bool $alias
      */
-    public function useAlias(bool $alias = true)
+    public function useAlias(bool $alias = true): void
     {
         $this->alias = $alias;
     }
@@ -60,7 +61,7 @@ class Table extends AbstractComponent
                             return sprintf(
                                 '%s AS %s',
                                 $this->getSubStatement($from['table'], $bindParams),
-                                $from['alias']
+                                Helper::quote($from['alias'])
                             );
                         }
 

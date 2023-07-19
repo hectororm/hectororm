@@ -36,7 +36,7 @@ class TableTest extends TestCase
         $binds = new BindParamList();
 
         $this->assertEquals(
-            'foo AS f',
+            'foo AS `f`',
             $table->getStatement($binds)
         );
         $this->assertEmpty($binds);
@@ -50,7 +50,7 @@ class TableTest extends TestCase
         $binds = new BindParamList();
 
         $this->assertEquals(
-            'foo AS f, bar AS b',
+            'foo AS `f`, bar AS `b`',
             $table->getStatement($binds)
         );
         $this->assertEmpty($binds);
@@ -69,7 +69,7 @@ class TableTest extends TestCase
         $binds = new BindParamList();
 
         $this->assertEquals(
-            'foo AS f, ( SELECT * FROM bar WHERE bar.qux = :_h_0 ) AS table',
+            'foo AS `f`, ( SELECT * FROM bar WHERE bar.qux = :_h_0 ) AS `table`',
             $table->getStatement($binds)
         );
         $this->assertEquals(

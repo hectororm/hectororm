@@ -48,7 +48,7 @@ class FromTest extends TestCase
         $clause->from('baz');
 
         $this->assertEquals(
-            'foo AS f, baz',
+            'foo AS `f`, baz',
             $clause->from->getStatement($binds)
         );
         $this->assertEmpty($binds);

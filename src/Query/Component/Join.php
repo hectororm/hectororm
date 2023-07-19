@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace Hector\Query\Component;
 
 use Hector\Connection\Bind\BindParamList;
+use Hector\Query\Helper;
 use Hector\Query\StatementInterface;
 
 class Join extends AbstractComponent
@@ -42,9 +43,29 @@ class Join extends AbstractComponent
         $this->joins[] = [
             'join' => $join,
             'table' => $table,
-            'alias' => $alias,
+            'alias' => Helper::trim($alias),
             'condition' => $condition,
         ];
+    }
+
+    /**
+     * Has alias?
+     *
+     * @param string $alias
+     *
+     * @return bool
+     */
+    public function hasAlias(string $alias): bool
+    {
+        $alias = Helper::trim($alias);
+
+        foreach ($this->joins as $join) {
+            if ($join['alias'] === $alias) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -75,10 +96,11 @@ class Join extends AbstractComponent
                 ' ',
                 array_map(
                     function ($join) use (&$bindParams) {
-                        $str = sprintf('%s JOIN %s', $join['join'], $this->getSubStatement($join['table'], $bindParams));
+                        $str = sprintf('%s JOIN %s', $join['join'],
+                            $this->getSubStatement($join['table'], $bindParams));
 
                         if (null !== $join['alias']) {
-                            $str .= sprintf(' AS %s', $join['alias']);
+                            $str .= sprintf(' AS %s', Helper::quote($join['alias']));
                         }
 
                         $joinCondition = $this->getJoinCondition($join['condition'], $bindParams);
@@ -103,8 +125,10 @@ class Join extends AbstractComponent
      *
      * @return string|null
      */
-    private function getJoinCondition(StatementInterface|string|iterable|null $condition, BindParamList $bindParams): ?string
-    {
+    private function getJoinCondition(
+        StatementInterface|string|iterable|null $condition,
+        BindParamList $bindParams
+    ): ?string {
         if (null === $condition) {
             return null;
         }

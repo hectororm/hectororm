@@ -45,7 +45,7 @@ class SelectTest extends TestCase
         $select->from('foo', 'f');
 
         $this->assertEquals(
-            'SELECT * FROM foo AS f',
+            'SELECT * FROM foo AS `f`',
             $select->getStatement($binds)
         );
         $this->assertEmpty($binds);
@@ -59,7 +59,7 @@ class SelectTest extends TestCase
         $select->distinct(true);
 
         $this->assertEquals(
-            'SELECT DISTINCT * FROM foo AS f',
+            'SELECT DISTINCT * FROM foo AS `f`',
             $select->getStatement($binds)
         );
         $this->assertEmpty($binds);
@@ -67,7 +67,7 @@ class SelectTest extends TestCase
         $select->distinct(false);
 
         $this->assertEquals(
-            'SELECT * FROM foo AS f',
+            'SELECT * FROM foo AS `f`',
             $select->getStatement($binds)
         );
         $this->assertEmpty($binds);
@@ -81,7 +81,7 @@ class SelectTest extends TestCase
         $select->leftJoin('bar', 'bar.bar_id = f.foo_id');
 
         $this->assertEquals(
-            'SELECT * FROM foo AS f LEFT JOIN bar ON ( bar.bar_id = f.foo_id )',
+            'SELECT * FROM foo AS `f` LEFT JOIN bar ON ( bar.bar_id = f.foo_id )',
             $select->getStatement($binds)
         );
         $this->assertEmpty($binds);
@@ -95,7 +95,7 @@ class SelectTest extends TestCase
         $select->columns('baz', 'qux');
 
         $this->assertEquals(
-            'SELECT baz, qux FROM foo AS f',
+            'SELECT baz, qux FROM foo AS `f`',
             $select->getStatement($binds)
         );
         $this->assertEmpty($binds);
@@ -109,7 +109,7 @@ class SelectTest extends TestCase
         $select->where('baz', '=', 'baz_value');
 
         $this->assertEquals(
-            'SELECT * FROM foo AS f WHERE baz = :_h_0',
+            'SELECT * FROM foo AS `f` WHERE baz = :_h_0',
             $select->getStatement($binds)
         );
         $this->assertEquals(
@@ -130,7 +130,7 @@ class SelectTest extends TestCase
             ->orWhere('bar.bar_column IS NULL');
 
         $this->assertEquals(
-            'SELECT * FROM foo AS f LEFT JOIN bar ON ( bar.bar_id = f.foo_id ) WHERE baz = :_h_0 AND bar.bar_column = TIME() OR bar.bar_column IS NULL',
+            'SELECT * FROM foo AS `f` LEFT JOIN bar ON ( bar.bar_id = f.foo_id ) WHERE baz = :_h_0 AND bar.bar_column = TIME() OR bar.bar_column IS NULL',
             $select->getStatement($binds)
         );
         $this->assertEquals(
@@ -167,7 +167,7 @@ class SelectTest extends TestCase
         $select->from('foo', 'f');
 
         $this->assertEquals(
-            '( SELECT * FROM foo AS f )',
+            '( SELECT * FROM foo AS `f` )',
             $select->getStatement($binds, true)
         );
         $this->assertEmpty($binds);

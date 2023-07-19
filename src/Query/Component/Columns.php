@@ -16,6 +16,7 @@ namespace Hector\Query\Component;
 
 use Countable;
 use Hector\Connection\Bind\BindParamList;
+use Hector\Query\Helper;
 use Hector\Query\StatementInterface;
 
 class Columns extends AbstractComponent implements Countable
@@ -40,7 +41,7 @@ class Columns extends AbstractComponent implements Countable
     {
         $this->columns[] = [
             'column' => $column,
-            'alias' => $alias,
+            'alias' => Helper::trim($alias),
         ];
     }
 
@@ -79,7 +80,7 @@ class Columns extends AbstractComponent implements Countable
                             return sprintf(
                                 '%s AS %s',
                                 rtrim($this->getSubStatement($column['column'], $bindParams)),
-                                $column['alias']
+                                Helper::quote($column['alias']),
                             );
                         }
 

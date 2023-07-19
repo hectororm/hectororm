@@ -47,7 +47,7 @@ class ColumnsTest extends TestCase
         $columns->column('foo', 'f');
         $binds = new BindParamList();
 
-        $this->assertEquals('foo AS f', $columns->getStatement($binds));
+        $this->assertEquals('foo AS `f`', $columns->getStatement($binds));
         $this->assertEmpty($binds);
     }
 
@@ -59,7 +59,7 @@ class ColumnsTest extends TestCase
         $binds = new BindParamList();
 
         $this->assertEquals(
-            'foo AS f, bar',
+            'foo AS `f`, bar',
             $columns->getStatement($binds)
         );
         $this->assertEmpty($binds);
@@ -92,7 +92,7 @@ class ColumnsTest extends TestCase
         $binds = new BindParamList();
 
         $this->assertEquals(
-            '( SELECT * FROM bar WHERE bar.qux = :_h_0 ) AS b, foo, baz',
+            '( SELECT * FROM bar WHERE bar.qux = :_h_0 ) AS `b`, foo, baz',
             $columns->getStatement($binds)
         );
         $this->assertEquals(

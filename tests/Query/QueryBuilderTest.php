@@ -90,7 +90,7 @@ class QueryBuilderTest extends TestCase
 
         $this->assertInstanceOf(QueryBuilder::class, $queryBuilder);
         $this->assertEquals(
-            'SELECT * FROM foo AS f',
+            'SELECT * FROM foo AS `f`',
             $reflectionMethod->invoke($queryBuilder)->getStatement($binds)
         );
         $this->assertEmpty($binds);
@@ -106,7 +106,7 @@ class QueryBuilderTest extends TestCase
         $this->assertInstanceOf(Select::class, $select);
         $this->assertInstanceOf(QueryBuilder::class, $queryBuilder);
         $this->assertEquals(
-            'SELECT DISTINCT * FROM foo AS f ORDER BY bar DESC',
+            'SELECT DISTINCT * FROM foo AS `f` ORDER BY bar DESC',
             $select->getStatement($binds)
         );
         $this->assertEmpty($binds);
@@ -206,7 +206,7 @@ class QueryBuilderTest extends TestCase
         $this->assertInstanceOf(Select::class, $select);
         $this->assertInstanceOf(QueryBuilder::class, $queryBuilder);
         $this->assertEquals(
-            'SELECT * FROM foo AS f ORDER BY bar DESC',
+            'SELECT * FROM foo AS `f` ORDER BY bar DESC',
             $select->getStatement($binds)
         );
         $this->assertEmpty($binds);
@@ -226,7 +226,7 @@ class QueryBuilderTest extends TestCase
         $this->assertInstanceOf(Select::class, $select);
         $this->assertInstanceOf(QueryBuilder::class, $queryBuilder);
         $this->assertEquals(
-            'SELECT COUNT(*) AS `count` FROM ( SELECT 1 FROM foo AS f ) AS countable',
+            'SELECT COUNT(*) AS `count` FROM ( SELECT 1 FROM foo AS `f` ) AS `countable`',
             $select->getStatement($binds)
         );
         $this->assertEmpty($binds);
@@ -244,7 +244,7 @@ class QueryBuilderTest extends TestCase
 
         $select = $queryBuilder->makeCount();
         $this->assertEquals(
-            'SELECT COUNT(*) AS `count` FROM ( SELECT 1 FROM foo AS f ) AS countable',
+            'SELECT COUNT(*) AS `count` FROM ( SELECT 1 FROM foo AS `f` ) AS `countable`',
             $select->getStatement($binds)
         );
         $this->assertEmpty($binds);
@@ -252,7 +252,7 @@ class QueryBuilderTest extends TestCase
         $queryBuilder->distinct();
         $select = $queryBuilder->makeCount();
         $this->assertEquals(
-            'SELECT COUNT(*) AS `count` FROM ( SELECT DISTINCT f.bar FROM foo AS f ) AS countable',
+            'SELECT COUNT(*) AS `count` FROM ( SELECT DISTINCT f.bar FROM foo AS `f` ) AS `countable`',
             $select->getStatement($binds)
         );
         $this->assertEmpty($binds);
@@ -273,7 +273,7 @@ class QueryBuilderTest extends TestCase
         $this->assertInstanceOf(Select::class, $select);
         $this->assertInstanceOf(QueryBuilder::class, $queryBuilder);
         $this->assertEquals(
-            'SELECT COUNT(*) AS `count` FROM ( SELECT f.bar FROM foo AS f HAVING f.bar = 1 ) AS countable',
+            'SELECT COUNT(*) AS `count` FROM ( SELECT f.bar FROM foo AS `f` HAVING f.bar = 1 ) AS `countable`',
             $select->getStatement($binds)
         );
         $this->assertEmpty($binds);
@@ -292,7 +292,7 @@ class QueryBuilderTest extends TestCase
         $this->assertInstanceOf(Select::class, $select);
         $this->assertInstanceOf(QueryBuilder::class, $queryBuilder);
         $this->assertEquals(
-            'SELECT COUNT(*) AS `count` FROM ( SELECT 1 FROM foo AS f GROUP BY foo ) AS countable',
+            'SELECT COUNT(*) AS `count` FROM ( SELECT 1 FROM foo AS `f` GROUP BY foo ) AS `countable`',
             $select->getStatement($binds)
         );
         $this->assertEmpty($binds);
@@ -309,7 +309,7 @@ class QueryBuilderTest extends TestCase
 
         $this->assertInstanceOf(Select::class, $select);
         $this->assertEquals(
-            'SELECT EXISTS( SELECT 1 FROM foo AS f WHERE f.bar = :_h_0 ) AS `exists`',
+            'SELECT EXISTS( SELECT 1 FROM foo AS `f` WHERE f.bar = :_h_0 ) AS `exists`',
             $select->getStatement($binds)
         );
         $this->assertEquals(
@@ -381,7 +381,7 @@ class QueryBuilderTest extends TestCase
 
         $this->assertInstanceOf(Update::class, $update);
         $this->assertEquals(
-            'UPDATE foo AS f SET bar = :_h_0',
+            'UPDATE foo AS `f` SET bar = :_h_0',
             $update->getStatement($binds)
         );
         $this->assertEquals(
