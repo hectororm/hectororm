@@ -17,8 +17,6 @@ namespace Hector\Query\Component;
 use Closure;
 use Countable;
 use Hector\Connection\Bind\BindParamList;
-use Hector\Query\Clause\Having;
-use Hector\Query\Clause\Where;
 use Hector\Query\Select;
 use Hector\Query\StatementInterface;
 
@@ -121,30 +119,8 @@ class Conditions extends AbstractComponent implements Countable
      */
     protected function getClosureArgs(): array
     {
-        $group = new class implements StatementInterface {
-            use Where;
-            use Having;
-
-            public function __construct()
-            {
-                $this->resetWhere();
-                $this->resetHaving();
-            }
-
-            /**
-             * @inheritDoc
-             */
-            public function getStatement(BindParamList $bindParams, bool $encapsulate = false): ?string
-            {
-                return
-                    $this->where->getStatement($bindParams, $encapsulate) .
-                    $this->having->getStatement($bindParams, $encapsulate);
-            }
-        };
-        $group->resetWhere();
-
         return [
-            $group,
+            new \Hector\Query\Statement\Conditions($this),
         ];
     }
 
