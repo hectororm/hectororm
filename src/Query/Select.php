@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace Hector\Query;
 
+use Closure;
 use Hector\Connection\Bind\BindParamList;
 use Hector\Query\Clause;
 use Hector\Query\Component;
@@ -37,7 +38,7 @@ class Select implements StatementInterface
     use Clause\Limit;
     use Component\EncapsulateHelperTrait;
 
-    protected bool $distinct = false;
+    protected bool|Closure $distinct = false;
 
     public function __construct(?BindParamList $binds = null)
     {
@@ -69,11 +70,11 @@ class Select implements StatementInterface
     /**
      * Distinct result.
      *
-     * @param bool $distinct
+     * @param bool|Closure $distinct
      *
      * @return static
      */
-    public function distinct(bool $distinct = true): static
+    public function distinct(bool|Closure $distinct = true): static
     {
         $this->distinct = $distinct;
 
@@ -87,14 +88,20 @@ class Select implements StatementInterface
     {
         $this->mergeBindParamsTo($bindParams);
 
+        $columnStr = $this->columns->getStatement($bindParams);
+        $whereStr = $this->where->getStatement($bindParams);
+        $havingStr = $this->having->getStatement($bindParams);
+        $groupStr = $this->group->getStatement($bindParams);
+        $orderStr = $this->order->getStatement($bindParams);
+        $limitStr = $this->limit->getStatement($bindParams);
+        $joinStr = $this->join->getStatement($bindParams);
+        $fromStr = $this->from->getStatement($bindParams);
+
         $str = 'SELECT';
 
-        if ($this->distinct) {
+        if ((true === $this->distinct || ($this->distinct instanceof Closure && true === ($this->distinct)()))) {
             $str .= ' DISTINCT';
         }
-
-        $fromStr = $this->from->getStatement($bindParams);
-        $columnStr = $this->columns->getStatement($bindParams);
 
         if (null == $fromStr && $columnStr === null) {
             return null;
@@ -103,22 +110,20 @@ class Select implements StatementInterface
         $str .= ' ' . ($columnStr ?? '*');
 
         if (null !== $fromStr) {
-            $str .= ' FROM ' . $fromStr . rtrim(' ' . ($this->join->getStatement($bindParams) ?? ''));
+            $str .= ' FROM ' . $fromStr . rtrim(' ' . ($joinStr ?? ''));
         }
 
-        $whereStr = $this->where->getStatement($bindParams);
         if (null !== $whereStr) {
             $str .= ' WHERE ' . $whereStr;
         }
 
-        $str .= rtrim(' ' . ($this->group->getStatement($bindParams) ?? ''));
+        $str .= rtrim(' ' . ($groupStr ?? ''));
 
-        $havingStr = $this->having->getStatement($bindParams);
         if (null !== $havingStr) {
             $str .= ' HAVING ' . $havingStr;
         }
-        $str .= rtrim(' ' . ($this->order->getStatement($bindParams) ?? ''));
-        $str .= rtrim(' ' . ($this->limit->getStatement($bindParams) ?? ''));
+        $str .= rtrim(' ' . ($orderStr ?? ''));
+        $str .= rtrim(' ' . ($limitStr ?? ''));
 
         return $this->encapsulate($str, $encapsulate);
     }

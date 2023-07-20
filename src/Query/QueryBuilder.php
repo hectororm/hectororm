@@ -136,7 +136,7 @@ class QueryBuilder implements StatementInterface
         $queryBuilder = clone $this;
 
         $select = new Select($this->getBindParams());
-        $select->distinct($this->distinct);
+        $select->distinct(fn() => $queryBuilder->distinct);
         $select->columns = $queryBuilder->columns;
         $select->from = $queryBuilder->from;
         $select->join = $queryBuilder->join;
