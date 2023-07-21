@@ -201,19 +201,18 @@ class ManyToMany extends Relationship
     /**
      * @inheritDoc
      */
-    public function addJoinToBuilder(Builder $builder, ?string $initialAlias = null): string
+    public function addJoinToBuilder(Builder $builder, string $alias, ?string $initialAlias = null): string
     {
         $sourceTable = $this->sourceEntity->getTable();
         $pivotTable = $this->resolvePivotTable($this->pivotTable);
         $targetTable = $this->targetEntity->getTable();
         $tableName = $targetTable->getFullName(true);
 
-        if (false === ($alias = $builder->join->getAlias($tableName))) {
-            $alias = 'alias' . ++Orm::$alias;
+        if (false === $builder->join->hasAlias($alias)) {
             $aliasPivot = 'pivot' . ++Orm::$alias;
 
             try {
-                $builder->innerJoin(
+                $builder->leftJoin(
                     $pivotTable->getFullName(true),
                     array_combine(
                         array_map(
@@ -226,7 +225,7 @@ class ManyToMany extends Relationship
                         ),
                     ),
                     $aliasPivot
-                )->innerJoin(
+                )->leftJoin(
                     $tableName,
                     array_combine(
                         array_map(

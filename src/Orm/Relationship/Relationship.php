@@ -22,6 +22,7 @@ use Hector\Orm\Exception\OrmException;
 use Hector\Orm\Exception\RelationException;
 use Hector\Orm\Orm;
 use Hector\Orm\Query\Builder;
+use Hector\Orm\Query\Component\Conditions;
 use Hector\Orm\Storage\EntityStorage;
 use Hector\Query\Clause;
 use Hector\Query\StatementInterface;
@@ -128,29 +129,43 @@ abstract class Relationship
      * Add join to builder.
      *
      * @param Builder $builder
+     * @param string $alias
      * @param string|null $initialAlias
      *
      * @return string Alias of join
      * @throws OrmException
      */
-    abstract public function addJoinToBuilder(Builder $builder, ?string $initialAlias = null): string;
+    abstract public function addJoinToBuilder(
+        Builder $builder,
+        string $alias,
+        ?string $initialAlias = null,
+    ): string;
 
     /**
      * Add condition to builder.
      *
      * @param Builder $builder
      * @param string $joinAlias
+     * @param string $link
      * @param string $column
      * @param string|StatementInterface|callback|null ...$condition
      *
      * @return void
      * @throws OrmException
      */
-    public function addConditionToBuilder(Builder $builder, string $joinAlias, string $column, ...$condition): void
-    {
+    public function addConditionToBuilder(
+        Builder|\Hector\Orm\Query\Statement\Conditions $builder,
+        string $joinAlias,
+        string $link,
+        string $column,
+        ...$condition
+    ): void {
         try {
             $targetTable = $this->targetEntity->getTable();
-            $builder->where($targetTable->getColumn($column)->getName(true, $joinAlias), ...$condition);
+            $builder->{match ($link) {
+                Conditions::LINK_OR => 'orWhere',
+                default => 'where',
+            }}($targetTable->getColumn($column)->getName(true, $joinAlias), ...$condition);
         } catch (SchemaException $exception) {
             throw new OrmException(
                 sprintf(

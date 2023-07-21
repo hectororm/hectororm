@@ -18,6 +18,7 @@ use Hector\Orm\Collection\LazyCollection;
 use Hector\Orm\Entity\Entity;
 use Hector\Orm\Exception\MapperException;
 use Hector\Orm\Exception\NotFoundException;
+use Hector\Orm\Orm;
 use Hector\Orm\Query\Builder;
 use Hector\Orm\Tests\AbstractTestCase;
 use Hector\Orm\Tests\Fake\Entity\Film;
@@ -336,5 +337,40 @@ class BuilderTest extends AbstractTestCase
         $total = $builder->count();
 
         $this->assertGreaterThan(0, $total);
+    }
+
+    public function testWhereWithNamedRelations()
+    {
+        Orm::$alias = 0;
+        $builder = new Builder(Film::class);
+        $builder->where('language.name', 'French');
+        $builder->orWhere('language.name', 'Italian');
+        $builder->where('original_language.name', 'French');
+
+        $this->assertEquals(
+            'SELECT DISTINCT `main`.`film_id`, `main`.`title`, `main`.`description`, `main`.`release_year`, `main`.`language_id`, `main`.`original_language_id`, `main`.`rental_duration`, `main`.`rental_rate`, `main`.`length`, `main`.`replacement_cost`, `main`.`rating`, `main`.`special_features`, `main`.`last_update` ' .
+            'FROM `sakila`.`film` AS `main` ' .
+            'LEFT JOIN `sakila`.`language` AS `language` ON ( `main`.`language_id` = `language`.`language_id` ) ' .
+            'LEFT JOIN `sakila`.`language` AS `original_language` ON ( `main`.`original_language_id` = `original_language`.`language_id` ) ' .
+            'WHERE `language`.`name` = :_h_0 OR `language`.`name` = :_h_1 AND `original_language`.`name` = :_h_2',
+            $builder->getStatement(new BindParamList()));
+    }
+
+    public function testEncapsuledWhereWithNamedRelations()
+    {
+        Orm::$alias = 0;
+        $builder = new Builder(Film::class);
+        $builder->where(function ($where) {
+            $where->where('language.name', 'French');
+            $where->orWhere('language.name', 'Italian');
+        });
+
+        $statement = $builder->getStatement(new BindParamList());
+        $this->assertEquals(
+            'SELECT DISTINCT `main`.`film_id`, `main`.`title`, `main`.`description`, `main`.`release_year`, `main`.`language_id`, `main`.`original_language_id`, `main`.`rental_duration`, `main`.`rental_rate`, `main`.`length`, `main`.`replacement_cost`, `main`.`rating`, `main`.`special_features`, `main`.`last_update` ' .
+            'FROM `sakila`.`film` AS `main` ' .
+            'LEFT JOIN `sakila`.`language` AS `language` ON ( `main`.`language_id` = `language`.`language_id` ) ' .
+            'WHERE ( `language`.`name` = :_h_0 OR `language`.`name` = :_h_1 )',
+            $statement);
     }
 }

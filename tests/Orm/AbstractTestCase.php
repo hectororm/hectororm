@@ -37,7 +37,7 @@ abstract class AbstractTestCase extends TestCase
         }
 
         $connection = new Connection(
-            dsn:    getenv('MYSQL_DSN') ?: throw new LogicException('Missing env variable "MYSQL_DSN" for tests'),
+            dsn: getenv('MYSQL_DSN') ?: throw new LogicException('Missing env variable "MYSQL_DSN" for tests'),
             logger: new Logger()
         );
 

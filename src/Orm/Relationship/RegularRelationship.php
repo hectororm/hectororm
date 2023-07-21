@@ -87,15 +87,18 @@ abstract class RegularRelationship extends Relationship
      * @inheritDoc
      * @throws SchemaException
      */
-    public function addJoinToBuilder(Builder $builder, ?string $initialAlias = null): string
-    {
+    public function addJoinToBuilder(
+        Builder $builder,
+        string $alias,
+        ?string $initialAlias = null,
+    ): string {
         $sourceTable = $this->sourceEntity->getTable();
         $targetTable = $this->targetEntity->getTable();
         $tableName = $targetTable->getFullName(true);
 
-        if (false === ($alias = $builder->join->getAlias($tableName))) {
-            $alias = 'alias' . ++Orm::$alias;
-            $builder->innerJoin(
+        if (false === $builder->join->hasAlias($alias)) {
+//            $alias = $this->getName() . ++Orm::$alias;
+            $builder->leftJoin(
                 $tableName,
                 array_combine(
                     array_map(

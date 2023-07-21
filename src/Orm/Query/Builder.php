@@ -22,6 +22,7 @@ use Hector\Orm\Exception\MapperException;
 use Hector\Orm\Exception\NotFoundException;
 use Hector\Orm\Exception\OrmException;
 use Hector\Orm\Orm;
+use Hector\Orm\Query\Component\Conditions;
 use Hector\Query\QueryBuilder;
 use Hector\Query\Statement\Row;
 use Hector\Query\Statement\SqlFunction;
@@ -72,6 +73,16 @@ class Builder extends QueryBuilder
 
         $table = $this->entityReflection->getTable();
         $this->from($table->getFullName(true), static::FROM_ALIAS);
+
+        return $this;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function resetWhere(): static
+    {
+        $this->where = new Conditions($this, $this->entityReflection);
 
         return $this;
     }
@@ -371,56 +382,5 @@ class Builder extends QueryBuilder
                 $offset += $limit;
             }
         } while (false === $collection->isEmpty());
-    }
-
-    /**
-     * @inheritDoc
-     * @throws OrmException
-     */
-    public function andWhere(...$condition): static
-    {
-        if (isset($condition[0]) && $this->isConditionOnRelationship($condition[0])) {
-            $conditionColumns = explode('.', $condition[0]);
-            $depth = count($conditionColumns) - 1;
-
-            if (!$this->entityReflection->getMapper()->getRelationships()->exists($conditionColumns[0])) {
-                return parent::andWhere(...$condition);
-            }
-
-            $i = 0;
-            $entityClass = $this->entityReflection->class;
-            $alias = static::FROM_ALIAS;
-            do {
-                $mapper = Orm::get()->getMapper($entityClass);
-                $relationship = $mapper->getRelationships()->get($conditionColumns[$i]);
-                $alias = $relationship->addJoinToBuilder($this, $alias);
-                $entityClass = $relationship->getTargetEntity();
-                $i++;
-            } while ($i < $depth);
-
-            $relationship->addConditionToBuilder($this, $alias, end($conditionColumns), ...array_slice($condition, 1));
-
-            $this->distinct(true);
-
-            return $this;
-        }
-
-        return parent::andWhere(...$condition);
-    }
-
-    /**
-     * Is condition on relationship?
-     *
-     * @param $condition
-     *
-     * @return bool
-     */
-    private function isConditionOnRelationship($condition): bool
-    {
-        if (!is_string($condition)) {
-            return false;
-        }
-
-        return preg_match('/^(\w+\.)+[\w`]+$/i', $condition) === 1;
     }
 }
