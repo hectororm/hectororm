@@ -40,7 +40,14 @@ class OneToMany extends RegularRelationship
 
         // Deduct columns
         if (empty($columns)) {
-            $columns = $this->sourceEntity->getTable()->getPrimaryIndex()->getColumnsName();
+            if (empty($columns = $this->sourceEntity->getTable()->getPrimaryIndex()?->getColumnsName())) {
+                throw new RelationException(sprintf(
+                    'Unable to deduct columns of entity "%s" for relation "%s"',
+                    $sourceEntity,
+                    $name,
+                ));
+            }
+
             $this->sourceColumns = $columns;
             $this->targetColumns = $columns;
         }

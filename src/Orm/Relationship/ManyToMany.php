@@ -68,16 +68,16 @@ class ManyToMany extends Relationship
                 $this->sourceEntity
                     ->getTable()
                     ->getPrimaryIndex()
-                    ->getColumnsName();
-            $this->pivotTargetColumns = $this->sourceColumns;
+                    ?->getColumnsName();
+            $this->pivotTargetColumns = $this->sourceColumns ?? [];
         }
         if (null === $columnsTo) {
             $this->pivotSourceColumns =
                 $this->targetEntity
                     ->getTable()
                     ->getPrimaryIndex()
-                    ->getColumnsName();
-            $this->targetColumns = $this->pivotSourceColumns;
+                    ?->getColumnsName();
+            $this->targetColumns = $this->pivotSourceColumns ?? [];
         }
 
         // Defined columns
