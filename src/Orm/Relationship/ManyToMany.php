@@ -64,19 +64,11 @@ class ManyToMany extends Relationship
 
         // Deduct default columns
         if (null === $columnsFrom) {
-            $this->sourceColumns =
-                $this->sourceEntity
-                    ->getTable()
-                    ->getPrimaryIndex()
-                    ?->getColumnsName();
+            $this->sourceColumns = $this->sourceEntity->getPrimaryIndex()?->getColumnsName();
             $this->pivotTargetColumns = $this->sourceColumns ?? [];
         }
         if (null === $columnsTo) {
-            $this->pivotSourceColumns =
-                $this->targetEntity
-                    ->getTable()
-                    ->getPrimaryIndex()
-                    ?->getColumnsName();
+            $this->pivotSourceColumns = $this->targetEntity->getPrimaryIndex()?->getColumnsName();
             $this->targetColumns = $this->pivotSourceColumns ?? [];
         }
 

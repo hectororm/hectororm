@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace Hector\Orm\Entity;
 
 use Exception;
+use Hector\DataTypes\Type\StringType;
 use Hector\DataTypes\Type\TypeInterface;
 use Hector\Orm\Assert\EntityAssert;
 use Hector\Orm\Attributes;
@@ -24,11 +25,13 @@ use Hector\Orm\Orm;
 use Hector\Orm\Storage\EntityStorage;
 use Hector\Schema\Exception\NotFoundException;
 use Hector\Schema\Exception\SchemaException;
+use Hector\Schema\Index;
 use Hector\Schema\Table;
 use ReflectionAttribute;
 use ReflectionClass;
 use ReflectionException;
 use ReflectionProperty;
+use UnexpectedValueException;
 
 /**
  * @property-read string|Entity $class Class of entity
@@ -53,6 +56,7 @@ class ReflectionEntity
     private string $table;
     private ?string $schema;
     private ?string $connection;
+    private ?array $primaryColumns = [];
     private array $types = [];
     private array $hidden = [];
 
@@ -99,6 +103,7 @@ class ReflectionEntity
             'schema' => $this->schema,
             'connection' => $this->connection
             ) = $this->retrieveTable();
+        $this->primaryColumns = $this->retrievePrimary();
         $this->types = $this->retrieveTypes();
         $this->hidden = $this->retrieveHidden();
     }
@@ -116,6 +121,7 @@ class ReflectionEntity
             'table' => $this->table,
             'schema' => $this->schema,
             'connection' => $this->connection,
+            'primaryColumns' => $this->primaryColumns,
             'types' => $this->types,
             'hidden' => $this->hidden,
         ];
@@ -135,6 +141,7 @@ class ReflectionEntity
         $this->table = $data['table'] ?? throw new OrmException('Unable to unserialize ReflectionEntity');
         $this->schema = $data['schema'] ?? null;
         $this->connection = $data['connection'] ?? null;
+        $this->primaryColumns = $data['primaryColumns'] ?? null;
         $this->types = $data['types'] ?? [];
         $this->hidden = $data['hidden'] ?? [];
     }
@@ -270,6 +277,31 @@ class ReflectionEntity
         ];
     }
 
+    /**
+     * Retrieve primary.
+     *
+     * @return string[]|null
+     * @throws OrmException
+     */
+    protected function retrievePrimary(): ?array
+    {
+        $primary = null;
+        $reflectionClass = $this->getClass();
+
+        do {
+            $attributes = $reflectionClass->getAttributes(
+                Attributes\Hidden::class,
+                ReflectionAttribute::IS_INSTANCEOF
+            );
+
+            foreach ($attributes as $attribute) {
+                $primary = array_merge($attribute->newInstance()->columns, $primary ?? []);
+            }
+        } while ($reflectionClass = $reflectionClass->getParentClass());
+
+        return $primary;
+    }
+
     ///////////////
     /// GETTERS ///
     ///////////////
@@ -402,6 +434,30 @@ class ReflectionEntity
     }
 
     /**
+     * Get primary index.
+     *
+     * @return Index|null
+     * @throws OrmException
+     */
+    public function getPrimaryIndex(): ?Index
+    {
+        if (null !== $this->primaryColumns) {
+            if (empty($this->primaryColumns)) {
+                return null;
+            }
+
+            return new Index(
+                Index::PRIMARY,
+                Index::PRIMARY,
+                $this->primaryColumns,
+                $this->getTable(),
+            );
+        }
+
+        return $this->getTable()->getPrimaryIndex();
+    }
+
+    /**
      * Get mapper.
      *
      * @return Mapper
@@ -437,7 +493,11 @@ class ReflectionEntity
                 return $this->types[$column];
             }
 
-            return Orm::get()->getTypes()->get($this->getTable()->getColumn($column)->getType());
+            try {
+                return Orm::get()->getTypes()->get($this->getTable()->getColumn($column)->getType());
+            } catch (UnexpectedValueException) {
+                return $this->types[$column] = new StringType();
+            }
         } catch (Exception $exception) {
             throw new OrmException(sprintf('Type error for column %s', $column), previous: $exception);
         }

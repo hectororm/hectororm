@@ -98,13 +98,13 @@ abstract class AbstractMapper implements Mapper
      */
     public function getPrimaryValue(Entity $entity): ?array
     {
-        $primaryIndex = $this->reflection->getTable()->getPrimaryIndex();
+        $primaryIndex = $this->reflection->getPrimaryIndex();
 
         if (null === $primaryIndex) {
             return null;
         }
 
-        $collected = $this->collectEntity($entity, $this->reflection->getTable()->getPrimaryIndex()->getColumnsName());
+        $collected = $this->collectEntity($entity, $this->reflection->getPrimaryIndex()->getColumnsName());
 
         return $collected ?: null;
     }
@@ -126,7 +126,7 @@ abstract class AbstractMapper implements Mapper
         return md5(
             implode(
                 "\0",
-                $this->collectEntity($entity, $this->reflection->getTable()->getPrimaryIndex()->getColumnsName())
+                $this->collectEntity($entity, $this->reflection->getPrimaryIndex()->getColumnsName())
             )
         );
     }
@@ -275,11 +275,17 @@ abstract class AbstractMapper implements Mapper
         $entity->getRelated()->linkForeign();
 
         $values = $this->collectEntity($entity, $this->getEntityAlteration($entity));
-        $primaryValue = $this->getPrimaryValue($entity) ?: $this->reflection->getHectorData($entity)->get('original');
+        $noPrimary = false;
+        if (null === ($primaryValue = $this->getPrimaryValue($entity))) {
+            $primaryValue = $this->reflection->getHectorData($entity)->get('original');
+            $noPrimary = true;
+        }
 
         if (count($values) > 0) {
             // Separate values of primary value
-            $values = array_diff_key($values, array_fill_keys(array_keys($primaryValue), null));
+            if (false === $noPrimary) {
+                $values = array_diff_key($values, array_fill_keys(array_keys($primaryValue), null));
+            }
 
             $nbAffected =
                 $entity::query()
@@ -416,7 +422,7 @@ abstract class AbstractMapper implements Mapper
     private function extractPrimaryValue(array $values): array
     {
         $values = array_filter($values, fn($value) => null !== $value);
-        $primaryColumns = $this->reflection->getTable()->getPrimaryIndex()?->getColumnsName();
+        $primaryColumns = $this->reflection->getPrimaryIndex()?->getColumnsName();
 
         if (null === $primaryColumns) {
             return [];

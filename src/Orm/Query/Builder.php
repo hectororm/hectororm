@@ -222,13 +222,12 @@ class Builder extends QueryBuilder
     private function findQuery(mixed ...$primaryValues): void
     {
         $table = $this->entityReflection->getTable();
-
-        $primaryIndex = $table->getPrimaryIndex();
+        $primaryIndex = $this->entityReflection->getPrimaryIndex();
         if (null === $primaryIndex) {
             throw new MapperException(sprintf('No primary key on "%s" table', $table->getFullName()));
         }
 
-        $primaryColumns = $table->getPrimaryIndex()->getColumnsName(true, static::FROM_ALIAS);
+        $primaryColumns = $primaryIndex->getColumnsName(true, static::FROM_ALIAS);
         $nbColumns = count($primaryColumns);
 
         foreach ($primaryValues as &$primaryValue) {
