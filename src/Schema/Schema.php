@@ -30,6 +30,7 @@ class Schema implements Countable, IteratorAggregate
         private string $name,
         private string $charset,
         private ?string $collation = null,
+        private ?string $alias = null,
         private array $tables = [],
         private ?SchemaContainer $container = null,
     ) {
@@ -46,6 +47,7 @@ class Schema implements Countable, IteratorAggregate
         return [
             'connection' => $this->connection,
             'name' => $this->name,
+            'alias' => $this->alias,
             'charset' => $this->charset,
             'collation' => $this->collation,
             'tables' => $this->tables,
@@ -61,6 +63,7 @@ class Schema implements Countable, IteratorAggregate
     {
         $this->connection = $data['connection'];
         $this->name = $data['name'];
+        $this->alias = $data['alias'] ?? null;
         $this->charset = $data['charset'];
         $this->collation = $data['collation'];
         $this->tables = $data['tables'];
@@ -117,6 +120,16 @@ class Schema implements Countable, IteratorAggregate
         }
 
         return $this->name;
+    }
+
+    /**
+     * Get alias.
+     *
+     * @return string|null
+     */
+    public function getAlias(): ?string
+    {
+        return $this->alias;
     }
 
     /**

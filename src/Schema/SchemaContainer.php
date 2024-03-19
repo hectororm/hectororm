@@ -97,6 +97,10 @@ class SchemaContainer implements SchemaContainerInterface
             if ($schema->getName() === $name) {
                 return true;
             }
+
+            if ($schema->getAlias() === $name) {
+                return true;
+            }
         }
 
         return false;
@@ -110,6 +114,10 @@ class SchemaContainer implements SchemaContainerInterface
         /** @var Schema $schema */
         foreach ($this->getSchemas($connection) as $schema) {
             if ($schema->getName() === $name) {
+                return $schema;
+            }
+
+            if ($schema->getAlias() === $name) {
                 return $schema;
             }
         }

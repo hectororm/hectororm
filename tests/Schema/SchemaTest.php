@@ -13,6 +13,7 @@
 namespace Hector\Schema\Tests;
 
 use Hector\Schema\Exception\NotFoundException;
+use Hector\Schema\Schema;
 use Hector\Schema\SchemaContainer;
 use Hector\Schema\Table;
 
@@ -59,6 +60,20 @@ class SchemaTest extends AbstractTestCase
         $schema = $this->getSchemaContainer()->getSchema('sakila');
 
         $this->assertEquals('`sakila`', $schema->getName(true));
+    }
+
+    public function testGetAlias()
+    {
+        $schema = $this->getSchemaContainer()->getSchema('sakila');
+
+        $this->assertNull($schema->getAlias());
+    }
+
+    public function testGetAlias_defined()
+    {
+        $schema = new Schema(connection: 'test', name: 'table_name', charset: 'utf8mb4', alias: 'myAlias');
+
+        $this->assertEquals('myAlias', $schema->getAlias());
     }
 
     public function testGetCharset()
