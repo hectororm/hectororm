@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace Hector\Query;
 
+use Closure;
 use Hector\Connection\Bind\BindParamList;
 
 class Insert implements StatementInterface
@@ -25,6 +26,7 @@ class Insert implements StatementInterface
     use Component\EncapsulateHelperTrait;
 
     protected ?Select $select;
+    protected bool|Closure $ignore = false;
 
     public function __construct(?BindParamList $binds = null)
     {
@@ -45,6 +47,7 @@ class Insert implements StatementInterface
             ->resetFrom()
             ->resetAssignments()
             ->resetSelect();
+        is_bool($this->ignore) && $this->ignore = false;
 
         return $this;
     }
@@ -76,6 +79,20 @@ class Insert implements StatementInterface
     }
 
     /**
+     * Ignore duplicate.
+     *
+     * @param bool|Closure $ignore
+     *
+     * @return static
+     */
+    public function ignore(bool|Closure $ignore = true): static
+    {
+        $this->ignore = $ignore;
+
+        return $this;
+    }
+
+    /**
      * @inheritDoc
      */
     public function getStatement(BindParamList $bindParams, bool $encapsulate = false): ?string
@@ -89,7 +106,13 @@ class Insert implements StatementInterface
             return null;
         }
 
-        $str = 'INSERT INTO ' . ($this->from->getStatement($bindParams) ?? '') . ' ' .
+        $str = 'INSERT';
+
+        if ((true === $this->ignore || ($this->ignore instanceof Closure && true === ($this->ignore)()))) {
+            $str .= ' IGNORE';
+        }
+
+        $str .= ' INTO ' . ($this->from->getStatement($bindParams) ?? '') . ' ' .
             (false === $this->assignments->isStatement() ? 'SET ' : '') .
             $assignmentsStr;
 

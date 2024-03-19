@@ -57,6 +57,24 @@ class InsertTest extends TestCase
         );
     }
 
+    public function testGetStatementWithIgnore()
+    {
+        $insert = new Insert();
+        $binds = new BindParamList();
+        $insert->from('`foo`');
+        $insert->assign('`bar`', 'value_bar');
+        $insert->ignore(true);
+
+        $this->assertEquals(
+            'INSERT IGNORE INTO `foo` SET `bar` = :_h_0',
+            $insert->getStatement($binds)
+        );
+        $this->assertEquals(
+            ['_h_0' => 'value_bar'],
+            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+        );
+    }
+
     public function testGetStatementWithSelect()
     {
         $insert = new Insert();
