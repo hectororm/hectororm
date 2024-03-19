@@ -14,7 +14,6 @@ declare(strict_types=1);
 
 namespace Hector\DataTypes\Type;
 
-use Hector\DataTypes\Exception\ValueException;
 use Hector\DataTypes\ExpectedType;
 
 interface TypeInterface
@@ -52,6 +51,16 @@ interface TypeInterface
      * @return mixed
      */
     public function toSchema(mixed $value, ?ExpectedType $expected = null): mixed;
+
+    /**
+     * Compare data.
+     *
+     * @param mixed $entityData
+     * @param mixed $schemaData
+     *
+     * @return bool TRUE if equals, FALSE else
+     */
+    public function equals(mixed $entityData, mixed $schemaData): bool;
 
     /**
      * Get binding type.

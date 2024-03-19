@@ -138,4 +138,13 @@ class JsonTypeTest extends TestCase
 
         $type->toSchema($fakeObject);
     }
+
+    public function testEquals()
+    {
+        $type = new JsonType();
+
+        $this->assertTrue($type->equals('{"foo":"value","bar":"valueb","baz":2}', '{"foo":"value", "bar": "valueb", "baz": 2}'));
+        $this->assertTrue($type->equals('{"foo":"value","bar":"valueb","baz":2}', '{"foo":"value","bar": "valueb","baz": 2}'));
+        $this->assertFalse($type->equals('{"foo":"value","baz":2}', '{"foo":"value","bar": "valueb","baz": 2}'));
+    }
 }

@@ -64,4 +64,19 @@ class SetType extends AbstractType
 
         return implode(',', $value);
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function equals(mixed $entityData, mixed $schemaData): bool
+    {
+        if (parent::equals($entityData, $schemaData)) {
+            return true;
+        }
+
+        $entityData = explode(',', $entityData ?? '');
+        $schemaData = explode(',', $schemaData ?? '');
+
+        return empty(array_diff($entityData, $schemaData)) && empty(array_diff($schemaData, $entityData));
+    }
 }

@@ -80,4 +80,12 @@ class JsonType extends AbstractType
             throw ValueException::castError($this, $e);
         }
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function equals(mixed $entityData, mixed $schemaData): bool
+    {
+        return $entityData == json_encode(json_decode($schemaData));
+    }
 }

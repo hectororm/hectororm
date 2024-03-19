@@ -104,4 +104,13 @@ class SetTypeTest extends TestCase
 
         $type->toSchema($fakeObject);
     }
+
+    public function testEquals()
+    {
+        $type = new SetType();
+
+        $this->assertTrue($type->equals('foo,bar,baz', 'baz,foo,bar'));
+        $this->assertFalse($type->equals('foo,bar,baz', 'foo,bar'));
+        $this->assertFalse($type->equals('foo,baz', 'foo,bar,baz'));
+    }
 }

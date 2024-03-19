@@ -37,6 +37,14 @@ abstract class AbstractType implements TypeInterface
     /**
      * @inheritDoc
      */
+    public function equals(mixed $entityData, mixed $schemaData): bool
+    {
+        return $entityData == $schemaData;
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function getBindingType(): ?int
     {
         return null;
