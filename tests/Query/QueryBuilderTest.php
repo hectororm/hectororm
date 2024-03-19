@@ -370,6 +370,23 @@ class QueryBuilderTest extends TestCase
         );
     }
 
+    public function testIgnore()
+    {
+        $queryBuilder = new FakeQueryBuilder($this->getConnection());
+        $queryBuilder->ignore(true);
+        $queryBuilder->from('foo', 'f');
+        $queryBuilder->insert((new Select())->from('baz')->where('bar', 'bar_value'));
+
+        $this->assertEquals(
+            'INSERT IGNORE INTO foo SELECT * FROM baz WHERE bar = :_h_0',
+            $queryBuilder->statement
+        );
+        $this->assertEquals(
+            ['_h_0' => 'bar_value'],
+            array_map(fn(BindParam $bind) => $bind->getValue(), $queryBuilder->input_parameters)
+        );
+    }
+
     public function testMakeUpdate()
     {
         $queryBuilder = new FakeQueryBuilder($this->getConnection());
