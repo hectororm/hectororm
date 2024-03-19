@@ -63,6 +63,7 @@ class Select implements StatementInterface
             ->resetHaving()
             ->resetOrder()
             ->resetLimit();
+        is_bool($this->distinct) && $this->distinct = false;
 
         return $this;
     }
