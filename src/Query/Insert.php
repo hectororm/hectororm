@@ -79,7 +79,7 @@ class Insert implements StatementInterface
     }
 
     /**
-     * Ignore duplicate.
+     * Ignore duplicates.
      *
      * @param bool|Closure $ignore
      *

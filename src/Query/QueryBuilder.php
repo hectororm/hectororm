@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace Hector\Query;
 
+use Closure;
 use Generator;
 use Hector\Connection\Bind\BindParamList;
 use Hector\Connection\Connection;
@@ -33,6 +34,7 @@ class QueryBuilder implements StatementInterface
     use Clause\Limit;
 
     protected bool $distinct = false;
+    protected bool $ignore = false;
 
     /**
      * QueryBuilder constructor.
@@ -89,6 +91,8 @@ class QueryBuilder implements StatementInterface
             ->resetHaving()
             ->resetOrder()
             ->resetLimit();
+        $this->distinct = false;
+        $this->ignore = false;
 
         return $this;
     }
@@ -103,6 +107,20 @@ class QueryBuilder implements StatementInterface
     public function distinct(bool $distinct = true): static
     {
         $this->distinct = $distinct;
+
+        return $this;
+    }
+
+    /**
+     * Ignore duplicates.
+     *
+     * @param bool $ignore
+     *
+     * @return static
+     */
+    public function ignore(bool $ignore = true): static
+    {
+        $this->ignore = $ignore;
 
         return $this;
     }
@@ -204,7 +222,10 @@ class QueryBuilder implements StatementInterface
      */
     protected function makeInsert(): Insert
     {
+        $queryBuilder = clone $this;
+
         $insert = new Insert($this->getBindParams());
+        $insert->ignore(fn() => $queryBuilder->ignore);
         $insert->assignments = clone $this->assignments;
         $insert->from = clone $this->from;
         $insert->from->useAlias(false);
