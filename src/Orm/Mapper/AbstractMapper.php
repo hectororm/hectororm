@@ -355,12 +355,25 @@ abstract class AbstractMapper implements Mapper
             return $columns;
         }
 
-        $originalData = array_intersect_key($originalData, array_fill_keys($columns, null));
+        $diff = [];
+        foreach ($columns as $column) {
+            $columnDiff = $this->reflection->getType($column)?->equals($currentData[$column], $originalData[$column]);
 
-        ksort($originalData);
-        ksort($currentData);
+            if (false === $columnDiff) {
+                $diff[] = $column;
+                continue;
+            }
 
-        return array_keys(array_diff_assoc($originalData, $currentData));
+            if (true === $columnDiff) {
+                continue;
+            }
+
+            if ($currentData[$column] != $originalData[$column]) {
+                $diff[] = $column;
+            }
+        }
+
+        return $diff;
     }
 
     ///////////////
