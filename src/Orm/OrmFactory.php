@@ -20,6 +20,7 @@ use Hector\Connection\Log\Logger;
 use Hector\Orm\Exception\OrmException;
 use Hector\Schema\Exception\SchemaException;
 use Hector\Schema\Generator\MySQL;
+use Hector\Schema\Schema;
 use Hector\Schema\SchemaContainer;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\SimpleCache\CacheInterface;
@@ -56,6 +57,29 @@ class OrmFactory
             }
 
             $schemaContainer = static::schemaContainer($connection, ...$options['schemas']);
+
+            if (array_key_exists('aliases', $options) && is_array($options['aliases'])) {
+                $schemaContainer = new SchemaContainer(
+                    array_map(
+                        function (Schema $schema) use ($options) {
+                            if (false === array_key_exists($schema->getName(), $options['aliases'])) {
+                                return $schema;
+                            }
+
+                            return new Schema(
+                                connection: $schema->getConnection(),
+                                name: $schema->getName(),
+                                alias: (string)$options['aliases'][$schema->getName()],
+                                charset: $schema->getCharset(),
+                                collation: $schema->getCollation(),
+                                tables: iterator_to_array($schema->getTables()),
+                            );
+                        },
+                        iterator_to_array($schemaContainer->getSchemas()),
+                    )
+                );
+            }
+
             $cache->set(static::CACHE_ORM_KEY, $schemaContainer);
         }
 
