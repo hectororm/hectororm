@@ -86,6 +86,14 @@ class JsonType extends AbstractType
      */
     public function equals(mixed $entityData, mixed $schemaData): bool
     {
+        if (parent::equals($entityData, $schemaData)) {
+            return true;
+        }
+
+        if (null === $schemaData) {
+            return empty($entityData);
+        }
+
         return $entityData == json_encode(json_decode($schemaData));
     }
 }

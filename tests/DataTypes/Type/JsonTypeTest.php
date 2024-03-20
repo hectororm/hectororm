@@ -144,7 +144,11 @@ class JsonTypeTest extends TestCase
         $type = new JsonType();
 
         $this->assertTrue($type->equals('{"foo":"value","bar":"valueb","baz":2}', '{"foo":"value", "bar": "valueb", "baz": 2}'));
+        $this->assertTrue($type->equals('', null));
+        $this->assertTrue($type->equals(null, null));
         $this->assertTrue($type->equals('{"foo":"value","bar":"valueb","baz":2}', '{"foo":"value","bar": "valueb","baz": 2}'));
         $this->assertFalse($type->equals('{"foo":"value","baz":2}', '{"foo":"value","bar": "valueb","baz": 2}'));
+        $this->assertFalse($type->equals('{"foo":"value","baz":2}', null));
+        $this->assertFalse($type->equals('{"foo":"value","baz":2}', ''));
     }
 }
