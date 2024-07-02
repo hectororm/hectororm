@@ -102,4 +102,12 @@ class StringTypeTest extends TestCase
 
         $this->assertEquals('foo', $type->toSchema($object));
     }
+
+    public function testToSchemaWithMaxLength()
+    {
+        $type = new StringType(maxlength: 6);
+
+        $this->assertSame('foo ba', $type->toSchema('foo bar baz'));
+        $this->assertSame('foo', $type->toSchema('foo'));
+    }
 }

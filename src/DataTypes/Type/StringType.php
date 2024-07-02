@@ -21,6 +21,12 @@ use Stringable;
 
 class StringType extends AbstractType
 {
+    public function __construct(
+        protected ?int $maxlength = null,
+        protected ?string $encoding = null,
+    ) {
+    }
+
     /**
      * @inheritDoc
      */
@@ -56,6 +62,15 @@ class StringType extends AbstractType
             }
 
             throw ValueException::castError($this);
+        }
+
+        if (null !== $this->maxlength) {
+            return mb_substr(
+                (string)$value,
+                0,
+                $this->maxlength,
+                $this->encoding,
+            );
         }
 
         return (string)$value;
