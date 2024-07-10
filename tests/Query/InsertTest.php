@@ -48,7 +48,7 @@ class InsertTest extends TestCase
         $insert->assign('`bar`', 'value_bar');
 
         $this->assertEquals(
-            'INSERT INTO `foo` SET `bar` = :_h_0',
+            'INSERT INTO `foo` ( `bar` ) VALUES ( :_h_0 )',
             $insert->getStatement($binds)
         );
         $this->assertEquals(
@@ -66,7 +66,7 @@ class InsertTest extends TestCase
         $insert->ignore(true);
 
         $this->assertEquals(
-            'INSERT IGNORE INTO `foo` SET `bar` = :_h_0',
+            'INSERT IGNORE INTO `foo` ( `bar` ) VALUES ( :_h_0 )',
             $insert->getStatement($binds)
         );
         $this->assertEquals(
@@ -107,7 +107,7 @@ class InsertTest extends TestCase
         );
 
         $this->assertEquals(
-            'INSERT INTO `foo` SET `bar` = :_h_0, foo = CURRENT_TIMESTAMP(), baz = :_h_1, `qux` = NOW()',
+            'INSERT INTO `foo` ( `bar`, foo, baz, `qux` ) VALUES ( :_h_0, CURRENT_TIMESTAMP(), :_h_1, NOW() )',
             $insert->getStatement($binds)
         );
         $this->assertEquals(
@@ -124,7 +124,7 @@ class InsertTest extends TestCase
         $insert->assign('`bar`', 'value_bar');
 
         $this->assertEquals(
-            '( INSERT INTO `foo` SET `bar` = :_h_0 )',
+            '( INSERT INTO `foo` ( `bar` ) VALUES ( :_h_0 ) )',
             $insert->getStatement($binds, true)
         );
         $this->assertEquals(

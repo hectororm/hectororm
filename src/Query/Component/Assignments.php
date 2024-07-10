@@ -19,7 +19,15 @@ use Hector\Query\StatementInterface;
 
 class Assignments extends AbstractComponent
 {
-    private array|StatementInterface $assignments = [];
+    protected array|StatementInterface $assignments = [];
+
+    public static function createFromAssignments(Assignments $assignments, mixed $builder = null): static
+    {
+        $component = new static($builder);
+        $component->assignments = $assignments->assignments;
+
+        return $component;
+    }
 
     /**
      * Is statement assignment.
@@ -78,29 +86,6 @@ class Assignments extends AbstractComponent
      */
     public function getStatement(BindParamList $bindParams, bool $encapsulate = false): ?string
     {
-        if ($this->assignments instanceof StatementInterface) {
-            return $this->assignments->getStatement($bindParams, $encapsulate);
-        }
-
-        return $this->encapsulate(
-            implode(
-                ', ',
-                array_map(
-                    function ($assignment) use (&$bindParams) {
-                        if (!array_key_exists('value', $assignment)) {
-                            return $this->getSubStatement($assignment['column'], $bindParams);
-                        }
-
-                        return sprintf(
-                            '%s = %s',
-                            $this->getSubStatement($assignment['column'], $bindParams),
-                            $this->getSubStatementValue($assignment['value'], $bindParams)
-                        );
-                    },
-                    $this->assignments
-                )
-            ),
-            $encapsulate
-        );
+        return null;
     }
 }

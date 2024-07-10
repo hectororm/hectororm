@@ -14,16 +14,16 @@ namespace Hector\Query\Tests\Component;
 
 use Hector\Connection\Bind\BindParam;
 use Hector\Connection\Bind\BindParamList;
-use Hector\Query\Component\Assignments;
+use Hector\Query\Component\UpdateAssignments;
 use Hector\Query\Select;
 use Hector\Query\Statement\Raw;
 use PHPUnit\Framework\TestCase;
 
-class AssignmentsTest extends TestCase
+class UpdateAssignmentsTest extends TestCase
 {
     public function testGetStatement()
     {
-        $assignments = new Assignments();
+        $assignments = new UpdateAssignments();
         $binds = new BindParamList();
 
         $this->assertNull($assignments->getStatement($binds));
@@ -32,7 +32,7 @@ class AssignmentsTest extends TestCase
 
     public function testAssignmentOne()
     {
-        $assignments = new Assignments();
+        $assignments = new UpdateAssignments();
         $assignments->assignment('foo', 'value');
         $binds = new BindParamList();
 
@@ -48,7 +48,7 @@ class AssignmentsTest extends TestCase
 
     public function testAssignmentTwo()
     {
-        $assignments = new Assignments();
+        $assignments = new UpdateAssignments();
         $assignments->assignment('foo', 'value');
         $assignments->assignment('bar', 'value2');
         $binds = new BindParamList();
@@ -65,7 +65,7 @@ class AssignmentsTest extends TestCase
 
     public function testAssignments()
     {
-        $assignments = new Assignments();
+        $assignments = new UpdateAssignments();
         $assignments->assignment('foo', 'value');
         $assignments->assignments(
             [
@@ -87,7 +87,7 @@ class AssignmentsTest extends TestCase
 
     public function testAssignStatement()
     {
-        $assignments = new Assignments();
+        $assignments = new UpdateAssignments();
         $assignments->assignments(
             (new Select())
                 ->from('bar')
@@ -107,7 +107,7 @@ class AssignmentsTest extends TestCase
 
     public function testAssignNull()
     {
-        $assignments = new Assignments();
+        $assignments = new UpdateAssignments();
         $assignments->assignments(
             [
                 '`foo`' => null,

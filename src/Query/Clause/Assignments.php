@@ -16,7 +16,9 @@ namespace Hector\Query\Clause;
 
 use Closure;
 use Hector\Query\Component;
+use Hector\Query\Insert;
 use Hector\Query\StatementInterface;
+use Hector\Query\Update;
 
 trait Assignments
 {
@@ -29,7 +31,11 @@ trait Assignments
      */
     public function resetAssignments(): static
     {
-        $this->assignments = new Component\Assignments($this);
+        $this->assignments = match (true) {
+            $this instanceof Insert => new Component\InsertAssignments($this),
+            $this instanceof Update => new Component\UpdateAssignments($this),
+            default => new Component\Assignments($this),
+        };
 
         return $this;
     }

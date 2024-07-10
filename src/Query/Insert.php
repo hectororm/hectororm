@@ -113,7 +113,6 @@ class Insert implements StatementInterface
         }
 
         $str .= ' INTO ' . ($this->from->getStatement($bindParams) ?? '') . ' ' .
-            (false === $this->assignments->isStatement() ? 'SET ' : '') .
             $assignmentsStr;
 
         return $this->encapsulate($str, $encapsulate);
