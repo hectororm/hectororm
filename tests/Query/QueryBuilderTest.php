@@ -318,26 +318,6 @@ class QueryBuilderTest extends TestCase
         );
     }
 
-    public function testMakeInsert()
-    {
-        $queryBuilder = new FakeQueryBuilder($this->getConnection());
-        $queryBuilder->from('foo', 'f');
-        $queryBuilder->assign('bar', 'bar_value');
-
-        $binds = new BindParamList();
-        $insert = $queryBuilder->makeInsert();
-
-        $this->assertInstanceOf(Insert::class, $insert);
-        $this->assertEquals(
-            'INSERT INTO foo SET bar = :_h_0',
-            $insert->getStatement($binds)
-        );
-        $this->assertEquals(
-            ['_h_0' => 'bar_value'],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
-        );
-    }
-
     public function testInsert()
     {
         $queryBuilder = new FakeQueryBuilder($this->getConnection());
@@ -345,7 +325,7 @@ class QueryBuilderTest extends TestCase
         $queryBuilder->insert(['bar' => 'bar_value']);
 
         $this->assertEquals(
-            'INSERT INTO foo SET bar = :_h_0',
+            'INSERT INTO foo ( bar ) VALUES ( :_h_0 )',
             $queryBuilder->statement
         );
         $this->assertEquals(
@@ -384,26 +364,6 @@ class QueryBuilderTest extends TestCase
         $this->assertEquals(
             ['_h_0' => 'bar_value'],
             array_map(fn(BindParam $bind) => $bind->getValue(), $queryBuilder->input_parameters)
-        );
-    }
-
-    public function testMakeUpdate()
-    {
-        $queryBuilder = new FakeQueryBuilder($this->getConnection());
-        $queryBuilder->from('foo', 'f');
-        $queryBuilder->assign('bar', 'bar_value');
-
-        $binds = new BindParamList();
-        $update = $queryBuilder->makeUpdate();
-
-        $this->assertInstanceOf(Update::class, $update);
-        $this->assertEquals(
-            'UPDATE foo AS `f` SET bar = :_h_0',
-            $update->getStatement($binds)
-        );
-        $this->assertEquals(
-            ['_h_0' => 'bar_value'],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 

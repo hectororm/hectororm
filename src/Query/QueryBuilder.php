@@ -14,16 +14,16 @@ declare(strict_types=1);
 
 namespace Hector\Query;
 
-use Closure;
 use Generator;
 use Hector\Connection\Bind\BindParamList;
 use Hector\Connection\Connection;
+use Hector\Query\Component\InsertAssignments;
+use Hector\Query\Component\UpdateAssignments;
 use Hector\Query\Statement\Exists;
 
 class QueryBuilder implements StatementInterface
 {
     use Clause\BindParams;
-    use Clause\Assignments;
     use Clause\Columns;
     use Clause\From;
     use Clause\Join;
@@ -52,7 +52,6 @@ class QueryBuilder implements StatementInterface
     public function __clone(): void
     {
         $this->binds = clone $this->binds;
-        $this->assignments = clone $this->assignments;
         $this->columns = clone $this->columns;
         $this->from = clone $this->from;
         $this->join = clone $this->join;
@@ -62,7 +61,6 @@ class QueryBuilder implements StatementInterface
         $this->order = clone $this->order;
         $this->limit = clone $this->limit;
 
-        $this->assignments->builder = $this;
         $this->columns->builder = $this;
         $this->from->builder = $this;
         $this->join->builder = $this;
@@ -82,7 +80,6 @@ class QueryBuilder implements StatementInterface
     {
         $this
             ->resetBindParams()
-            ->resetAssignments()
             ->resetColumns()
             ->resetFrom()
             ->resetJoin()
@@ -226,7 +223,6 @@ class QueryBuilder implements StatementInterface
 
         $insert = new Insert($this->getBindParams());
         $insert->ignore(fn() => $queryBuilder->ignore);
-        $insert->assignments = clone $this->assignments;
         $insert->from = clone $this->from;
         $insert->from->useAlias(false);
 
@@ -241,7 +237,6 @@ class QueryBuilder implements StatementInterface
     protected function makeUpdate(): Update
     {
         $update = new Update($this->getBindParams());
-        $update->assignments = clone $this->assignments;
         $update->from = clone $this->from;
         $update->where = clone $this->where;
         $update->order = clone $this->order;
