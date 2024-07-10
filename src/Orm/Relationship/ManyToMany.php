@@ -285,7 +285,7 @@ class ManyToMany extends Relationship
             $entities,
             fn(Entity $entity) => $entity->getRelated()->set(
                 $this->name,
-                new Collection([], $this->targetEntity->getName())
+                new Collection([])
             )
         );
 
@@ -347,10 +347,13 @@ class ManyToMany extends Relationship
         /** @var Entity $foreignEntity */
         foreach ($foreign as $foreignEntity) {
             // Pivot
-            $queryBuilder = $this->newQueryBuilder($entity, $foreignEntity);
+            $queryBuilder = $this->newQueryBuilder();
+            $queryBuilder->whereEquals($pivotData = $this->getPivotData($entity, $foreignEntity));
 
             if (!$queryBuilder->exists()) {
-                if ($queryBuilder->insert($foreignEntity->getPivot()?->getData() ?? []) !== 1) {
+                $pivotData = $foreignEntity->getPivot()?->getData() ?? $pivotData;
+
+                if (empty($pivotData) || $queryBuilder->insert($pivotData) !== 1) {
                     throw new RelationException(
                         sprintf(
                             'Error during creation of link between entities "%s" and "%s"',
@@ -362,12 +365,13 @@ class ManyToMany extends Relationship
                 continue;
             }
 
-            $queryBuilder->update($foreignEntity->getPivot()?->getData() ?? []);
+            $queryBuilder->update($pivotData);
         }
 
         // Detached
         foreach ($foreign->detached() as $detachedEntity) {
-            $queryBuilder = $this->newQueryBuilder($entity, $detachedEntity);
+            $queryBuilder = $this->newQueryBuilder();
+            $queryBuilder->whereEquals($this->getPivotData($entity, $detachedEntity));
             $queryBuilder->delete();
         }
         $foreign->clearDetached();
@@ -376,31 +380,38 @@ class ManyToMany extends Relationship
     /**
      * New query builder.
      *
-     * @param Entity $entity
-     * @param Entity $foreign
-     *
      * @return QueryBuilder
      * @throws OrmException
      */
-    private function newQueryBuilder(Entity $entity, Entity $foreign): QueryBuilder
+    private function newQueryBuilder(): QueryBuilder
     {
         $queryBuilder = new QueryBuilder(Orm::get()->getConnection($this->sourceEntity->connection));
         $queryBuilder->from($this->pivotTable);
 
+        return $queryBuilder;
+    }
+
+    /**
+     * Get pivot data for entities.
+     *
+     * @param Entity $entity
+     * @param Entity $foreign
+     *
+     * @return array
+     * @throws OrmException
+     * @throws RelationException
+     */
+    private function getPivotData(Entity $entity, Entity $foreign): array
+    {
         $sourceValues = $this->getEntityValues($this->sourceEntity, $this->getSourceColumns(), $entity);
         $sourceValues = reset($sourceValues);
         $targetValues = $this->getEntityValues($this->targetEntity, $this->getTargetColumns(), $foreign);
         $targetValues = reset($targetValues);
 
-        $queryBuilder->where(
-            new Row(...array_merge($this->getPivotTargetColumns(), $this->getPivotSourceColumns())),
-            '=',
-            ($sourceValues + $targetValues)
+        return array_merge(
+            array_combine($this->getPivotTargetColumns(), $sourceValues),
+            array_combine($this->getPivotSourceColumns(), $targetValues),
         );
-        $queryBuilder->assigns(array_combine($this->getPivotTargetColumns(), $sourceValues));
-        $queryBuilder->assigns(array_combine($this->getPivotSourceColumns(), $targetValues));
-
-        return $queryBuilder;
     }
 
     /**
