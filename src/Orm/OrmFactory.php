@@ -69,9 +69,9 @@ class OrmFactory
                             return new Schema(
                                 connection: $schema->getConnection(),
                                 name: $schema->getName(),
-                                alias: (string)$options['aliases'][$schema->getName()],
                                 charset: $schema->getCharset(),
                                 collation: $schema->getCollation(),
+                                alias: (string)$options['aliases'][$schema->getName()],
                                 tables: iterator_to_array($schema->getTables()),
                             );
                         },
@@ -102,6 +102,8 @@ class OrmFactory
 
         return new Connection(
             dsn: $options['dsn'],
+            username: $options['username'] ?? null,
+            password: $options['password'] ?? null,
             readDsn: $options['read_dsn'] ?? null,
             name: $options['name'] ?? Connection::DEFAULT_NAME,
             logger: ($options['log'] ?? false) ? new Logger() : null
