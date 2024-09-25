@@ -13,7 +13,6 @@
 namespace Hector\Connection\Tests;
 
 use Generator;
-use Hector\Connection\Bind\BindParam;
 use Hector\Connection\Connection;
 use Hector\Connection\Log\Logger;
 use PDO;
@@ -46,7 +45,7 @@ class ConnectionTest extends TestCase
 
     public function testGetName()
     {
-        $connection = new Connection('sqlite::memory:', null, 'connection');
+        $connection = new Connection('sqlite::memory:', name: 'connection');
 
         $this->assertEquals('connection', $connection->getName());
     }
@@ -77,7 +76,7 @@ class ConnectionTest extends TestCase
 
     public function testGetReadPdo()
     {
-        $connection = new Connection('sqlite::memory:', 'sqlite::memory:');
+        $connection = new Connection('sqlite::memory:', readDsn: 'sqlite::memory:');
 
         $this->assertInstanceOf(PDO::class, $connection->getReadPdo());
         $this->assertNotSame($connection->getPdo(), $connection->getReadPdo());
@@ -94,7 +93,7 @@ class ConnectionTest extends TestCase
 
     public function testGetReadPdoTransactionStarted()
     {
-        $connection = new Connection('sqlite::memory:', 'sqlite::memory:');
+        $connection = new Connection('sqlite::memory:', readDsn: 'sqlite::memory:');
 
         $this->assertNotSame($connection->getPdo(), $connection->getReadPdo());
 
@@ -369,7 +368,7 @@ class ConnectionTest extends TestCase
         $connection = new Connection('sqlite:' . realpath(__DIR__ . '/test.sqlite'));
         $result = $connection->fetchColumn('SELECT * FROM `table`;', [], 1);
 
-        $this->assertIsArray( $result);
+        $this->assertIsArray($result);
         $this->assertCount(2, $result);
         $this->assertEquals('Foo', $result[0]);
         $this->assertEquals('Bar', $result[1]);

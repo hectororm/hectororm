@@ -34,12 +34,16 @@ class Connection
      * Connection constructor.
      *
      * @param string $dsn
+     * @param string|null $username
+     * @param string|null $password
      * @param string|null $readDsn
      * @param string $name
      * @param Logger|null $logger
      */
     public function __construct(
         protected string $dsn,
+        private ?string $username = null,
+        private ?string $password = null,
         protected ?string $readDsn = null,
         protected string $name = self::DEFAULT_NAME,
         protected ?Logger $logger = null
@@ -55,6 +59,8 @@ class Connection
     {
         return [
             'dsn' => $this->dsn,
+            'username' => $this->username,
+            'password' => $this->password,
             'readDsn' => $this->readDsn,
             'name' => $this->name,
             'logger' => $this->logger,
@@ -69,6 +75,8 @@ class Connection
     public function __unserialize(array $data): void
     {
         $this->dsn = $data['dsn'];
+        $this->username = $data['username'];
+        $this->password = $data['password'];
         $this->readDsn = $data['readDsn'];
         $this->name = $data['name'];
         $this->logger = $data['logger'];
@@ -107,7 +115,7 @@ class Connection
 
         $logEntry = $this->logger?->newEntry($this->name, 'CONNECTION ' . $this->dsn, type: LogEntry::TYPE_CONNECTION);
 
-        $this->pdo = new PDO($this->dsn);
+        $this->pdo = new PDO($this->dsn, $this->username, $this->password);
 
         $logEntry?->end();
 
@@ -136,7 +144,7 @@ class Connection
 
         $logEntry = $this->logger?->newEntry($this->name, 'CONNECTION ' . $this->readDsn);
 
-        $this->readPdo = new PDO($this->readDsn);
+        $this->readPdo = new PDO($this->readDsn, $this->username, $this->password);
 
         $logEntry?->end();
 
@@ -259,7 +267,7 @@ class Connection
      * @param BindParamList|array $input_parameters
      *
      * @return int
-     * @see \PDOStatement::execute()
+     * @see PDOStatement::execute
      */
     public function execute(string $statement, BindParamList|array $input_parameters = []): int
     {
@@ -275,7 +283,7 @@ class Connection
      * @param BindParamList|array $input_parameters
      *
      * @return array<array>
-     * @see \PDOStatement::fetchAll()
+     * @see PDOStatement::fetchAll
      */
     public function fetchAll(string $statement, BindParamList|array $input_parameters = []): array
     {
@@ -308,7 +316,7 @@ class Connection
      * @param BindParamList|array $input_parameters
      *
      * @return array|null
-     * @see \PDOStatement::fetch()
+     * @see PDOStatement::fetch
      */
     public function fetchOne(string $statement, BindParamList|array $input_parameters = []): ?array
     {
@@ -325,7 +333,7 @@ class Connection
      * @param int $column
      *
      * @return array
-     * @see \PDOStatement::fetchColumn()
+     * @see PDOStatement::fetchColumn
      */
     public function fetchColumn(
         string $statement,
@@ -345,7 +353,7 @@ class Connection
      * @param int $column
      *
      * @return Generator
-     * @see \PDOStatement::fetchColumn()
+     * @see PDOStatement::fetchColumn
      */
     public function yieldColumn(
         string $statement,
