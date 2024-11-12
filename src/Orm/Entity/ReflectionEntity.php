@@ -290,7 +290,7 @@ class ReflectionEntity
 
         do {
             $attributes = $reflectionClass->getAttributes(
-                Attributes\Hidden::class,
+                Attributes\Primary::class,
                 ReflectionAttribute::IS_INSTANCEOF
             );
 
