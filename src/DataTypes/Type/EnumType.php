@@ -21,7 +21,7 @@ use ValueError;
 
 class EnumType extends AbstractType
 {
-    public function __construct(protected string $enum)
+    public function __construct(protected string $enum, protected bool $try = false)
     {
         if (false === is_a($this->enum, BackedEnum::class, true)) {
             throw new ValueError('Enum must be a PHP 8.1 backed enum type');
@@ -41,8 +41,14 @@ class EnumType extends AbstractType
                     throw ValueException::castError($this);
                 }
 
-                $value = $this->enum::from($value)->value;
-                settype($value, $expected->getName());
+                $value = $this->enum::{match ($this->try) {
+                    false => 'from',
+                    true => 'tryFrom',
+                }}($value)?->value;
+
+                if (null !== $value) {
+                    settype($value, $expected->getName());
+                }
 
                 return $value;
             }
@@ -52,7 +58,10 @@ class EnumType extends AbstractType
             }
         }
 
-        return $this->enum::from($value);
+        return $this->enum::{match ($this->try) {
+            false => 'from',
+            true => 'tryFrom',
+        }}($value);
     }
 
     /**
@@ -62,12 +71,15 @@ class EnumType extends AbstractType
     {
         if (false === is_a($value, $this->enum)) {
             if (is_scalar($value)) {
-                return $this->enum::from($value)->value;
+                return $this->enum::{match ($this->try) {
+                    false => 'from',
+                    true => 'tryFrom',
+                }}($value)?->value;
             }
 
             throw new ValueError(sprintf('Value must be an enum "%s"', $this->enum));
         }
 
-        return $value->value;
+        return $value?->value;
     }
 }

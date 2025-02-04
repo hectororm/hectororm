@@ -52,6 +52,21 @@ class EnumTypeTest extends TestCase
         $type->fromSchema(['foo']);
     }
 
+    public function testFromSchema_try()
+    {
+        $type = new EnumType(FakeEnumString::class, true);
+
+        $this->assertSame(FakeEnumString::FOO, $type->fromSchema('foo'));
+        $this->assertNull($type->fromSchema('qux'));
+    }
+
+    public function testFromSchema_noTry()
+    {
+        $this->expectException(ValueError::class);
+        $type = new EnumType(FakeEnumString::class, false);
+        $type->fromSchema('qux');
+    }
+
     public function testFromSchemaWithDeclaredTypeStringBuiltin()
     {
         $expectedType = new ExpectedType('string', false, true);
