@@ -21,6 +21,16 @@ use ReflectionProperty;
 
 class ConnectionTest extends TestCase
 {
+    public function testFromPdo()
+    {
+        $pdo = new PDO('sqlite::memory:');
+        $readPdo = new PDO('sqlite::memory:');
+        $connection = Connection::fromPdo($pdo, $readPdo);
+
+        $this->assertSame($pdo, $connection->getPdo());
+        $this->assertSame($readPdo, $connection->getReadPdo());
+    }
+
     public function testSerialization()
     {
         $connection = new Connection('sqlite::memory:');
@@ -107,6 +117,13 @@ class ConnectionTest extends TestCase
         $connection = new Connection('sqlite::memory:', 'sqlite::memory:');
 
         $this->assertEquals('sqlite', $connection->getDriverName());
+    }
+
+    public function testGetDriverInfo()
+    {
+        $connection = new Connection('sqlite::memory:', 'sqlite::memory:');
+
+        $this->assertEquals('sqlite', $connection->getDriverInfo()->getDriver());
     }
 
     public function testGetLastInsertId()

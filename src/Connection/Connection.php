@@ -17,6 +17,8 @@ namespace Hector\Connection;
 use Exception;
 use Generator;
 use Hector\Connection\Bind\BindParamList;
+use Hector\Connection\Driver\DriverInfo;
+use Hector\Connection\Exception\ConnectionException;
 use Hector\Connection\Log\LogEntry;
 use Hector\Connection\Log\Logger;
 use PDO;
@@ -28,6 +30,7 @@ class Connection
 
     private ?PDO $pdo = null;
     private ?PDO $readPdo = null;
+    private ?DriverInfo $driverInfo = null;
     private int $transactions = 0;
 
     /**
@@ -51,12 +54,38 @@ class Connection
     }
 
     /**
+     * Create connection from PDO objects.
+     *
+     * @param PDO $pdo
+     * @param PDO|null $readPdo
+     * @param string $name
+     * @param Logger|null $logger
+     *
+     * @return self
+     */
+    public static function fromPdo(
+        PDO $pdo,
+        ?PDO $readPdo = null,
+        string $name = self::DEFAULT_NAME,
+        ?Logger $logger = null,
+    ): self {
+        $connection = new self('PDO', name: $name, logger: $logger);
+        $connection->pdo = $pdo;
+        $connection->readPdo = $readPdo;
+
+        return $connection;
+    }
+
+    /**
      * PHP serialize method.
      *
      * @return array
+     * @throws ConnectionException
      */
     public function __serialize(): array
     {
+        $this->dsn === 'PDO' && throw new ConnectionException('Connection created from PDO');
+
         return [
             'dsn' => $this->dsn,
             'username' => $this->username,
@@ -155,10 +184,22 @@ class Connection
      * Get driver name.
      *
      * @return string
+     * @deprecated 1.0.0-beta8 No longer used by internal code and not recommended
+     * @see Connection::getDriverInfo()
      */
     public function getDriverName(): string
     {
-        return $this->getPdo()->getAttribute(PDO::ATTR_DRIVER_NAME);
+        return $this->getDriverInfo()->getDriver();
+    }
+
+    /**
+     * Get driver info.
+     *
+     * @return DriverInfo
+     */
+    public function getDriverInfo(): DriverInfo
+    {
+        return $this->driverInfo ??= DriverInfo::fromPDO($this->getPdo());
     }
 
     /**
