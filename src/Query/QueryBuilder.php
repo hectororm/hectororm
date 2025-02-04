@@ -17,8 +17,6 @@ namespace Hector\Query;
 use Generator;
 use Hector\Connection\Bind\BindParamList;
 use Hector\Connection\Connection;
-use Hector\Query\Component\InsertAssignments;
-use Hector\Query\Component\UpdateAssignments;
 use Hector\Query\Statement\Exists;
 
 class QueryBuilder implements StatementInterface
@@ -269,14 +267,18 @@ class QueryBuilder implements StatementInterface
     /**
      * Fetch one.
      *
+     * @param bool $lock Lock for update
+     *
      * @return array|null
      */
-    public function fetchOne(): ?array
+    public function fetchOne(bool $lock = false): ?array
     {
         $select = $this->makeSelect();
 
         $binds = new BindParamList();
         $statement = $select->getStatement($binds);
+
+        true === $lock && $statement = $this->addLockForUpdate($statement);
 
         return $this->connection->fetchOne($statement, $binds->getArrayCopy());
     }
@@ -284,14 +286,18 @@ class QueryBuilder implements StatementInterface
     /**
      * Fetch all.
      *
+     * @param bool $lock Lock for update
+     *
      * @return Generator<array>
      */
-    public function fetchAll(): Generator
+    public function fetchAll(bool $lock = false): Generator
     {
         $select = $this->makeSelect();
 
         $binds = new BindParamList();
         $statement = $select->getStatement($binds);
+
+        true === $lock && $statement = $this->addLockForUpdate($statement);
 
         yield from $this->connection->fetchAll($statement, $binds->getArrayCopy());
     }
@@ -300,17 +306,37 @@ class QueryBuilder implements StatementInterface
      * Fetch all.
      *
      * @param int $column
+     * @param bool $lock Lock for update
      *
      * @return Generator<mixed>
      */
-    public function fetchColumn(int $column = 0): Generator
+    public function fetchColumn(int $column = 0, bool $lock = false): Generator
     {
         $select = $this->makeSelect();
 
         $binds = new BindParamList();
         $statement = $select->getStatement($binds);
 
+        true === $lock && $statement = $this->addLockForUpdate($statement);
+
         yield from $this->connection->fetchColumn($statement, $binds->getArrayCopy(), $column);
+    }
+
+    /**
+     * Add lock on statement.
+     *
+     * @param string $statement
+     *
+     * @return string
+     */
+    private function addLockForUpdate(string $statement): string
+    {
+        return
+            $statement .
+            match ($this->connection->getDriverInfo()->getCapabilities()->hasLockAndSkip()) {
+                true => ' FOR UPDATE SKIP LOCKED',
+                false => '',
+            };
     }
 
     /**

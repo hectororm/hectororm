@@ -15,11 +15,10 @@ namespace Hector\Query\Tests;
 use Hector\Connection\Bind\BindParam;
 use Hector\Connection\Bind\BindParamList;
 use Hector\Connection\Connection;
+use Hector\Connection\Driver\DriverInfo;
 use Hector\Query\Delete;
-use Hector\Query\Insert;
 use Hector\Query\QueryBuilder;
 use Hector\Query\Select;
-use Hector\Query\Update;
 use PHPUnit\Framework\TestCase;
 
 class QueryBuilderTest extends TestCase
@@ -48,6 +47,28 @@ class QueryBuilderTest extends TestCase
 
         $this->assertNotNull($result);
         $this->assertArrayHasKey('table_id', $result);
+    }
+
+    public function testFetchOneWithLock()
+    {
+        $connection = new class('sqlite:' . realpath(__DIR__ . '/test.sqlite')) extends Connection {
+            public ?string $lastStatement = null;
+
+            public function getDriverInfo(): DriverInfo
+            {
+                return new DriverInfo('mysql', '8.0.0');
+            }
+
+            public function fetchOne(string $statement, BindParamList|array $input_parameters = []): ?array
+            {
+                $this->lastStatement = $statement;
+                return null;
+            }
+        };
+        $queryBuilder = new QueryBuilder($connection);
+        $queryBuilder->from('`table`')->columns('*')->fetchOne(true);
+
+        $this->assertEquals('SELECT * FROM `table` FOR UPDATE SKIP LOCKED', $connection->lastStatement);
     }
 
     public function testFetchAll()
