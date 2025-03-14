@@ -17,32 +17,12 @@ namespace Hector\Schema\Generator;
 use Hector\Schema\Exception\SchemaException;
 use Hector\Schema\Index;
 use Hector\Schema\Table;
-use PDO;
 
 /**
  * Class MySQL.
  */
 class MySQL extends AbstractGenerator
 {
-    private bool $mariaDB;
-
-    /**
-     * Is MariaDB?
-     *
-     * @return bool
-     */
-    protected function isMariaDB(): bool
-    {
-        if (null === ($this->mariaDB ?? null)) {
-            $this->mariaDB = str_contains(
-                strtolower($this->connection->getPdo()->getAttribute(PDO::ATTR_SERVER_VERSION)),
-                'maria'
-            );
-        }
-
-        return $this->mariaDB;
-    }
-
     /**
      * @inheritDoc
      */
@@ -76,7 +56,18 @@ class MySQL extends AbstractGenerator
             'SELECT t.*, ' .
             '       c.`CHARACTER_SET_NAME` AS `TABLE_CHARACTER_SET_NAME` ' .
             'FROM `information_schema`.`tables` t ' .
-            'LEFT JOIN `information_schema`.`collation_character_set_applicability` c ON ( c.`collation_name` = t.`table_collation` ) ' .
+            'LEFT JOIN `information_schema`.`collation_character_set_applicability` c ' .
+            '    ON ( c.`' . match ($this->connection->getDriverInfo()->getDriver()) {
+                'mariadb' => match (true) {
+                    version_compare(
+                        $this->connection->getDriverInfo()->getVersion(),
+                        '11.5',
+                        '>='
+                    ) => 'full_collation_name',
+                    default => 'collation_name',
+                },
+                default => 'collation_name'
+            } . '` = t.`table_collation` ) ' .
             'WHERE t.`table_schema` = :schema ' .
             '  AND t.`table_type` IN (\'BASE TABLE\', \'VIEW\') ' .
             ';';
@@ -148,7 +139,7 @@ class MySQL extends AbstractGenerator
     protected function getDefaultValue(?string $default): ?string
     {
         // MariaDB?
-        if ($this->isMariaDB()) {
+        if ('mariadb' == $this->connection->getDriverInfo()->getDriver()) {
             // MariaDB NULL values
             if ("NULL" === $default) {
                 return null;
