@@ -38,7 +38,7 @@ class Join extends AbstractComponent
         string $join,
         StatementInterface|string $table,
         StatementInterface|string|iterable|null $condition = null,
-        string $alias = null
+        ?string $alias = null
     ): void {
         $this->joins[] = [
             'join' => $join,
