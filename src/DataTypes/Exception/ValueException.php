@@ -28,7 +28,7 @@ class ValueException extends ValueError
      *
      * @return static
      */
-    public static function castError(TypeInterface $type, Throwable $previous = null): static
+    public static function castError(TypeInterface $type, ?Throwable $previous = null): static
     {
         return new static(sprintf('Unable to cast "%s" type', $type::class), 0, $previous);
     }
@@ -41,7 +41,7 @@ class ValueException extends ValueError
      *
      * @return static
      */
-    public static function castNotBuiltin(TypeInterface $type, Throwable $previous = null): static
+    public static function castNotBuiltin(TypeInterface $type, ?Throwable $previous = null): static
     {
         return new static(sprintf('Unable to cast "%s" type to not builtin type', $type::class), 0, $previous);
     }
