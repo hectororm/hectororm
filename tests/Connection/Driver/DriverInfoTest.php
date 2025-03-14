@@ -24,8 +24,8 @@ class DriverInfoTest extends TestCase
         return [
             ['mysql', '8.0.31', 'mysql', '8.0.31'],
             ['mysql', '5.7.35', 'mysql', '5.7.35'],
-            ['mariadb', '5.5.5-10.5.13-MariaDB', 'mariadb', '10.5.13'],
-            ['mariadb', '10.6.5-MariaDB', 'mariadb', '10.6.5'],
+            ['mysql', '5.5.5-10.5.13-MariaDB', 'mariadb', '10.5.13'],
+            ['mysql', '10.6.5-MariaDB', 'mariadb', '10.6.5'],
             ['pgsql', '13.3', 'pgsql', '13.3'],
             ['sqlite', '3.34.1', 'sqlite', '3.34.1'],
             ['vitess', '5.5.5-8.0.0-vitess', 'vitess', '8.0.0'],

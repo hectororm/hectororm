@@ -27,11 +27,11 @@ class DriverInfo
     public static function fromPDO(PDO $pdo): DriverInfo
     {
         $driver = strtolower($pdo->getAttribute(PDO::ATTR_DRIVER_NAME));
-        $version = $pdo->getAttribute(PDO::ATTR_SERVER_VERSION);
+        $version = strtolower($pdo->getAttribute(PDO::ATTR_SERVER_VERSION));
 
         $driver = match (true) {
-            str_contains($driver, 'mariadb') => 'mariadb',
-            str_contains($driver, 'vitess') => 'vitess',
+            str_contains($version, 'mariadb') => 'mariadb',
+            str_contains($version, 'vitess') => 'vitess',
             default => $driver,
         };
 
