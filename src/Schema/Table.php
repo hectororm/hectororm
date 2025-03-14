@@ -311,7 +311,7 @@ class Table implements Countable, IteratorAggregate
      * @return Generator<ForeignKey>
      * @throws SchemaException
      */
-    public function getForeignKeys(Table $table = null): Generator
+    public function getForeignKeys(?Table $table = null): Generator
     {
         foreach ($this->foreign_keys as $foreign_key) {
             if (null === $table || $table === $foreign_key->getReferencedTable()) {
