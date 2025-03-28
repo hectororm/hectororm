@@ -120,8 +120,11 @@ class JsonTypeTest extends TestCase
         };
 
         $this->assertSame('{"foo":"bar"}', $type->toSchema(["foo" => "bar"]));
-        $this->assertSame('{"foo": "bar"}', $type->toSchema('{"foo": "bar"}'));
+        $this->assertSame('"{\"foo\": \"bar\"}"', $type->toSchema('{"foo": "bar"}'));
         $this->assertSame('{"foo":"bar"}', $type->toSchema($fakeObject));
+        $this->assertSame('true', $type->toSchema(true));
+        $this->assertSame('1.5', $type->toSchema(1.5));
+        $this->assertSame('"string"', $type->toSchema("string"));
     }
 
     public function testToSchemaWithBadType()

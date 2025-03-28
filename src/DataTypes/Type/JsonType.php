@@ -70,10 +70,6 @@ class JsonType extends AbstractType
      */
     public function toSchema(mixed $value, ?ExpectedType $expected = null): string|bool|null
     {
-        if (is_scalar($value)) {
-            return (string)$value;
-        }
-
         try {
             return json_encode($value, JSON_THROW_ON_ERROR);
         } catch (Throwable $e) {
