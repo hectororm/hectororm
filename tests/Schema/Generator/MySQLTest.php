@@ -311,10 +311,24 @@ class MySQLTest extends TestCase
                     'unsigned' => false,
                 ],
                 [
-                    'name' => 'last_update',
+                    'name' => 'location',
                     'charset' => null,
                     'collation' => null,
                     'position' => 7,
+                    'default' => null,
+                    'nullable' => false,
+                    'type' => 'geometry',
+                    'auto_increment' => false,
+                    'maxlength' => null,
+                    'numeric_precision' => null,
+                    'numeric_scale' => null,
+                    'unsigned' => false,
+                ],
+                [
+                    'name' => 'last_update',
+                    'charset' => null,
+                    'collation' => null,
+                    'position' => 8,
                     'default' => 'CURRENT_TIMESTAMP',
                     'nullable' => false,
                     'type' => 'timestamp',
@@ -338,6 +352,12 @@ class MySQLTest extends TestCase
                     'type' => 'index',
                     'table_name' => 'address',
                     'columns_name' => ['city_id'],
+                ],
+                [
+                    'name' => 'idx_location',
+                    'type' => 'index',
+                    'table_name' => 'address',
+                    'columns_name' => ['location']
                 ],
                 [
                     'name' => 'PRIMARY',
