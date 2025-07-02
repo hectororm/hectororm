@@ -1,0 +1,10 @@
+/.phpunit.cache
+/vendor
+.phpunit.result.cache
+composer.lock
+phpunit.xml
+
+# Dev environment
+/.idea
+/.vscode
+/.fleet

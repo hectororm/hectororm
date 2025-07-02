@@ -1,0 +1,34 @@
+{
+    "name": "hectororm/connection",
+    "description": "Hector Connection",
+    "license": "MIT",
+    "homepage": "https://gethectororm.com",
+    "support": {
+        "issues": "https://github.com/hectororm/hectororm/issues",
+        "source": "https://github.com/hectororm/hectororm"
+    },
+    "authors": [
+        {
+            "name": "Ronan Giron",
+            "email": "ronan@getberlioz.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Hector\\Connection\\": ""
+        }
+    },
+    "require": {
+        "php": "^8.0",
+        "ext-pdo": "*",
+        "berlioz/helpers": "^1.6"
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-main": "1.x-dev"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    }
+}

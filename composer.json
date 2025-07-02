@@ -1,0 +1,66 @@
+{
+    "name": "hectororm/hectororm",
+    "description": "Hector ORM",
+    "license": "MIT",
+    "homepage": "https://gethectororm.com",
+    "support": {
+        "issues": "https://github.com/hectororm/hectororm/issues",
+        "source": "https://github.com/hectororm/hectororm"
+    },
+    "authors": [
+        {
+            "name": "Ronan Giron",
+            "email": "ronan@getberlioz.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Hector\\Collection\\": "src/Collection/",
+            "Hector\\Connection\\": "src/Connection/",
+            "Hector\\DataTypes\\": "src/DataTypes/",
+            "Hector\\Orm\\": "src/Orm/",
+            "Hector\\Query\\": "src/Query/",
+            "Hector\\Schema\\": "src/Schema/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Hector\\Collection\\Tests\\": "tests/Collection/",
+            "Hector\\Connection\\Tests\\": "tests/Connection/",
+            "Hector\\DataTypes\\Tests\\": "tests/DataTypes/",
+            "Hector\\Orm\\Tests\\": "tests/Orm/",
+            "Hector\\Query\\Tests\\": "tests/Query/",
+            "Hector\\Schema\\Tests\\": "tests/Schema/"
+        }
+    },
+    "replace": {
+        "hectororm/collection": "self.version",
+        "hectororm/connection": "self.version",
+        "hectororm/data-types": "self.version",
+        "hectororm/orm": "self.version",
+        "hectororm/query": "self.version",
+        "hectororm/schema": "self.version"
+    },
+    "require": {
+        "php": "^8.0",
+        "ext-mbstring": "*",
+        "ext-pdo": "*",
+        "berlioz/helpers": "^1.6",
+        "psr/simple-cache": "^1.0 || ^2.0 || ^3.0",
+        "psr/event-dispatcher": "^1.0"
+    },
+    "require-dev": {
+        "ext-pdo_mysql": "*",
+        "ext-pdo_sqlite": "*",
+        "phpunit/phpunit": "^9.6",
+        "ramsey/uuid": "^4.0"
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-main": "1.x-dev"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    }
+}

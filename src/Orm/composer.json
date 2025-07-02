@@ -1,0 +1,41 @@
+{
+    "name": "hectororm/orm",
+    "description": "Hector ORM",
+    "license": "MIT",
+    "homepage": "https://gethectororm.com",
+    "support": {
+        "issues": "https://github.com/hectororm/hectororm/issues",
+        "source": "https://github.com/hectororm/hectororm"
+    },
+    "authors": [
+        {
+            "name": "Ronan Giron",
+            "email": "ronan@getberlioz.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Hector\\Orm\\": ""
+        }
+    },
+    "require": {
+        "php": "^8.0",
+        "ext-pdo": "*",
+        "berlioz/helpers": "^1.6",
+        "hectororm/collection": "^1.0",
+        "hectororm/connection": "^1.0",
+        "hectororm/data-types": "^1.0",
+        "hectororm/query": "^1.0",
+        "hectororm/schema": "^1.0",
+        "psr/simple-cache": "^1.0 || ^2.0 || ^3.0",
+        "psr/event-dispatcher": "^1.0"
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-main": "1.x-dev"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    }
+}

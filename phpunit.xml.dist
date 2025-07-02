@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/9.3/phpunit.xsd"
+         bootstrap="./tests/bootstrap.php"
+         colors="true">
+    <coverage processUncoveredFiles="true">
+        <include>
+            <directory suffix=".php">src</directory>
+        </include>
+        <exclude>
+            <directory suffix="Interface.php">src</directory>
+        </exclude>
+    </coverage>
+    <php>
+        <env name="MYSQL_DSN" value="mysql:host=localhost;dbname=sakila;user=root"/>
+    </php>
+    <testsuites>
+        <testsuite name="Hector Collection test suite">
+            <directory suffix="Test.php">./tests/Collection</directory>
+        </testsuite>
+        <testsuite name="Hector Connection test suite">
+            <directory suffix="Test.php">./tests/Connection</directory>
+        </testsuite>
+        <testsuite name="Hector DataTypes test suite">
+            <directory suffix="Test.php">./tests/DataTypes</directory>
+        </testsuite>
+        <testsuite name="Hector Orm test suite">
+            <directory suffix="Test.php">./tests/Orm</directory>
+        </testsuite>
+        <testsuite name="Hector Query test suite">
+            <directory suffix="Test.php">./tests/Query</directory>
+        </testsuite>
+        <testsuite name="Hector Schema test suite">
+            <directory suffix="Test.php">./tests/Schema</directory>
+        </testsuite>
+    </testsuites>
+</phpunit>

@@ -1,0 +1,37 @@
+{
+    "name": "hectororm/data-types",
+    "description": "Hector Data Types",
+    "license": "MIT",
+    "homepage": "https://gethectororm.com",
+    "support": {
+        "issues": "https://github.com/hectororm/hectororm/issues",
+        "source": "https://github.com/hectororm/hectororm"
+    },
+    "authors": [
+        {
+            "name": "Ronan Giron",
+            "email": "ronan@getberlioz.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Hector\\DataTypes\\": ""
+        }
+    },
+    "require": {
+        "php": "^8.0",
+        "ext-mbstring": "*",
+        "ext-pdo": "*"
+    },
+    "suggest": {
+        "ramsey/uuid": "To use ramsey/uuid library as entity property type"
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-main": "1.x-dev"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    }
+}
