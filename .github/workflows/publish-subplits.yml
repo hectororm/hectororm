@@ -1,0 +1,41 @@
+name: Sub-Split Publishing
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v1.*'
+  create:
+    tags:
+      - 'v1.*'
+  delete:
+    tags:
+      - 'v1.*'
+
+jobs:
+  publish_subsplits:
+    runs-on: ubuntu-latest
+    name: Publish package sub-splits
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: '0'
+          persist-credentials: 'false'
+      - uses: frankdejonge/use-github-token@1.1.0
+        with:
+          authentication: 'x-access-token:${{ secrets.REPO_PUSH_TOKEN }}'
+          user_name: 'Ronan Giron'
+          user_email: 'ElGigi@users.noreply.github.com'
+      - name: Cache splitsh-lite
+        id: splitsh-cache
+        uses: actions/cache@v4
+        with:
+          path: './.splitsh'
+          key: '${{ runner.os }}-splitsh'
+      - uses: frankdejonge/use-subsplit-publish@1.1.0
+        with:
+          source-branch: 'main'
+          config-path: './config.subsplit-publish.json'
+          splitsh-path: './.splitsh/splitsh-lite'
+          splitsh-version: 'v1.0.1'
