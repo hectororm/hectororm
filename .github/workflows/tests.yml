@@ -1,0 +1,67 @@
+name: Tests
+
+on:
+  push:
+    branches:
+      - main
+      - '*.x'
+  pull_request: ~
+  schedule:
+    - cron: '0 0 * * *'
+
+jobs:
+  phpunit:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        php-versions: [ '8.0', '8.1', '8.2', '8.3', '8.4' ]
+        stability: [ 'prefer-lowest', 'prefer-stable' ]
+        mysql-versions: [
+          { distribution: 'mysql', version: '8.4' },
+          { distribution: 'mysql', version: '8.0' },
+          { distribution: 'mysql', version: '5.7' },
+          { distribution: 'mariadb', version: '11.7' },
+          { distribution: 'mariadb', version: '11.4' },
+          { distribution: 'mariadb', version: '10.11' },
+          { distribution: 'mariadb', version: '10.6' },
+          { distribution: 'mariadb', version: '10.5' }
+        ]
+
+    name: PHPUnit on PHP ${{ matrix.php-versions }} & ${{ matrix.mysql-versions.distribution }} ${{ matrix.mysql-versions.version }} - ${{ matrix.stability }}
+
+    continue-on-error: ${{ matrix.stability != 'prefer-stable' }}
+
+    env:
+      MYSQL_DSN: "mysql:host=127.0.0.1;dbname=sakila;user=root"
+
+    steps:
+      - name: 'Checkout code'
+        uses: actions/checkout@v4
+
+      - name: 'Setup MySQL/MariaDB'
+        uses: shogo82148/actions-setup-mysql@v1
+        with:
+          mysql-version: ${{ matrix.mysql-versions.version }}
+          distribution: ${{ matrix.mysql-versions.distribution }}
+
+      - name: 'Install Sakila database'
+        run: |
+          mysql -uroot -h127.0.0.1 < tests/Assets/Sakila/mysql-schema.sql
+          mysql -uroot -h127.0.0.1 < tests/Assets/Sakila/mysql-data.sql
+
+      - name: 'Setup PHP'
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-versions }}
+          extensions: pdo, pdo-mysql
+          ini-values: error_reporting=E_ALL
+          tools: composer:v2
+          coverage: xdebug
+
+      - name: 'Install dependencies'
+        run: composer update --${{ matrix.stability }} --prefer-dist --no-interaction --no-progress
+
+      - name: 'Execute tests'
+        run: vendor/bin/phpunit --coverage-text --coverage-clover=coverage.clover
