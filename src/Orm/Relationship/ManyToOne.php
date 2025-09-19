@@ -54,7 +54,7 @@ class ManyToOne extends RegularRelationship
     /**
      * @inheritDoc
      */
-    public function valid(Entity|Collection|null $related): bool
+    public function valid(mixed &$related): bool
     {
         if (null === $related) {
             return true;

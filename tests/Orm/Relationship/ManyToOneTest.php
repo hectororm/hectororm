@@ -41,7 +41,8 @@ class ManyToOneTest extends AbstractTestCase
             ['address_id' => 'address_id']
         );
 
-        $this->assertTrue($relationship->valid(Address::get(1)));
+        $value = Address::get(1);
+        $this->assertTrue($relationship->valid($value));
     }
 
     public function testValidWithNull()
@@ -53,7 +54,8 @@ class ManyToOneTest extends AbstractTestCase
             ['address_id' => 'address_id']
         );
 
-        $this->assertTrue($relationship->valid(null));
+        $value = null;
+        $this->assertTrue($relationship->valid($value));
     }
 
     public function testValidWithBadEntity()
@@ -65,7 +67,8 @@ class ManyToOneTest extends AbstractTestCase
             ['address_id' => 'address_id']
         );
 
-        $this->assertFalse($relationship->valid(Staff::get(1)));
+        $value = Staff::get(1);
+        $this->assertFalse($relationship->valid($value));
     }
 
     public function testValidWithCollection()
@@ -77,7 +80,8 @@ class ManyToOneTest extends AbstractTestCase
             ['address_id' => 'address_id']
         );
 
-        $this->assertFalse($relationship->valid(Staff::all()));
+        $value = Staff::all();
+        $this->assertFalse($relationship->valid($value));
     }
 
     public function testSwitchIntoEntities()

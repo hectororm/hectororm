@@ -216,11 +216,11 @@ abstract class Relationship
     /**
      * Valid related entity or collection.
      *
-     * @param Entity|Collection|null $related
+     * @param mixed &$related
      *
      * @return bool
      */
-    abstract public function valid(Entity|Collection|null $related): bool;
+    abstract public function valid(mixed &$related): bool;
 
     /**
      * Get reverse relationship.

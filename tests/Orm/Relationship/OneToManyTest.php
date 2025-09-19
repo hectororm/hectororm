@@ -44,7 +44,8 @@ class OneToManyTest extends AbstractTestCase
             ['language_id' => 'language_id']
         );
 
-        $this->assertTrue($relationship->valid(Film::query()->limit(20)->all()));
+        $value = Film::query()->limit(20)->all();
+        $this->assertTrue($relationship->valid($value));
     }
 
     public function testValidWithNull()
@@ -56,7 +57,8 @@ class OneToManyTest extends AbstractTestCase
             ['language_id' => 'language_id']
         );
 
-        $this->assertTrue($relationship->valid(null));
+        $value = null;
+        $this->assertTrue($relationship->valid($value));
     }
 
     public function testValidWithEntity()
@@ -68,7 +70,8 @@ class OneToManyTest extends AbstractTestCase
             ['language_id' => 'language_id']
         );
 
-        $this->assertFalse($relationship->valid(Film::get(1)));
+        $value = Film::get(1);
+        $this->assertFalse($relationship->valid($value));
     }
 
     public function testValidWithCollection()
@@ -80,7 +83,8 @@ class OneToManyTest extends AbstractTestCase
             ['language_id' => 'language_id']
         );
 
-        $this->assertTrue($relationship->valid(new Collection([], Film::class)));
+        $value = new Collection([]);
+        $this->assertTrue($relationship->valid($value));
     }
 
     public function testValidWithCollectionWithNoRestrictionButGoodEntities()
@@ -92,7 +96,8 @@ class OneToManyTest extends AbstractTestCase
             ['language_id' => 'language_id']
         );
 
-        $this->assertTrue($relationship->valid(new Collection([new Film(), new Film()])));
+        $value = new Collection([new Film(), new Film()]);
+        $this->assertTrue($relationship->valid($value));
     }
 
     public function testSwitchIntoEntities()

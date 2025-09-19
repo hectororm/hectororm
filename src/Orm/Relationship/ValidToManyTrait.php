@@ -23,14 +23,18 @@ trait ValidToManyTrait
     /**
      * Valid related entity.
      *
-     * @param Entity|Collection|null $related
+     * @param mixed &$related
      *
      * @return bool
      */
-    public function valid(Entity|Collection|null $related): bool
+    public function valid(mixed &$related): bool
     {
         if (null === $related) {
             return true;
+        }
+
+        if (is_array($related)) {
+            $related = new Collection($related);
         }
 
         if (!$related instanceof Collection) {
