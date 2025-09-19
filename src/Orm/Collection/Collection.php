@@ -37,11 +37,11 @@ class Collection extends \Hector\Collection\Collection
      *
      * @throws OrmException
      */
-    public function save(): void
+    public function save(bool $cascade = false): void
     {
         /** @var Entity $entity */
         foreach ($this as $entity) {
-            $entity->save();
+            $entity->save($cascade);
         }
     }
 

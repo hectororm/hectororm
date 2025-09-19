@@ -126,9 +126,10 @@ abstract class Entity
      *
      * @throws OrmException
      */
-    public function save(): void
+    public function save(bool $cascade = false): void
     {
         Orm::get()->save($this, true);
+        true === $cascade && $this->getRelated()->save();
     }
 
     /**

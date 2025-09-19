@@ -263,4 +263,17 @@ class Related implements Countable
             $this->getRelationships()->get($relationshipName)->linkNative($this->entity, $value);
         }
     }
+
+    /**
+     * Save all related.
+     *
+     * @throws OrmException
+     */
+    public function save(bool $cascade = false): void
+    {
+        /** @var Collection|Entity $value */
+        foreach ($this->related as $value) {
+            $value->save($cascade);
+        }
+    }
 }

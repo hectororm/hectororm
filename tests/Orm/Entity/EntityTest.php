@@ -20,9 +20,11 @@ use Hector\Orm\Exception\OrmException;
 use Hector\Orm\Query\Builder;
 use Hector\Orm\Tests\AbstractTestCase;
 use Hector\Orm\Tests\Fake\Entity\Actor;
+use Hector\Orm\Tests\Fake\Entity\Customer;
 use Hector\Orm\Tests\Fake\Entity\Film;
 use Hector\Orm\Tests\Fake\Entity\FilmMagic;
 use Hector\Orm\Tests\Fake\Entity\Language;
+use Hector\Orm\Tests\Fake\Entity\Payment;
 use ReflectionProperty;
 
 class EntityTest extends AbstractTestCase
@@ -297,6 +299,48 @@ class EntityTest extends AbstractTestCase
         $this->assertNotNull($film->last_update);
         $this->assertNotNull($film->getRelated()->original_language->language_id);
         $this->assertNotNull($film->getRelated()->original_language->last_update);
+    }
+
+    public function testSaveWithRelationOneToMany()
+    {
+        $payment = new Payment();
+        $payment->payment_date = '2025-09-19';
+        $payment->staff_id = 1;
+        $payment->rental_id = 1;
+        $payment->amount = 100;
+
+        $customer = Customer::find(2);
+        $customer->payments->append($payment);
+        $customer->save();
+        $payment->refresh();
+
+        $this->assertNotNull($payment->payment_id);
+        $this->assertEquals(100, $payment->amount);
+
+        $payment->amount = 200;
+        $customer->save();
+        $payment->refresh();
+
+        $this->assertEquals(100, $payment->amount);
+    }
+
+    public function testSaveWithExistentRelationOneToMany()
+    {
+        $customer = Customer::find(1);
+        $payment = $customer->payments->first(fn(Payment $payment) => 5 === $payment->payment_id);
+
+        $amount = $payment->amount;
+
+        $this->assertFalse($payment->isAltered());
+        $payment->amount += 1;
+        $this->assertTrue($payment->isAltered());
+        $customer->save();
+        $this->assertTrue($payment->isAltered());
+        $customer->save(true);
+        $this->assertFalse($payment->isAltered());
+
+        $payment->refresh();
+        $this->assertEquals($amount + 1, $payment->amount);
     }
 
     /**

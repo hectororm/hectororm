@@ -14,6 +14,15 @@ namespace Hector\Orm\Tests\Fake\Entity;
 
 use Hector\Orm\Entity\MagicEntity;
 
+/**
+ *
+ * @property int $payment_id
+ * @property int $customer_id
+ * @property int $staff_id
+ * @property int $rental_id
+ * @property float $amount
+ * @property string $payment_date
+ */
 class Payment extends MagicEntity
 {
 }
