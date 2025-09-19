@@ -32,7 +32,6 @@ $ composer require hectororm/schema
 | MySQL   |   8.4   |       ✔       |
 | MySQL   |   8.0   |       ✔       |
 | MySQL   |   5.7   |       ✔       |
-| MySQL   |   5.6   |       ✔       |
 | MariaDB |  11.7   |       ✔       |
 | MariaDB |  11.4   |       ✔       |
 | MariaDB |  10.11  |       ✔       |

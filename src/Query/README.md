@@ -25,9 +25,9 @@ You can install **Hector Query** with [Composer](https://getcomposer.org/), it's
 $ composer require hectororm/query
 ```
 
-## Usage
+## Query Builder
 
-### QueryBuilder
+### Usage
 
 You can initialize the query builder with a `Connection` object.
 
@@ -243,6 +243,21 @@ $results = $queryBuilder->fetchAll();
 
 This method reset columns, limit and order of query ; but don't modify the query builder, so you can continue to use it to get results for example.
 
+### Distinct
+
+```php
+/** @var QueryBuilder $queryBuilder */
+use Hector\Query\QueryBuilder;
+
+$queryBuilder
+    ->from('table', 'alias')
+    ->where('field', '=', 'value')
+    ->orWhere('field', '=', 'value2')
+    ->distinct();
+
+$count = $queryBuilder->count();
+$results = $queryBuilder->fetchAll();
+
 ### Exists
 
 A shortcut method is available in `QueryBuilder` class to do an exists query.
@@ -282,3 +297,9 @@ $affectedRows = $queryBuilder->delete();
 ```
 
 These methods don't modify the query builder, so you can continue to use it to get results for example.
+
+To ignore duplicates :
+
+```php
+$queryBuilder->delete();
+```
