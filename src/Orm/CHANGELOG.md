@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Parameter `$cascade` to method `Entity::save()` (default to false) to persist related entities
+- Improve PHPDoc to enable IDE type inference for concrete entity classes
 
 ### Changed
 

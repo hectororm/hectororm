@@ -20,12 +20,22 @@ use Hector\Orm\Entity\ReflectionEntity;
 use Hector\Orm\Exception\OrmException;
 use Hector\Orm\Orm;
 
+/**
+ * Collection of {@see \Hector\Orm\Entity\Entity} objects.
+ *
+ * This class extends the generic {@see \Hector\Collection\Collection} and adds
+ * ORM‑specific behaviours (save, delete, refresh, relation loading, …).
+ *
+ * @template T of \Hector\Orm\Entity\Entity
+ * @extends \Hector\Collection\Collection<T>
+ */
 class Collection extends \Hector\Collection\Collection
 {
     private array $detached = [];
 
     /**
      * @inheritDoc
+     * @return LazyCollection<T> The lazy collection instance.
      */
     protected function newLazy(iterable|Closure $iterable): LazyCollection
     {

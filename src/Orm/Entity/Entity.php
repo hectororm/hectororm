@@ -23,6 +23,11 @@ use Hector\Orm\Mapper\GenericMapper;
 use Hector\Orm\Orm;
 use Hector\Orm\Query\Builder;
 
+/**
+ * Base class for all ORM entities.
+ *
+ * @template T of Entity
+ */
 #[Attributes\Mapper(GenericMapper::class)]
 abstract class Entity
 {
@@ -182,7 +187,7 @@ abstract class Entity
     /**
      * Query.
      *
-     * @return Builder
+     * @return Builder<static>
      */
     public static function query(): Builder
     {

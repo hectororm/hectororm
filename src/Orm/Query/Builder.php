@@ -29,19 +29,24 @@ use Hector\Query\Statement\SqlFunction;
 use Hector\Schema\Column;
 
 /**
- * @template T
+ * Query builder for a specific entity.
+ *
+ * @template T of Entity
+ * @extends QueryBuilder<T>
  */
 class Builder extends QueryBuilder
 {
     public const FROM_ALIAS = 'main';
 
+    /** @var ReflectionEntity<T> Reflection of the target entity. */
     private ReflectionEntity $entityReflection;
+    /** @var array<string,mixed> Relations to eager‑load. */
     public array $with = [];
 
     /**
      * EntityQuery constructor.
      *
-     * @param class-string<T> $entity
+     * @param class-string<T> $entity Fully qualified entity class name.
      *
      * @throws OrmException
      */
@@ -88,7 +93,7 @@ class Builder extends QueryBuilder
     }
 
     /**
-     * Reset entity columns.
+     * Reset entity columns (select list) to the default set.
      *
      * @return static
      * @throws OrmException
@@ -118,9 +123,9 @@ class Builder extends QueryBuilder
     }
 
     /**
-     * With.
+     * Define eager‑loaded relations.
      *
-     * @param array $with
+     * @param array<string,mixed> $with List of relations to load.
      *
      * @return static
      */
@@ -132,13 +137,14 @@ class Builder extends QueryBuilder
     }
 
     /**
-     * With pivot column.
+     * Add a pivot column to the SELECT list.
      *
-     * @param string $column
-     * @param string $alias
+     * @param string $column Column name in the pivot table.
+     * @param string $alias Alias to use for the column.
      *
      * @return static
      * @internal
+     *
      */
     public function withPivotColumn(string $column, string $alias): static
     {
@@ -148,11 +154,9 @@ class Builder extends QueryBuilder
     }
 
     /**
-     * Get entity at offset.
+     * Retrieve a single entity at the given offset.
      *
-     * If many results from query, only offset given in parameter is returned (default first).
-     *
-     * @param int $offset
+     * @param int $offset Zero‑based offset (default 0).
      *
      * @return T|null
      * @throws OrmException
@@ -165,11 +169,9 @@ class Builder extends QueryBuilder
     }
 
     /**
-     * Get entity at offset or fail if no result.
+     * Retrieve a single entity at the given offset or throw if none found.
      *
-     * If many results from query, only offset given in parameter is returned (default first).
-     *
-     * @param int $offset
+     * @param int $offset Zero‑based offset (default 0).
      *
      * @return T
      * @throws NotFoundException if no entity found
@@ -187,12 +189,10 @@ class Builder extends QueryBuilder
     }
 
     /**
-     * Get entity at offset or new entity if no result.
+     * Retrieve a single entity at the given offset or create a new one.
      *
-     * If many results from query, only offset given in parameter is returned (default first).
-     *
-     * @param int $offset
-     * @param array $initialData
+     * @param int $offset Zero‑based offset (default 0).
+     * @param array $initialData Optional data to hydrate the new entity.
      *
      * @return T
      * @throws OrmException
@@ -210,14 +210,13 @@ class Builder extends QueryBuilder
     }
 
     /**
-     * Find.
+     * Build the WHERE clause for a primary‑key lookup.
      *
-     * If one primary value is given, an entity
-     * is returned, else a collection is returned.
+     * @param mixed ...$primaryValues Primary key values (single or composite).
      *
-     * @param mixed ...$primaryValues
-     *
-     * @throws OrmException
+     * @return void
+     * @throws MapperException If the entity has no primary key or the supplied
+     *                         values do not match the key definition.
      */
     private function findQuery(mixed ...$primaryValues): void
     {
@@ -249,12 +248,9 @@ class Builder extends QueryBuilder
     }
 
     /**
-     * Find.
+     * Find one or many entities by primary key.
      *
-     * If one primary value is given, an entity
-     * is returned, else a collection is returned.
-     *
-     * @param mixed ...$primaryValues
+     * @param mixed ...$primaryValues Primary key values.
      *
      * @return T|Collection<T>|null
      * @throws OrmException
@@ -271,9 +267,9 @@ class Builder extends QueryBuilder
     }
 
     /**
-     * Find all.
+     * Find a collection of entities by primary key(s).
      *
-     * @param mixed ...$primaryValues
+     * @param mixed ...$primaryValues Primary key values.
      *
      * @return Collection<T>
      * @throws OrmException
@@ -286,12 +282,9 @@ class Builder extends QueryBuilder
     }
 
     /**
-     * Find or fail.
+     * Find one or many entities by primary key, throwing if none found.
      *
-     * If one primary value is given, an entity
-     * is returned, else a collection is returned.
-     *
-     * @param mixed ...$primaryValues
+     * @param mixed ...$primaryValues Primary key values.
      *
      * @return T|Collection<T>
      * @throws OrmException
@@ -308,12 +301,10 @@ class Builder extends QueryBuilder
     }
 
     /**
-     * Find entity or new entity if no result.
+     * Find an entity by primary key or create a new one if none exists.
      *
-     * Only one primary value is accepted.
-     *
-     * @param mixed $primaryValue
-     * @param array $initialData
+     * @param mixed $primaryValue Primary key value.
+     * @param array $initialData Optional data for the new entity.
      *
      * @return T
      * @throws OrmException
@@ -331,7 +322,7 @@ class Builder extends QueryBuilder
     }
 
     /**
-     * All.
+     * Retrieve all matching entities.
      *
      * @return Collection<T>
      * @throws OrmException
@@ -342,7 +333,7 @@ class Builder extends QueryBuilder
     }
 
     /**
-     * Iterate result with Generator.
+     * Iterate over the result set lazily.
      *
      * @return LazyCollection<T>
      * @throws OrmException
@@ -353,11 +344,11 @@ class Builder extends QueryBuilder
     }
 
     /**
-     * Chunk results.
+     * Process results in chunks.
      *
-     * @param int $limit
-     * @param callable $callback
-     * @param bool $lazy
+     * @param int $limit Number of rows per chunk.
+     * @param callable $callback Function to call for each chunk (receives a Collection<T>).
+     * @param bool $lazy If true, use the lazy generator; otherwise fetch each chunk eagerly.
      *
      * @return void
      * @throws OrmException

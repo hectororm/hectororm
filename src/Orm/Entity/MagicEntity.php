@@ -19,6 +19,11 @@ use Hector\Orm\Exception\OrmException;
 use Hector\Orm\Mapper\MagicMapper;
 use JsonSerializable;
 
+/**
+ * Entity with dynamic attributes stored in an internal array.
+ *
+ * @template T of MagicEntity
+ */
 #[Attributes\Mapper(MagicMapper::class)]
 abstract class MagicEntity extends Entity implements JsonSerializable
 {
