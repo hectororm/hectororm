@@ -131,9 +131,7 @@ class Conditions extends AbstractComponent implements Countable
     {
         $statement = '';
 
-        for ($iCondition = 0; $iCondition < count($this->conditions); $iCondition++) {
-            $condition = $this->conditions[$iCondition];
-
+        foreach ($this->conditions as $condition) {
             if (null === ($subStatement = $this->getSubStatement($condition['column'], $bindParams, true))) {
                 continue;
             }
