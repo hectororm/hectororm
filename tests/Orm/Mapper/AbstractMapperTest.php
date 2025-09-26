@@ -12,7 +12,6 @@
 
 namespace Hector\Orm\Tests\Mapper;
 
-use Hector\Orm\Collection\Collection;
 use Hector\Orm\Entity\Entity;
 use Hector\Orm\Exception\MapperException;
 use Hector\Orm\Mapper\AbstractMapper;
@@ -23,7 +22,6 @@ use Hector\Orm\Relationship\Relationships;
 use Hector\Orm\Tests\AbstractTestCase;
 use Hector\Orm\Tests\Fake\Entity\Film;
 use Hector\Orm\Tests\Fake\Entity\Language;
-use Hector\Orm\Tests\Fake\Entity\LanguageCollection;
 use PDOException;
 use stdClass;
 use TypeError;

@@ -12,8 +12,8 @@
 
 namespace Hector\DataTypes\Tests;
 
-use Hector\DataTypes\Type\StringType;
 use Hector\DataTypes\Type;
+use Hector\DataTypes\Type\StringType;
 use Hector\DataTypes\TypeSet;
 use PHPUnit\Framework\TestCase;
 

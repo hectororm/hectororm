@@ -20,6 +20,7 @@ use Hector\Orm\Tests\AbstractTestCase;
 use Hector\Orm\Tests\Fake\Entity\Actor;
 use Hector\Orm\Tests\Fake\Entity\Address;
 use Hector\Orm\Tests\Fake\Entity\Staff;
+use ReflectionMethod;
 
 class ManyToOneTest extends AbstractTestCase
 {
@@ -93,7 +94,7 @@ class ManyToOneTest extends AbstractTestCase
             ['address_id' => 'address_id']
         );
 
-        $reflectionMethod = new \ReflectionMethod(ManyToOne::class, 'switchIntoEntities');
+        $reflectionMethod = new ReflectionMethod(ManyToOne::class, 'switchIntoEntities');
         $reflectionMethod->setAccessible(true);
 
         $foreigners = new Collection(

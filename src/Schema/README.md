@@ -76,11 +76,15 @@ Description of classes represents the a schema.
 
 It's a container of schema. Methods available:
 
-- `SchemaContainer::getSchemas(?string $connection = null): Generator` Returns a generator of `Hector\Schema\Schema` objects, you can pass a specific connection
+- `SchemaContainer::getSchemas(?string $connection = null): Generator` Returns a generator of `Hector\Schema\Schema`
+  objects, you can pass a specific connection
 - `SchemaContainer::hasSchema(string $name, ?string $connection = null): bool` Check if container has a schema
-- `SchemaContainer::getSchema(string $name, ?string $connection = null): Schema` Returns representation of a schema, an `Hector\Schema\Schema` object
-- `SchemaContainer::hasTable(string $name, ?string $schemaName = null, ?string $connection = null): bool` Check if a schema in the container has a table
-- `SchemaContainer::getTable(string $name, ?string $schemaName = null, ?string $connection = null): Table` Returns representation of a table, an `Hector\Schema\Table` object
+- `SchemaContainer::getSchema(string $name, ?string $connection = null): Schema` Returns representation of a schema, an
+  `Hector\Schema\Schema` object
+- `SchemaContainer::hasTable(string $name, ?string $schemaName = null, ?string $connection = null): bool` Check if a
+  schema in the container has a table
+- `SchemaContainer::getTable(string $name, ?string $schemaName = null, ?string $connection = null): Table` Returns
+  representation of a table, an `Hector\Schema\Table` object
 
 It's an iterable class, returns `Hector\Schema\Schema` objects.
 

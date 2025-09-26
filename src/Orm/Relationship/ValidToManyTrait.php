@@ -13,7 +13,6 @@
 namespace Hector\Orm\Relationship;
 
 use Hector\Orm\Collection\Collection;
-use Hector\Orm\Entity\Entity;
 use Hector\Orm\Entity\ReflectionEntity;
 
 trait ValidToManyTrait

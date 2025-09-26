@@ -13,17 +13,13 @@
 namespace Hector\Orm\Tests\Entity;
 
 use Hector\Orm\Attributes;
-use Hector\Orm\Collection\Collection;
 use Hector\Orm\Entity\ReflectionEntity;
-use Hector\Orm\Exception\OrmException;
 use Hector\Orm\Mapper\GenericMapper;
 use Hector\Orm\Mapper\MagicMapper;
 use Hector\Orm\Tests\AbstractTestCase;
 use Hector\Orm\Tests\Fake\Entity\City;
 use Hector\Orm\Tests\Fake\Entity\Film;
 use Hector\Orm\Tests\Fake\Entity\FilmMagic;
-use Hector\Orm\Tests\Fake\Entity\Language;
-use Hector\Orm\Tests\Fake\Entity\LanguageCollection;
 use Hector\Orm\Tests\Fake\Mapper\CityMapper;
 use stdClass;
 use TypeError;
@@ -48,7 +44,8 @@ class ReflectionEntityTest extends AbstractTestCase
     {
         $this->expectException(TypeError::class);
 
-        $entity = new #[Attributes\Mapper(stdClass::class)] class extends Film {
+        $entity = new #[Attributes\Mapper(stdClass::class)]
+        class extends Film {
         };
 
         new ReflectionEntity(get_class($entity));

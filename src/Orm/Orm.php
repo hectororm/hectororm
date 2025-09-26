@@ -20,7 +20,6 @@ use Hector\Connection\Exception\NotFoundException;
 use Hector\DataTypes\TypeSet;
 use Hector\Orm\Entity\Entity;
 use Hector\Orm\Entity\ReflectionEntity;
-use Hector\Orm\Event;
 use Hector\Orm\Exception\OrmException;
 use Hector\Orm\Mapper\Mapper;
 use Hector\Orm\Query\Builder;

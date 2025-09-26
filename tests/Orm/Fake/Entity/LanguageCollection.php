@@ -12,6 +12,8 @@
 
 namespace Hector\Orm\Tests\Fake\Entity;
 
-class LanguageCollection extends \Hector\Orm\Collection\Collection
+use Hector\Orm\Collection\Collection;
+
+class LanguageCollection extends Collection
 {
 }

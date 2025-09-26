@@ -100,18 +100,18 @@ abstract class AbstractGenerator implements GeneratorInterface
             $columns = [];
             foreach ($this->getColumnsInfo($name, $tableName) as $columnInfo) {
                 $column = new Column(
-                    name:              $columnInfo['name'],
-                    position:          $columnInfo['position'],
-                    default:           $columnInfo['default'],
-                    nullable:          $columnInfo['nullable'],
-                    type:              $columnInfo['type'],
-                    auto_increment:    $columnInfo['auto_increment'] ?? false,
-                    maxlength:         $columnInfo['maxlength'] ?? null,
+                    name: $columnInfo['name'],
+                    position: $columnInfo['position'],
+                    default: $columnInfo['default'],
+                    nullable: $columnInfo['nullable'],
+                    type: $columnInfo['type'],
+                    auto_increment: $columnInfo['auto_increment'] ?? false,
+                    maxlength: $columnInfo['maxlength'] ?? null,
                     numeric_precision: $columnInfo['numeric_precision'] ?? null,
-                    numeric_scale:     $columnInfo['numeric_scale'] ?? null,
-                    unsigned:          $columnInfo['unsigned'] ?? false,
-                    charset:           $columnInfo['charset'] ?? null,
-                    collation:         $columnInfo['collation'] ?? null,
+                    numeric_scale: $columnInfo['numeric_scale'] ?? null,
+                    unsigned: $columnInfo['unsigned'] ?? false,
+                    charset: $columnInfo['charset'] ?? null,
+                    collation: $columnInfo['collation'] ?? null,
                 );
                 $columns[$column->getName()] = $column;
             }
@@ -123,8 +123,8 @@ abstract class AbstractGenerator implements GeneratorInterface
             $indexes = [];
             foreach ($this->getIndexesInfo($name, $tableName) as $indexInfo) {
                 $index = new Index(
-                    name:         $indexInfo['name'],
-                    type:         $indexInfo['type'],
+                    name: $indexInfo['name'],
+                    type: $indexInfo['type'],
                     columns_name: $indexInfo['columns_name'] ?? [],
                 );
                 $indexes[$index->getName()] = $index;
@@ -134,26 +134,26 @@ abstract class AbstractGenerator implements GeneratorInterface
             $foreignKeys = [];
             foreach ($this->getForeignKeysInfo($name, $tableName) as $foreignKeyInfo) {
                 $foreignKey = new ForeignKey(
-                    name:                    $foreignKeyInfo['name'],
-                    columns_name:            $foreignKeyInfo['columns_name'],
-                    referenced_schema_name:  $foreignKeyInfo['referenced_schema_name'],
-                    referenced_table_name:   $foreignKeyInfo['referenced_table_name'],
+                    name: $foreignKeyInfo['name'],
+                    columns_name: $foreignKeyInfo['columns_name'],
+                    referenced_schema_name: $foreignKeyInfo['referenced_schema_name'],
+                    referenced_table_name: $foreignKeyInfo['referenced_table_name'],
                     referenced_columns_name: $foreignKeyInfo['referenced_columns_name'],
-                    update_rule:             $foreignKeyInfo['update_rule'] ?? ForeignKey::RULE_NO_ACTION,
-                    delete_rule:             $foreignKeyInfo['delete_rule'] ?? ForeignKey::RULE_NO_ACTION,
+                    update_rule: $foreignKeyInfo['update_rule'] ?? ForeignKey::RULE_NO_ACTION,
+                    delete_rule: $foreignKeyInfo['delete_rule'] ?? ForeignKey::RULE_NO_ACTION,
                 );
                 $foreignKeys[$foreignKey->getName()] = $foreignKey;
             }
             ksort($foreignKeys);
 
             $tables[$tableName] = new Table(
-                schema_name:  $tableInfo['schema_name'],
-                type:         $tableInfo['type'],
-                name:         $tableName,
-                charset:      $tableInfo['charset'] ?? null,
-                collation:    $tableInfo['collation'] ?? null,
-                columns:      $columns ?? [],
-                indexes:      $indexes ?? [],
+                schema_name: $tableInfo['schema_name'],
+                type: $tableInfo['type'],
+                name: $tableName,
+                charset: $tableInfo['charset'] ?? null,
+                collation: $tableInfo['collation'] ?? null,
+                columns: $columns ?? [],
+                indexes: $indexes ?? [],
                 foreign_keys: $foreignKeys ?? [],
             );
             ksort($tables);
@@ -161,10 +161,10 @@ abstract class AbstractGenerator implements GeneratorInterface
 
         return new Schema(
             connection: $this->connection->getName(),
-            name:       $schemaInfo['name'],
-            charset:    $schemaInfo['charset'],
-            collation:  $schemaInfo['collation'] ?? null,
-            tables:     $tables,
+            name: $schemaInfo['name'],
+            charset: $schemaInfo['charset'],
+            collation: $schemaInfo['collation'] ?? null,
+            tables: $tables,
         );
     }
 

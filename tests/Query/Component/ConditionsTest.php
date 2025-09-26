@@ -235,7 +235,8 @@ class ConditionsTest extends TestCase
                 '_h_4' => 2,
                 '_h_5' => 3,
                 '_h_6' => 4,
-                '_h_7' => 'test'],
+                '_h_7' => 'test'
+            ],
             array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
         );
     }
@@ -279,7 +280,8 @@ class ConditionsTest extends TestCase
                 '_h_2' => 3,
                 '_h_3' => 4,
                 '_h_4' => 5,
-                '_h_5' => 6],
+                '_h_5' => 6
+            ],
             array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
         );
     }

@@ -69,7 +69,8 @@ $delete = new Delete();
 $union = new Union();
 ```
 
-All this classes implements `StatementInterface` interface. This interface provides one method to get statement and bindings:
+All this classes implements `StatementInterface` interface. This interface provides one method to get statement and
+bindings:
 
 `StatementInterface::getStatement(BindParamList $bindParams)`
 
@@ -131,7 +132,8 @@ You can specify columns name and alias with method:
 
 `QueryBuilder::column($column, $alias)`
 
-Repeat call of this method, add a new column to the result rows ; you can reset columns with method `QueryBuilder::resetColumns()`.
+Repeat call of this method, add a new column to the result rows ; you can reset columns with method
+`QueryBuilder::resetColumns()`.
 
 Or pass an array of column names:
 
@@ -176,7 +178,8 @@ For Insert/Update statements, you need to assign values with method :
 
 `QueryBuilder::assign($column, $value)`
 
-Repeat call of this method, add a new assignment to the statement ; you can reset assignments with method `QueryBuilder::resetAssignments()`.
+Repeat call of this method, add a new assignment to the statement ; you can reset assignments with method
+`QueryBuilder::resetAssignments()`.
 
 Or pass an associative array with column names and values:
 
@@ -221,7 +224,7 @@ $union->addSelect($select1, $select2);
   Get all rows of statement results, uses `Generator` class.
 - `QueryBuilder::fetchColumn(int $column = 0): Generator`
   Get specified column value of all rows of statement results, uses `Generator` class.
-  
+
 To known how use Generator, refers to the PHP documentation: https://www.php.net/manual/class.generator.php
 
 ### Count results
@@ -241,7 +244,8 @@ $count = $queryBuilder->count();
 $results = $queryBuilder->fetchAll();
 ```
 
-This method reset columns, limit and order of query ; but don't modify the query builder, so you can continue to use it to get results for example.
+This method reset columns, limit and order of query ; but don't modify the query builder, so you can continue to use it
+to get results for example.
 
 ### Distinct
 

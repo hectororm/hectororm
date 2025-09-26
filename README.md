@@ -9,7 +9,8 @@
 
 **Hector ORM** is a modern, modular, and lightweight Object-Relational Mapping (ORM) framework for PHP.
 
-It features a fully decoupled architecture, offering individual components for collections, connections, data types, schema introspection, and query building.  
+It features a fully decoupled architecture, offering individual components for collections, connections, data types,
+schema introspection, and query building.  
 You can use each package independently or as part of the complete Hector ORM solution.
 
 > **All development, issues, and pull requests are managed in this monorepo.**  

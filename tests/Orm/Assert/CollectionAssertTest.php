@@ -4,7 +4,6 @@ namespace Hector\Orm\Tests\Assert;
 
 use Hector\Orm\Assert\CollectionAssert;
 use Hector\Orm\Collection\Collection;
-use Hector\Orm\Tests\Fake\Entity\LanguageCollection;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 use stdClass;

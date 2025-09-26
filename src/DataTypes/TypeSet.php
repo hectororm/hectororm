@@ -15,8 +15,6 @@ declare(strict_types=1);
 namespace Hector\DataTypes;
 
 use Countable;
-use Hector\DataTypes\Exception\ValueException;
-use Hector\DataTypes\Type;
 use UnexpectedValueException;
 
 class TypeSet implements Countable

@@ -40,7 +40,7 @@ $args = $filtered;
 
 if (count($args) < 2) {
     fwrite(STDERR,
-            "Usage: php bin/prepare-changelog.php <version> <date:YYYY-MM-DD> [Package1 Package2 ...] [--dry-run]\n");
+        "Usage: php bin/prepare-changelog.php <version> <date:YYYY-MM-DD> [Package1 Package2 ...] [--dry-run]\n");
     exit(1);
 }
 $version = $args[0];
@@ -86,7 +86,7 @@ function extractVersionBody(string $md, string $version): string
 {
     $md = normEol($md);
     if (preg_match('/^##\s*\[' . preg_quote($version,
-                    '/') . '\]\s*(?:-\s*\d{4}-\d{2}-\d{2})?\s*\n(.*?)(?=^##\s*\[|\z)/ims', $md, $m)) {
+            '/') . '\]\s*(?:-\s*\d{4}-\d{2}-\d{2})?\s*\n(.*?)(?=^##\s*\[|\z)/ims', $md, $m)) {
         return trim($m[1]);
     }
     return '';
@@ -143,24 +143,24 @@ function parseKeepAChangelog(string $body): array
         $sections[$current] = ($sections[$current] ?? '') . "\n" . trim($buf);
     }
     $map = [
-            'added' => 'Added',
-            'new' => 'Added',
-            'changed' => 'Changed',
-            'update' => 'Changed',
-            'updated' => 'Changed',
-            'deprecated' => 'Deprecated',
-            'removed' => 'Removed',
-            'deleted' => 'Removed',
-            'fixed' => 'Fixed',
-            'bugfix' => 'Fixed',
-            'bug fixes' => 'Fixed',
-            'security' => 'Security',
-            'docs' => 'Docs',
-            'documentation' => 'Docs',
-            'breaking' => 'Breaking',
-            'breaking changes' => 'Breaking',
-            'meta' => 'Meta',
-            'chore' => 'Meta',
+        'added' => 'Added',
+        'new' => 'Added',
+        'changed' => 'Changed',
+        'update' => 'Changed',
+        'updated' => 'Changed',
+        'deprecated' => 'Deprecated',
+        'removed' => 'Removed',
+        'deleted' => 'Removed',
+        'fixed' => 'Fixed',
+        'bugfix' => 'Fixed',
+        'bug fixes' => 'Fixed',
+        'security' => 'Security',
+        'docs' => 'Docs',
+        'documentation' => 'Docs',
+        'breaking' => 'Breaking',
+        'breaking changes' => 'Breaking',
+        'meta' => 'Meta',
+        'chore' => 'Meta',
     ];
     $out = [];
     foreach ($sections as $k => $text) {
@@ -187,7 +187,7 @@ function insertOrReplaceRootVersion(string $rootMd, string $version, string $dat
         return null; // no unreleased zone
     }
     $pattern = '/^##\s*\[' . preg_quote($version, '/') . '\]\s*-?\s*' . preg_quote($date,
-                    '/') . '\s*\n(.*?)(?=^##\s*\[|\z)/ims';
+            '/') . '\s*\n(.*?)(?=^##\s*\[|\z)/ims';
     if (preg_match($pattern, $rootMd)) {
         return preg_replace($pattern, $section, $rootMd);
     }

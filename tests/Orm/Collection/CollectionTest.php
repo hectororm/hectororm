@@ -14,12 +14,8 @@ namespace Hector\Orm\Tests\Collection;
 
 use Hector\Orm\Collection\Collection;
 use Hector\Orm\Tests\AbstractTestCase;
-use Hector\Orm\Tests\Fake\Entity\Actor;
 use Hector\Orm\Tests\Fake\Entity\Film;
 use Hector\Orm\Tests\Fake\Entity\Staff;
-use InvalidArgumentException;
-use stdClass;
-use TypeError;
 
 class CollectionTest extends AbstractTestCase
 {

@@ -19,8 +19,8 @@ use ReflectionNamedType;
 class FakeReflectionNamedType extends ReflectionNamedType
 {
     private string $fake_name;
-    private bool $fake_allowsNull ;
-    private bool $fake_builtin ;
+    private bool $fake_allowsNull;
+    private bool $fake_builtin;
 
     public function __construct(
         string $name,

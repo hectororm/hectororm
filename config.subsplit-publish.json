@@ -1,34 +1,34 @@
 {
-    "sub-splits": [
-        {
-            "name": "collection",
-            "directory": "src/Collection",
-            "target": "git@github.com:hectororm/collection.git"
-        },
-        {
-            "name": "connection",
-            "directory": "src/Connection",
-            "target": "git@github.com:hectororm/connection.git"
-        },
-        {
-            "name": "data-types",
-            "directory": "src/DataTypes",
-            "target": "git@github.com:hectororm/data-types.git"
-        },
-        {
-            "name": "orm",
-            "directory": "src/Orm",
-            "target": "git@github.com:hectororm/orm.git"
-        },
-        {
-            "name": "query",
-            "directory": "src/Query",
-            "target": "git@github.com:hectororm/query.git"
-        },
-        {
-            "name": "schema",
-            "directory": "src/Schema",
-            "target": "git@github.com:hectororm/schema.git"
-        }
-    ]
+  "sub-splits": [
+    {
+      "name": "collection",
+      "directory": "src/Collection",
+      "target": "git@github.com:hectororm/collection.git"
+    },
+    {
+      "name": "connection",
+      "directory": "src/Connection",
+      "target": "git@github.com:hectororm/connection.git"
+    },
+    {
+      "name": "data-types",
+      "directory": "src/DataTypes",
+      "target": "git@github.com:hectororm/data-types.git"
+    },
+    {
+      "name": "orm",
+      "directory": "src/Orm",
+      "target": "git@github.com:hectororm/orm.git"
+    },
+    {
+      "name": "query",
+      "directory": "src/Query",
+      "target": "git@github.com:hectororm/query.git"
+    },
+    {
+      "name": "schema",
+      "directory": "src/Schema",
+      "target": "git@github.com:hectororm/schema.git"
+    }
+  ]
 }

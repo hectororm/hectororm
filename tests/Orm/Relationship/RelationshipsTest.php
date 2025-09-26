@@ -13,9 +13,9 @@
 namespace Hector\Orm\Tests\Relationship;
 
 use Hector\Orm\Exception\RelationException;
-use Hector\Orm\Relationship\Relationship;
 use Hector\Orm\Relationship\ManyToOne;
 use Hector\Orm\Relationship\OneToMany;
+use Hector\Orm\Relationship\Relationship;
 use Hector\Orm\Relationship\Relationships;
 use Hector\Orm\Tests\AbstractTestCase;
 use Hector\Orm\Tests\Fake\Entity\Actor;

@@ -15,8 +15,6 @@ declare(strict_types=1);
 namespace Hector\Query;
 
 use Hector\Connection\Bind\BindParamList;
-use Hector\Query\Clause;
-use Hector\Query\Component;
 
 class Update implements StatementInterface
 {

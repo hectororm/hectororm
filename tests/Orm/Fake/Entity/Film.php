@@ -15,6 +15,7 @@ namespace Hector\Orm\Tests\Fake\Entity;
 use DateTime;
 use Hector\Orm\Attributes\BelongsToMany;
 use Hector\Orm\Attributes\HasOne;
+use Hector\Orm\Collection\Collection;
 use Hector\Orm\Entity\Entity;
 
 #[HasOne(Language::class, 'language', ['language_id' => 'language_id'])]
@@ -36,7 +37,7 @@ class Film extends Entity
     public ?array $special_features = null;
     public ?DateTime $last_update = null;
 
-    public function getActors(): \Hector\Orm\Collection\Collection
+    public function getActors(): Collection
     {
         return $this->getRelated()->get('actors');
     }

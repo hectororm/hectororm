@@ -71,12 +71,12 @@ class DriverInfo
      */
     public function getCapabilities(): DriverCapabilities
     {
-       return match ($this->driver) {
-           'mysql' => new MySQLCapabilities($this),
-           'mariadb' => new MariaDBCapabilities($this),
-           'sqlite' => new SQLiteCapabilities($this),
-           'pgsql' => new PostgreSQLCapabilities($this),
-           default => new UnknownCapabilities(),
-       };
+        return match ($this->driver) {
+            'mysql' => new MySQLCapabilities($this),
+            'mariadb' => new MariaDBCapabilities($this),
+            'sqlite' => new SQLiteCapabilities($this),
+            'pgsql' => new PostgreSQLCapabilities($this),
+            default => new UnknownCapabilities(),
+        };
     }
 }

@@ -1,33 +1,33 @@
 {
-    "name": "hectororm/query",
-    "description": "Hector Query",
-    "license": "MIT",
-    "homepage": "https://gethectororm.com",
-    "support": {
-        "issues": "https://github.com/hectororm/hectororm/issues",
-        "source": "https://github.com/hectororm/hectororm"
-    },
-    "authors": [
-        {
-            "name": "Ronan Giron",
-            "email": "ronan@getberlioz.com"
-        }
-    ],
-    "autoload": {
-        "psr-4": {
-            "Hector\\Query\\": ""
-        }
-    },
-    "require": {
-        "php": "^8.0",
-        "hectororm/connection": "^1.0"
-    },
-    "extra": {
-        "branch-alias": {
-            "dev-main": "1.x-dev"
-        }
-    },
-    "config": {
-        "sort-packages": true
+  "name": "hectororm/query",
+  "description": "Hector Query",
+  "license": "MIT",
+  "homepage": "https://gethectororm.com",
+  "support": {
+    "issues": "https://github.com/hectororm/hectororm/issues",
+    "source": "https://github.com/hectororm/hectororm"
+  },
+  "authors": [
+    {
+      "name": "Ronan Giron",
+      "email": "ronan@getberlioz.com"
     }
+  ],
+  "autoload": {
+    "psr-4": {
+      "Hector\\Query\\": ""
+    }
+  },
+  "require": {
+    "php": "^8.0",
+    "hectororm/connection": "^1.0"
+  },
+  "extra": {
+    "branch-alias": {
+      "dev-main": "1.x-dev"
+    }
+  },
+  "config": {
+    "sort-packages": true
+  }
 }

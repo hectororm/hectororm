@@ -17,7 +17,6 @@ namespace Hector\Orm\Relationship;
 use Hector\Orm\Collection\Collection;
 use Hector\Orm\Entity\Entity;
 use Hector\Orm\Exception\OrmException;
-use Hector\Orm\Orm;
 use Hector\Orm\Query\Builder;
 use Hector\Query\Statement\Row;
 use Hector\Schema\Exception\SchemaException;

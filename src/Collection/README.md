@@ -345,6 +345,7 @@ $collection->reverse(true)->getArrayCopy(); // Returns `['k2' => 'baz', 1 => 'ba
 Similar to `array_reverse()` function.
 
 ####
+
 `CollectionInterface::column(string|int|Closure|null $column_key, string|int|Closure|null $index_key = null): static`
 
 Get column value or reindex collection.

@@ -16,8 +16,6 @@ namespace Hector\Query;
 
 use Closure;
 use Hector\Connection\Bind\BindParamList;
-use Hector\Query\Clause;
-use Hector\Query\Component;
 
 class Select implements StatementInterface
 {
