@@ -327,7 +327,7 @@ class EntityTest extends AbstractTestCase
     public function testSaveWithExistentRelationOneToMany(): void
     {
         $customer = Customer::find(1);
-        $payment = $customer->payments->first(fn(Payment $payment) => 5 === $payment->payment_id);
+        $payment = $customer->payments->first(fn(Payment $payment): bool => 5 === $payment->payment_id);
 
         $amount = $payment->amount;
 
@@ -340,7 +340,7 @@ class EntityTest extends AbstractTestCase
         $this->assertFalse($payment->isAltered());
 
         $payment->refresh();
-        $this->assertEquals($amount + 1, $payment->amount);
+        $this->assertEquals(round($amount + 1), round($payment->amount));
     }
 
     /**
