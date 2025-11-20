@@ -58,7 +58,7 @@ class MagicMapper extends AbstractMapper
             // Convert types
             array_walk(
                 $data,
-                function (&$value, $key) {
+                function (&$value, $key): void {
                     if (null === $value) {
                         return;
                     }
@@ -98,7 +98,7 @@ class MagicMapper extends AbstractMapper
             // Convert types
             array_walk(
                 $data,
-                function (&$value, $key) {
+                function (&$value, $key): void {
                     if (null === $value) {
                         return;
                     }

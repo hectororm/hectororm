@@ -20,7 +20,7 @@ use PHPUnit\Framework\TestCase;
 
 class TableTest extends TestCase
 {
-    public function testGetStatement()
+    public function testGetStatement(): void
     {
         $table = new Table();
         $binds = new BindParamList();
@@ -29,7 +29,7 @@ class TableTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testTableOne()
+    public function testTableOne(): void
     {
         $table = new Table();
         $table->table('foo', 'f');
@@ -42,7 +42,7 @@ class TableTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testTableTwo()
+    public function testTableTwo(): void
     {
         $table = new Table();
         $table->table('foo', 'f');
@@ -56,7 +56,7 @@ class TableTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testTableWithStatement()
+    public function testTableWithStatement(): void
     {
         $table = new Table();
         $table->table('foo', 'f');

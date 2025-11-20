@@ -19,7 +19,7 @@ use PHPUnit\Framework\TestCase;
 
 class CollectionTest extends TestCase
 {
-    public function testLazy()
+    public function testLazy(): void
     {
         $collection = new Collection(['foo', 'bar', 'baz', 'qux', 'quxx']);
         $collection2 = $collection->lazy();
@@ -28,7 +28,7 @@ class CollectionTest extends TestCase
         $this->assertEquals($collection->getArrayCopy(), $collection2->getArrayCopy());
     }
 
-    public function testGetIterator()
+    public function testGetIterator(): void
     {
         $collection = new Collection(['foo', 'bar', 'baz', 'qux', 'quxx']);
 
@@ -36,7 +36,7 @@ class CollectionTest extends TestCase
         $this->assertSame($collection->getArrayCopy(), iterator_to_array($collection->getIterator()));
     }
 
-    public function testArrayAccess()
+    public function testArrayAccess(): void
     {
         $collection = new Collection(['key1' => 'foo', 'bar', 'key2' => 'baz', 'qux', 'quxx']);
         $collection[] = 'value1';
@@ -54,7 +54,7 @@ class CollectionTest extends TestCase
         $this->assertNull($collection['nonexistent']);
     }
 
-    public function testAppend()
+    public function testAppend(): void
     {
         $collection = new Collection(['foo', 'bar']);
 
@@ -64,7 +64,7 @@ class CollectionTest extends TestCase
         );
     }
 
-    public function testPrepend()
+    public function testPrepend(): void
     {
         $collection = new Collection(['foo', 'bar']);
 

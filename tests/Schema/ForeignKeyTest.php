@@ -17,7 +17,7 @@ use Hector\Schema\ForeignKey;
 
 class ForeignKeyTest extends AbstractTestCase
 {
-    public function testSerialization()
+    public function testSerialization(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('customer');
         $foreignKeys = iterator_to_array($table->getForeignKeys());
@@ -34,7 +34,7 @@ class ForeignKeyTest extends AbstractTestCase
         $this->assertEquals($foreignKey->getDeleteRule(), $foreignKey2->getDeleteRule());
     }
 
-    public function testGetName()
+    public function testGetName(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('store');
         $foreignKeys = iterator_to_array($table->getForeignKeys());
@@ -43,7 +43,7 @@ class ForeignKeyTest extends AbstractTestCase
         $this->assertEquals('fk_store_staff', $foreignKey->getName());
     }
 
-    public function testGetColumnsName()
+    public function testGetColumnsName(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('store');
         $foreignKeys = iterator_to_array($table->getForeignKeys());
@@ -52,7 +52,7 @@ class ForeignKeyTest extends AbstractTestCase
         $this->assertEquals(['manager_staff_id'], $foreignKey->getColumnsName());
     }
 
-    public function testGetReferencedSchemaName()
+    public function testGetReferencedSchemaName(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('store');
         $foreignKeys = iterator_to_array($table->getForeignKeys());
@@ -61,7 +61,7 @@ class ForeignKeyTest extends AbstractTestCase
         $this->assertEquals('sakila', $foreignKey->getReferencedSchemaName());
     }
 
-    public function testGetReferencedTableName()
+    public function testGetReferencedTableName(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('store');
         $foreignKeys = iterator_to_array($table->getForeignKeys());
@@ -70,7 +70,7 @@ class ForeignKeyTest extends AbstractTestCase
         $this->assertEquals('staff', $foreignKey->getReferencedTableName());
     }
 
-    public function testGetReferencedColumnsName()
+    public function testGetReferencedColumnsName(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('store');
         $foreignKeys = iterator_to_array($table->getForeignKeys());
@@ -79,7 +79,7 @@ class ForeignKeyTest extends AbstractTestCase
         $this->assertEquals(['staff_id'], $foreignKey->getReferencedColumnsName());
     }
 
-    public function testGetUpdateRule()
+    public function testGetUpdateRule(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('store');
         $foreignKeys = iterator_to_array($table->getForeignKeys());
@@ -88,7 +88,7 @@ class ForeignKeyTest extends AbstractTestCase
         $this->assertEquals(ForeignKey::RULE_CASCADE, $foreignKey->getUpdateRule());
     }
 
-    public function testGetDeleteRule()
+    public function testGetDeleteRule(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('store');
         $foreignKeys = iterator_to_array($table->getForeignKeys());
@@ -97,7 +97,7 @@ class ForeignKeyTest extends AbstractTestCase
         $this->assertEquals(ForeignKey::RULE_RESTRICT, $foreignKey->getDeleteRule());
     }
 
-    public function testGetTable()
+    public function testGetTable(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('store');
         $foreignKeys = iterator_to_array($table->getForeignKeys());
@@ -106,7 +106,7 @@ class ForeignKeyTest extends AbstractTestCase
         $this->assertSame($table, $foreignKey->getTable());
     }
 
-    public function testGetColumns()
+    public function testGetColumns(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('store');
         $foreignKeys = iterator_to_array($table->getForeignKeys());
@@ -119,7 +119,7 @@ class ForeignKeyTest extends AbstractTestCase
         }
     }
 
-    public function testGetReferencedTable()
+    public function testGetReferencedTable(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('store');
         $foreignKeys = iterator_to_array($table->getForeignKeys());
@@ -129,7 +129,7 @@ class ForeignKeyTest extends AbstractTestCase
         $this->assertSame($tableReferenced, $foreignKey->getReferencedTable());
     }
 
-    public function testGetReferencedColumns()
+    public function testGetReferencedColumns(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('store');
         $foreignKeys = iterator_to_array($table->getForeignKeys());

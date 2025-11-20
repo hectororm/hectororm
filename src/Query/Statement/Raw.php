@@ -19,19 +19,14 @@ use Hector\Query\StatementInterface;
 
 class Raw implements StatementInterface
 {
-    private string $expression;
-    private array $binds;
-
     /**
      * Raw constructor.
      *
      * @param string $expression
      * @param array $binds
      */
-    public function __construct(string $expression, array $binds = [])
+    public function __construct(private string $expression, private array $binds = [])
     {
-        $this->expression = $expression;
-        $this->binds = $binds;
     }
 
     /**

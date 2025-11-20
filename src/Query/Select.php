@@ -14,27 +14,37 @@ declare(strict_types=1);
 
 namespace Hector\Query;
 
+use Hector\Query\Component\Join;
+use Hector\Query\Component\Order;
+use Hector\Query\Clause\BindParams;
+use Hector\Query\Clause\Columns;
+use Hector\Query\Clause\From;
+use Hector\Query\Clause\Where;
+use Hector\Query\Clause\Group;
+use Hector\Query\Clause\Having;
+use Hector\Query\Clause\Limit;
+use Hector\Query\Component\EncapsulateHelperTrait;
 use Closure;
 use Hector\Connection\Bind\BindParamList;
 
 class Select implements StatementInterface
 {
-    public const INNER_JOIN = Component\Join::INNER_JOIN;
-    public const LEFT_JOIN = Component\Join::LEFT_JOIN;
-    public const RIGHT_JOIN = Component\Join::RIGHT_JOIN;
-    public const ORDER_ASC = Component\Order::ORDER_ASC;
-    public const ORDER_DESC = Component\Order::ORDER_DESC;
+    public const INNER_JOIN = Join::INNER_JOIN;
+    public const LEFT_JOIN = Join::LEFT_JOIN;
+    public const RIGHT_JOIN = Join::RIGHT_JOIN;
+    public const ORDER_ASC = Order::ORDER_ASC;
+    public const ORDER_DESC = Order::ORDER_DESC;
 
-    use Clause\BindParams;
-    use Clause\Columns;
-    use Clause\From;
+    use BindParams;
+    use Columns;
+    use From;
     use Clause\Join;
-    use Clause\Where;
-    use Clause\Group;
-    use Clause\Having;
+    use Where;
+    use Group;
+    use Having;
     use Clause\Order;
-    use Clause\Limit;
-    use Component\EncapsulateHelperTrait;
+    use Limit;
+    use EncapsulateHelperTrait;
 
     protected bool|Closure $distinct = false;
 

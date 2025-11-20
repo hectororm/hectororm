@@ -21,7 +21,7 @@ use PHPUnit\Framework\TestCase;
 
 class InsertTest extends TestCase
 {
-    public function testGetStatementEmpty()
+    public function testGetStatementEmpty(): void
     {
         $insert = new Insert();
         $binds = new BindParamList();
@@ -30,7 +30,7 @@ class InsertTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testGetStatementWithoutAssignment()
+    public function testGetStatementWithoutAssignment(): void
     {
         $insert = new Insert();
         $binds = new BindParamList();
@@ -40,7 +40,7 @@ class InsertTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testGetStatementWithOneAssignment()
+    public function testGetStatementWithOneAssignment(): void
     {
         $insert = new Insert();
         $binds = new BindParamList();
@@ -57,7 +57,7 @@ class InsertTest extends TestCase
         );
     }
 
-    public function testGetStatementWithIgnore()
+    public function testGetStatementWithIgnore(): void
     {
         $insert = new Insert();
         $binds = new BindParamList();
@@ -75,7 +75,7 @@ class InsertTest extends TestCase
         );
     }
 
-    public function testGetStatementWithSelect()
+    public function testGetStatementWithSelect(): void
     {
         $insert = new Insert();
         $binds = new BindParamList();
@@ -92,7 +92,7 @@ class InsertTest extends TestCase
         );
     }
 
-    public function testGetStatementWithMultipleAssignments()
+    public function testGetStatementWithMultipleAssignments(): void
     {
         $insert = new Insert();
         $binds = new BindParamList();
@@ -116,7 +116,7 @@ class InsertTest extends TestCase
         );
     }
 
-    public function testGetStatementWithEncapsulation()
+    public function testGetStatementWithEncapsulation(): void
     {
         $insert = new Insert();
         $binds = new BindParamList();

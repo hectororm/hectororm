@@ -14,19 +14,25 @@ declare(strict_types=1);
 
 namespace Hector\Query;
 
+use Hector\Query\Component\Order;
+use Hector\Query\Clause\BindParams;
+use Hector\Query\Clause\From;
+use Hector\Query\Clause\Where;
+use Hector\Query\Clause\Limit;
+use Hector\Query\Component\EncapsulateHelperTrait;
 use Hector\Connection\Bind\BindParamList;
 
 class Delete implements StatementInterface
 {
-    public const ORDER_ASC = Component\Order::ORDER_ASC;
-    public const ORDER_DESC = Component\Order::ORDER_DESC;
+    public const ORDER_ASC = Order::ORDER_ASC;
+    public const ORDER_DESC = Order::ORDER_DESC;
 
-    use Clause\BindParams;
-    use Clause\From;
-    use Clause\Where;
+    use BindParams;
+    use From;
+    use Where;
     use Clause\Order;
-    use Clause\Limit;
-    use Component\EncapsulateHelperTrait;
+    use Limit;
+    use EncapsulateHelperTrait;
 
     public function __construct(?BindParamList $binds = null)
     {

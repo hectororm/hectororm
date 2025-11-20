@@ -23,7 +23,7 @@ use PHPUnit\Framework\TestCase;
 
 class ConditionsTest extends TestCase
 {
-    public function testCount()
+    public function testCount(): void
     {
         $condition = new Conditions();
 
@@ -35,7 +35,7 @@ class ConditionsTest extends TestCase
         $this->assertCount(3, $condition);
     }
 
-    public function testNoCondition()
+    public function testNoCondition(): void
     {
         $condition = new Conditions();
         $binds = new BindParamList();
@@ -44,7 +44,7 @@ class ConditionsTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testOneCondition()
+    public function testOneCondition(): void
     {
         $condition = new Conditions();
         $condition->add('foo IS NULL');
@@ -57,7 +57,7 @@ class ConditionsTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testTwoConditions()
+    public function testTwoConditions(): void
     {
         $condition = new Conditions();
         $condition->add('foo IS NULL');
@@ -74,7 +74,7 @@ class ConditionsTest extends TestCase
         );
     }
 
-    public function testEncapsulation()
+    public function testEncapsulation(): void
     {
         $condition = new Conditions();
         $condition->add('foo IS NULL');
@@ -91,7 +91,7 @@ class ConditionsTest extends TestCase
         );
     }
 
-    public function testEqual()
+    public function testEqual(): void
     {
         $conditions = new Conditions();
         $conditions->equal('foo', 'bar');
@@ -107,7 +107,7 @@ class ConditionsTest extends TestCase
         );
     }
 
-    public function testEqualWithNullValue()
+    public function testEqualWithNullValue(): void
     {
         $conditions = new Conditions();
         $conditions->equal('foo', null);
@@ -120,7 +120,7 @@ class ConditionsTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testEqualWithArray()
+    public function testEqualWithArray(): void
     {
         $conditions = new Conditions();
         $conditions->equal('foo', [1, 2]);
@@ -136,7 +136,7 @@ class ConditionsTest extends TestCase
         );
     }
 
-    public function testEqualWithObjectStringable()
+    public function testEqualWithObjectStringable(): void
     {
         $obj = new class {
             public function __toString(): string
@@ -160,7 +160,7 @@ class ConditionsTest extends TestCase
         );
     }
 
-    public function testEqualWithObjectNotStringable()
+    public function testEqualWithObjectNotStringable(): void
     {
         $obj = new class {
             public string $foo = 'foo';
@@ -181,7 +181,7 @@ class ConditionsTest extends TestCase
         );
     }
 
-    public function testEqualWithArrayOfEnum()
+    public function testEqualWithArrayOfEnum(): void
     {
         if (!interface_exists(BackedEnum::class)) {
             $this->markTestSkipped('Enum are not available on this PHP version.');
@@ -201,7 +201,7 @@ class ConditionsTest extends TestCase
         );
     }
 
-    public function testEquals()
+    public function testEquals(): void
     {
         $othersConditions = new Conditions();
         $othersConditions->add(new Row('corge', 'grault'), 'IN', [[1, 2], [3, 4]]);
@@ -241,7 +241,7 @@ class ConditionsTest extends TestCase
         );
     }
 
-    public function testConditionsWithStatement()
+    public function testConditionsWithStatement(): void
     {
         $condition = new Conditions();
         $condition->add(
@@ -263,7 +263,7 @@ class ConditionsTest extends TestCase
         );
     }
 
-    public function testConditionsWithRow()
+    public function testConditionsWithRow(): void
     {
         $conditions = new Conditions();
         $conditions->add(new Row('foo', 'bar'), 'IN', [[1, 2], [3, 4], [5, 6]]);
@@ -286,7 +286,7 @@ class ConditionsTest extends TestCase
         );
     }
 
-    public function testConditionsWithCallback()
+    public function testConditionsWithCallback(): void
     {
         $nbCallbackCalled = 0;
         $select = new Select();
@@ -294,7 +294,7 @@ class ConditionsTest extends TestCase
         $binds = new BindParamList();
 
         $conditions->add(
-            function ($select) use (&$nbCallbackCalled) {
+            function ($select) use (&$nbCallbackCalled): void {
                 $nbCallbackCalled++;
 
                 $select->where('foo', 'bar');
@@ -312,7 +312,7 @@ class ConditionsTest extends TestCase
         $this->assertEquals(1, $nbCallbackCalled);
     }
 
-    public function testConditionsWithValueCallback()
+    public function testConditionsWithValueCallback(): void
     {
         $nbCallbackCalled = 0;
         $select = new Select();

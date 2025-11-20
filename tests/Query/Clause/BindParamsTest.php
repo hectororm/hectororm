@@ -18,7 +18,7 @@ use PHPUnit\Framework\TestCase;
 
 class BindParamsTest extends TestCase
 {
-    public function testResetBindParams()
+    public function testResetBindParams(): void
     {
         $clause = $this->getMockForTrait(BindParams::class);
 
@@ -29,7 +29,7 @@ class BindParamsTest extends TestCase
         $this->assertNotSame($bindParams, $clause->getBindParams());
     }
 
-    public function testGetBindParams()
+    public function testGetBindParams(): void
     {
         $clause = $this->getMockForTrait(BindParams::class);
 
@@ -42,7 +42,7 @@ class BindParamsTest extends TestCase
         );
     }
 
-    public function testBind()
+    public function testBind(): void
     {
         $clause = $this->getMockForTrait(BindParams::class);
         $clause->resetBindParams();

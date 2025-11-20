@@ -12,6 +12,8 @@
 
 namespace Hector\Query\Tests;
 
+use Generator;
+use ReflectionMethod;
 use Hector\Connection\Bind\BindParam;
 use Hector\Connection\Bind\BindParamList;
 use Hector\Connection\Connection;
@@ -39,7 +41,7 @@ class QueryBuilderTest extends TestCase
         return $this->connection = new Connection('sqlite:' . realpath(__DIR__ . '/test.sqlite'));
     }
 
-    public function testFetchOne()
+    public function testFetchOne(): void
     {
         $queryBuilder = new QueryBuilder($this->getConnection());
 
@@ -49,7 +51,7 @@ class QueryBuilderTest extends TestCase
         $this->assertArrayHasKey('table_id', $result);
     }
 
-    public function testFetchOneWithLock()
+    public function testFetchOneWithLock(): void
     {
         $connection = new class('sqlite:' . realpath(__DIR__ . '/test.sqlite')) extends Connection {
             public ?string $lastStatement = null;
@@ -71,26 +73,26 @@ class QueryBuilderTest extends TestCase
         $this->assertEquals('SELECT * FROM `table` FOR UPDATE SKIP LOCKED', $connection->lastStatement);
     }
 
-    public function testFetchAll()
+    public function testFetchAll(): void
     {
         $queryBuilder = new QueryBuilder($this->getConnection());
 
         $result = $queryBuilder->from('`table`')->columns('*')->fetchAll();
 
-        $this->assertInstanceOf(\Generator::class, $result);
+        $this->assertInstanceOf(Generator::class, $result);
         $this->assertIsIterable($result);
 
         $result = iterator_to_array($result);
         $this->assertGreaterThanOrEqual(2, $result);
     }
 
-    public function testFetchColumn()
+    public function testFetchColumn(): void
     {
         $queryBuilder = new QueryBuilder($this->getConnection());
 
         $result = $queryBuilder->from('`table`')->fetchColumn(1);
 
-        $this->assertInstanceOf(\Generator::class, $result);
+        $this->assertInstanceOf(Generator::class, $result);
         $this->assertIsIterable($result);
 
         $result = iterator_to_array($result);
@@ -100,9 +102,9 @@ class QueryBuilderTest extends TestCase
         $this->assertContains("Bar", $result);
     }
 
-    public function testSelect()
+    public function testSelect(): void
     {
-        $reflectionMethod = new \ReflectionMethod(QueryBuilder::class, 'makeSelect');
+        $reflectionMethod = new ReflectionMethod(QueryBuilder::class, 'makeSelect');
         $reflectionMethod->setAccessible(true);
 
         $queryBuilder = new QueryBuilder($this->getConnection());
@@ -117,7 +119,7 @@ class QueryBuilderTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testDistinct()
+    public function testDistinct(): void
     {
         $queryBuilder = new FakeQueryBuilder($this->getConnection());
         $queryBuilder = $queryBuilder->from('foo', 'f')->orderBy('bar', 'DESC')->distinct();
@@ -133,15 +135,15 @@ class QueryBuilderTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testSelectWithClosureCondition()
+    public function testSelectWithClosureCondition(): void
     {
-        $reflectionMethod = new \ReflectionMethod(QueryBuilder::class, 'makeSelect');
+        $reflectionMethod = new ReflectionMethod(QueryBuilder::class, 'makeSelect');
         $reflectionMethod->setAccessible(true);
 
         $queryBuilder = new QueryBuilder($this->getConnection());
         $queryBuilder->from('`foo`')
             ->where(
-                function ($query) {
+                function ($query): void {
                     $query->where('bar', 'baz');
                 }
             );
@@ -167,17 +169,15 @@ class QueryBuilderTest extends TestCase
         );
     }
 
-    public function testSelectWithClosureConditionWithReturnedValue()
+    public function testSelectWithClosureConditionWithReturnedValue(): void
     {
-        $reflectionMethod = new \ReflectionMethod(QueryBuilder::class, 'makeSelect');
+        $reflectionMethod = new ReflectionMethod(QueryBuilder::class, 'makeSelect');
         $reflectionMethod->setAccessible(true);
 
         $queryBuilder = new QueryBuilder($this->getConnection());
         $queryBuilder->from('`foo`')
             ->where(
-                function () {
-                    return 'bar';
-                },
+                fn() => 'bar',
                 'test'
             );
 
@@ -192,18 +192,16 @@ class QueryBuilderTest extends TestCase
         );
     }
 
-    public function testSelectWithClosureConditionValue()
+    public function testSelectWithClosureConditionValue(): void
     {
-        $reflectionMethod = new \ReflectionMethod(QueryBuilder::class, 'makeSelect');
+        $reflectionMethod = new ReflectionMethod(QueryBuilder::class, 'makeSelect');
         $reflectionMethod->setAccessible(true);
 
         $queryBuilder = new QueryBuilder($this->getConnection());
         $queryBuilder->from('`foo`')
             ->where(
                 'bar',
-                function () {
-                    return 'test';
-                }
+                fn() => 'test'
             );
 
         $binds = new BindParamList();
@@ -217,7 +215,7 @@ class QueryBuilderTest extends TestCase
         );
     }
 
-    public function testMakeSelect()
+    public function testMakeSelect(): void
     {
         $queryBuilder = new FakeQueryBuilder($this->getConnection());
         $queryBuilder = $queryBuilder->from('foo', 'f')->orderBy('bar', 'DESC');
@@ -233,7 +231,7 @@ class QueryBuilderTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testMakeCount()
+    public function testMakeCount(): void
     {
         $queryBuilder = new FakeQueryBuilder($this->getConnection());
         $queryBuilder = $queryBuilder
@@ -253,7 +251,7 @@ class QueryBuilderTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testMakeCount_withDistinct()
+    public function testMakeCount_withDistinct(): void
     {
         $queryBuilder = new FakeQueryBuilder($this->getConnection());
         $queryBuilder = $queryBuilder
@@ -279,7 +277,7 @@ class QueryBuilderTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testMakeCount_withHaving()
+    public function testMakeCount_withHaving(): void
     {
         $queryBuilder = new FakeQueryBuilder($this->getConnection());
         $queryBuilder = $queryBuilder
@@ -300,7 +298,7 @@ class QueryBuilderTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testMakeCount_withGroup()
+    public function testMakeCount_withGroup(): void
     {
         $queryBuilder = new FakeQueryBuilder($this->getConnection());
         $queryBuilder = $queryBuilder
@@ -319,7 +317,7 @@ class QueryBuilderTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testMakeExists()
+    public function testMakeExists(): void
     {
         $queryBuilder = new FakeQueryBuilder($this->getConnection());
         $queryBuilder->from('foo', 'f');
@@ -339,7 +337,7 @@ class QueryBuilderTest extends TestCase
         );
     }
 
-    public function testInsert()
+    public function testInsert(): void
     {
         $queryBuilder = new FakeQueryBuilder($this->getConnection());
         $queryBuilder->from('foo', 'f');
@@ -355,7 +353,7 @@ class QueryBuilderTest extends TestCase
         );
     }
 
-    public function testInsertSelect()
+    public function testInsertSelect(): void
     {
         $queryBuilder = new FakeQueryBuilder($this->getConnection());
         $queryBuilder->from('foo', 'f');
@@ -371,7 +369,7 @@ class QueryBuilderTest extends TestCase
         );
     }
 
-    public function testIgnore()
+    public function testIgnore(): void
     {
         $queryBuilder = new FakeQueryBuilder($this->getConnection());
         $queryBuilder->ignore(true);
@@ -388,7 +386,7 @@ class QueryBuilderTest extends TestCase
         );
     }
 
-    public function testMakeDelete()
+    public function testMakeDelete(): void
     {
         $queryBuilder = new FakeQueryBuilder($this->getConnection());
         $queryBuilder->from('foo', 'f');

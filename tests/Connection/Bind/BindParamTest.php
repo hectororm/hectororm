@@ -28,28 +28,28 @@ class BindParamTest extends TestCase
         }
     }
 
-    public function testGetName()
+    public function testGetName(): void
     {
         $param = new BindParam('bar', 'foo', PDO::PARAM_INT);
 
         $this->assertSame('bar', $param->getName());
     }
 
-    public function testGetValue()
+    public function testGetValue(): void
     {
         $param = new BindParam('name', 'foo', PDO::PARAM_INT);
 
         $this->assertSame('foo', $param->getValue());
     }
 
-    public function testGetVariableInteger()
+    public function testGetVariableInteger(): void
     {
         $param = new BindParam('name', 1, PDO::PARAM_INT);
 
         $this->assertSame(1, $param->getValue());
     }
 
-    public function testGetVariable_StringEnum()
+    public function testGetVariable_StringEnum(): void
     {
         $this->enumCapability();
 
@@ -60,7 +60,7 @@ class BindParamTest extends TestCase
         $this->assertSame(PDO::PARAM_STR, $param->getDataType());
     }
 
-    public function testGetVariable_IntEnum()
+    public function testGetVariable_IntEnum(): void
     {
         $this->enumCapability();
 
@@ -71,7 +71,7 @@ class BindParamTest extends TestCase
         $this->assertSame(PDO::PARAM_INT, $param->getDataType());
     }
 
-    public function testGetDataType()
+    public function testGetDataType(): void
     {
         $var = '1';
         $param = new BindParam('name', $var, PDO::PARAM_INT);
@@ -79,7 +79,7 @@ class BindParamTest extends TestCase
         $this->assertSame(PDO::PARAM_INT, $param->getDataType());
     }
 
-    public function testGetDataTypeString()
+    public function testGetDataTypeString(): void
     {
         $var = 'foo';
         $param = new BindParam('name', $var);
@@ -87,7 +87,7 @@ class BindParamTest extends TestCase
         $this->assertSame(PDO::PARAM_STR, $param->getDataType());
     }
 
-    public function testGetDataTypeString_enum()
+    public function testGetDataTypeString_enum(): void
     {
         $this->enumCapability();
 
@@ -97,7 +97,7 @@ class BindParamTest extends TestCase
         $this->assertSame(PDO::PARAM_STR, $param->getDataType());
     }
 
-    public function testGetDataTypeInt()
+    public function testGetDataTypeInt(): void
     {
         $var = 1;
         $param = new BindParam('name', $var);
@@ -105,7 +105,7 @@ class BindParamTest extends TestCase
         $this->assertSame(PDO::PARAM_INT, $param->getDataType());
     }
 
-    public function testGetDataTypeInt_enum()
+    public function testGetDataTypeInt_enum(): void
     {
         $this->enumCapability();
 
@@ -115,7 +115,7 @@ class BindParamTest extends TestCase
         $this->assertSame(PDO::PARAM_INT, $param->getDataType());
     }
 
-    public function testGetDataTypeLob()
+    public function testGetDataTypeLob(): void
     {
         $var = fopen('php://memory', 'r');
         $param = new BindParam('name', $var);
@@ -123,7 +123,7 @@ class BindParamTest extends TestCase
         $this->assertSame(PDO::PARAM_LOB, $param->getDataType());
     }
 
-    public function testGetDataTypeBool()
+    public function testGetDataTypeBool(): void
     {
         $var = false;
         $param = new BindParam('name', $var);

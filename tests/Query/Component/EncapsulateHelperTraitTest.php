@@ -7,7 +7,7 @@ use PHPUnit\Framework\TestCase;
 
 class EncapsulateHelperTraitTest extends TestCase
 {
-    public function testEncapsulate()
+    public function testEncapsulate(): void
     {
         /** @var EncapsulateHelperTrait $trait */
         $trait = $this->getMockForTrait(EncapsulateHelperTrait::class);
@@ -15,7 +15,7 @@ class EncapsulateHelperTraitTest extends TestCase
         $this->assertEquals('( STR )', $trait->encapsulate('STR'));
     }
 
-    public function testEncapsulate_false()
+    public function testEncapsulate_false(): void
     {
         /** @var EncapsulateHelperTrait $trait */
         $trait = $this->getMockForTrait(EncapsulateHelperTrait::class);
@@ -23,7 +23,7 @@ class EncapsulateHelperTraitTest extends TestCase
         $this->assertEquals('STR', $trait->encapsulate('STR', false));
     }
 
-    public function testEncapsulate_emptyStr()
+    public function testEncapsulate_emptyStr(): void
     {
         /** @var EncapsulateHelperTrait $trait */
         $trait = $this->getMockForTrait(EncapsulateHelperTrait::class);
@@ -31,7 +31,7 @@ class EncapsulateHelperTraitTest extends TestCase
         $this->assertNull($trait->encapsulate(''));
     }
 
-    public function testEncapsulate_nullStr()
+    public function testEncapsulate_nullStr(): void
     {
         /** @var EncapsulateHelperTrait $trait */
         $trait = $this->getMockForTrait(EncapsulateHelperTrait::class);

@@ -20,7 +20,7 @@ use UnexpectedValueException;
 
 class EntityStorageTest extends TestCase
 {
-    public function testSerialize()
+    public function testSerialize(): void
     {
         $this->expectException(OrmException::class);
 
@@ -28,7 +28,7 @@ class EntityStorageTest extends TestCase
         serialize($storage);
     }
 
-    public function testGetIterator()
+    public function testGetIterator(): void
     {
         $storage = new FakeEntityStorage();
         $storage->attach($entity = new Film());
@@ -38,7 +38,7 @@ class EntityStorageTest extends TestCase
         $this->assertCount(2, $storage->getIterator());
     }
 
-    public function testDetach()
+    public function testDetach(): void
     {
         $storage = new FakeEntityStorage();
         $storage->attach($entity = new Film());
@@ -51,7 +51,7 @@ class EntityStorageTest extends TestCase
         $this->assertCount(1, $storage);
     }
 
-    public function testDetachCollection()
+    public function testDetachCollection(): void
     {
         $storage = new FakeEntityStorage();
         $storage->attach($entity = new Film());
@@ -65,7 +65,7 @@ class EntityStorageTest extends TestCase
         $this->assertCount(1, $storage);
     }
 
-    public function testUnset()
+    public function testUnset(): void
     {
         $storage = new FakeEntityStorage();
         $storage->attach($entity = new Film());
@@ -77,7 +77,7 @@ class EntityStorageTest extends TestCase
         $this->assertCount(0, $storage);
     }
 
-    public function testDetachUnknownEntity()
+    public function testDetachUnknownEntity(): void
     {
         $storage = new FakeEntityStorage();
         $storage->attach($entity = new Film());
@@ -90,7 +90,7 @@ class EntityStorageTest extends TestCase
         $this->assertCount(1, $storage);
     }
 
-    public function testIterator()
+    public function testIterator(): void
     {
         $entities = [];
         $storage = new FakeEntityStorage();
@@ -103,7 +103,7 @@ class EntityStorageTest extends TestCase
         $this->assertCount(5, $storage);
     }
 
-    public function testAttach()
+    public function testAttach(): void
     {
         $storage = new FakeEntityStorage();
         $storage->attach($entity1 = new Film());
@@ -117,7 +117,7 @@ class EntityStorageTest extends TestCase
         $this->assertCount(2, $storage);
     }
 
-    public function testAttachCollection()
+    public function testAttachCollection(): void
     {
         $storage = new FakeEntityStorage();
         $collection = new Collection(
@@ -132,7 +132,7 @@ class EntityStorageTest extends TestCase
         $this->assertCount(3, $storage);
     }
 
-    public function testContainsKnownEntity()
+    public function testContainsKnownEntity(): void
     {
         $storage = new FakeEntityStorage();
         $storage->attach($entity = new Film());
@@ -141,7 +141,7 @@ class EntityStorageTest extends TestCase
         $this->assertTrue(isset($storage[$entity]));
     }
 
-    public function testContainsCollection()
+    public function testContainsCollection(): void
     {
         $storage = new FakeEntityStorage();
         $storage->attach($entity = new Film());
@@ -152,7 +152,7 @@ class EntityStorageTest extends TestCase
         $this->assertFalse($storage->contains(new Collection([$entity2, new Film()])));
     }
 
-    public function testContainsUnknownEntity()
+    public function testContainsUnknownEntity(): void
     {
         $storage = new FakeEntityStorage();
         $entity = new Film();
@@ -161,7 +161,7 @@ class EntityStorageTest extends TestCase
         $this->assertFalse(isset($storage[$entity]));
     }
 
-    public function testContainsSimilar()
+    public function testContainsSimilar(): void
     {
         $storage = new FakeEntityStorage();
         $entity = new Film();
@@ -178,7 +178,7 @@ class EntityStorageTest extends TestCase
         $this->assertFalse(isset($storage[$entity2]));
     }
 
-    public function testCount()
+    public function testCount(): void
     {
         $entities = [];
         $storage = new FakeEntityStorage();
@@ -193,7 +193,7 @@ class EntityStorageTest extends TestCase
         $this->assertCount(3, $storage);
     }
 
-    public function testStatusWithTwoAttachment()
+    public function testStatusWithTwoAttachment(): void
     {
         $storage = new FakeEntityStorage();
         $storage->attach($entity = new Film());
@@ -205,7 +205,7 @@ class EntityStorageTest extends TestCase
         $this->assertEquals(FakeEntityStorage::STATUS_TO_UPDATE, $storage[$entity]);
     }
 
-    public function testStatusWithUnknownEntity()
+    public function testStatusWithUnknownEntity(): void
     {
         $storage = new FakeEntityStorage();
 
@@ -214,7 +214,7 @@ class EntityStorageTest extends TestCase
         $storage[new Film()];
     }
 
-    public function testStatusGetSet()
+    public function testStatusGetSet(): void
     {
         $storage = new FakeEntityStorage();
         $storage->attach($entity = new Film());

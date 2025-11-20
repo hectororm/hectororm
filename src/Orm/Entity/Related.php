@@ -24,7 +24,6 @@ use InvalidArgumentException;
 
 class Related implements Countable
 {
-    private Entity $entity;
     private array $related = [];
 
     /**
@@ -32,9 +31,8 @@ class Related implements Countable
      *
      * @param Entity $entity
      */
-    public function __construct(Entity $entity)
+    public function __construct(private Entity $entity)
     {
-        $this->entity = $entity;
     }
 
     public function __serialize(): array

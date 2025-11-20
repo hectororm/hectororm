@@ -18,18 +18,8 @@ use ReflectionNamedType;
 
 class FakeReflectionNamedType extends ReflectionNamedType
 {
-    private string $fake_name;
-    private bool $fake_allowsNull;
-    private bool $fake_builtin;
-
-    public function __construct(
-        string $name,
-        bool $allowsNull = false,
-        bool $builtin = false
-    ) {
-        $this->fake_name = $name;
-        $this->fake_allowsNull = $allowsNull;
-        $this->fake_builtin = $builtin;
+    public function __construct(private string $fake_name, private bool $fake_allowsNull = false, private bool $fake_builtin = false)
+    {
     }
 
     /**

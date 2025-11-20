@@ -16,7 +16,7 @@ use Hector\Orm\Entity\Entity;
 
 class Country extends Entity
 {
-    public ?int $country_id;
-    public ?string $country;
-    public ?string $last_update;
+    public ?int $country_id = null;
+    public ?string $country = null;
+    public ?string $last_update = null;
 }

@@ -20,7 +20,7 @@ use ValueError;
 
 class StringTypeTest extends TestCase
 {
-    public function testFromSchema()
+    public function testFromSchema(): void
     {
         $type = new StringType();
 
@@ -32,7 +32,7 @@ class StringTypeTest extends TestCase
         $this->assertSame('', $type->fromSchema(false));
     }
 
-    public function testFromSchemaWithNotScalar()
+    public function testFromSchemaWithNotScalar(): void
     {
         $this->expectException(ValueError::class);
 
@@ -40,7 +40,7 @@ class StringTypeTest extends TestCase
         $type->fromSchema(['foo']);
     }
 
-    public function testFromSchemaWithDeclaredTypeBuiltin()
+    public function testFromSchemaWithDeclaredTypeBuiltin(): void
     {
         $expectedType = new ExpectedType('string', false, true);
 
@@ -49,7 +49,7 @@ class StringTypeTest extends TestCase
         $this->assertSame('1', $type->fromSchema('1', $expectedType));
     }
 
-    public function testFromSchemaWithDeclaredTypeBuiltinAndBadValue()
+    public function testFromSchemaWithDeclaredTypeBuiltinAndBadValue(): void
     {
         $this->expectException(ValueError::class);
         $expectedType = new ExpectedType('string', false, true);
@@ -59,7 +59,7 @@ class StringTypeTest extends TestCase
         $this->assertSame('1', $type->fromSchema(new stdClass(), $expectedType));
     }
 
-    public function testFromSchemaWithDeclaredTypeNotBuiltin()
+    public function testFromSchemaWithDeclaredTypeNotBuiltin(): void
     {
         $this->expectException(ValueError::class);
 
@@ -69,7 +69,7 @@ class StringTypeTest extends TestCase
         $type->fromSchema('1', $expectedType);
     }
 
-    public function testToSchema()
+    public function testToSchema(): void
     {
         $type = new StringType();
 
@@ -81,7 +81,7 @@ class StringTypeTest extends TestCase
         $this->assertSame('', $type->toSchema(false));
     }
 
-    public function testToSchemaWithNotScalar()
+    public function testToSchemaWithNotScalar(): void
     {
         $this->expectException(ValueError::class);
 
@@ -89,7 +89,7 @@ class StringTypeTest extends TestCase
         $type->toSchema(['foo']);
     }
 
-    public function testToSchemaWithObjectString()
+    public function testToSchemaWithObjectString(): void
     {
         $object = new class {
             public function __toString()
@@ -103,7 +103,7 @@ class StringTypeTest extends TestCase
         $this->assertEquals('foo', $type->toSchema($object));
     }
 
-    public function testToSchemaWithMaxLength()
+    public function testToSchemaWithMaxLength(): void
     {
         $type = new StringType(maxlength: 6);
 

@@ -23,7 +23,7 @@ use TypeError;
 
 class HasOneTest extends TestCase
 {
-    public function testConstruct()
+    public function testConstruct(): void
     {
         $attribute = new HasOne(Address::class, 'address', ['address_id' => 'address_id']);
 
@@ -32,7 +32,7 @@ class HasOneTest extends TestCase
         $this->assertEquals(['address_id' => 'address_id'], $attribute->columns);
     }
 
-    public function testConstructWithoutColumns()
+    public function testConstructWithoutColumns(): void
     {
         $attribute = new HasOne(Address::class, 'address');
 
@@ -41,14 +41,14 @@ class HasOneTest extends TestCase
         $this->assertNull($attribute->columns);
     }
 
-    public function testConstructBadEntity()
+    public function testConstructBadEntity(): void
     {
         $this->expectException(TypeError::class);
 
         new HasOne(stdClass::class, 'address');
     }
 
-    public function testInit()
+    public function testInit(): void
     {
         $attribute = new HasOne(Address::class, 'address', ['address_id' => 'address_id']);
         $relationships = new Relationships(Customer::class);

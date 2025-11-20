@@ -18,7 +18,7 @@ use PHPUnit\Framework\TestCase;
 
 class LimitTest extends TestCase
 {
-    public function testGetStatement()
+    public function testGetStatement(): void
     {
         $limit = new Limit();
         $binds = new BindParamList();
@@ -29,7 +29,7 @@ class LimitTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testSetOffset()
+    public function testSetOffset(): void
     {
         $limit = new Limit();
         $limit->setOffset(5);
@@ -40,7 +40,7 @@ class LimitTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testSetLimit()
+    public function testSetLimit(): void
     {
         $limit = new Limit();
         $limit->setLimit(10);
@@ -51,7 +51,7 @@ class LimitTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testSetLimitWithOffset()
+    public function testSetLimitWithOffset(): void
     {
         $limit = new Limit();
         $limit->setLimit(10);

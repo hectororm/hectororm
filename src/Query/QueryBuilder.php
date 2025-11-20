@@ -14,6 +14,15 @@ declare(strict_types=1);
 
 namespace Hector\Query;
 
+use Hector\Query\Clause\BindParams;
+use Hector\Query\Clause\Columns;
+use Hector\Query\Clause\From;
+use Hector\Query\Clause\Join;
+use Hector\Query\Clause\Where;
+use Hector\Query\Clause\Group;
+use Hector\Query\Clause\Having;
+use Hector\Query\Clause\Order;
+use Hector\Query\Clause\Limit;
 use Generator;
 use Hector\Connection\Bind\BindParamList;
 use Hector\Connection\Connection;
@@ -21,15 +30,15 @@ use Hector\Query\Statement\Exists;
 
 class QueryBuilder implements StatementInterface
 {
-    use Clause\BindParams;
-    use Clause\Columns;
-    use Clause\From;
-    use Clause\Join;
-    use Clause\Where;
-    use Clause\Group;
-    use Clause\Having;
-    use Clause\Order;
-    use Clause\Limit;
+    use BindParams;
+    use Columns;
+    use From;
+    use Join;
+    use Where;
+    use Group;
+    use Having;
+    use Order;
+    use Limit;
 
     protected bool $distinct = false;
     protected bool $ignore = false;

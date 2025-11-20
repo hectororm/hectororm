@@ -20,7 +20,7 @@ use PHPUnit\Framework\TestCase;
 
 class OrderTest extends TestCase
 {
-    public function testCount()
+    public function testCount(): void
     {
         $orderBy = new Order();
 
@@ -32,7 +32,7 @@ class OrderTest extends TestCase
         $this->assertCount(2, $orderBy);
     }
 
-    public function testGetStatement()
+    public function testGetStatement(): void
     {
         $orderBy = new Order();
         $binds = new BindParamList();
@@ -40,7 +40,7 @@ class OrderTest extends TestCase
         $this->assertNull($orderBy->getStatement($binds));
     }
 
-    public function testOrderByOne()
+    public function testOrderByOne(): void
     {
         $orderBy = new Order();
         $orderBy->orderBy('foo', Order::ORDER_DESC);
@@ -53,7 +53,7 @@ class OrderTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testOrderByTwo()
+    public function testOrderByTwo(): void
     {
         $orderBy = new Order();
         $orderBy->orderBy('foo', Order::ORDER_DESC);
@@ -67,7 +67,7 @@ class OrderTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testOrderByAsc()
+    public function testOrderByAsc(): void
     {
         $orderBy = new Order();
         $orderBy->orderBy('baz', Order::ORDER_ASC);
@@ -79,7 +79,7 @@ class OrderTest extends TestCase
         );
     }
 
-    public function testOrderByStatement()
+    public function testOrderByStatement(): void
     {
         $orderBy = new Order();
         $orderBy->orderBy('baz', Order::ORDER_ASC);

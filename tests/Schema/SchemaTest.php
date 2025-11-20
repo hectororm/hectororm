@@ -12,6 +12,7 @@
 
 namespace Hector\Schema\Tests;
 
+use Iterator;
 use Hector\Schema\Exception\NotFoundException;
 use Hector\Schema\Schema;
 use Hector\Schema\SchemaContainer;
@@ -19,7 +20,7 @@ use Hector\Schema\Table;
 
 class SchemaTest extends AbstractTestCase
 {
-    public function testSerialization()
+    public function testSerialization(): void
     {
         $schema = $this->getSchemaContainer()->getSchema('sakila');
         $schema2 = unserialize(serialize($schema));
@@ -30,24 +31,24 @@ class SchemaTest extends AbstractTestCase
         $this->assertCount(count(iterator_to_array($schema->getTables())), $schema2->getTables());
     }
 
-    public function testCount()
+    public function testCount(): void
     {
         $schema = $this->getSchemaContainer()->getSchema('sakila');
 
         $this->assertCount(23, $schema);
     }
 
-    public function testGetIterator()
+    public function testGetIterator(): void
     {
         $schema = $this->getSchemaContainer()->getSchema('sakila');
         $iterator = $schema->getIterator();
 
-        $this->assertInstanceOf(\Iterator::class, $iterator);
+        $this->assertInstanceOf(Iterator::class, $iterator);
         $this->assertCount(23, $iterator);
         $this->assertContainsOnlyInstancesOf(Table::class, $iterator);
     }
 
-    public function testGetName()
+    public function testGetName(): void
     {
         $schema = $this->getSchemaContainer()->getSchema('sakila');
 
@@ -55,42 +56,42 @@ class SchemaTest extends AbstractTestCase
         $this->assertEquals($schema->getName(), $schema->getName(false));
     }
 
-    public function testGetNameQuoted()
+    public function testGetNameQuoted(): void
     {
         $schema = $this->getSchemaContainer()->getSchema('sakila');
 
         $this->assertEquals('`sakila`', $schema->getName(true));
     }
 
-    public function testGetAlias()
+    public function testGetAlias(): void
     {
         $schema = $this->getSchemaContainer()->getSchema('sakila');
 
         $this->assertNull($schema->getAlias());
     }
 
-    public function testGetAlias_defined()
+    public function testGetAlias_defined(): void
     {
         $schema = new Schema(connection: 'test', name: 'table_name', charset: 'utf8mb4', alias: 'myAlias');
 
         $this->assertEquals('myAlias', $schema->getAlias());
     }
 
-    public function testGetCharset()
+    public function testGetCharset(): void
     {
         $schema = $this->getSchemaContainer()->getSchema('sakila');
 
         $this->assertEquals('utf8mb4', $schema->getCharset());
     }
 
-    public function testGetCollation()
+    public function testGetCollation(): void
     {
         $schema = $this->getSchemaContainer()->getSchema('sakila');
 
         $this->assertStringStartsWith('utf8mb4_', $schema->getCollation());
     }
 
-    public function testGetTables()
+    public function testGetTables(): void
     {
         $schema = $this->getSchemaContainer()->getSchema('sakila');
 
@@ -103,7 +104,7 @@ class SchemaTest extends AbstractTestCase
         }
     }
 
-    public function testGetTablesWithType()
+    public function testGetTablesWithType(): void
     {
         $schema = $this->getSchemaContainer()->getSchema('sakila');
 
@@ -114,7 +115,7 @@ class SchemaTest extends AbstractTestCase
         $this->assertCount(7, $tables);
     }
 
-    public function testGetTable()
+    public function testGetTable(): void
     {
         $schema = $this->getSchemaContainer()->getSchema('sakila');
         $table = $schema->getTable('customer');
@@ -124,7 +125,7 @@ class SchemaTest extends AbstractTestCase
         $this->assertEquals('sakila', $table->getSchemaName());
     }
 
-    public function testGetTableNonexistent()
+    public function testGetTableNonexistent(): void
     {
         $this->expectException(NotFoundException::class);
 
@@ -132,7 +133,7 @@ class SchemaTest extends AbstractTestCase
         $schema->getTable('foo');
     }
 
-    public function testGetContainer()
+    public function testGetContainer(): void
     {
         $schema = $this->getSchemaContainer()->getSchema('sakila');
 

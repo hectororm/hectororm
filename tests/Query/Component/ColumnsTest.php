@@ -20,7 +20,7 @@ use PHPUnit\Framework\TestCase;
 
 class ColumnsTest extends TestCase
 {
-    public function testCount()
+    public function testCount(): void
     {
         $columns = new Columns();
 
@@ -32,7 +32,7 @@ class ColumnsTest extends TestCase
         $this->assertCount(3, $columns);
     }
 
-    public function testGetStatement()
+    public function testGetStatement(): void
     {
         $columns = new Columns();
         $binds = new BindParamList();
@@ -41,7 +41,7 @@ class ColumnsTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testColumn()
+    public function testColumn(): void
     {
         $columns = new Columns();
         $columns->column('foo', 'f');
@@ -51,7 +51,7 @@ class ColumnsTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testTwoColumn()
+    public function testTwoColumn(): void
     {
         $columns = new Columns();
         $columns->column('foo', 'f');
@@ -65,7 +65,7 @@ class ColumnsTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testColumns()
+    public function testColumns(): void
     {
         $columns = new Columns();
         $columns->column('bar');
@@ -79,7 +79,7 @@ class ColumnsTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testColumnWithStatement()
+    public function testColumnWithStatement(): void
     {
         $columns = new Columns();
         $columns->column(

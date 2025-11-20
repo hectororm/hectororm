@@ -22,21 +22,21 @@ use TypeError;
 
 class MagicMapperTest extends AbstractTestCase
 {
-    public function testConstruct()
+    public function testConstruct(): void
     {
         $mapper = new MagicMapper(FilmMagic::class, $this->getOrm()->getStorage());
 
         $this->assertInstanceOf(MagicMapper::class, $mapper);
     }
 
-    public function testConstructWithBadEntity()
+    public function testConstructWithBadEntity(): void
     {
         $this->expectException(TypeError::class);
 
         new MagicMapper(Film::class, $this->getOrm()->getStorage());
     }
 
-    public function testHydrateEntity()
+    public function testHydrateEntity(): void
     {
         $mapper = new MagicMapper(FilmMagic::class, $this->getOrm()->getStorage());
         $entity = new FilmMagic();
@@ -46,7 +46,7 @@ class MagicMapperTest extends AbstractTestCase
         $this->assertEquals('foo', $entity->description);
     }
 
-    public function testHydrateEntityWithBadEntity()
+    public function testHydrateEntityWithBadEntity(): void
     {
         $this->expectException(MapperException::class);
 
@@ -55,7 +55,7 @@ class MagicMapperTest extends AbstractTestCase
         $mapper->hydrateEntity($entity, ['language_id' => 1]);
     }
 
-    public function testCollectEntity()
+    public function testCollectEntity(): void
     {
         $entity = new FilmMagic();
         $entity->film_id = 123;
@@ -73,7 +73,7 @@ class MagicMapperTest extends AbstractTestCase
         );
     }
 
-    public function testCollectEntityWithSpecifiedColumns()
+    public function testCollectEntityWithSpecifiedColumns(): void
     {
         $entity = new FilmMagic();
         $entity->film_id = 123;
@@ -90,7 +90,7 @@ class MagicMapperTest extends AbstractTestCase
         );
     }
 
-    public function testCollectEntityWithSpecifiedColumnsOrdered()
+    public function testCollectEntityWithSpecifiedColumnsOrdered(): void
     {
         $entity = new FilmMagic();
         $entity->film_id = 123;
@@ -107,7 +107,7 @@ class MagicMapperTest extends AbstractTestCase
         );
     }
 
-    public function testCollectEntityWithBadEntity()
+    public function testCollectEntityWithBadEntity(): void
     {
         $this->expectException(MapperException::class);
 

@@ -20,7 +20,7 @@ use PHPUnit\Framework\TestCase;
 
 class WhereTest extends TestCase
 {
-    public function testResetWhere()
+    public function testResetWhere(): void
     {
         /** @var Where $clause */
         $clause = $this->getMockForTrait(Where::class);
@@ -38,7 +38,7 @@ class WhereTest extends TestCase
         $this->assertEmpty($clause->where->getStatement($binds));
     }
 
-    public function testWhere()
+    public function testWhere(): void
     {
         /** @var Where $clause */
         $clause = $this->getMockForTrait(Where::class);
@@ -53,7 +53,7 @@ class WhereTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testAndWhereWithoutArgument()
+    public function testAndWhereWithoutArgument(): void
     {
         $this->expectException(InvalidArgumentException::class);
 
@@ -63,7 +63,7 @@ class WhereTest extends TestCase
         $clause->andWhere();
     }
 
-    public function testAndWhereWithOneArgument()
+    public function testAndWhereWithOneArgument(): void
     {
         /** @var Where $clause */
         $clause = $this->getMockForTrait(Where::class);
@@ -78,7 +78,7 @@ class WhereTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testAndWhereWithTwoConditions()
+    public function testAndWhereWithTwoConditions(): void
     {
         /** @var Where $clause */
         $clause = $this->getMockForTrait(Where::class);
@@ -94,7 +94,7 @@ class WhereTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testAndWhereWithTwoArguments()
+    public function testAndWhereWithTwoArguments(): void
     {
         /** @var Where $clause */
         $clause = $this->getMockForTrait(Where::class);
@@ -112,7 +112,7 @@ class WhereTest extends TestCase
         );
     }
 
-    public function testAndWhereWithThreeArguments()
+    public function testAndWhereWithThreeArguments(): void
     {
         /** @var Where $clause */
         $clause = $this->getMockForTrait(Where::class);
@@ -130,7 +130,7 @@ class WhereTest extends TestCase
         );
     }
 
-    public function testOrWhereWithoutArgument()
+    public function testOrWhereWithoutArgument(): void
     {
         $this->expectException(InvalidArgumentException::class);
 
@@ -140,7 +140,7 @@ class WhereTest extends TestCase
         $clause->orWhere();
     }
 
-    public function testOrWhereWithTwoConditions()
+    public function testOrWhereWithTwoConditions(): void
     {
         /** @var Where $clause */
         $clause = $this->getMockForTrait(Where::class);
@@ -156,7 +156,7 @@ class WhereTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testOrWhereWithOneArgument()
+    public function testOrWhereWithOneArgument(): void
     {
         /** @var Where $clause */
         $clause = $this->getMockForTrait(Where::class);
@@ -171,7 +171,7 @@ class WhereTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testOrWhereWithTwoArguments()
+    public function testOrWhereWithTwoArguments(): void
     {
         /** @var Where $clause */
         $clause = $this->getMockForTrait(Where::class);
@@ -189,7 +189,7 @@ class WhereTest extends TestCase
         );
     }
 
-    public function testOrWhereWithThreeArguments()
+    public function testOrWhereWithThreeArguments(): void
     {
         /** @var Where $clause */
         $clause = $this->getMockForTrait(Where::class);
@@ -207,7 +207,7 @@ class WhereTest extends TestCase
         );
     }
 
-    public function testWhereEquals()
+    public function testWhereEquals(): void
     {
         /** @var Where $clause */
         $clause = $this->getMockForTrait(Where::class);
@@ -235,7 +235,7 @@ class WhereTest extends TestCase
         );
     }
 
-    public function testWhereIn()
+    public function testWhereIn(): void
     {
         /** @var Where $clause */
         $clause = $this->getMockForTrait(Where::class);
@@ -258,7 +258,7 @@ class WhereTest extends TestCase
         );
     }
 
-    public function testWhereNotIn()
+    public function testWhereNotIn(): void
     {
         /** @var Where $clause */
         $clause = $this->getMockForTrait(Where::class);
@@ -279,7 +279,7 @@ class WhereTest extends TestCase
         );
     }
 
-    public function testWhereNull()
+    public function testWhereNull(): void
     {
         /** @var Where $clause */
         $clause = $this->getMockForTrait(Where::class);
@@ -297,7 +297,7 @@ class WhereTest extends TestCase
         );
     }
 
-    public function testWhereNotNull()
+    public function testWhereNotNull(): void
     {
         /** @var Where $clause */
         $clause = $this->getMockForTrait(Where::class);
@@ -315,7 +315,7 @@ class WhereTest extends TestCase
         );
     }
 
-    public function testWhereBetween()
+    public function testWhereBetween(): void
     {
         /** @var Where $clause */
         $clause = $this->getMockForTrait(Where::class);
@@ -336,7 +336,7 @@ class WhereTest extends TestCase
         );
     }
 
-    public function testWhereNotBetween()
+    public function testWhereNotBetween(): void
     {
         /** @var Where $clause */
         $clause = $this->getMockForTrait(Where::class);
@@ -357,7 +357,7 @@ class WhereTest extends TestCase
         );
     }
 
-    public function testWhereGreaterThan()
+    public function testWhereGreaterThan(): void
     {
         /** @var Where $clause */
         $clause = $this->getMockForTrait(Where::class);
@@ -377,7 +377,7 @@ class WhereTest extends TestCase
         );
     }
 
-    public function testWhereGreaterThanOrEqual()
+    public function testWhereGreaterThanOrEqual(): void
     {
         /** @var Where $clause */
         $clause = $this->getMockForTrait(Where::class);
@@ -397,7 +397,7 @@ class WhereTest extends TestCase
         );
     }
 
-    public function testWhereLessThan()
+    public function testWhereLessThan(): void
     {
         /** @var Where $clause */
         $clause = $this->getMockForTrait(Where::class);
@@ -415,7 +415,7 @@ class WhereTest extends TestCase
         );
     }
 
-    public function testWhereLessThanOrEqual()
+    public function testWhereLessThanOrEqual(): void
     {
         /** @var Where $clause */
         $clause = $this->getMockForTrait(Where::class);
@@ -433,7 +433,7 @@ class WhereTest extends TestCase
         );
     }
 
-    public function testWhereExists()
+    public function testWhereExists(): void
     {
         /** @var Where $clause */
         $clause = $this->getMockForTrait(Where::class);
@@ -448,7 +448,7 @@ class WhereTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testWhereNotExists()
+    public function testWhereNotExists(): void
     {
         /** @var Where $clause */
         $clause = $this->getMockForTrait(Where::class);
@@ -463,7 +463,7 @@ class WhereTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testWhereContains()
+    public function testWhereContains(): void
     {
         /** @var Where $clause */
         $clause = $this->getMockForTrait(Where::class);
@@ -481,7 +481,7 @@ class WhereTest extends TestCase
         );
     }
 
-    public function testWhereStartsWith()
+    public function testWhereStartsWith(): void
     {
         /** @var Where $clause */
         $clause = $this->getMockForTrait(Where::class);
@@ -499,7 +499,7 @@ class WhereTest extends TestCase
         );
     }
 
-    public function testWhereEndsWith()
+    public function testWhereEndsWith(): void
     {
         /** @var Where $clause */
         $clause = $this->getMockForTrait(Where::class);

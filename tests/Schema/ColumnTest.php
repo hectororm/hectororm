@@ -16,7 +16,7 @@ use Hector\Schema\Column;
 
 class ColumnTest extends AbstractTestCase
 {
-    public function testSerialization()
+    public function testSerialization(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('customer');
         $column = $table->getColumn('first_name');
@@ -37,7 +37,7 @@ class ColumnTest extends AbstractTestCase
         $this->assertEquals($column->getCollation(), $column2->getCollation());
     }
 
-    public function testGetName()
+    public function testGetName(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('customer');
         $column = $table->getColumn('first_name');
@@ -47,7 +47,7 @@ class ColumnTest extends AbstractTestCase
         $this->assertEquals('foo.first_name', $column->getName(false, 'foo'));
     }
 
-    public function testGetNameQuoted()
+    public function testGetNameQuoted(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('customer');
         $column = $table->getColumn('first_name');
@@ -56,7 +56,7 @@ class ColumnTest extends AbstractTestCase
         $this->assertEquals('`foo`.`first_name`', $column->getName(true, 'foo'));
     }
 
-    public function testGetFullName()
+    public function testGetFullName(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('customer');
         $column = $table->getColumn('first_name');
@@ -65,7 +65,7 @@ class ColumnTest extends AbstractTestCase
         $this->assertEquals($column->getFullName(), $column->getFullName(false));
     }
 
-    public function testGetFullNameQuoted()
+    public function testGetFullNameQuoted(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('customer');
         $column = $table->getColumn('first_name');
@@ -73,7 +73,7 @@ class ColumnTest extends AbstractTestCase
         $this->assertEquals('`sakila`.`customer`.`first_name`', $column->getFullName(true));
     }
 
-    public function testGetPosition()
+    public function testGetPosition(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('customer');
         $column = $table->getColumn('first_name');
@@ -81,7 +81,7 @@ class ColumnTest extends AbstractTestCase
         $this->assertEquals(2, $column->getPosition());
     }
 
-    public function testHasDefault()
+    public function testHasDefault(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('customer');
 
@@ -90,7 +90,7 @@ class ColumnTest extends AbstractTestCase
         $this->assertTrue($table->getColumn('active')->hasDefault());
     }
 
-    public function testGetDefault()
+    public function testGetDefault(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('customer');
         $column = $table->getColumn('active');
@@ -98,7 +98,7 @@ class ColumnTest extends AbstractTestCase
         $this->assertEquals(1, $column->getDefault());
     }
 
-    public function testGetDefaultWithTimestamp()
+    public function testGetDefaultWithTimestamp(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('customer');
         $column = $table->getColumn('last_update');
@@ -106,7 +106,7 @@ class ColumnTest extends AbstractTestCase
         $this->assertEquals('CURRENT_TIMESTAMP', $column->getDefault());
     }
 
-    public function testGetDefaultNull()
+    public function testGetDefaultNull(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('customer');
         $column = $table->getColumn('first_name');
@@ -114,7 +114,7 @@ class ColumnTest extends AbstractTestCase
         $this->assertEquals(null, $column->getDefault());
     }
 
-    public function testIsNullableFalse()
+    public function testIsNullableFalse(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('customer');
         $column = $table->getColumn('first_name');
@@ -122,7 +122,7 @@ class ColumnTest extends AbstractTestCase
         $this->assertFalse($column->isNullable());
     }
 
-    public function testIsNullableTrue()
+    public function testIsNullableTrue(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('customer');
         $column = $table->getColumn('email');
@@ -130,7 +130,7 @@ class ColumnTest extends AbstractTestCase
         $this->assertTrue($column->isNullable());
     }
 
-    public function testGetType()
+    public function testGetType(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('customer');
         $column = $table->getColumn('email');
@@ -138,7 +138,7 @@ class ColumnTest extends AbstractTestCase
         $this->assertEquals('varchar', $column->getType());
     }
 
-    public function testGetType2()
+    public function testGetType2(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('customer');
         $column = $table->getColumn('address_id');
@@ -146,7 +146,7 @@ class ColumnTest extends AbstractTestCase
         $this->assertEquals('smallint', $column->getType());
     }
 
-    public function testIsAutoIncrementTrue()
+    public function testIsAutoIncrementTrue(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('customer');
         $column = $table->getColumn('customer_id');
@@ -154,7 +154,7 @@ class ColumnTest extends AbstractTestCase
         $this->assertTrue($column->isAutoIncrement());
     }
 
-    public function testIsAutoIncrementFalse()
+    public function testIsAutoIncrementFalse(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('customer');
         $column = $table->getColumn('address_id');
@@ -162,7 +162,7 @@ class ColumnTest extends AbstractTestCase
         $this->assertFalse($column->isAutoIncrement());
     }
 
-    public function testGetMaxlengthInteger()
+    public function testGetMaxlengthInteger(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('customer');
         $column = $table->getColumn('customer_id');
@@ -170,7 +170,7 @@ class ColumnTest extends AbstractTestCase
         $this->assertNull($column->getMaxlength());
     }
 
-    public function testGetMaxlengthVarChar()
+    public function testGetMaxlengthVarChar(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('customer');
         $column = $table->getColumn('first_name');
@@ -178,7 +178,7 @@ class ColumnTest extends AbstractTestCase
         $this->assertEquals(45, $column->getMaxlength());
     }
 
-    public function testGetNumericPrecisionInteger()
+    public function testGetNumericPrecisionInteger(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('customer');
         $column = $table->getColumn('address_id');
@@ -186,7 +186,7 @@ class ColumnTest extends AbstractTestCase
         $this->assertEquals(5, $column->getNumericPrecision());
     }
 
-    public function testGetNumericPrecisionFloat()
+    public function testGetNumericPrecisionFloat(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('payment');
         $column = $table->getColumn('amount');
@@ -194,7 +194,7 @@ class ColumnTest extends AbstractTestCase
         $this->assertEquals(5, $column->getNumericPrecision());
     }
 
-    public function testGetNumericPrecisionVarChar()
+    public function testGetNumericPrecisionVarChar(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('customer');
         $column = $table->getColumn('first_name');
@@ -202,7 +202,7 @@ class ColumnTest extends AbstractTestCase
         $this->assertNull($column->getNumericPrecision());
     }
 
-    public function testGetNumericScaleInteger()
+    public function testGetNumericScaleInteger(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('customer');
         $column = $table->getColumn('address_id');
@@ -210,7 +210,7 @@ class ColumnTest extends AbstractTestCase
         $this->assertEquals(0, $column->getNumericScale());
     }
 
-    public function testGetNumericScaleFloat()
+    public function testGetNumericScaleFloat(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('payment');
         $column = $table->getColumn('amount');
@@ -218,7 +218,7 @@ class ColumnTest extends AbstractTestCase
         $this->assertEquals(2, $column->getNumericScale());
     }
 
-    public function testGetNumericScaleVarChar()
+    public function testGetNumericScaleVarChar(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('customer');
         $column = $table->getColumn('first_name');
@@ -226,7 +226,7 @@ class ColumnTest extends AbstractTestCase
         $this->assertNull($column->getNumericScale());
     }
 
-    public function testIsUnsigned()
+    public function testIsUnsigned(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('customer');
         $column = $table->getColumn('customer_id');
@@ -234,7 +234,7 @@ class ColumnTest extends AbstractTestCase
         $this->assertTrue($column->isUnsigned());
     }
 
-    public function testIsUnsignedFalse()
+    public function testIsUnsignedFalse(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('customer');
         $column = $table->getColumn('active');
@@ -242,7 +242,7 @@ class ColumnTest extends AbstractTestCase
         $this->assertFalse($column->isUnsigned());
     }
 
-    public function testIsUnsignedVarChar()
+    public function testIsUnsignedVarChar(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('customer');
         $column = $table->getColumn('first_name');
@@ -250,7 +250,7 @@ class ColumnTest extends AbstractTestCase
         $this->assertFalse($column->isUnsigned());
     }
 
-    public function testGetCharset()
+    public function testGetCharset(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('customer');
         $column = $table->getColumn('first_name');
@@ -258,7 +258,7 @@ class ColumnTest extends AbstractTestCase
         $this->assertEquals('utf8mb4', $column->getCharset());
     }
 
-    public function testGetCharsetInteger()
+    public function testGetCharsetInteger(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('customer');
         $column = $table->getColumn('address_id');
@@ -266,7 +266,7 @@ class ColumnTest extends AbstractTestCase
         $this->assertNull($column->getCharset());
     }
 
-    public function testGetCollation()
+    public function testGetCollation(): void
     {
         $schema = $this->getSchemaContainer()->getSchema('sakila');
         $table = $schema->getTable('customer');
@@ -275,7 +275,7 @@ class ColumnTest extends AbstractTestCase
         $this->assertEquals($schema->getCollation(), $column->getCollation());
     }
 
-    public function testGetCollationInteger()
+    public function testGetCollationInteger(): void
     {
         $schema = $this->getSchemaContainer()->getSchema('sakila');
         $table = $schema->getTable('customer');
@@ -284,7 +284,7 @@ class ColumnTest extends AbstractTestCase
         $this->assertNull($column->getCollation());
     }
 
-    public function testGetTable()
+    public function testGetTable(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('customer');
         $column = $table->getColumn('address_id');
@@ -292,7 +292,7 @@ class ColumnTest extends AbstractTestCase
         $this->assertSame($table, $column->getTable());
     }
 
-    public function testIsPrimaryTrue()
+    public function testIsPrimaryTrue(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('customer');
         $column = $table->getColumn('customer_id');
@@ -300,7 +300,7 @@ class ColumnTest extends AbstractTestCase
         $this->assertTrue($column->isPrimary());
     }
 
-    public function testIsPrimaryFalse()
+    public function testIsPrimaryFalse(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('customer');
         $column = $table->getColumn('first_name');

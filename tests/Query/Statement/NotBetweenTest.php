@@ -19,7 +19,7 @@ use PHPUnit\Framework\TestCase;
 
 class NotBetweenTest extends TestCase
 {
-    public function testGetStatement()
+    public function testGetStatement(): void
     {
         $between = new NotBetween('foo', 1, 10);
         $binds = new BindParamList();
@@ -31,7 +31,7 @@ class NotBetweenTest extends TestCase
         );
     }
 
-    public function testGetStatementWithEncapsulation()
+    public function testGetStatementWithEncapsulation(): void
     {
         $between = new NotBetween('foo', 1, 10);
         $binds = new BindParamList();

@@ -20,7 +20,7 @@ use PHPUnit\Framework\TestCase;
 
 class HavingTest extends TestCase
 {
-    public function testResetHaving()
+    public function testResetHaving(): void
     {
         /** @var Having $clause */
         $clause = $this->getMockForTrait(Having::class);
@@ -38,7 +38,7 @@ class HavingTest extends TestCase
         $this->assertEmpty($clause->having->getStatement($binds));
     }
 
-    public function testHaving()
+    public function testHaving(): void
     {
         /** @var Having $clause */
         $clause = $this->getMockForTrait(Having::class);
@@ -53,7 +53,7 @@ class HavingTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testAndHavingWithoutArgument()
+    public function testAndHavingWithoutArgument(): void
     {
         $this->expectException(InvalidArgumentException::class);
 
@@ -63,7 +63,7 @@ class HavingTest extends TestCase
         $clause->andHaving();
     }
 
-    public function testAndHavingWithOneArgument()
+    public function testAndHavingWithOneArgument(): void
     {
         /** @var Having $clause */
         $clause = $this->getMockForTrait(Having::class);
@@ -78,7 +78,7 @@ class HavingTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testAndHavingWithTwoConditions()
+    public function testAndHavingWithTwoConditions(): void
     {
         /** @var Having $clause */
         $clause = $this->getMockForTrait(Having::class);
@@ -94,7 +94,7 @@ class HavingTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testAndHavingWithTwoArguments()
+    public function testAndHavingWithTwoArguments(): void
     {
         /** @var Having $clause */
         $clause = $this->getMockForTrait(Having::class);
@@ -112,7 +112,7 @@ class HavingTest extends TestCase
         );
     }
 
-    public function testAndHavingWithThreeArguments()
+    public function testAndHavingWithThreeArguments(): void
     {
         /** @var Having $clause */
         $clause = $this->getMockForTrait(Having::class);
@@ -130,7 +130,7 @@ class HavingTest extends TestCase
         );
     }
 
-    public function testOrHavingWithoutArgument()
+    public function testOrHavingWithoutArgument(): void
     {
         $this->expectException(InvalidArgumentException::class);
 
@@ -140,7 +140,7 @@ class HavingTest extends TestCase
         $clause->orHaving();
     }
 
-    public function testOrHavingWithTwoConditions()
+    public function testOrHavingWithTwoConditions(): void
     {
         /** @var Having $clause */
         $clause = $this->getMockForTrait(Having::class);
@@ -156,7 +156,7 @@ class HavingTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testOrHavingWithOneArgument()
+    public function testOrHavingWithOneArgument(): void
     {
         /** @var Having $clause */
         $clause = $this->getMockForTrait(Having::class);
@@ -171,7 +171,7 @@ class HavingTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testOrHavingWithTwoArguments()
+    public function testOrHavingWithTwoArguments(): void
     {
         /** @var Having $clause */
         $clause = $this->getMockForTrait(Having::class);
@@ -189,7 +189,7 @@ class HavingTest extends TestCase
         );
     }
 
-    public function testOrHavingWithThreeArguments()
+    public function testOrHavingWithThreeArguments(): void
     {
         /** @var Having $clause */
         $clause = $this->getMockForTrait(Having::class);
@@ -207,7 +207,7 @@ class HavingTest extends TestCase
         );
     }
 
-    public function testHavingEquals()
+    public function testHavingEquals(): void
     {
         /** @var Having $clause */
         $clause = $this->getMockForTrait(Having::class);
@@ -231,7 +231,7 @@ class HavingTest extends TestCase
         );
     }
 
-    public function testHavingIn()
+    public function testHavingIn(): void
     {
         /** @var Having $clause */
         $clause = $this->getMockForTrait(Having::class);
@@ -249,7 +249,7 @@ class HavingTest extends TestCase
         );
     }
 
-    public function testHavingNotIn()
+    public function testHavingNotIn(): void
     {
         /** @var Having $clause */
         $clause = $this->getMockForTrait(Having::class);
@@ -267,7 +267,7 @@ class HavingTest extends TestCase
         );
     }
 
-    public function testHavingNull()
+    public function testHavingNull(): void
     {
         /** @var Having $clause */
         $clause = $this->getMockForTrait(Having::class);
@@ -285,7 +285,7 @@ class HavingTest extends TestCase
         );
     }
 
-    public function testHavingNotNull()
+    public function testHavingNotNull(): void
     {
         /** @var Having $clause */
         $clause = $this->getMockForTrait(Having::class);
@@ -303,7 +303,7 @@ class HavingTest extends TestCase
         );
     }
 
-    public function testHavingBetween()
+    public function testHavingBetween(): void
     {
         /** @var Having $clause */
         $clause = $this->getMockForTrait(Having::class);
@@ -321,7 +321,7 @@ class HavingTest extends TestCase
         );
     }
 
-    public function testHavingNotBetween()
+    public function testHavingNotBetween(): void
     {
         /** @var Having $clause */
         $clause = $this->getMockForTrait(Having::class);
@@ -339,7 +339,7 @@ class HavingTest extends TestCase
         );
     }
 
-    public function testHavingGreaterThan()
+    public function testHavingGreaterThan(): void
     {
         /** @var Having $clause */
         $clause = $this->getMockForTrait(Having::class);
@@ -357,7 +357,7 @@ class HavingTest extends TestCase
         );
     }
 
-    public function testHavingGreaterThanOrEqual()
+    public function testHavingGreaterThanOrEqual(): void
     {
         /** @var Having $clause */
         $clause = $this->getMockForTrait(Having::class);
@@ -375,7 +375,7 @@ class HavingTest extends TestCase
         );
     }
 
-    public function testHavingLessThan()
+    public function testHavingLessThan(): void
     {
         /** @var Having $clause */
         $clause = $this->getMockForTrait(Having::class);
@@ -393,7 +393,7 @@ class HavingTest extends TestCase
         );
     }
 
-    public function testHavingLessThanOrEqual()
+    public function testHavingLessThanOrEqual(): void
     {
         /** @var Having $clause */
         $clause = $this->getMockForTrait(Having::class);
@@ -411,7 +411,7 @@ class HavingTest extends TestCase
         );
     }
 
-    public function testHavingExists()
+    public function testHavingExists(): void
     {
         /** @var Having $clause */
         $clause = $this->getMockForTrait(Having::class);
@@ -426,7 +426,7 @@ class HavingTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testHavingNotExists()
+    public function testHavingNotExists(): void
     {
         /** @var Having $clause */
         $clause = $this->getMockForTrait(Having::class);
@@ -441,7 +441,7 @@ class HavingTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testHavingContains()
+    public function testHavingContains(): void
     {
         /** @var Having $clause */
         $clause = $this->getMockForTrait(Having::class);
@@ -459,7 +459,7 @@ class HavingTest extends TestCase
         );
     }
 
-    public function testHavingStartsWith()
+    public function testHavingStartsWith(): void
     {
         /** @var Having $clause */
         $clause = $this->getMockForTrait(Having::class);
@@ -477,7 +477,7 @@ class HavingTest extends TestCase
         );
     }
 
-    public function testHavingEndsWith()
+    public function testHavingEndsWith(): void
     {
         /** @var Having $clause */
         $clause = $this->getMockForTrait(Having::class);

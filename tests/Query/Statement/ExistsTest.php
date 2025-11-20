@@ -20,7 +20,7 @@ use PHPUnit\Framework\TestCase;
 
 class ExistsTest extends TestCase
 {
-    public function testGetStatement()
+    public function testGetStatement(): void
     {
         $exists = new Exists('SELECT 1');
         $binds = new BindParamList();
@@ -29,7 +29,7 @@ class ExistsTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testGetStatementWithEncapsulation()
+    public function testGetStatementWithEncapsulation(): void
     {
         $exists = new Exists('SELECT 1');
         $binds = new BindParamList();
@@ -38,7 +38,7 @@ class ExistsTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testExistsWithStatement()
+    public function testExistsWithStatement(): void
     {
         $exists = new Exists(
             (new Select())

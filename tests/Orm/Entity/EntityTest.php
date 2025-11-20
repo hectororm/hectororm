@@ -37,7 +37,7 @@ class EntityTest extends AbstractTestCase
     /**
      * @dataProvider classProvider
      */
-    public function testEntityGetSuccess($class)
+    public function testEntityGetSuccess($class): void
     {
         $entity = $class::get(1);
 
@@ -48,7 +48,7 @@ class EntityTest extends AbstractTestCase
     /**
      * @dataProvider classProvider
      */
-    public function testEntityGetNull($class)
+    public function testEntityGetNull($class): void
     {
         $entity = $class::get(9999);
 
@@ -58,7 +58,7 @@ class EntityTest extends AbstractTestCase
     /**
      * @dataProvider classProvider
      */
-    public function testGetOrFail($class)
+    public function testGetOrFail($class): void
     {
         $entity = $class::getOrFail(1);
 
@@ -69,7 +69,7 @@ class EntityTest extends AbstractTestCase
     /**
      * @dataProvider classProvider
      */
-    public function testGetOrFailWithFailure($class)
+    public function testGetOrFailWithFailure($class): void
     {
         $this->expectException(NotFoundException::class);
 
@@ -79,7 +79,7 @@ class EntityTest extends AbstractTestCase
     /**
      * @dataProvider classProvider
      */
-    public function testGetOrNew($class)
+    public function testGetOrNew($class): void
     {
         $entity = $class::getOrNew(1);
 
@@ -90,7 +90,7 @@ class EntityTest extends AbstractTestCase
     /**
      * @dataProvider classProvider
      */
-    public function testGetOrNewWithData($class)
+    public function testGetOrNewWithData($class): void
     {
         $entity = $class::getOrNew(9999, ['title' => 'New title']);
 
@@ -102,7 +102,7 @@ class EntityTest extends AbstractTestCase
     /**
      * @dataProvider classProvider
      */
-    public function testGetOrNewWithEmptyData($class)
+    public function testGetOrNewWithEmptyData($class): void
     {
         $entity = $class::getOrNew(9999);
 
@@ -114,7 +114,7 @@ class EntityTest extends AbstractTestCase
     /**
      * @dataProvider classProvider
      */
-    public function testEntityFindSuccess($class)
+    public function testEntityFindSuccess($class): void
     {
         $entity = $class::find(10);
 
@@ -125,7 +125,7 @@ class EntityTest extends AbstractTestCase
     /**
      * @dataProvider classProvider
      */
-    public function testEntityFindNull($class)
+    public function testEntityFindNull($class): void
     {
         $entity = $class::find(9999);
 
@@ -135,7 +135,7 @@ class EntityTest extends AbstractTestCase
     /**
      * @dataProvider classProvider
      */
-    public function testFindOrFail($class)
+    public function testFindOrFail($class): void
     {
         $entity = $class::findOrFail(10);
 
@@ -146,7 +146,7 @@ class EntityTest extends AbstractTestCase
     /**
      * @dataProvider classProvider
      */
-    public function testFindOrFailWithFailure($class)
+    public function testFindOrFailWithFailure($class): void
     {
         $this->expectException(NotFoundException::class);
 
@@ -156,7 +156,7 @@ class EntityTest extends AbstractTestCase
     /**
      * @dataProvider classProvider
      */
-    public function testFindOrNew($class)
+    public function testFindOrNew($class): void
     {
         $entity = $class::findOrNew(1);
 
@@ -167,7 +167,7 @@ class EntityTest extends AbstractTestCase
     /**
      * @dataProvider classProvider
      */
-    public function testFindOrNewWithData($class)
+    public function testFindOrNewWithData($class): void
     {
         $entity = $class::findOrNew(9999, ['title' => 'New title']);
 
@@ -179,7 +179,7 @@ class EntityTest extends AbstractTestCase
     /**
      * @dataProvider classProvider
      */
-    public function testFindOrNewWithEmptyData($class)
+    public function testFindOrNewWithEmptyData($class): void
     {
         $entity = $class::findOrNew(9999);
 
@@ -191,7 +191,7 @@ class EntityTest extends AbstractTestCase
     /**
      * @dataProvider classProvider
      */
-    public function testAll($class)
+    public function testAll($class): void
     {
         $collection = $class::all();
 
@@ -203,12 +203,12 @@ class EntityTest extends AbstractTestCase
     /**
      * @dataProvider classProvider
      */
-    public function testChunk($class)
+    public function testChunk($class): void
     {
         $total = 0;
         $class::chunk(
             50,
-            function (Collection $collection) use ($class, &$total) {
+            function (Collection $collection) use ($class, &$total): void {
                 $this->assertGreaterThan(0, count($collection));
                 $this->assertLessThanOrEqual(50, count($collection));
                 $this->assertContainsOnlyInstancesOf($class, $collection);
@@ -222,7 +222,7 @@ class EntityTest extends AbstractTestCase
     /**
      * @dataProvider classProvider
      */
-    public function testYield($class)
+    public function testYield($class): void
     {
         $iterator = call_user_func([$class, 'yield']);
 
@@ -233,7 +233,7 @@ class EntityTest extends AbstractTestCase
     /**
      * @dataProvider classProvider
      */
-    public function testCount($class)
+    public function testCount($class): void
     {
         $total = $class::count();
 
@@ -243,7 +243,7 @@ class EntityTest extends AbstractTestCase
     /**
      * @dataProvider classProvider
      */
-    public function testEntityBuilder($class)
+    public function testEntityBuilder($class): void
     {
         $entityBuilder = $class::query();
 
@@ -260,7 +260,7 @@ class EntityTest extends AbstractTestCase
     /**
      * @dataProvider classProvider
      */
-    public function testSaveNew($class)
+    public function testSaveNew($class): void
     {
         $film = new $class();
         $film->language_id = 1;
@@ -279,7 +279,7 @@ class EntityTest extends AbstractTestCase
     /**
      * @dataProvider classProvider
      */
-    public function testSaveNewWithNewRelation($class)
+    public function testSaveNewWithNewRelation($class): void
     {
         $language = new Language();
         $language->name = 'Foo bar';
@@ -301,7 +301,7 @@ class EntityTest extends AbstractTestCase
         $this->assertNotNull($film->getRelated()->original_language->last_update);
     }
 
-    public function testSaveWithRelationOneToMany()
+    public function testSaveWithRelationOneToMany(): void
     {
         $payment = new Payment();
         $payment->payment_date = '2025-09-19';
@@ -324,7 +324,7 @@ class EntityTest extends AbstractTestCase
         $this->assertEquals(100, $payment->amount);
     }
 
-    public function testSaveWithExistentRelationOneToMany()
+    public function testSaveWithExistentRelationOneToMany(): void
     {
         $customer = Customer::find(1);
         $payment = $customer->payments->first(fn(Payment $payment) => 5 === $payment->payment_id);
@@ -346,7 +346,7 @@ class EntityTest extends AbstractTestCase
     /**
      * @dataProvider classProvider
      */
-    public function testDeleteExistent($class)
+    public function testDeleteExistent($class): void
     {
         $film = new $class();
         $film->language_id = 1;
@@ -363,7 +363,7 @@ class EntityTest extends AbstractTestCase
     /**
      * @dataProvider classProvider
      */
-    public function testDeleteNonexistent($class)
+    public function testDeleteNonexistent($class): void
     {
         $this->expectException(OrmException::class);
 
@@ -374,7 +374,7 @@ class EntityTest extends AbstractTestCase
     /**
      * @dataProvider classProvider
      */
-    public function testRefresh($class)
+    public function testRefresh($class): void
     {
         $film = $class::get(1);
         $originalTitle = $film->title;
@@ -390,7 +390,7 @@ class EntityTest extends AbstractTestCase
     /**
      * @dataProvider classProvider
      */
-    public function testRefreshNonexistent($class)
+    public function testRefreshNonexistent($class): void
     {
         $this->expectException(OrmException::class);
 
@@ -401,7 +401,7 @@ class EntityTest extends AbstractTestCase
     /**
      * @dataProvider classProvider
      */
-    public function testIsEqualTo($class)
+    public function testIsEqualTo($class): void
     {
         $film1 = $class::get(1);
         $film1bis = $class::get(1);
@@ -424,7 +424,7 @@ class EntityTest extends AbstractTestCase
     /**
      * @dataProvider classProvider
      */
-    public function testIsAltered($class)
+    public function testIsAltered($class): void
     {
         /** @var Film $film */
         $film = $class::get(1);

@@ -28,7 +28,7 @@ use TypeError;
 
 class AbstractMapperTest extends AbstractTestCase
 {
-    public function testConstruct()
+    public function testConstruct(): void
     {
         $mapper = new FakeAbstractMapper(Film::class, $this->getOrm()->getStorage());
 
@@ -36,14 +36,14 @@ class AbstractMapperTest extends AbstractTestCase
         $this->assertInstanceOf(FakeAbstractMapper::class, $mapper);
     }
 
-    public function testConstructWithNotAnEntity()
+    public function testConstructWithNotAnEntity(): void
     {
         $this->expectException(TypeError::class);
 
         new FakeAbstractMapper(stdClass::class, $this->getOrm()->getStorage());
     }
 
-    public function testGetRelationships()
+    public function testGetRelationships(): void
     {
         $mapper = new FakeAbstractMapper(Film::class, $this->getOrm()->getStorage());
 
@@ -53,7 +53,7 @@ class AbstractMapperTest extends AbstractTestCase
         $this->assertCount(3, $mapper->getRelationships());
     }
 
-    public function testInsertEntity()
+    public function testInsertEntity(): void
     {
         $entity = new Film();
         $entity->title = 'Foo';
@@ -70,7 +70,7 @@ class AbstractMapperTest extends AbstractTestCase
         $this->assertNotNull($entity->film_id);
     }
 
-    public function testInsertExistentEntity()
+    public function testInsertExistentEntity(): void
     {
         $this->expectException(PDOException::class);
 
@@ -79,7 +79,7 @@ class AbstractMapperTest extends AbstractTestCase
         $mapper->insertEntity($entity);
     }
 
-    public function testUpdateEntity()
+    public function testUpdateEntity(): void
     {
         $mapper = new GenericMapper(Film::class, $this->getOrm()->getStorage());
 
@@ -95,7 +95,7 @@ class AbstractMapperTest extends AbstractTestCase
         $this->assertEquals(1, $nbAffected);
     }
 
-    public function testUpdateEntityNew()
+    public function testUpdateEntityNew(): void
     {
         $mapper = new GenericMapper(Film::class, $this->getOrm()->getStorage());
 
@@ -109,7 +109,7 @@ class AbstractMapperTest extends AbstractTestCase
         $mapper->updateEntity($entity);
     }
 
-    public function testDeleteEntity()
+    public function testDeleteEntity(): void
     {
         $mapper = new GenericMapper(Film::class, $this->getOrm()->getStorage());
 
@@ -123,7 +123,7 @@ class AbstractMapperTest extends AbstractTestCase
         $this->assertEquals(1, $nbAffected);
     }
 
-    public function testDeleteEntityNew()
+    public function testDeleteEntityNew(): void
     {
         $mapper = new GenericMapper(Film::class, $this->getOrm()->getStorage());
 
@@ -137,7 +137,7 @@ class AbstractMapperTest extends AbstractTestCase
         $mapper->deleteEntity($entity);
     }
 
-    public function testDeleteEntityNonexistent()
+    public function testDeleteEntityNonexistent(): void
     {
         $mapper = new GenericMapper(Film::class, $this->getOrm()->getStorage());
 
@@ -152,7 +152,7 @@ class AbstractMapperTest extends AbstractTestCase
         $this->assertEquals(1, $nbAffected);
     }
 
-    public function testDeleteEntityNoPrimaryValue()
+    public function testDeleteEntityNoPrimaryValue(): void
     {
         $mapper = new GenericMapper(Film::class, $this->getOrm()->getStorage());
 
@@ -165,7 +165,7 @@ class AbstractMapperTest extends AbstractTestCase
         $mapper->deleteEntity($entity);
     }
 
-    public function testRefreshEntity()
+    public function testRefreshEntity(): void
     {
         $mapper = new GenericMapper(Film::class, $this->getOrm()->getStorage());
         $entity = Film::get(1);
@@ -177,7 +177,7 @@ class AbstractMapperTest extends AbstractTestCase
         $this->assertNotEquals('Foo', $entity->title);
     }
 
-    public function testRefreshEntityNew()
+    public function testRefreshEntityNew(): void
     {
         $mapper = new GenericMapper(Film::class, $this->getOrm()->getStorage());
 
@@ -190,7 +190,7 @@ class AbstractMapperTest extends AbstractTestCase
         $mapper->refreshEntity($entity);
     }
 
-    public function testRefreshEntityDeleted()
+    public function testRefreshEntityDeleted(): void
     {
         $mapper = new GenericMapper(Film::class, $this->getOrm()->getStorage());
 
@@ -207,7 +207,7 @@ class AbstractMapperTest extends AbstractTestCase
         $mapper->refreshEntity($entity);
     }
 
-    public function testGetEntityAlteration_freshEntity()
+    public function testGetEntityAlteration_freshEntity(): void
     {
         $mapper = new MagicMapper(Language::class, $this->getOrm()->getStorage());
         $entity = $mapper->fetchOneWithBuilder((new Builder(Language::class))->where('language_id', 2));
@@ -216,7 +216,7 @@ class AbstractMapperTest extends AbstractTestCase
         $this->assertEquals([], $mapper->getEntityAlteration($entity));
     }
 
-    public function testGetEntityAlteration_alteredEntity()
+    public function testGetEntityAlteration_alteredEntity(): void
     {
         $mapper = new MagicMapper(Language::class, $this->getOrm()->getStorage());
         /** @var Language $entity */
@@ -232,7 +232,7 @@ class AbstractMapperTest extends AbstractTestCase
         $this->assertEquals(['name'], $mapper->getEntityAlteration($entity, ['language_id', 'name']));
     }
 
-    public function testGetEntityAlteration_newEntity()
+    public function testGetEntityAlteration_newEntity(): void
     {
         $mapper = new MagicMapper(Language::class, $this->getOrm()->getStorage());
         $entity = new Language();

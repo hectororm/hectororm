@@ -21,10 +21,6 @@ class Between implements StatementInterface
 {
     protected const EXPRESSION = 'BETWEEN';
 
-    protected StatementInterface|string $column;
-    protected mixed $value1;
-    protected mixed $value2;
-
     /**
      * Between constructor.
      *
@@ -32,11 +28,8 @@ class Between implements StatementInterface
      * @param mixed $value1
      * @param mixed $value2
      */
-    public function __construct(StatementInterface|string $column, mixed $value1, mixed $value2)
+    public function __construct(protected StatementInterface|string $column, protected mixed $value1, protected mixed $value2)
     {
-        $this->column = $column;
-        $this->value1 = $value1;
-        $this->value2 = $value2;
     }
 
     /**

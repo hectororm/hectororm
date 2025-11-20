@@ -20,7 +20,7 @@ use ValueError;
 
 class BooleanTypeTest extends TestCase
 {
-    public function testFromSchema()
+    public function testFromSchema(): void
     {
         $type = new BooleanType();
 
@@ -34,7 +34,7 @@ class BooleanTypeTest extends TestCase
         $this->assertSame(false, $type->fromSchema(0));
     }
 
-    public function testFromSchemaWithNotScalar()
+    public function testFromSchemaWithNotScalar(): void
     {
         $this->expectException(ValueError::class);
 
@@ -42,7 +42,7 @@ class BooleanTypeTest extends TestCase
         $type->fromSchema(['foo']);
     }
 
-    public function testFromSchemaWithDeclaredTypeBuiltin()
+    public function testFromSchemaWithDeclaredTypeBuiltin(): void
     {
         $expectedType = new ExpectedType('string', false, true);
 
@@ -51,7 +51,7 @@ class BooleanTypeTest extends TestCase
         $this->assertSame('1', $type->fromSchema('1', $expectedType));
     }
 
-    public function testFromSchemaWithDeclaredTypeBuiltinAndBadValue()
+    public function testFromSchemaWithDeclaredTypeBuiltinAndBadValue(): void
     {
         $this->expectException(ValueError::class);
         $expectedType = new ExpectedType('string', false, true);
@@ -61,7 +61,7 @@ class BooleanTypeTest extends TestCase
         $this->assertSame('1', $type->fromSchema(new stdClass(), $expectedType));
     }
 
-    public function testFromSchemaWithDeclaredTypeNotBuiltin()
+    public function testFromSchemaWithDeclaredTypeNotBuiltin(): void
     {
         $this->expectException(ValueError::class);
 
@@ -71,7 +71,7 @@ class BooleanTypeTest extends TestCase
         $type->fromSchema('1', $expectedType);
     }
 
-    public function testToSchema()
+    public function testToSchema(): void
     {
         $type = new BooleanType();
 
@@ -85,7 +85,7 @@ class BooleanTypeTest extends TestCase
         $this->assertSame(0, $type->toSchema(0));
     }
 
-    public function testToSchemaWithNotScalar()
+    public function testToSchemaWithNotScalar(): void
     {
         $this->expectException(ValueError::class);
 

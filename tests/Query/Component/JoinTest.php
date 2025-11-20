@@ -21,7 +21,7 @@ use PHPUnit\Framework\TestCase;
 
 class JoinTest extends TestCase
 {
-    public function testGetStatement()
+    public function testGetStatement(): void
     {
         $join = new Join();
         $binds = new BindParamList();
@@ -29,7 +29,7 @@ class JoinTest extends TestCase
         $this->assertNull($join->getStatement($binds));
     }
 
-    public function testJoinOne()
+    public function testJoinOne(): void
     {
         $join = new Join();
         $join->join(Join::INNER_JOIN, 'bar', null);
@@ -42,7 +42,7 @@ class JoinTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testJoinTwo()
+    public function testJoinTwo(): void
     {
         $join = new Join();
         $join->join(Join::INNER_JOIN, 'bar', null);
@@ -56,7 +56,7 @@ class JoinTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testJoinStatement()
+    public function testJoinStatement(): void
     {
         $join = new Join();
         $join->join(
@@ -72,7 +72,7 @@ class JoinTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testJoinRawStatement()
+    public function testJoinRawStatement(): void
     {
         $join = new Join();
         $join->join(

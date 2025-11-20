@@ -20,14 +20,14 @@ use TypeError;
 
 class MapperTest extends TestCase
 {
-    public function testConstruct()
+    public function testConstruct(): void
     {
         $attribute = new Mapper(GenericMapper::class);
 
         $this->assertEquals(GenericMapper::class, $attribute->mapper);
     }
 
-    public function testConstructWithBadCollection()
+    public function testConstructWithBadCollection(): void
     {
         $this->expectException(TypeError::class);
 

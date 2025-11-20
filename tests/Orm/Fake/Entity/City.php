@@ -21,8 +21,8 @@ use Hector\Orm\Tests\Fake\Mapper\CityMapper;
 #[Orm\HasOne(Country::class, 'country')]
 class City extends Entity
 {
-    public ?int $city_id;
-    public ?string $city;
-    public ?int $country_id;
-    public ?DateTime $last_update;
+    public ?int $city_id = null;
+    public ?string $city = null;
+    public ?int $country_id = null;
+    public ?DateTime $last_update = null;
 }

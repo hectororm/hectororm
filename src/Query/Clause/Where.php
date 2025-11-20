@@ -14,8 +14,8 @@ declare(strict_types=1);
 
 namespace Hector\Query\Clause;
 
+use Hector\Query\Component\Conditions;
 use Closure;
-use Hector\Query\Component;
 use Hector\Query\Statement\Between;
 use Hector\Query\Statement\NotBetween;
 use Hector\Query\Statement\SqlFunction;
@@ -28,7 +28,7 @@ use InvalidArgumentException;
 trait Where
 {
     /** @internal */
-    public Component\Conditions $where;
+    public Conditions $where;
 
     /**
      * Reset where.
@@ -37,7 +37,7 @@ trait Where
      */
     public function resetWhere(): static
     {
-        $this->where = new Component\Conditions($this);
+        $this->where = new Conditions($this);
 
         return $this;
     }
@@ -94,9 +94,9 @@ trait Where
         }
 
         match ($nbArgs) {
-            1 => $this->where->add($condition[0], null, null, Component\Conditions::LINK_OR),
-            2 => $this->where->equal($condition[0], $condition[1], Component\Conditions::LINK_OR),
-            3 => $this->where->add($condition[0], $condition[1], $condition[2], Component\Conditions::LINK_OR),
+            1 => $this->where->add($condition[0], null, null, Conditions::LINK_OR),
+            2 => $this->where->equal($condition[0], $condition[1], Conditions::LINK_OR),
+            3 => $this->where->add($condition[0], $condition[1], $condition[2], Conditions::LINK_OR),
         };
 
         return $this;

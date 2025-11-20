@@ -21,7 +21,7 @@ use TypeError;
 
 class GenericMapperTest extends AbstractTestCase
 {
-    public function testHydrateEntity()
+    public function testHydrateEntity(): void
     {
         $mapper = new GenericMapper(Film::class, $this->getOrm()->getStorage());
         $entity = new Film();
@@ -31,7 +31,7 @@ class GenericMapperTest extends AbstractTestCase
         $this->assertEquals('foo', $entity->description);
     }
 
-    public function testHydrateEntityWithIncompleteEntity()
+    public function testHydrateEntityWithIncompleteEntity(): void
     {
         $mapper = new GenericMapper(Film::class, $this->getOrm()->getStorage());
         $entity = new FilmIncomplete();
@@ -40,7 +40,7 @@ class GenericMapperTest extends AbstractTestCase
         $this->assertEquals(1, $entity->film_id);
     }
 
-    public function testHydrateEntityWithBadEntity()
+    public function testHydrateEntityWithBadEntity(): void
     {
         $this->expectException(TypeError::class);
 
@@ -49,7 +49,7 @@ class GenericMapperTest extends AbstractTestCase
         $mapper->hydrateEntity($entity, ['author_id' => 1]);
     }
 
-    public function testCollectEntity()
+    public function testCollectEntity(): void
     {
         $entity = new Film();
         $entity->film_id = 123;
@@ -77,7 +77,7 @@ class GenericMapperTest extends AbstractTestCase
         );
     }
 
-    public function testCollectEntityWithSpecifiedColumns()
+    public function testCollectEntityWithSpecifiedColumns(): void
     {
         $entity = new Film();
         $entity->film_id = 123;
@@ -94,7 +94,7 @@ class GenericMapperTest extends AbstractTestCase
         );
     }
 
-    public function testCollectEntityWithSpecifiedColumnsOrdered()
+    public function testCollectEntityWithSpecifiedColumnsOrdered(): void
     {
         $entity = new Film();
         $entity->film_id = 123;
@@ -111,7 +111,7 @@ class GenericMapperTest extends AbstractTestCase
         );
     }
 
-    public function testCollectEntityWithBadEntity()
+    public function testCollectEntityWithBadEntity(): void
     {
         $this->expectException(TypeError::class);
 

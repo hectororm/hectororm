@@ -14,6 +14,11 @@ declare(strict_types=1);
 
 namespace Hector\Orm\Relationship;
 
+use Hector\Query\Clause\Where;
+use Hector\Query\Clause\Group;
+use Hector\Query\Clause\Having;
+use Hector\Query\Clause\Order;
+use Hector\Query\Clause\Limit;
 use Hector\Orm\Assert\EntityAssert;
 use Hector\Orm\Collection\Collection;
 use Hector\Orm\Entity\Entity;
@@ -24,20 +29,17 @@ use Hector\Orm\Orm;
 use Hector\Orm\Query\Builder;
 use Hector\Orm\Query\Component\Conditions;
 use Hector\Orm\Storage\EntityStorage;
-use Hector\Query\Clause;
 use Hector\Query\StatementInterface;
 use Hector\Schema\Exception\SchemaException;
 
 abstract class Relationship
 {
     use EntityAssert;
-    use Clause\Where;
-    use Clause\Group;
-    use Clause\Having;
-    use Clause\Order;
-    use Clause\Limit;
-
-    protected string $name;
+    use Where;
+    use Group;
+    use Having;
+    use Order;
+    use Limit;
     protected ReflectionEntity $sourceEntity;
     protected ReflectionEntity $targetEntity;
     protected array $sourceColumns;
@@ -52,9 +54,8 @@ abstract class Relationship
      *
      * @throws OrmException
      */
-    public function __construct(string $name, string $sourceEntity, string $targetEntity)
+    public function __construct(protected string $name, string $sourceEntity, string $targetEntity)
     {
-        $this->name = $name;
         $this->sourceEntity = ReflectionEntity::get($sourceEntity);
         $this->targetEntity = ReflectionEntity::get($targetEntity);
 
@@ -253,7 +254,7 @@ abstract class Relationship
             $entityValue = $entityReflection->getMapper()->collectEntity($entity, $columns);
 
             if (count($entityValue) !== $nbColumns) {
-                throw RelationException::notAttemptedColumns($this->name, $columns, get_class($entity));
+                throw RelationException::notAttemptedColumns($this->name, $columns, $entity::class);
             }
 
             if (empty(array_filter($entityValue, fn($value) => null !== $value))) {

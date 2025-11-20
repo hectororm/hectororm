@@ -18,7 +18,7 @@ use PHPUnit\Framework\TestCase;
 
 class RowTest extends TestCase
 {
-    public function testGetStatement()
+    public function testGetStatement(): void
     {
         $row = new Row('foo', '`bar`', 'baz');
         $binds = new BindParamList();
@@ -27,7 +27,7 @@ class RowTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testGetStatementWithEncapsulation()
+    public function testGetStatementWithEncapsulation(): void
     {
         $row = new Row('foo', '`bar`', 'baz');
         $binds = new BindParamList();

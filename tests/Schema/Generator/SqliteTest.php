@@ -27,7 +27,7 @@ class SqliteTest extends TestCase
         return new FakeSqlite(new Connection('sqlite:' . $path));
     }
 
-    public function testGetSchemaInfo()
+    public function testGetSchemaInfo(): void
     {
         $this->assertEquals(
             [
@@ -39,7 +39,7 @@ class SqliteTest extends TestCase
         );
     }
 
-    public function testGetTablesInfo()
+    public function testGetTablesInfo(): void
     {
         $this->assertEquals(
             [
@@ -209,7 +209,7 @@ class SqliteTest extends TestCase
         );
     }
 
-    public function testGetColumnsInfo()
+    public function testGetColumnsInfo(): void
     {
         $this->assertEquals(
             [
@@ -330,7 +330,7 @@ class SqliteTest extends TestCase
         );
     }
 
-    public function testGetIndexesInfo()
+    public function testGetIndexesInfo(): void
     {
         $this->assertEquals(
             [
@@ -345,7 +345,7 @@ class SqliteTest extends TestCase
         );
     }
 
-    public function testGetForeignKeysInfo()
+    public function testGetForeignKeysInfo(): void
     {
         $this->assertEquals(
             [
@@ -364,7 +364,7 @@ class SqliteTest extends TestCase
         );
     }
 
-    public function testGenerateSchema()
+    public function testGenerateSchema(): void
     {
         $generator = $this->getGenerator();
         $schemaContainer = $generator->generateSchemas('main');

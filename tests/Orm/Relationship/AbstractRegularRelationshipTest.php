@@ -26,7 +26,7 @@ use TypeError;
 
 class AbstractRegularRelationshipTest extends AbstractTestCase
 {
-    public function testConstruct()
+    public function testConstruct(): void
     {
         $relationship = new ManyToOne(
             'language',
@@ -41,7 +41,7 @@ class AbstractRegularRelationshipTest extends AbstractTestCase
         $this->assertEquals(['language_id'], $relationship->getTargetColumns());
     }
 
-    public function testConstructWithBadSourceEntity()
+    public function testConstructWithBadSourceEntity(): void
     {
         $this->expectException(TypeError::class);
 
@@ -54,7 +54,7 @@ class AbstractRegularRelationshipTest extends AbstractTestCase
     }
 
 
-    public function testConstructWithBadTargetEntity()
+    public function testConstructWithBadTargetEntity(): void
     {
         $this->expectException(TypeError::class);
 
@@ -66,7 +66,7 @@ class AbstractRegularRelationshipTest extends AbstractTestCase
         );
     }
 
-    public function testGetName()
+    public function testGetName(): void
     {
         $relationship = new ManyToOne(
             $name = 'language',
@@ -78,7 +78,7 @@ class AbstractRegularRelationshipTest extends AbstractTestCase
         $this->assertEquals($name, $relationship->getName());
     }
 
-    public function testGetSourceEntity()
+    public function testGetSourceEntity(): void
     {
         $relationship = new ManyToOne(
             'language',
@@ -90,7 +90,7 @@ class AbstractRegularRelationshipTest extends AbstractTestCase
         $this->assertEquals(Film::class, $relationship->getSourceEntity());
     }
 
-    public function testGetSourceColumns()
+    public function testGetSourceColumns(): void
     {
         $relationship = new ManyToOne(
             'language',
@@ -102,7 +102,7 @@ class AbstractRegularRelationshipTest extends AbstractTestCase
         $this->assertEquals(['language'], $relationship->getSourceColumns());
     }
 
-    public function testGetSourceColumnsWithMultipleColumns()
+    public function testGetSourceColumnsWithMultipleColumns(): void
     {
         $relationship = new ManyToOne(
             'language',
@@ -114,7 +114,7 @@ class AbstractRegularRelationshipTest extends AbstractTestCase
         $this->assertEquals(['film', 'language'], $relationship->getSourceColumns());
     }
 
-    public function testGetTargetEntity()
+    public function testGetTargetEntity(): void
     {
         $relationship = new ManyToOne(
             'language',
@@ -126,7 +126,7 @@ class AbstractRegularRelationshipTest extends AbstractTestCase
         $this->assertEquals(Language::class, $relationship->getTargetEntity());
     }
 
-    public function testGetTargetColumns()
+    public function testGetTargetColumns(): void
     {
         $relationship = new ManyToOne(
             'language',
@@ -138,7 +138,7 @@ class AbstractRegularRelationshipTest extends AbstractTestCase
         $this->assertEquals(['language_id'], $relationship->getTargetColumns());
     }
 
-    public function testGetTargetColumnsWithMultipleColumns()
+    public function testGetTargetColumnsWithMultipleColumns(): void
     {
         $relationship = new ManyToOne(
             'language',
@@ -150,7 +150,7 @@ class AbstractRegularRelationshipTest extends AbstractTestCase
         $this->assertEquals(['language_id', 'project_id'], $relationship->getTargetColumns());
     }
 
-    public function testGetBuilder()
+    public function testGetBuilder(): void
     {
         $relationship = new ManyToOne(
             'language',
@@ -169,7 +169,7 @@ class AbstractRegularRelationshipTest extends AbstractTestCase
         );
     }
 
-    public function testGetBuilderWithBadEntity()
+    public function testGetBuilderWithBadEntity(): void
     {
         $this->expectException(TypeError::class);
 
@@ -182,7 +182,7 @@ class AbstractRegularRelationshipTest extends AbstractTestCase
         $relationship->getBuilder(Language::get(1));
     }
 
-    public function testGetBuilderWithoutEntities()
+    public function testGetBuilderWithoutEntities(): void
     {
         $relationship = new ManyToOne(
             'language',
@@ -196,7 +196,7 @@ class AbstractRegularRelationshipTest extends AbstractTestCase
         $this->assertNull($relationship->getBuilder()->where->getStatement($binds));
     }
 
-    public function testGetBuilderWithClauses()
+    public function testGetBuilderWithClauses(): void
     {
         $relationship = new ManyToOne(
             'language',
@@ -224,7 +224,7 @@ class AbstractRegularRelationshipTest extends AbstractTestCase
         $this->assertEquals($relationship->limit, $builder->limit);
     }
 
-    public function testGet()
+    public function testGet(): void
     {
         $relationship = new ManyToOne(
             'language',

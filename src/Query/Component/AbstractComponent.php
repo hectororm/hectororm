@@ -22,16 +22,13 @@ abstract class AbstractComponent implements StatementInterface
 {
     use EncapsulateHelperTrait;
 
-    public mixed $builder;
-
     /**
      * AbstractComponent constructor.
      *
      * @param mixed $builder
      */
-    public function __construct(mixed $builder = null)
+    public function __construct(public mixed $builder = null)
     {
-        $this->builder = $builder;
     }
 
     /**
@@ -79,7 +76,7 @@ abstract class AbstractComponent implements StatementInterface
             return $str ?: null;
         }
 
-        return (string)$statement;
+        return $statement;
     }
 
     /**

@@ -18,7 +18,7 @@ use PHPUnit\Framework\TestCase;
 
 class GroupTest extends TestCase
 {
-    public function testResetGroup()
+    public function testResetGroup(): void
     {
         $clause = new class {
             use Group;
@@ -37,7 +37,7 @@ class GroupTest extends TestCase
         $this->assertEmpty($clause->group->getStatement($binds));
     }
 
-    public function testGroupBy()
+    public function testGroupBy(): void
     {
         $clause = new class {
             use Group;
@@ -54,7 +54,7 @@ class GroupTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testGroupByWithRollup()
+    public function testGroupByWithRollup(): void
     {
         $clause = new class {
             use Group;

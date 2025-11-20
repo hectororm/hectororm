@@ -14,6 +14,8 @@ declare(strict_types=1);
 
 namespace Hector\Query\Clause;
 
+use Hector\Query\Component\InsertAssignments;
+use Hector\Query\Component\UpdateAssignments;
 use Closure;
 use Hector\Query\Component;
 use Hector\Query\Insert;
@@ -32,8 +34,8 @@ trait Assignments
     public function resetAssignments(): static
     {
         $this->assignments = match (true) {
-            $this instanceof Insert => new Component\InsertAssignments($this),
-            $this instanceof Update => new Component\UpdateAssignments($this),
+            $this instanceof Insert => new InsertAssignments($this),
+            $this instanceof Update => new UpdateAssignments($this),
             default => new Component\Assignments($this),
         };
 

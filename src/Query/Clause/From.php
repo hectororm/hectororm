@@ -14,12 +14,12 @@ declare(strict_types=1);
 
 namespace Hector\Query\Clause;
 
-use Hector\Query\Component;
+use Hector\Query\Component\Table;
 use Hector\Query\StatementInterface;
 
 trait From
 {
-    public Component\Table $from;
+    public Table $from;
 
     /**
      * Reset from.
@@ -28,7 +28,7 @@ trait From
      */
     public function resetFrom(): static
     {
-        $this->from = new Component\Table($this);
+        $this->from = new Table($this);
 
         return $this;
     }

@@ -19,7 +19,7 @@ use Hector\Orm\Tests\Fake\Entity\Language;
 
 class OneToOneTest extends AbstractTestCase
 {
-    public function testLinkForeign()
+    public function testLinkForeign(): void
     {
         $relationship = new OneToOne(
             'language',
@@ -38,7 +38,7 @@ class OneToOneTest extends AbstractTestCase
         $this->assertEquals($film->language_id, $language->language_id);
     }
 
-    public function testReverse()
+    public function testReverse(): void
     {
         $relationship = new OneToOne(
             'language',

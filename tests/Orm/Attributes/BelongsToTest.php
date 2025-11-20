@@ -23,7 +23,7 @@ use TypeError;
 
 class BelongsToTest extends AbstractTestCase
 {
-    public function testConstruct()
+    public function testConstruct(): void
     {
         $attribute = new BelongsTo(Customer::class, 'customer', 'address');
 
@@ -32,7 +32,7 @@ class BelongsToTest extends AbstractTestCase
         $this->assertEquals('address', $attribute->foreignName);
     }
 
-    public function testConstructWithoutForeignName()
+    public function testConstructWithoutForeignName(): void
     {
         $attribute = new BelongsTo(Customer::class, 'customer');
 
@@ -41,14 +41,14 @@ class BelongsToTest extends AbstractTestCase
         $this->assertNull($attribute->foreignName);
     }
 
-    public function testConstructBadEntity()
+    public function testConstructBadEntity(): void
     {
         $this->expectException(TypeError::class);
 
         new BelongsTo(stdClass::class, 'customer');
     }
 
-    public function testInit()
+    public function testInit(): void
     {
         $attribute = new BelongsTo(Customer::class, 'customer', 'address');
         $relationships = new Relationships(Address::class);

@@ -20,7 +20,7 @@ use PHPUnit\Framework\TestCase;
 
 class GroupTest extends TestCase
 {
-    public function testCount()
+    public function testCount(): void
     {
         $group = new Group();
 
@@ -32,7 +32,7 @@ class GroupTest extends TestCase
         $this->assertCount(2, $group);
     }
 
-    public function testGetStatement()
+    public function testGetStatement(): void
     {
         $group = new Group();
         $binds = new BindParamList();
@@ -41,7 +41,7 @@ class GroupTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testGroupBy()
+    public function testGroupBy(): void
     {
         $group = new Group();
         $group->groupBy('foo');
@@ -54,7 +54,7 @@ class GroupTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testGroupByRaw()
+    public function testGroupByRaw(): void
     {
         $group = new Group();
         $group->groupBy('foo');
@@ -71,7 +71,7 @@ class GroupTest extends TestCase
         );
     }
 
-    public function testWithRollup()
+    public function testWithRollup(): void
     {
         $group = new Group();
         $group->groupBy('foo');

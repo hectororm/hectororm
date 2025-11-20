@@ -19,7 +19,7 @@ use PHPUnit\Framework\TestCase;
 
 class LogEntryTest extends TestCase
 {
-    public function testConstruct()
+    public function testConstruct(): void
     {
         $logEntry = new LogEntry(
             $connection = Connection::DEFAULT_NAME,
@@ -33,7 +33,7 @@ class LogEntryTest extends TestCase
         $this->assertEquals($parameters, $logEntry->getParameters());
     }
 
-    public function testEnd()
+    public function testEnd(): void
     {
         $logEntry = new LogEntry(Connection::DEFAULT_NAME, 'STATEMENT');
 
@@ -44,7 +44,7 @@ class LogEntryTest extends TestCase
         $this->assertGreaterThan(0, $logEntry->getDuration());
     }
 
-    public function testGetStart()
+    public function testGetStart(): void
     {
         $time1 = microtime(true);
         $logEntry = new LogEntry(Connection::DEFAULT_NAME, 'STATEMENT');
@@ -56,7 +56,7 @@ class LogEntryTest extends TestCase
         $this->assertLessThan($time2, $logEntry->getStart());
     }
 
-    public function testGetEnd()
+    public function testGetEnd(): void
     {
         $logEntry = new LogEntry(Connection::DEFAULT_NAME, 'STATEMENT');
 
@@ -72,7 +72,7 @@ class LogEntryTest extends TestCase
         $this->assertLessThan($time2, $logEntry->getEnd());
     }
 
-    public function testGetDuration()
+    public function testGetDuration(): void
     {
         $time1 = microtime(true);
         $logEntry = new LogEntry(Connection::DEFAULT_NAME, 'STATEMENT');
@@ -86,21 +86,21 @@ class LogEntryTest extends TestCase
         $this->assertLessThan($time2 - $time1, $logEntry->getDuration());
     }
 
-    public function testGetConnection()
+    public function testGetConnection(): void
     {
         $logEntry = new LogEntry($connection = 'FooConnection', 'STATEMENT');
 
         $this->assertEquals($connection, $logEntry->getConnection());
     }
 
-    public function testGetStatement()
+    public function testGetStatement(): void
     {
         $logEntry = new LogEntry(Connection::DEFAULT_NAME, $statement = 'STATEMENT');
 
         $this->assertEquals($statement, $logEntry->getStatement());
     }
 
-    public function testGetParameters()
+    public function testGetParameters(): void
     {
         $logEntry = new LogEntry(
             Connection::DEFAULT_NAME,
@@ -111,7 +111,7 @@ class LogEntryTest extends TestCase
         $this->assertEquals($parameters, $logEntry->getParameters());
     }
 
-    public function testGetParametersDefaultValue()
+    public function testGetParametersDefaultValue(): void
     {
         $logEntry = new LogEntry(Connection::DEFAULT_NAME, 'STATEMENT');
 
@@ -119,14 +119,14 @@ class LogEntryTest extends TestCase
         $this->assertEmpty($logEntry->getParameters());
     }
 
-    public function testGetTrace()
+    public function testGetTrace(): void
     {
         $logEntry = new LogEntry(Connection::DEFAULT_NAME, 'STATEMENT', trace: $trace = 'foo');
 
         $this->assertEquals($trace, $logEntry->getTrace());
     }
 
-    public function testGetTraceDefaultValue()
+    public function testGetTraceDefaultValue(): void
     {
         $logEntry = new LogEntry(Connection::DEFAULT_NAME, 'STATEMENT');
 

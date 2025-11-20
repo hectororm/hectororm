@@ -19,7 +19,7 @@ use Ramsey\Uuid\UuidInterface;
 
 class RamseyUuidTypeTest extends TestCase
 {
-    public function testFromSchema()
+    public function testFromSchema(): void
     {
         $type = new RamseyUuidType();
 
@@ -33,7 +33,7 @@ class RamseyUuidTypeTest extends TestCase
         );
     }
 
-    public function testToSchema()
+    public function testToSchema(): void
     {
         $type = new RamseyUuidType();
 

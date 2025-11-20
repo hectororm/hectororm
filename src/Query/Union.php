@@ -14,13 +14,16 @@ declare(strict_types=1);
 
 namespace Hector\Query;
 
+use Hector\Query\Clause\Order;
+use Hector\Query\Clause\Limit;
+use Hector\Query\Component\EncapsulateHelperTrait;
 use Hector\Connection\Bind\BindParamList;
 
 class Union implements StatementInterface
 {
-    use Clause\Order;
-    use Clause\Limit;
-    use Component\EncapsulateHelperTrait;
+    use Order;
+    use Limit;
+    use EncapsulateHelperTrait;
 
     private bool $all = false;
     private array $selects = [];

@@ -22,14 +22,14 @@ use ValueError;
 
 class JsonTypeTest extends TestCase
 {
-    public function testFromSchema()
+    public function testFromSchema(): void
     {
         $type = new JsonType();
 
         $this->assertEquals(["foo" => "bar"], $type->fromSchema('{"foo": "bar"}'));
     }
 
-    public function testFromSchema_notAssociative()
+    public function testFromSchema_notAssociative(): void
     {
         $type = new JsonType(associative: false);
 
@@ -37,7 +37,7 @@ class JsonTypeTest extends TestCase
         $this->assertEquals('bar', $type->fromSchema('{"foo": "bar"}')->foo);
     }
 
-    public function testFromSchemaWithNotValid()
+    public function testFromSchemaWithNotValid(): void
     {
         $this->expectException(ValueError::class);
 
@@ -45,7 +45,7 @@ class JsonTypeTest extends TestCase
         $type->fromSchema(1);
     }
 
-    public function testFromSchemaWithNotScalar()
+    public function testFromSchemaWithNotScalar(): void
     {
         $this->expectException(ValueError::class);
 
@@ -53,7 +53,7 @@ class JsonTypeTest extends TestCase
         $type->fromSchema(['foo']);
     }
 
-    public function testFromSchemaWithDeclaredTypeBuiltinArray()
+    public function testFromSchemaWithDeclaredTypeBuiltinArray(): void
     {
         $expectedType = new ExpectedType('array', false, true);
         $type = new JsonType();
@@ -61,7 +61,7 @@ class JsonTypeTest extends TestCase
         $this->assertEquals(["foo" => "bar"], $type->fromSchema('{"foo": "bar"}', $expectedType));
     }
 
-    public function testFromSchemaWithDeclaredTypeBuiltinString()
+    public function testFromSchemaWithDeclaredTypeBuiltinString(): void
     {
         $expectedType = new ExpectedType('string', false, true);
         $type = new JsonType();
@@ -69,7 +69,7 @@ class JsonTypeTest extends TestCase
         $this->assertEquals('{"foo": "bar"}', $type->fromSchema('{"foo": "bar"}', $expectedType));
     }
 
-    public function testFromSchemaWithDeclaredTypeBuiltinInvalid()
+    public function testFromSchemaWithDeclaredTypeBuiltinInvalid(): void
     {
         $this->expectException(ValueError::class);
 
@@ -79,7 +79,7 @@ class JsonTypeTest extends TestCase
         $type->fromSchema('{"foo": "bar"}', $expectedType);
     }
 
-    public function testFromSchemaWithDeclaredTypeBuiltinAndBadValue()
+    public function testFromSchemaWithDeclaredTypeBuiltinAndBadValue(): void
     {
         $this->expectException(ValueError::class);
         $expectedType = new ExpectedType('string', false, true);
@@ -88,7 +88,7 @@ class JsonTypeTest extends TestCase
         $type->fromSchema(new stdClass(), $expectedType);
     }
 
-    public function testFromSchemaWithDeclaredTypeStdClass()
+    public function testFromSchemaWithDeclaredTypeStdClass(): void
     {
         $expectedType = new ExpectedType(stdClass::class, false, false);
         $type = new JsonType();
@@ -99,7 +99,7 @@ class JsonTypeTest extends TestCase
         );
     }
 
-    public function testFromSchemaWithDeclaredTypeNotBuiltin()
+    public function testFromSchemaWithDeclaredTypeNotBuiltin(): void
     {
         $this->expectException(ValueError::class);
 
@@ -109,7 +109,7 @@ class JsonTypeTest extends TestCase
         $type->fromSchema('{"foo": "bar"}', $expectedType);
     }
 
-    public function testToSchema()
+    public function testToSchema(): void
     {
         $type = new JsonType();
         $fakeObject = new class implements JsonSerializable {
@@ -127,7 +127,7 @@ class JsonTypeTest extends TestCase
         $this->assertSame('"string"', $type->toSchema("string"));
     }
 
-    public function testToSchemaWithBadType()
+    public function testToSchemaWithBadType(): void
     {
         $this->expectException(ValueError::class);
 
@@ -142,7 +142,7 @@ class JsonTypeTest extends TestCase
         $type->toSchema($fakeObject);
     }
 
-    public function testEquals()
+    public function testEquals(): void
     {
         $type = new JsonType();
 

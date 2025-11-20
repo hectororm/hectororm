@@ -49,7 +49,7 @@ class OrmFactory
         ?EventDispatcherInterface $eventDispatcher = null,
         ?CacheInterface $cache = null
     ): Orm {
-        $connection = $connection ?? static::connection($options);
+        $connection ??= static::connection($options);
 
         if (null === ($schemaContainer = $cache?->get(static::CACHE_ORM_KEY))) {
             if (!array_key_exists('schemas', $options) || !is_array($options['schemas'])) {

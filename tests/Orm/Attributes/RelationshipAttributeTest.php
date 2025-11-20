@@ -20,7 +20,7 @@ use Hector\Orm\Tests\Fake\Entity\Language;
 
 class RelationshipAttributeTest extends AbstractTestCase
 {
-    public function testInitWithClauses()
+    public function testInitWithClauses(): void
     {
         $attribute = new HasMany(
             Film::class,

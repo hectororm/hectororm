@@ -24,7 +24,7 @@ use ReflectionMethod;
 
 class ManyToOneTest extends AbstractTestCase
 {
-    public function testConstructWithDeductionOfColumns()
+    public function testConstructWithDeductionOfColumns(): void
     {
         $relationship = new ManyToOne('address', Staff::class, Address::class);
 
@@ -33,7 +33,7 @@ class ManyToOneTest extends AbstractTestCase
         $this->assertEquals(['address_id'], $relationship->getTargetColumns());
     }
 
-    public function testValid()
+    public function testValid(): void
     {
         $relationship = new ManyToOne(
             'address',
@@ -46,7 +46,7 @@ class ManyToOneTest extends AbstractTestCase
         $this->assertTrue($relationship->valid($value));
     }
 
-    public function testValidWithNull()
+    public function testValidWithNull(): void
     {
         $relationship = new ManyToOne(
             'address',
@@ -59,7 +59,7 @@ class ManyToOneTest extends AbstractTestCase
         $this->assertTrue($relationship->valid($value));
     }
 
-    public function testValidWithBadEntity()
+    public function testValidWithBadEntity(): void
     {
         $relationship = new ManyToOne(
             'address',
@@ -72,7 +72,7 @@ class ManyToOneTest extends AbstractTestCase
         $this->assertFalse($relationship->valid($value));
     }
 
-    public function testValidWithCollection()
+    public function testValidWithCollection(): void
     {
         $relationship = new ManyToOne(
             'address',
@@ -85,7 +85,7 @@ class ManyToOneTest extends AbstractTestCase
         $this->assertFalse($relationship->valid($value));
     }
 
-    public function testSwitchIntoEntities()
+    public function testSwitchIntoEntities(): void
     {
         $relationship = new ManyToOne(
             'address',
@@ -108,7 +108,7 @@ class ManyToOneTest extends AbstractTestCase
         $this->assertSame($address2, $staff2->getRelated()->address);
     }
 
-    public function testLinkForeign()
+    public function testLinkForeign(): void
     {
         $relationship = new ManyToOne(
             'address',
@@ -131,7 +131,7 @@ class ManyToOneTest extends AbstractTestCase
         $this->assertEquals($staff->address_id, $address->address_id);
     }
 
-    public function testReverse()
+    public function testReverse(): void
     {
         $relationship = new ManyToOne(
             'address',
@@ -149,7 +149,7 @@ class ManyToOneTest extends AbstractTestCase
         $this->assertEquals($reverse->getTargetColumns(), $relationship->getSourceColumns());
     }
 
-    public function testEntityGet()
+    public function testEntityGet(): void
     {
         $staff = Staff::findOrFail(1);
 

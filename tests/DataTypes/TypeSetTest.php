@@ -12,21 +12,24 @@
 
 namespace Hector\DataTypes\Tests;
 
-use Hector\DataTypes\Type;
+use Hector\DataTypes\Type\NumericType;
+use Hector\DataTypes\Type\DateTimeType;
+use Hector\DataTypes\Type\SetType;
+use Hector\DataTypes\Type\JsonType;
 use Hector\DataTypes\Type\StringType;
 use Hector\DataTypes\TypeSet;
 use PHPUnit\Framework\TestCase;
 
 class TypeSetTest extends TestCase
 {
-    public function testConstruct()
+    public function testConstruct(): void
     {
         $typeSet = new TypeSet(['fake' => $typeObj = new StringType()]);
 
         $this->assertSame($typeObj, $typeSet->get('fake'));
     }
 
-    public function testReset()
+    public function testReset(): void
     {
         $typeSet = new TypeSet();
         $initialCount = count($typeSet);
@@ -39,7 +42,7 @@ class TypeSetTest extends TestCase
         $this->assertCount($initialCount, $typeSet);
     }
 
-    public function testAdd()
+    public function testAdd(): void
     {
         $typeSet = new TypeSet();
         $typeSet->add('fake', $typeObj = new StringType());
@@ -47,35 +50,35 @@ class TypeSetTest extends TestCase
         $this->assertSame($typeObj, $typeSet->get('fake'));
     }
 
-    public function testGet()
+    public function testGet(): void
     {
         $typeSet = new TypeSet();
 
-        $this->assertInstanceOf(Type\StringType::class, $typeSet->get('char'));
-        $this->assertInstanceOf(Type\StringType::class, $typeSet->get('varchar'));
-        $this->assertInstanceOf(Type\StringType::class, $typeSet->get('tinytext'));
-        $this->assertInstanceOf(Type\StringType::class, $typeSet->get('text'));
-        $this->assertInstanceOf(Type\StringType::class, $typeSet->get('mediumtext'));
-        $this->assertInstanceOf(Type\StringType::class, $typeSet->get('longtext'));
-        $this->assertInstanceOf(Type\StringType::class, $typeSet->get('tinyblob'));
-        $this->assertInstanceOf(Type\StringType::class, $typeSet->get('blob'));
-        $this->assertInstanceOf(Type\StringType::class, $typeSet->get('mediumblob'));
-        $this->assertInstanceOf(Type\StringType::class, $typeSet->get('longblog'));
-        $this->assertInstanceOf(Type\NumericType::class, $typeSet->get('tinyint'));
-        $this->assertInstanceOf(Type\NumericType::class, $typeSet->get('smallint'));
-        $this->assertInstanceOf(Type\NumericType::class, $typeSet->get('mediumint'));
-        $this->assertInstanceOf(Type\NumericType::class, $typeSet->get('int'));
-        $this->assertInstanceOf(Type\NumericType::class, $typeSet->get('bigint'));
-        $this->assertInstanceOf(Type\NumericType::class, $typeSet->get('decimal'));
-        $this->assertInstanceOf(Type\NumericType::class, $typeSet->get('numeric'));
-        $this->assertInstanceOf(Type\NumericType::class, $typeSet->get('float'));
-        $this->assertInstanceOf(Type\NumericType::class, $typeSet->get('double'));
-        $this->assertInstanceOf(Type\DateTimeType::class, $typeSet->get('date'));
-        $this->assertInstanceOf(Type\DateTimeType::class, $typeSet->get('datetime'));
-        $this->assertInstanceOf(Type\DateTimeType::class, $typeSet->get('timestamp'));
-        $this->assertInstanceOf(Type\NumericType::class, $typeSet->get('year'));
-        $this->assertInstanceOf(Type\StringType::class, $typeSet->get('enum'));
-        $this->assertInstanceOf(Type\SetType::class, $typeSet->get('set'));
-        $this->assertInstanceOf(Type\JsonType::class, $typeSet->get('json'));
+        $this->assertInstanceOf(StringType::class, $typeSet->get('char'));
+        $this->assertInstanceOf(StringType::class, $typeSet->get('varchar'));
+        $this->assertInstanceOf(StringType::class, $typeSet->get('tinytext'));
+        $this->assertInstanceOf(StringType::class, $typeSet->get('text'));
+        $this->assertInstanceOf(StringType::class, $typeSet->get('mediumtext'));
+        $this->assertInstanceOf(StringType::class, $typeSet->get('longtext'));
+        $this->assertInstanceOf(StringType::class, $typeSet->get('tinyblob'));
+        $this->assertInstanceOf(StringType::class, $typeSet->get('blob'));
+        $this->assertInstanceOf(StringType::class, $typeSet->get('mediumblob'));
+        $this->assertInstanceOf(StringType::class, $typeSet->get('longblog'));
+        $this->assertInstanceOf(NumericType::class, $typeSet->get('tinyint'));
+        $this->assertInstanceOf(NumericType::class, $typeSet->get('smallint'));
+        $this->assertInstanceOf(NumericType::class, $typeSet->get('mediumint'));
+        $this->assertInstanceOf(NumericType::class, $typeSet->get('int'));
+        $this->assertInstanceOf(NumericType::class, $typeSet->get('bigint'));
+        $this->assertInstanceOf(NumericType::class, $typeSet->get('decimal'));
+        $this->assertInstanceOf(NumericType::class, $typeSet->get('numeric'));
+        $this->assertInstanceOf(NumericType::class, $typeSet->get('float'));
+        $this->assertInstanceOf(NumericType::class, $typeSet->get('double'));
+        $this->assertInstanceOf(DateTimeType::class, $typeSet->get('date'));
+        $this->assertInstanceOf(DateTimeType::class, $typeSet->get('datetime'));
+        $this->assertInstanceOf(DateTimeType::class, $typeSet->get('timestamp'));
+        $this->assertInstanceOf(NumericType::class, $typeSet->get('year'));
+        $this->assertInstanceOf(StringType::class, $typeSet->get('enum'));
+        $this->assertInstanceOf(SetType::class, $typeSet->get('set'));
+        $this->assertInstanceOf(JsonType::class, $typeSet->get('json'));
     }
 }

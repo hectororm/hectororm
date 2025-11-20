@@ -25,7 +25,7 @@ class MySQLTest extends TestCase
         return new FakeMySQL(new Connection(getenv('MYSQL_DSN')));
     }
 
-    public function testGetSchemaInfo()
+    public function testGetSchemaInfo(): void
     {
         $info = $this->getGenerator()->getSchemaInfo('sakila');
 
@@ -34,7 +34,7 @@ class MySQLTest extends TestCase
         $this->assertStringStartsWith('utf8mb4_', $info['collation']);
     }
 
-    public function testGetTablesInfo()
+    public function testGetTablesInfo(): void
     {
         $schemaInfo = $this->getGenerator()->getSchemaInfo('sakila');
 
@@ -206,7 +206,7 @@ class MySQLTest extends TestCase
         );
     }
 
-    public function testGetColumnsInfo()
+    public function testGetColumnsInfo(): void
     {
         $schemaInfo = $this->getGenerator()->getSchemaInfo('sakila');
 
@@ -343,7 +343,7 @@ class MySQLTest extends TestCase
         );
     }
 
-    public function testGetIndexesInfo()
+    public function testGetIndexesInfo(): void
     {
         $this->assertEquals(
             [
@@ -370,7 +370,7 @@ class MySQLTest extends TestCase
         );
     }
 
-    public function testGetForeignKeysInfo()
+    public function testGetForeignKeysInfo(): void
     {
         $this->assertEquals(
             [
@@ -389,7 +389,7 @@ class MySQLTest extends TestCase
         );
     }
 
-    public function testGenerateSchema()
+    public function testGenerateSchema(): void
     {
         $generator = $this->getGenerator();
         $schemaContainer = $generator->generateSchemas('sakila');

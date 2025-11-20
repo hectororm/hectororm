@@ -50,7 +50,7 @@ class LazyCollectionTest extends TestCase
     /**
      * @dataProvider constructProvider
      */
-    public function testConstruct(Closure|iterable $iterable)
+    public function testConstruct(Closure|iterable $iterable): void
     {
         $collection = new LazyCollection($iterable);
 
@@ -58,13 +58,13 @@ class LazyCollectionTest extends TestCase
         $this->assertEquals(['foo', 'bar'], $collection->getArrayCopy());
     }
 
-    public function testConstruct_notIterable()
+    public function testConstruct_notIterable(): void
     {
         $this->expectException(InvalidArgumentException::class);
         new LazyCollection(fn() => new stdClass());
     }
 
-    public function testGetIterator()
+    public function testGetIterator(): void
     {
         $collection = new LazyCollection($arr = ['foo', 'bar', 'baz', 'qux', 'quxx']);
 

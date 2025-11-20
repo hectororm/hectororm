@@ -50,7 +50,7 @@ class SetType extends AbstractType
             throw ValueException::castNotBuiltin($this);
         }
 
-        return (array)$value;
+        return $value;
     }
 
     /**

@@ -28,7 +28,7 @@ class EnumTypeTest extends TestCase
         }
     }
 
-    public function testFromSchema_int()
+    public function testFromSchema_int(): void
     {
         $type = new EnumType(FakeEnumInt::class);
 
@@ -36,7 +36,7 @@ class EnumTypeTest extends TestCase
         $this->assertSame(FakeEnumInt::BAR, $type->fromSchema(1));
     }
 
-    public function testFromSchema_string()
+    public function testFromSchema_string(): void
     {
         $type = new EnumType(FakeEnumString::class);
 
@@ -44,7 +44,7 @@ class EnumTypeTest extends TestCase
         $this->assertSame(FakeEnumString::BAR, $type->fromSchema('bar'));
     }
 
-    public function testFromSchemaWithNotScalar()
+    public function testFromSchemaWithNotScalar(): void
     {
         $this->expectException(ValueError::class);
 
@@ -52,7 +52,7 @@ class EnumTypeTest extends TestCase
         $type->fromSchema(['foo']);
     }
 
-    public function testFromSchema_try()
+    public function testFromSchema_try(): void
     {
         $type = new EnumType(FakeEnumString::class, true);
 
@@ -60,14 +60,14 @@ class EnumTypeTest extends TestCase
         $this->assertNull($type->fromSchema('qux'));
     }
 
-    public function testFromSchema_noTry()
+    public function testFromSchema_noTry(): void
     {
         $this->expectException(ValueError::class);
         $type = new EnumType(FakeEnumString::class, false);
         $type->fromSchema('qux');
     }
 
-    public function testFromSchemaWithDeclaredTypeStringBuiltin()
+    public function testFromSchemaWithDeclaredTypeStringBuiltin(): void
     {
         $expectedType = new ExpectedType('string', false, true);
 
@@ -76,7 +76,7 @@ class EnumTypeTest extends TestCase
         $this->assertSame('foo', $type->fromSchema('foo', $expectedType));
     }
 
-    public function testFromSchemaWithDeclaredTypeBuiltinAndBadValue()
+    public function testFromSchemaWithDeclaredTypeBuiltinAndBadValue(): void
     {
         $this->expectException(ValueError::class);
         $expectedType = new ExpectedType('string', false, true);
@@ -86,7 +86,7 @@ class EnumTypeTest extends TestCase
         $this->assertSame('1', $type->fromSchema(new stdClass(), $expectedType));
     }
 
-    public function testFromSchemaWithDeclaredTypeNotBuiltin()
+    public function testFromSchemaWithDeclaredTypeNotBuiltin(): void
     {
         $this->expectException(ValueError::class);
 
@@ -96,7 +96,7 @@ class EnumTypeTest extends TestCase
         $type->fromSchema('1', $expectedType);
     }
 
-    public function testToSchema()
+    public function testToSchema(): void
     {
         $type = new EnumType(FakeEnumString::class);
 
@@ -104,7 +104,7 @@ class EnumTypeTest extends TestCase
         $this->assertSame('bar', $type->toSchema(FakeEnumString::BAR));
     }
 
-    public function testToSchemaWithNotScalar()
+    public function testToSchemaWithNotScalar(): void
     {
         $this->expectException(ValueError::class);
 

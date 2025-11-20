@@ -18,7 +18,7 @@ use PHPUnit\Framework\TestCase;
 
 class OrderTest extends TestCase
 {
-    public function testResetOrder()
+    public function testResetOrder(): void
     {
         $clause = new class {
             use Order;
@@ -37,7 +37,7 @@ class OrderTest extends TestCase
         $this->assertEmpty($clause->order->getStatement($binds));
     }
 
-    public function testOrderBy()
+    public function testOrderBy(): void
     {
         $clause = new class {
             use Order;
@@ -54,7 +54,7 @@ class OrderTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testRandom()
+    public function testRandom(): void
     {
         $clause = new class {
             use Order;

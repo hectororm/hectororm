@@ -20,19 +20,14 @@ use Hector\Query\StatementInterface;
 
 class SqlFunction implements StatementInterface
 {
-    protected string $function;
-    protected Closure|StatementInterface|string $expression;
-
     /**
      * SqlFunction constructor.
      *
      * @param string $function
      * @param Closure|StatementInterface|string $expression
      */
-    public function __construct(string $function, Closure|StatementInterface|string $expression)
+    public function __construct(protected string $function, protected Closure|StatementInterface|string $expression)
     {
-        $this->function = $function;
-        $this->expression = $expression;
     }
 
     /**

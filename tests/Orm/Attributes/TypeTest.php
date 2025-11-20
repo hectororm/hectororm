@@ -20,7 +20,7 @@ use TypeError;
 
 class TypeTest extends TestCase
 {
-    public function testConstruct()
+    public function testConstruct(): void
     {
         $attribute = new Type('column', DateTimeType::class);
 
@@ -28,7 +28,7 @@ class TypeTest extends TestCase
         $this->assertEquals(DateTimeType::class, $attribute->type);
     }
 
-    public function testConstructWithBadCollection()
+    public function testConstructWithBadCollection(): void
     {
         $this->expectException(TypeError::class);
 

@@ -32,7 +32,7 @@ class CollectionInterfaceTest extends TestCase
     /**
      * @dataProvider collectionTypeProvider
      */
-    public function testNew(string $class)
+    public function testNew(string $class): void
     {
         /** @var class-string<CollectionInterface> $class */
         $collection = $class::new($arr = ['foo', 'bar', 'baz', 'qux', 'quxx']);
@@ -44,7 +44,7 @@ class CollectionInterfaceTest extends TestCase
     /**
      * @dataProvider collectionTypeProvider
      */
-    public function testGetArrayCopy(string $class)
+    public function testGetArrayCopy(string $class): void
     {
         $collection = new $class($arr = ['foo', 'bar', 'baz', 'qux', 'quxx']);
 
@@ -54,7 +54,7 @@ class CollectionInterfaceTest extends TestCase
     /**
      * @dataProvider collectionTypeProvider
      */
-    public function testGetArrayCopy_recursive(string $class)
+    public function testGetArrayCopy_recursive(string $class): void
     {
         $collection = new $class(
             $arr = [
@@ -71,7 +71,7 @@ class CollectionInterfaceTest extends TestCase
     /**
      * @dataProvider collectionTypeProvider
      */
-    public function testAll(string $class)
+    public function testAll(string $class): void
     {
         $collection = new $class($arr = ['foo', 'bar', 'baz', 'qux', 'quxx']);
 
@@ -81,7 +81,7 @@ class CollectionInterfaceTest extends TestCase
     /**
      * @dataProvider collectionTypeProvider
      */
-    public function testAll_recursive(string $class)
+    public function testAll_recursive(string $class): void
     {
         $collection = new $class(
             $arr = [
@@ -96,7 +96,7 @@ class CollectionInterfaceTest extends TestCase
     /**
      * @dataProvider collectionTypeProvider
      */
-    public function testCount(string $class)
+    public function testCount(string $class): void
     {
         $collection = new $class($arr = ['foo', 'bar', 'baz', 'qux', 'quxx']);
 
@@ -111,7 +111,7 @@ class CollectionInterfaceTest extends TestCase
     /**
      * @dataProvider collectionTypeProvider
      */
-    public function testIsEmpty(string $class)
+    public function testIsEmpty(string $class): void
     {
         $this->assertFalse((new $class(['foo', 'bar', 'baz']))->isEmpty());
         $this->assertTrue((new $class())->isEmpty());
@@ -120,7 +120,7 @@ class CollectionInterfaceTest extends TestCase
     /**
      * @dataProvider collectionTypeProvider
      */
-    public function testIsList(string $class)
+    public function testIsList(string $class): void
     {
         $this->assertFalse((new $class(['foo', 2 => 'bar', 'baz']))->isList());
         $this->assertTrue((new $class(['foo', 'bar', 'baz']))->isList());
@@ -129,7 +129,7 @@ class CollectionInterfaceTest extends TestCase
     /**
      * @dataProvider collectionTypeProvider
      */
-    public function testDebugInfo(string $class)
+    public function testDebugInfo(string $class): void
     {
         $collection = new $class($arr = ['foo', 'bar', 'baz', 'qux', 'quxx']);
 
@@ -139,7 +139,7 @@ class CollectionInterfaceTest extends TestCase
     /**
      * @dataProvider collectionTypeProvider
      */
-    public function testJsonSerialize(string $class)
+    public function testJsonSerialize(string $class): void
     {
         $collection = new $class($arr = ['foo', 'bar', 'baz', 'qux', 'quxx']);
 
@@ -149,7 +149,7 @@ class CollectionInterfaceTest extends TestCase
     /**
      * @dataProvider collectionTypeProvider
      */
-    public function testCollect(string $class)
+    public function testCollect(string $class): void
     {
         $collection = new $class($arr = ['foo', 'bar', 'baz', 'qux', 'quxx']);
         $newCollection = $collection->collect();
@@ -161,7 +161,7 @@ class CollectionInterfaceTest extends TestCase
     /**
      * @dataProvider collectionTypeProvider
      */
-    public function testCollect_multiDimensional(string $class)
+    public function testCollect_multiDimensional(string $class): void
     {
         $collection = new $class($arr = [['foo', 'bar'], new $class(['baz', 'qux']), ['quxx']]);
         $newCollection = $collection->collect();
@@ -173,7 +173,7 @@ class CollectionInterfaceTest extends TestCase
     /**
      * @dataProvider collectionTypeProvider
      */
-    public function testSort(string $class)
+    public function testSort(string $class): void
     {
         $arr = ['d' => 'Lemon', 'a' => 'orange', 'b1' => 'banana10', 'b2' => 'banana2', 'c' => 'apple'];
 
@@ -200,7 +200,7 @@ class CollectionInterfaceTest extends TestCase
     /**
      * @dataProvider collectionTypeProvider
      */
-    public function testMultiSort(string $class)
+    public function testMultiSort(string $class): void
     {
         $arr = [
             'l' => ['name' => 'Lemon', 'nb' => 1],
@@ -231,7 +231,7 @@ class CollectionInterfaceTest extends TestCase
     /**
      * @dataProvider collectionTypeProvider
      */
-    public function testFilter(string $class)
+    public function testFilter(string $class): void
     {
         $collection = new $class(['foo', 'bar', 'baz', 'qux', 'quxx']);
 
@@ -251,7 +251,7 @@ class CollectionInterfaceTest extends TestCase
     /**
      * @dataProvider collectionTypeProvider
      */
-    public function testFilterInstanceOf(string $class)
+    public function testFilterInstanceOf(string $class): void
     {
         $arr = [
             $value1 = new stdClass(),
@@ -279,7 +279,7 @@ class CollectionInterfaceTest extends TestCase
     /**
      * @dataProvider collectionTypeProvider
      */
-    public function testMap(string $class)
+    public function testMap(string $class): void
     {
         $callback = fn($value) => $value . 'Mapped';
         $collection = new $class($arr = ['foo', 'bar', 'baz', 'qux', 'quxx']);
@@ -290,7 +290,7 @@ class CollectionInterfaceTest extends TestCase
     /**
      * @dataProvider collectionTypeProvider
      */
-    public function testEach(string $class)
+    public function testEach(string $class): void
     {
         $result = 0;
         $callback = fn($value) => $result++;
@@ -304,7 +304,7 @@ class CollectionInterfaceTest extends TestCase
     /**
      * @dataProvider collectionTypeProvider
      */
-    public function testSearch(string $class)
+    public function testSearch(string $class): void
     {
         $arr = ['foo', 'bar', '1', 1, 'quxx'];
         $callback = fn($value) => str_starts_with($value, 'ba');
@@ -317,7 +317,7 @@ class CollectionInterfaceTest extends TestCase
     /**
      * @dataProvider collectionTypeProvider
      */
-    public function testGet(string $class)
+    public function testGet(string $class): void
     {
         $arr = ['foo', 'bar' => 'baz', 'qux', 'quxx'];
 
@@ -332,7 +332,7 @@ class CollectionInterfaceTest extends TestCase
     /**
      * @dataProvider collectionTypeProvider
      */
-    public function testFirst(string $class)
+    public function testFirst(string $class): void
     {
         $arr = ['foo', 'bar', 'baz', 'qux', 'quxx'];
         $callback = fn($value) => str_starts_with($value, 'ba');
@@ -347,7 +347,7 @@ class CollectionInterfaceTest extends TestCase
     /**
      * @dataProvider collectionTypeProvider
      */
-    public function testLast(string $class)
+    public function testLast(string $class): void
     {
         $arr = ['foo', 'bar', 'baz', 'qux', 'quxx'];
         $callback = fn($value) => str_starts_with($value, 'ba');
@@ -362,7 +362,7 @@ class CollectionInterfaceTest extends TestCase
     /**
      * @dataProvider collectionTypeProvider
      */
-    public function testSlice(string $class)
+    public function testSlice(string $class): void
     {
         $arr = array_flip(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']);
 
@@ -403,7 +403,7 @@ class CollectionInterfaceTest extends TestCase
     /**
      * @dataProvider collectionTypeProvider
      */
-    public function testContains(string $class)
+    public function testContains(string $class): void
     {
         $arr = ['1', '2', 1, 3, 4];
 
@@ -433,7 +433,7 @@ class CollectionInterfaceTest extends TestCase
     /**
      * @dataProvider collectionTypeProvider
      */
-    public function testChunk(string $class)
+    public function testChunk(string $class): void
     {
         $arr = ['key1' => 'value1', 'key2' => 'value2', 'key3' => 'value3'];
 
@@ -449,7 +449,7 @@ class CollectionInterfaceTest extends TestCase
     /**
      * @dataProvider collectionTypeProvider
      */
-    public function testKeys(string $class)
+    public function testKeys(string $class): void
     {
         $collection = new $class(['key1' => 'value1', 'key2' => 'value2', 'key3' => 'value3']);
 
@@ -462,7 +462,7 @@ class CollectionInterfaceTest extends TestCase
     /**
      * @dataProvider collectionTypeProvider
      */
-    public function testValues(string $class)
+    public function testValues(string $class): void
     {
         $collection = new $class(['key1' => 'value1', 'key2' => 'value2', 'key3' => 'value3']);
 
@@ -475,7 +475,7 @@ class CollectionInterfaceTest extends TestCase
     /**
      * @dataProvider collectionTypeProvider
      */
-    public function testUnique(string $class)
+    public function testUnique(string $class): void
     {
         $arr = ['key1' => 'value', 'key2' => 'value2', 'key3' => 'value'];
 
@@ -488,7 +488,7 @@ class CollectionInterfaceTest extends TestCase
     /**
      * @dataProvider collectionTypeProvider
      */
-    public function testFlip(string $class)
+    public function testFlip(string $class): void
     {
         $arr = ['key1' => 'value1', 'key2' => 'value2', 'key3' => 'value3'];
 
@@ -501,7 +501,7 @@ class CollectionInterfaceTest extends TestCase
     /**
      * @dataProvider collectionTypeProvider
      */
-    public function testReverse(string $class)
+    public function testReverse(string $class): void
     {
         $arr = ['key1' => 'value1', 'key2' => 'value2', 'key3' => 'value3'];
 
@@ -518,7 +518,7 @@ class CollectionInterfaceTest extends TestCase
     /**
      * @dataProvider collectionTypeProvider
      */
-    public function testColumn(string $class)
+    public function testColumn(string $class): void
     {
         $arr = [
             'key1' => ['foo' => 'value1foo', 'bar' => 'value1bar'],
@@ -543,7 +543,7 @@ class CollectionInterfaceTest extends TestCase
     /**
      * @dataProvider collectionTypeProvider
      */
-    public function testRand(string $class)
+    public function testRand(string $class): void
     {
         $arr = ['foo', 'bar', 'baz', 'qux', 'quxx'];
 
@@ -571,7 +571,7 @@ class CollectionInterfaceTest extends TestCase
     /**
      * @dataProvider collectionTypeProvider
      */
-    public function testSum(string $class)
+    public function testSum(string $class): void
     {
         $collection = new $class($arr = [1, 2, 3, 4, 5]);
 
@@ -584,7 +584,7 @@ class CollectionInterfaceTest extends TestCase
     /**
      * @dataProvider collectionTypeProvider
      */
-    public function testAvg(string $class)
+    public function testAvg(string $class): void
     {
         $this->assertEquals(0, (new $class())->avg());
 
@@ -603,7 +603,7 @@ class CollectionInterfaceTest extends TestCase
     /**
      * @dataProvider collectionTypeProvider
      */
-    public function testMedian(string $class)
+    public function testMedian(string $class): void
     {
         $this->assertEquals(0, (new $class())->median());
 
@@ -632,7 +632,7 @@ class CollectionInterfaceTest extends TestCase
     /**
      * @dataProvider collectionTypeProvider
      */
-    public function testVariance(string $class)
+    public function testVariance(string $class): void
     {
         $this->assertEqualsWithDelta(0, (new $class())->variance(), .000001);
 
@@ -666,7 +666,7 @@ class CollectionInterfaceTest extends TestCase
     /**
      * @dataProvider collectionTypeProvider
      */
-    public function testDeviation(string $class)
+    public function testDeviation(string $class): void
     {
         $this->assertEqualsWithDelta(0, (new $class())->deviation(), .000001);
 
@@ -700,7 +700,7 @@ class CollectionInterfaceTest extends TestCase
     /**
      * @dataProvider collectionTypeProvider
      */
-    public function testReduce(string $class)
+    public function testReduce(string $class): void
     {
         $arr = [1, 2, 3, 4, 5];
 

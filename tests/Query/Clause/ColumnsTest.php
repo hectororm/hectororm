@@ -18,7 +18,7 @@ use PHPUnit\Framework\TestCase;
 
 class ColumnsTest extends TestCase
 {
-    public function testResetColumns()
+    public function testResetColumns(): void
     {
         $clause = new class {
             use Columns;
@@ -37,7 +37,7 @@ class ColumnsTest extends TestCase
         $this->assertEmpty($clause->columns->getStatement($binds));
     }
 
-    public function testColumn()
+    public function testColumn(): void
     {
         $clause = new class {
             use Columns;
@@ -54,7 +54,7 @@ class ColumnsTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testColumns()
+    public function testColumns(): void
     {
         $clause = new class {
             use Columns;

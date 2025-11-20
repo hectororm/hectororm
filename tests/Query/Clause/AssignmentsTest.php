@@ -21,7 +21,7 @@ use PHPUnit\Framework\TestCase;
 
 class AssignmentsTest extends TestCase
 {
-    public function testResetAssignments()
+    public function testResetAssignments(): void
     {
         $clause = new class {
             use Assignments;
@@ -34,7 +34,7 @@ class AssignmentsTest extends TestCase
         $this->assertNotSame($assignments, $clause->assignments);
     }
 
-    public function testAssign()
+    public function testAssign(): void
     {
         $clause = new class {
             use Assignments;
@@ -56,7 +56,7 @@ class AssignmentsTest extends TestCase
         );
     }
 
-    public function testAssigns()
+    public function testAssigns(): void
     {
         $clause = new class {
             use Assignments;
@@ -79,7 +79,7 @@ class AssignmentsTest extends TestCase
         );
     }
 
-    public function testAssignsSelect()
+    public function testAssignsSelect(): void
     {
         $clause = new class {
             use Assignments;

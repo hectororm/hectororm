@@ -20,7 +20,7 @@ use PHPUnit\Framework\TestCase;
 
 class DeleteTest extends TestCase
 {
-    public function testGetStatementEmpty()
+    public function testGetStatementEmpty(): void
     {
         $delete = new Delete();
         $binds = new BindParamList();
@@ -29,7 +29,7 @@ class DeleteTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testGetStatementWithoutCondition()
+    public function testGetStatementWithoutCondition(): void
     {
         $delete = new Delete();
         $binds = new BindParamList();
@@ -45,7 +45,7 @@ class DeleteTest extends TestCase
         );
     }
 
-    public function testGetStatementWithEncapsulation()
+    public function testGetStatementWithEncapsulation(): void
     {
         $delete = new Delete();
         $binds = new BindParamList();
@@ -61,7 +61,7 @@ class DeleteTest extends TestCase
         );
     }
 
-    public function testGetStatementWithCondition()
+    public function testGetStatementWithCondition(): void
     {
         $delete = new Delete();
         $binds = new BindParamList();
@@ -78,7 +78,7 @@ class DeleteTest extends TestCase
         );
     }
 
-    public function testGetStatementWithLimit()
+    public function testGetStatementWithLimit(): void
     {
         $delete = new Delete();
         $binds = new BindParamList();
@@ -96,7 +96,7 @@ class DeleteTest extends TestCase
         );
     }
 
-    public function testGetStatementWithOrderAndLimit()
+    public function testGetStatementWithOrderAndLimit(): void
     {
         $delete = new Delete();
         $binds = new BindParamList();

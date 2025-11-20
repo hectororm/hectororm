@@ -19,7 +19,7 @@ use PHPUnit\Framework\TestCase;
 
 class LoggerTest extends TestCase
 {
-    public function testSerialization()
+    public function testSerialization(): void
     {
         $logger = new Logger();
         $logger->newEntry(Connection::DEFAULT_NAME, 'STATEMENT');
@@ -29,7 +29,7 @@ class LoggerTest extends TestCase
         $this->assertCount(0, $logger2);
     }
 
-    public function testCount()
+    public function testCount(): void
     {
         $logger = new Logger();
 
@@ -41,7 +41,7 @@ class LoggerTest extends TestCase
         $this->assertCount(2, $logger);
     }
 
-    public function testAdd()
+    public function testAdd(): void
     {
         $logger = new Logger();
         $logEntry = new LogEntry(Connection::DEFAULT_NAME, 'STATEMENT');
@@ -50,7 +50,7 @@ class LoggerTest extends TestCase
         $this->assertContains($logEntry, $logger->getLogs());
     }
 
-    public function testGetLogs()
+    public function testGetLogs(): void
     {
         $logger = new Logger();
         $logger->newEntry(Connection::DEFAULT_NAME, 'STATEMENT');
@@ -61,7 +61,7 @@ class LoggerTest extends TestCase
         $this->assertContainsOnlyInstancesOf(LogEntry::class, $logger->getLogs());
     }
 
-    public function testGetLogsEmpty()
+    public function testGetLogsEmpty(): void
     {
         $logger = new Logger();
 
@@ -69,7 +69,7 @@ class LoggerTest extends TestCase
         $this->assertEmpty($logger->getLogs());
     }
 
-    public function testNewEntry()
+    public function testNewEntry(): void
     {
         $logger = new Logger();
 

@@ -14,8 +14,8 @@ declare(strict_types=1);
 
 namespace Hector\Orm\Entity;
 
+use Hector\Orm\Attributes\Mapper;
 use Generator;
-use Hector\Orm\Attributes;
 use Hector\Orm\Collection\Collection;
 use Hector\Orm\Exception\NotFoundException;
 use Hector\Orm\Exception\OrmException;
@@ -28,7 +28,7 @@ use Hector\Orm\Query\Builder;
  *
  * @template T of Entity
  */
-#[Attributes\Mapper(GenericMapper::class)]
+#[Mapper(GenericMapper::class)]
 abstract class Entity
 {
     private EntityData $_hectorData;
@@ -62,7 +62,7 @@ abstract class Entity
      */
     final public function getRelated(): Related
     {
-        return ReflectionEntity::get($this::class)->getHectorData($this)->getRelated();
+        return ReflectionEntity::get(static::class)->getHectorData($this)->getRelated();
     }
 
     /**
@@ -73,7 +73,7 @@ abstract class Entity
      */
     final public function getPivot(): ?PivotData
     {
-        return ReflectionEntity::get($this::class)->getHectorData($this)->getPivot();
+        return ReflectionEntity::get(static::class)->getHectorData($this)->getPivot();
     }
 
     /**

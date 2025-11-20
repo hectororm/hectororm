@@ -14,14 +14,15 @@ declare(strict_types=1);
 
 namespace Hector\Query\Statement;
 
+use Hector\Query\Clause\Where;
+use Hector\Query\Clause\Having;
 use Hector\Connection\Bind\BindParamList;
-use Hector\Query\Clause;
 use Hector\Query\StatementInterface;
 
 class Conditions implements StatementInterface
 {
-    use Clause\Where;
-    use Clause\Having;
+    use Where;
+    use Having;
 
     public function __construct(protected mixed $builder)
     {

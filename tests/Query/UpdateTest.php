@@ -19,7 +19,7 @@ use PHPUnit\Framework\TestCase;
 
 class UpdateTest extends TestCase
 {
-    public function testGetStatementEmpty()
+    public function testGetStatementEmpty(): void
     {
         $update = new Update();
         $binds = new BindParamList();
@@ -28,7 +28,7 @@ class UpdateTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testGetStatementWithoutAssignment()
+    public function testGetStatementWithoutAssignment(): void
     {
         $update = new Update();
         $binds = new BindParamList();
@@ -38,7 +38,7 @@ class UpdateTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testGetStatementWithOneAssignment()
+    public function testGetStatementWithOneAssignment(): void
     {
         $update = new Update();
         $binds = new BindParamList();
@@ -55,7 +55,7 @@ class UpdateTest extends TestCase
         );
     }
 
-    public function testGetStatementWithTwoAssignment()
+    public function testGetStatementWithTwoAssignment(): void
     {
         $update = new Update();
         $binds = new BindParamList();
@@ -76,7 +76,7 @@ class UpdateTest extends TestCase
         );
     }
 
-    public function testGetStatementWithConditions()
+    public function testGetStatementWithConditions(): void
     {
         $update = new Update();
         $binds = new BindParamList();
@@ -101,7 +101,7 @@ class UpdateTest extends TestCase
         );
     }
 
-    public function testGetStatementWithEncapsulation()
+    public function testGetStatementWithEncapsulation(): void
     {
         $update = new Update();
         $binds = new BindParamList();

@@ -20,7 +20,7 @@ use PHPUnit\Framework\TestCase;
 
 class BetweenTest extends TestCase
 {
-    public function testGetStatement()
+    public function testGetStatement(): void
     {
         $between = new Between('foo', 1, 10);
         $binds = new BindParamList();
@@ -32,7 +32,7 @@ class BetweenTest extends TestCase
         );
     }
 
-    public function testGetStatementWithEncapsulation()
+    public function testGetStatementWithEncapsulation(): void
     {
         $between = new Between('foo', 1, 10);
         $binds = new BindParamList();
@@ -44,7 +44,7 @@ class BetweenTest extends TestCase
         );
     }
 
-    public function testBetweenWithStatement()
+    public function testBetweenWithStatement(): void
     {
         $between = new Between(
             (new Select())

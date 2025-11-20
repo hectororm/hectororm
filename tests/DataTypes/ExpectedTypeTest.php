@@ -44,7 +44,7 @@ class ExpectedTypeTest extends TestCase
     /**
      * @dataProvider fromDataProvider
      */
-    public function testFrom($type, $expected)
+    public function testFrom($type, $expected): void
     {
         $expectedType = ExpectedType::from(...$type);
 
@@ -122,7 +122,7 @@ class ExpectedTypeTest extends TestCase
     /**
      * @dataProvider fromStringDataProvider
      */
-    public function testFromString(array $type, array $expected)
+    public function testFromString(array $type, array $expected): void
     {
         $expectedType = ExpectedType::fromString(...$type);
 
@@ -148,7 +148,7 @@ class ExpectedTypeTest extends TestCase
     /**
      * @dataProvider fromReflectionDataProvider
      */
-    public function testFromReflection(ReflectionNamedType $reflection)
+    public function testFromReflection(ReflectionNamedType $reflection): void
     {
         $expected = ExpectedType::from($reflection);
 

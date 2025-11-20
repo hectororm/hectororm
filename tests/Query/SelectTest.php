@@ -19,7 +19,7 @@ use PHPUnit\Framework\TestCase;
 
 class SelectTest extends TestCase
 {
-    public function testGetStatementEmpty()
+    public function testGetStatementEmpty(): void
     {
         $select = new Select();
         $binds = new BindParamList();
@@ -28,7 +28,7 @@ class SelectTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testGetStatementWithoutTable()
+    public function testGetStatementWithoutTable(): void
     {
         $select = new Select();
         $binds = new BindParamList();
@@ -38,7 +38,7 @@ class SelectTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testGetStatementWithTable()
+    public function testGetStatementWithTable(): void
     {
         $select = new Select();
         $binds = new BindParamList();
@@ -51,7 +51,7 @@ class SelectTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testGetStatementWithDistinct()
+    public function testGetStatementWithDistinct(): void
     {
         $select = new Select();
         $binds = new BindParamList();
@@ -73,7 +73,7 @@ class SelectTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testGetStatementWithTableAndJointures()
+    public function testGetStatementWithTableAndJointures(): void
     {
         $select = new Select();
         $binds = new BindParamList();
@@ -87,7 +87,7 @@ class SelectTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testGetStatementWithColumn()
+    public function testGetStatementWithColumn(): void
     {
         $select = new Select();
         $binds = new BindParamList();
@@ -101,7 +101,7 @@ class SelectTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testGetStatementWithCondition()
+    public function testGetStatementWithCondition(): void
     {
         $select = new Select();
         $binds = new BindParamList();
@@ -118,7 +118,7 @@ class SelectTest extends TestCase
         );
     }
 
-    public function testGetStatementWithJoinAndConditions()
+    public function testGetStatementWithJoinAndConditions(): void
     {
         $select = new Select();
         $binds = new BindParamList();
@@ -139,7 +139,7 @@ class SelectTest extends TestCase
         );
     }
 
-    public function testGetStatementWithGroupAndHaving()
+    public function testGetStatementWithGroupAndHaving(): void
     {
         $select = new Select();
         $binds = new BindParamList();
@@ -160,7 +160,7 @@ class SelectTest extends TestCase
         );
     }
 
-    public function testGetStatementWithEncapsulation()
+    public function testGetStatementWithEncapsulation(): void
     {
         $select = new Select();
         $binds = new BindParamList();

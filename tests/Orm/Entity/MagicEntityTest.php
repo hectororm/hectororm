@@ -19,21 +19,21 @@ use Hector\Orm\Tests\Fake\Entity\Language;
 
 class MagicEntityTest extends AbstractTestCase
 {
-    public function testGetOnExistentEntity()
+    public function testGetOnExistentEntity(): void
     {
         $entity = FilmMagic::get(1);
 
         $this->assertNotEmpty($entity->title);
     }
 
-    public function testGetOnNewEntity()
+    public function testGetOnNewEntity(): void
     {
         $entity = new FilmMagic();
 
         $this->assertNull($entity->title);
     }
 
-    public function testGetOnExistentEntityWithUnknownProperty()
+    public function testGetOnExistentEntityWithUnknownProperty(): void
     {
         $this->expectException(OrmException::class);
 
@@ -41,7 +41,7 @@ class MagicEntityTest extends AbstractTestCase
         $entity->foo;
     }
 
-    public function testGetOnNewEntityWithUnknownProperty()
+    public function testGetOnNewEntityWithUnknownProperty(): void
     {
         $this->expectException(OrmException::class);
 
@@ -49,7 +49,7 @@ class MagicEntityTest extends AbstractTestCase
         $entity->foo;
     }
 
-    public function testSetOnExistentEntity()
+    public function testSetOnExistentEntity(): void
     {
         $entity = FilmMagic::get(1);
         $entity->title = 'Hector Film';
@@ -57,7 +57,7 @@ class MagicEntityTest extends AbstractTestCase
         $this->assertEquals('Hector Film', $entity->title);
     }
 
-    public function testSetOnNewEntity()
+    public function testSetOnNewEntity(): void
     {
         $entity = new FilmMagic();
         $entity->title = 'Hector Film';
@@ -65,7 +65,7 @@ class MagicEntityTest extends AbstractTestCase
         $this->assertEquals('Hector Film', $entity->title);
     }
 
-    public function testSetOnExistentEntityWithUnknownProperty()
+    public function testSetOnExistentEntityWithUnknownProperty(): void
     {
         $this->expectException(OrmException::class);
 
@@ -73,7 +73,7 @@ class MagicEntityTest extends AbstractTestCase
         $entity->foo = 'Bar';
     }
 
-    public function testSetOnNewEntityWithUnknownProperty()
+    public function testSetOnNewEntityWithUnknownProperty(): void
     {
         $this->expectException(OrmException::class);
 
@@ -81,7 +81,7 @@ class MagicEntityTest extends AbstractTestCase
         $entity->foo = 'Bar';
     }
 
-    public function testIssetOnExistentEntity()
+    public function testIssetOnExistentEntity(): void
     {
         $entity = FilmMagic::get(1);
 
@@ -89,7 +89,7 @@ class MagicEntityTest extends AbstractTestCase
         $this->assertFalse(isset($entity->foo));
     }
 
-    public function testIssetOnNewEntity()
+    public function testIssetOnNewEntity(): void
     {
         $entity = new FilmMagic();
 
@@ -97,7 +97,7 @@ class MagicEntityTest extends AbstractTestCase
         $this->assertFalse(isset($entity->foo));
     }
 
-    public function testRelation()
+    public function testRelation(): void
     {
         /** @var FilmMagic $entity */
         $entity = FilmMagic::query()->get();
@@ -110,7 +110,7 @@ class MagicEntityTest extends AbstractTestCase
         $this->assertEquals($entity->language_id, $related->language_id);
     }
 
-    public function testRelationSame()
+    public function testRelationSame(): void
     {
         /** @var FilmMagic $entity */
         $entity = FilmMagic::query()->get();

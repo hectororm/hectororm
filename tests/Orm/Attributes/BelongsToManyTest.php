@@ -23,7 +23,7 @@ use TypeError;
 
 class BelongsToManyTest extends AbstractTestCase
 {
-    public function testConstruct()
+    public function testConstruct(): void
     {
         $attribute = new BelongsToMany(
             Actor::class,
@@ -40,7 +40,7 @@ class BelongsToManyTest extends AbstractTestCase
         $this->assertEquals(['actor_id' => 'actor_id'], $attribute->columnsTo);
     }
 
-    public function testConstructWithoutColumns()
+    public function testConstructWithoutColumns(): void
     {
         $attribute = new BelongsToMany(Actor::class, 'actors');
 
@@ -51,14 +51,14 @@ class BelongsToManyTest extends AbstractTestCase
         $this->assertNull($attribute->columnsTo);
     }
 
-    public function testConstructBadEntity()
+    public function testConstructBadEntity(): void
     {
         $this->expectException(TypeError::class);
 
         new BelongsToMany(stdClass::class, 'acors');
     }
 
-    public function testInit()
+    public function testInit(): void
     {
         $attribute = new BelongsToMany(
             Actor::class,

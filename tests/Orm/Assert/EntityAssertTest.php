@@ -12,7 +12,7 @@ use TypeError;
 
 class EntityAssertTest extends TestCase
 {
-    public function testAssertEntity()
+    public function testAssertEntity(): void
     {
         $this->expectNotToPerformAssertions();
 
@@ -25,7 +25,7 @@ class EntityAssertTest extends TestCase
         $rMethod->invoke($trait, new Actor());
     }
 
-    public function testAssertEntity_failedWithObject()
+    public function testAssertEntity_failedWithObject(): void
     {
         $this->expectException(TypeError::class);
 
@@ -37,7 +37,7 @@ class EntityAssertTest extends TestCase
         $rMethod->invoke($trait, new stdClass());
     }
 
-    public function testAssertEntity_failedWithString()
+    public function testAssertEntity_failedWithString(): void
     {
         $this->expectException(TypeError::class);
 
@@ -49,7 +49,7 @@ class EntityAssertTest extends TestCase
         $rMethod->invoke($trait, stdClass::class);
     }
 
-    public function testAssertEntityType()
+    public function testAssertEntityType(): void
     {
         $this->expectNotToPerformAssertions();
 
@@ -62,7 +62,7 @@ class EntityAssertTest extends TestCase
         $rMethod->invoke($trait, new Actor(), Actor::class);
     }
 
-    public function testAssertEntityType_failedWithObject()
+    public function testAssertEntityType_failedWithObject(): void
     {
         $this->expectException(TypeError::class);
 
@@ -74,7 +74,7 @@ class EntityAssertTest extends TestCase
         $rMethod->invoke($trait, new Film(), Actor::class);
     }
 
-    public function testAssertEntityType_failedWithString()
+    public function testAssertEntityType_failedWithString(): void
     {
         $this->expectException(TypeError::class);
 

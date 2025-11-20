@@ -18,7 +18,7 @@ use PHPUnit\Framework\TestCase;
 
 class LimitTest extends TestCase
 {
-    public function testResetLimit()
+    public function testResetLimit(): void
     {
         $clause = new class {
             use Limit;
@@ -37,7 +37,7 @@ class LimitTest extends TestCase
         $this->assertEmpty($clause->limit->getStatement($binds));
     }
 
-    public function testLimit()
+    public function testLimit(): void
     {
         $clause = new class {
             use Limit;
@@ -53,7 +53,7 @@ class LimitTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testLimitWithOffset()
+    public function testLimitWithOffset(): void
     {
         $clause = new class {
             use Limit;
@@ -69,7 +69,7 @@ class LimitTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testOffset()
+    public function testOffset(): void
     {
         $clause = new class {
             use Limit;
@@ -86,7 +86,7 @@ class LimitTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testOffsetAlone()
+    public function testOffsetAlone(): void
     {
         $clause = new class {
             use Limit;

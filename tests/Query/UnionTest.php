@@ -20,7 +20,7 @@ use PHPUnit\Framework\TestCase;
 
 class UnionTest extends TestCase
 {
-    public function testStatementEmpty()
+    public function testStatementEmpty(): void
     {
         $binds = new BindParamList();
         $union = new Union();
@@ -29,7 +29,7 @@ class UnionTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testStatement()
+    public function testStatement(): void
     {
         $binds = new BindParamList();
         $select = new Select();
@@ -52,7 +52,7 @@ class UnionTest extends TestCase
         );
     }
 
-    public function testStatementEncapsulate()
+    public function testStatementEncapsulate(): void
     {
         $binds = new BindParamList();
         $select = new Select();
@@ -79,7 +79,7 @@ class UnionTest extends TestCase
         );
     }
 
-    public function testStatementUnionAll()
+    public function testStatementUnionAll(): void
     {
         $binds = new BindParamList();
         $select = new Select();
@@ -105,7 +105,7 @@ class UnionTest extends TestCase
         );
     }
 
-    public function testStatementWithOrderAndLimit()
+    public function testStatementWithOrderAndLimit(): void
     {
         $binds = new BindParamList();
         $select = new Select();

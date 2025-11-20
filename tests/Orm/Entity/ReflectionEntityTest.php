@@ -12,7 +12,7 @@
 
 namespace Hector\Orm\Tests\Entity;
 
-use Hector\Orm\Attributes;
+use Hector\Orm\Attributes\Mapper;
 use Hector\Orm\Entity\ReflectionEntity;
 use Hector\Orm\Mapper\GenericMapper;
 use Hector\Orm\Mapper\MagicMapper;
@@ -26,32 +26,32 @@ use TypeError;
 
 class ReflectionEntityTest extends AbstractTestCase
 {
-    public function testConstruct()
+    public function testConstruct(): void
     {
         $reflectionEntity = new ReflectionEntity(Film::class);
 
         $this->assertEquals(Film::class, $reflectionEntity->class);
     }
 
-    public function testConstruct_badEntity()
+    public function testConstruct_badEntity(): void
     {
         $this->expectException(TypeError::class);
 
         new ReflectionEntity(stdClass::class);
     }
 
-    public function testConstruct_badMapper()
+    public function testConstruct_badMapper(): void
     {
         $this->expectException(TypeError::class);
 
-        $entity = new #[Attributes\Mapper(stdClass::class)]
+        $entity = new #[Mapper(stdClass::class)]
         class extends Film {
         };
 
-        new ReflectionEntity(get_class($entity));
+        new ReflectionEntity($entity::class);
     }
 
-    public function testSerialization()
+    public function testSerialization(): void
     {
         $reflectionEntity = new ReflectionEntity(Film::class);
         $serialized = serialize($reflectionEntity);
@@ -60,7 +60,7 @@ class ReflectionEntityTest extends AbstractTestCase
         $this->assertEquals($reflectionEntity->__serialize(), $unserialized->__serialize());
     }
 
-    public function testMapperProperty()
+    public function testMapperProperty(): void
     {
         $reflectionEntity = new ReflectionEntity(Film::class);
         $this->assertEquals(GenericMapper::class, $reflectionEntity->mapper);
@@ -72,7 +72,7 @@ class ReflectionEntityTest extends AbstractTestCase
         $this->assertEquals(CityMapper::class, $reflectionEntity->mapper);
     }
 
-    public function testNewInstance()
+    public function testNewInstance(): void
     {
         $reflectionEntity = new ReflectionEntity(Film::class);
         $entity = $reflectionEntity->newInstance();
@@ -80,7 +80,7 @@ class ReflectionEntityTest extends AbstractTestCase
         $this->assertInstanceOf(Film::class, $entity);
     }
 
-    public function testNewInstanceOfMapper()
+    public function testNewInstanceOfMapper(): void
     {
         $reflectionEntity = new ReflectionEntity(Film::class);
         $mapper = $reflectionEntity->newInstanceOfMapper($this->getOrm()->getStorage());

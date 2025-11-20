@@ -18,7 +18,7 @@ use PHPUnit\Framework\TestCase;
 
 class NotExistsTest extends TestCase
 {
-    public function testGetStatement()
+    public function testGetStatement(): void
     {
         $exists = new NotExists('SELECT 1');
         $binds = new BindParamList();
@@ -27,7 +27,7 @@ class NotExistsTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testGetStatementWithEncapsulation()
+    public function testGetStatementWithEncapsulation(): void
     {
         $exists = new NotExists('SELECT 1');
         $binds = new BindParamList();

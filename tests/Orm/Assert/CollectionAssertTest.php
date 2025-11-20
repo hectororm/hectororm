@@ -11,7 +11,7 @@ use TypeError;
 
 class CollectionAssertTest extends TestCase
 {
-    public function testAssertCollection()
+    public function testAssertCollection(): void
     {
         $this->expectNotToPerformAssertions();
 
@@ -24,7 +24,7 @@ class CollectionAssertTest extends TestCase
         $rMethod->invoke($trait, new Collection());
     }
 
-    public function testAssertCollection_failedWithObject()
+    public function testAssertCollection_failedWithObject(): void
     {
         $this->expectException(TypeError::class);
 
@@ -36,7 +36,7 @@ class CollectionAssertTest extends TestCase
         $rMethod->invoke($trait, new stdClass());
     }
 
-    public function testAssertCollection_failedWithString()
+    public function testAssertCollection_failedWithString(): void
     {
         $this->expectException(TypeError::class);
 

@@ -20,7 +20,7 @@ use ValueError;
 
 class NumericTypeTest extends TestCase
 {
-    public function testFromSchemaFloat()
+    public function testFromSchemaFloat(): void
     {
         $type = new NumericType('float');
 
@@ -32,7 +32,7 @@ class NumericTypeTest extends TestCase
         $this->assertSame(0., $type->fromSchema(false));
     }
 
-    public function testFromSchemaInteger()
+    public function testFromSchemaInteger(): void
     {
         $type = new NumericType('int');
 
@@ -44,7 +44,7 @@ class NumericTypeTest extends TestCase
         $this->assertSame(0, $type->fromSchema(false));
     }
 
-    public function testFromSchemaWithNotScalar()
+    public function testFromSchemaWithNotScalar(): void
     {
         $this->expectException(ValueError::class);
 
@@ -53,7 +53,7 @@ class NumericTypeTest extends TestCase
         $type->fromSchema(['foo']);
     }
 
-    public function testFromSchemaWithDeclaredTypeBuiltin()
+    public function testFromSchemaWithDeclaredTypeBuiltin(): void
     {
         $expectedType = new ExpectedType('float', false, true);
 
@@ -62,7 +62,7 @@ class NumericTypeTest extends TestCase
         $this->assertSame(1., $type->fromSchema('1', $expectedType));
     }
 
-    public function testFromSchemaWithDeclaredTypeBuiltinAndBadValue()
+    public function testFromSchemaWithDeclaredTypeBuiltinAndBadValue(): void
     {
         $this->expectException(ValueError::class);
         $expectedType = new ExpectedType('float', false, true);
@@ -72,7 +72,7 @@ class NumericTypeTest extends TestCase
         $this->assertSame(1., $type->fromSchema(new stdClass(), $expectedType));
     }
 
-    public function testFromSchemaWithDeclaredTypeNotBuiltin()
+    public function testFromSchemaWithDeclaredTypeNotBuiltin(): void
     {
         $this->expectException(ValueError::class);
 
@@ -82,7 +82,7 @@ class NumericTypeTest extends TestCase
         $type->fromSchema('1', $expectedType);
     }
 
-    public function testToSchemaFloat()
+    public function testToSchemaFloat(): void
     {
         $type = new NumericType('float');
 
@@ -94,7 +94,7 @@ class NumericTypeTest extends TestCase
         $this->assertSame(0., $type->toSchema(false));
     }
 
-    public function testToSchemaInteger()
+    public function testToSchemaInteger(): void
     {
         $type = new NumericType('int');
 
@@ -106,7 +106,7 @@ class NumericTypeTest extends TestCase
         $this->assertSame(0, $type->toSchema(false));
     }
 
-    public function testToSchemaWithNotScalar()
+    public function testToSchemaWithNotScalar(): void
     {
         $this->expectException(ValueError::class);
 

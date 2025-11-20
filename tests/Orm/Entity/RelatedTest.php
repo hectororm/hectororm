@@ -24,7 +24,7 @@ use ReflectionObject;
 
 class RelatedTest extends AbstractTestCase
 {
-    public function testCount()
+    public function testCount(): void
     {
         $related = (Film::get(1))->getRelated();
 
@@ -35,7 +35,7 @@ class RelatedTest extends AbstractTestCase
         $this->assertCount(1, $related);
     }
 
-    public function testGetBuilder()
+    public function testGetBuilder(): void
     {
         $related = (Film::get(1))->getRelated();
         $builder = $related->getBuilder('language');
@@ -48,7 +48,7 @@ class RelatedTest extends AbstractTestCase
         $this->assertEquals(Language::class, $entityReflectionProperty->getValue($builder)->class);
     }
 
-    public function testGetBuilderNonexistentRelationship()
+    public function testGetBuilderNonexistentRelationship(): void
     {
         $this->expectException(RelationException::class);
 
@@ -56,7 +56,7 @@ class RelatedTest extends AbstractTestCase
         $related->getBuilder('foo');
     }
 
-    public function testGet()
+    public function testGet(): void
     {
         $nbQueries = count($this->getOrm()->getConnection()->getLogger());
         $related = Film::get(1)->getRelated();
@@ -67,7 +67,7 @@ class RelatedTest extends AbstractTestCase
         $this->assertCount($nbQueries + 2, $this->getOrm()->getConnection()->getLogger());
     }
 
-    public function testGetWithManyToManyRelationship()
+    public function testGetWithManyToManyRelationship(): void
     {
         $nbQueries = count($this->getOrm()->getConnection()->getLogger());
         $related = Film::find(1)->getRelated();
@@ -78,7 +78,7 @@ class RelatedTest extends AbstractTestCase
         $this->assertCount($nbQueries + 2, $this->getOrm()->getConnection()->getLogger());
     }
 
-    public function testGetEmptyEntity()
+    public function testGetEmptyEntity(): void
     {
         $nbQueries = count($this->getOrm()->getConnection()->getLogger());
         $related = (new Film())->getRelated();
@@ -88,7 +88,7 @@ class RelatedTest extends AbstractTestCase
         $this->assertCount($nbQueries, $this->getOrm()->getConnection()->getLogger());
     }
 
-    public function testGetNonexistentRelationship()
+    public function testGetNonexistentRelationship(): void
     {
         $this->expectException(RelationException::class);
 
@@ -96,7 +96,7 @@ class RelatedTest extends AbstractTestCase
         $related->get('foo');
     }
 
-    public function test__get()
+    public function test__get(): void
     {
         $related = Film::get(1)->getRelated();
         $relatedData = $related->language;
@@ -105,7 +105,7 @@ class RelatedTest extends AbstractTestCase
         $this->assertEquals(1, $relatedData->language_id);
     }
 
-    public function testSet()
+    public function testSet(): void
     {
         $related = Film::get(1)->getRelated();
         $related->set('language', $language = new Language());
@@ -115,7 +115,7 @@ class RelatedTest extends AbstractTestCase
         $this->assertSame($language, $relatedData);
     }
 
-    public function testSetInvalidEntity()
+    public function testSetInvalidEntity(): void
     {
         $this->expectException(InvalidArgumentException::class);
 
@@ -123,7 +123,7 @@ class RelatedTest extends AbstractTestCase
         $related->set('language', new Actor());
     }
 
-    public function test__set()
+    public function test__set(): void
     {
         $related = Film::get(1)->getRelated();
         $related->language = $language = new Language();
@@ -133,7 +133,7 @@ class RelatedTest extends AbstractTestCase
         $this->assertSame($language, $relatedData);
     }
 
-    public function testIsset()
+    public function testIsset(): void
     {
         $related = Film::get(1)->getRelated();
 
@@ -144,14 +144,14 @@ class RelatedTest extends AbstractTestCase
         $this->assertTrue($related->isset('language'));
     }
 
-    public function testIssetNonexistentRelationship()
+    public function testIssetNonexistentRelationship(): void
     {
         $related = Film::get(1)->getRelated();
 
         $this->assertFalse($related->isset('foo'));
     }
 
-    public function test__isset()
+    public function test__isset(): void
     {
         $related = Film::get(1)->getRelated();
 
@@ -162,7 +162,7 @@ class RelatedTest extends AbstractTestCase
         $this->assertTrue(isset($related->language));
     }
 
-    public function testUnset()
+    public function testUnset(): void
     {
         $related = Film::get(1)->getRelated();
         $related->language;
@@ -174,7 +174,7 @@ class RelatedTest extends AbstractTestCase
         $this->assertFalse(isset($related->language));
     }
 
-    public function testUnsetNotGottenRelationship()
+    public function testUnsetNotGottenRelationship(): void
     {
         $related = Film::get(1)->getRelated();
 
@@ -186,7 +186,7 @@ class RelatedTest extends AbstractTestCase
         $this->assertFalse(isset($related->language));
     }
 
-    public function test__unset()
+    public function test__unset(): void
     {
         $related = Film::get(1)->getRelated();
         $related->language;
@@ -198,7 +198,7 @@ class RelatedTest extends AbstractTestCase
         $this->assertFalse(isset($related->language));
     }
 
-    public function testExists()
+    public function testExists(): void
     {
         $related = Film::get(1)->getRelated();
 

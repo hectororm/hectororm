@@ -30,7 +30,7 @@ use Hector\Query\Component\Order;
 
 class BuilderTest extends AbstractTestCase
 {
-    public function testConstruct()
+    public function testConstruct(): void
     {
         $builder = new Builder(Staff::class);
         $binds = new BindParamList();
@@ -43,7 +43,7 @@ class BuilderTest extends AbstractTestCase
         $this->assertNull($builder->limit->getStatement($binds));
     }
 
-    public function testWith()
+    public function testWith(): void
     {
         $builder = new Builder(Staff::class);
         $builder->with($with = ['address' => ['city']]);
@@ -51,7 +51,7 @@ class BuilderTest extends AbstractTestCase
         $this->assertEquals($with, $builder->with);
     }
 
-    public function testGetOffset0()
+    public function testGetOffset0(): void
     {
         $builder = new Builder(Staff::class);
         $entity = $builder->get(0);
@@ -60,7 +60,7 @@ class BuilderTest extends AbstractTestCase
         $this->assertEquals(1, $entity->staff_id);
     }
 
-    public function testGetOffset1()
+    public function testGetOffset1(): void
     {
         $builder = new Builder(Staff::class);
         $entity = $builder->get(1);
@@ -69,7 +69,7 @@ class BuilderTest extends AbstractTestCase
         $this->assertEquals(2, $entity->staff_id);
     }
 
-    public function testGetOffsetNonexistent()
+    public function testGetOffsetNonexistent(): void
     {
         $builder = new Builder(Staff::class);
         $entity = $builder->get(99999);
@@ -77,7 +77,7 @@ class BuilderTest extends AbstractTestCase
         $this->assertNull($entity);
     }
 
-    public function testGetOrFailSuccess()
+    public function testGetOrFailSuccess(): void
     {
         $builder = new Builder(Staff::class);
         $entity = $builder->getOrFail(0);
@@ -86,7 +86,7 @@ class BuilderTest extends AbstractTestCase
         $this->assertEquals(1, $entity->staff_id);
     }
 
-    public function testGetOrFailException()
+    public function testGetOrFailException(): void
     {
         $builder = new Builder(Staff::class);
 
@@ -94,7 +94,7 @@ class BuilderTest extends AbstractTestCase
         $builder->getOrFail(9999);
     }
 
-    public function testGetOrNewExistent()
+    public function testGetOrNewExistent(): void
     {
         $builder = new Builder(Staff::class);
 
@@ -103,7 +103,7 @@ class BuilderTest extends AbstractTestCase
         $this->assertNotNull($entity->staff_id);
     }
 
-    public function testGetOrNewNonexistent()
+    public function testGetOrNewNonexistent(): void
     {
         $builder = new Builder(Staff::class);
         $entity = $builder->getOrNew(9999);
@@ -114,7 +114,7 @@ class BuilderTest extends AbstractTestCase
         $this->assertNull($entity->first_name);
     }
 
-    public function testGetOrNewWithData()
+    public function testGetOrNewWithData(): void
     {
         $builder = new Builder(Staff::class);
         $entity = $builder->getOrNew(9999, ['first_name' => 'Foo', 'last_name' => 'Bar']);
@@ -125,7 +125,7 @@ class BuilderTest extends AbstractTestCase
         $this->assertEquals('Bar', $entity->last_name);
     }
 
-    public function testFindByPrimaryWithMultipleKey()
+    public function testFindByPrimaryWithMultipleKey(): void
     {
         $this->expectException(MapperException::class);
 
@@ -133,7 +133,7 @@ class BuilderTest extends AbstractTestCase
         $builder->find([99999, 1]);
     }
 
-    public function testFindMultipleWithConditionWithTwoEntity()
+    public function testFindMultipleWithConditionWithTwoEntity(): void
     {
         $builder = new Builder(Staff::class);
         $collection = $builder->find(['staff_id' => 1], ['staff_id' => 2]);
@@ -142,7 +142,7 @@ class BuilderTest extends AbstractTestCase
         $this->assertCount(2, $collection);
     }
 
-    public function testFindMultipleWithConditionWithTwoEntity_onlyValues()
+    public function testFindMultipleWithConditionWithTwoEntity_onlyValues(): void
     {
         $builder = new Builder(Language::class);
         $collection = $builder->find(...[1, 2, 3, 4]);
@@ -151,7 +151,7 @@ class BuilderTest extends AbstractTestCase
         $this->assertCount(4, $collection);
     }
 
-    public function testFindMultipleWithConditionWithThreeEntityAndOneNonexistent()
+    public function testFindMultipleWithConditionWithThreeEntityAndOneNonexistent(): void
     {
         $builder = new Builder(Staff::class);
         $collection = $builder->find(['staff_id' => 1], ['staff_id' => 2], ['staff_id' => 99999]);
@@ -160,7 +160,7 @@ class BuilderTest extends AbstractTestCase
         $this->assertCount(2, $collection);
     }
 
-    public function testFindMultipleWithNonexistentEntity()
+    public function testFindMultipleWithNonexistentEntity(): void
     {
         $builder = new Builder(Staff::class);
         $collection = $builder->find(['staff_id' => 99998], ['staff_id' => 99999]);
@@ -169,7 +169,7 @@ class BuilderTest extends AbstractTestCase
         $this->assertCount(0, $collection);
     }
 
-    public function testFind1()
+    public function testFind1(): void
     {
         $builder = new Builder(Staff::class);
         $entity = $builder->find(1);
@@ -178,7 +178,7 @@ class BuilderTest extends AbstractTestCase
         $this->assertEquals(1, $entity->staff_id);
     }
 
-    public function testFind2()
+    public function testFind2(): void
     {
         $builder = new Builder(Staff::class);
         $entity = $builder->find(2);
@@ -187,7 +187,7 @@ class BuilderTest extends AbstractTestCase
         $this->assertEquals(2, $entity->staff_id);
     }
 
-    public function testFindOffsetNonexistent()
+    public function testFindOffsetNonexistent(): void
     {
         $builder = new Builder(Staff::class);
         $entity = $builder->find(99999);
@@ -195,7 +195,7 @@ class BuilderTest extends AbstractTestCase
         $this->assertNull($entity);
     }
 
-    public function testFindOrFailSuccess()
+    public function testFindOrFailSuccess(): void
     {
         $builder = new Builder(Staff::class);
         $entity = $builder->findOrFail(1);
@@ -204,7 +204,7 @@ class BuilderTest extends AbstractTestCase
         $this->assertEquals(1, $entity->staff_id);
     }
 
-    public function testFindOrFailException()
+    public function testFindOrFailException(): void
     {
         $builder = new Builder(Staff::class);
 
@@ -212,7 +212,7 @@ class BuilderTest extends AbstractTestCase
         $builder->findOrFail(9999);
     }
 
-    public function testFindOrNewExistent()
+    public function testFindOrNewExistent(): void
     {
         $builder = new Builder(Staff::class);
 
@@ -221,7 +221,7 @@ class BuilderTest extends AbstractTestCase
         $this->assertNotNull($entity->staff_id);
     }
 
-    public function testFindOrNewNonexistent()
+    public function testFindOrNewNonexistent(): void
     {
         $builder = new Builder(Staff::class);
         $entity = $builder->findOrNew(9999);
@@ -232,7 +232,7 @@ class BuilderTest extends AbstractTestCase
         $this->assertNull($entity->first_name);
     }
 
-    public function testFindOrNewWithData()
+    public function testFindOrNewWithData(): void
     {
         $builder = new Builder(Staff::class);
         $entity = $builder->findOrNew(9999, ['first_name' => 'Foo', 'last_name' => 'Bar']);
@@ -243,7 +243,7 @@ class BuilderTest extends AbstractTestCase
         $this->assertEquals('Bar', $entity->last_name);
     }
 
-    public function testAll()
+    public function testAll(): void
     {
         $builder = new Builder(Staff::class);
         $collection = $builder->all();
@@ -252,7 +252,7 @@ class BuilderTest extends AbstractTestCase
         $this->assertGreaterThanOrEqual(2, count($collection));
     }
 
-    public function testAllWithRelations()
+    public function testAllWithRelations(): void
     {
         $nbQueriesBefore = count($this->getOrm()->getConnection()->getLogger());
         $builder = new Builder(Staff::class);
@@ -269,7 +269,7 @@ class BuilderTest extends AbstractTestCase
         $this->assertEquals(4, count($this->getOrm()->getConnection()->getLogger()) - $nbQueriesBefore);
     }
 
-    public function testAllWithCondition()
+    public function testAllWithCondition(): void
     {
         $builder = new Builder(Staff::class);
         $collection = $builder->where('staff_id', '=', 1)->all();
@@ -278,7 +278,7 @@ class BuilderTest extends AbstractTestCase
         $this->assertCount(1, $collection);
     }
 
-    public function testAllWithConditionNoResult()
+    public function testAllWithConditionNoResult(): void
     {
         $builder = new Builder(Staff::class);
         $collection = $builder->where('staff_id', '>', 9999)->all();
@@ -287,13 +287,13 @@ class BuilderTest extends AbstractTestCase
         $this->assertCount(0, $collection);
     }
 
-    public function testChunk()
+    public function testChunk(): void
     {
         $builder = new Builder(Film::class);
         $total = 0;
         $builder->chunk(
             50,
-            function (Collection $collection) use (&$total) {
+            function (Collection $collection) use (&$total): void {
                 $this->assertGreaterThan(0, count($collection));
                 $this->assertLessThanOrEqual(50, count($collection));
                 $this->assertContainsOnlyInstancesOf(Film::class, $collection);
@@ -304,13 +304,13 @@ class BuilderTest extends AbstractTestCase
         $this->assertEquals($builder->count(), $total);
     }
 
-    public function testChunk_eager()
+    public function testChunk_eager(): void
     {
         $builder = new Builder(Film::class);
         $total = 0;
         $builder->chunk(
             50,
-            function (Collection $collection) use (&$total) {
+            function (Collection $collection) use (&$total): void {
                 $this->assertGreaterThan(0, count($collection));
                 $this->assertLessThanOrEqual(50, count($collection));
                 $this->assertContainsOnlyInstancesOf(Film::class, $collection);
@@ -322,7 +322,7 @@ class BuilderTest extends AbstractTestCase
         $this->assertEquals($builder->count(), $total);
     }
 
-    public function testYield()
+    public function testYield(): void
     {
         $builder = new Builder(Film::class);
         $iterator = $builder->yield();
@@ -331,7 +331,7 @@ class BuilderTest extends AbstractTestCase
         $this->assertCount($builder->count(), $iterator);
     }
 
-    public function testCount()
+    public function testCount(): void
     {
         $builder = new Builder(Film::class);
         $total = $builder->count();
@@ -339,7 +339,7 @@ class BuilderTest extends AbstractTestCase
         $this->assertGreaterThan(0, $total);
     }
 
-    public function testWhereWithNamedRelations()
+    public function testWhereWithNamedRelations(): void
     {
         Orm::$alias = 0;
         $builder = new Builder(Film::class);
@@ -356,11 +356,11 @@ class BuilderTest extends AbstractTestCase
             $builder->getStatement(new BindParamList()));
     }
 
-    public function testEncapsuledWhereWithNamedRelations()
+    public function testEncapsuledWhereWithNamedRelations(): void
     {
         Orm::$alias = 0;
         $builder = new Builder(Film::class);
-        $builder->where(function ($where) {
+        $builder->where(function ($where): void {
             $where->where('language.name', 'French');
             $where->orWhere('language.name', 'Italian');
         });

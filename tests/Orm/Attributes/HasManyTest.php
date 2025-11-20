@@ -23,7 +23,7 @@ use TypeError;
 
 class HasManyTest extends TestCase
 {
-    public function testConstruct()
+    public function testConstruct(): void
     {
         $attribute = new HasMany(Film::class, 'films', ['language_id' => 'language_id']);
 
@@ -32,7 +32,7 @@ class HasManyTest extends TestCase
         $this->assertEquals(['language_id' => 'language_id'], $attribute->columns);
     }
 
-    public function testConstructWithoutColumns()
+    public function testConstructWithoutColumns(): void
     {
         $attribute = new HasMany(Film::class, 'films');
 
@@ -41,14 +41,14 @@ class HasManyTest extends TestCase
         $this->assertNull($attribute->columns);
     }
 
-    public function testConstructBadEntity()
+    public function testConstructBadEntity(): void
     {
         $this->expectException(TypeError::class);
 
         new HasMany(stdClass::class, 'films');
     }
 
-    public function testInit()
+    public function testInit(): void
     {
         $attribute = new HasMany(Film::class, 'films', ['language_id' => 'language_id']);
         $relationships = new Relationships(Language::class);

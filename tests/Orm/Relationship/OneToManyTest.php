@@ -26,7 +26,7 @@ use ReflectionMethod;
 
 class OneToManyTest extends AbstractTestCase
 {
-    public function testConstructWithDeductionOfColumns()
+    public function testConstructWithDeductionOfColumns(): void
     {
         $relationship = new OneToMany('films', Language::class, Film::class);
 
@@ -35,7 +35,7 @@ class OneToManyTest extends AbstractTestCase
         $this->assertEquals(['language_id'], $relationship->getTargetColumns());
     }
 
-    public function testValid()
+    public function testValid(): void
     {
         $relationship = new OneToMany(
             'films',
@@ -48,7 +48,7 @@ class OneToManyTest extends AbstractTestCase
         $this->assertTrue($relationship->valid($value));
     }
 
-    public function testValidWithNull()
+    public function testValidWithNull(): void
     {
         $relationship = new OneToMany(
             'films',
@@ -61,7 +61,7 @@ class OneToManyTest extends AbstractTestCase
         $this->assertTrue($relationship->valid($value));
     }
 
-    public function testValidWithEntity()
+    public function testValidWithEntity(): void
     {
         $relationship = new OneToMany(
             'films',
@@ -74,7 +74,7 @@ class OneToManyTest extends AbstractTestCase
         $this->assertFalse($relationship->valid($value));
     }
 
-    public function testValidWithCollection()
+    public function testValidWithCollection(): void
     {
         $relationship = new OneToMany(
             'films',
@@ -87,7 +87,7 @@ class OneToManyTest extends AbstractTestCase
         $this->assertTrue($relationship->valid($value));
     }
 
-    public function testValidWithCollectionWithNoRestrictionButGoodEntities()
+    public function testValidWithCollectionWithNoRestrictionButGoodEntities(): void
     {
         $relationship = new OneToMany(
             'films',
@@ -100,7 +100,7 @@ class OneToManyTest extends AbstractTestCase
         $this->assertTrue($relationship->valid($value));
     }
 
-    public function testSwitchIntoEntities()
+    public function testSwitchIntoEntities(): void
     {
         $relationship = new OneToMany(
             'films',
@@ -134,7 +134,7 @@ class OneToManyTest extends AbstractTestCase
         $this->assertFalse($language2->getRelated()->films->contains($film1));
     }
 
-    public function testSwitchIntoEntities_withoutInverted()
+    public function testSwitchIntoEntities_withoutInverted(): void
     {
         $relationship = new OneToMany(
             'payments',
@@ -160,7 +160,7 @@ class OneToManyTest extends AbstractTestCase
         $this->assertInstanceOf(Collection::class, $staff->getRelated()->payments);
     }
 
-    public function testLinkNative()
+    public function testLinkNative(): void
     {
         $relationship = new OneToMany(
             'films',
@@ -180,7 +180,7 @@ class OneToManyTest extends AbstractTestCase
         $this->assertEquals($film->language_id, $language->language_id);
     }
 
-    public function testReverse()
+    public function testReverse(): void
     {
         $relationship = new OneToMany(
             'language',

@@ -19,7 +19,7 @@ use PHPUnit\Framework\TestCase;
 
 class RawTest extends TestCase
 {
-    public function testGetStatement()
+    public function testGetStatement(): void
     {
         $raw = new Raw('UNIX_TIMESTAMP(?)', [$date = date('Y-m-d H:i:s')]);
         $binds = new BindParamList();
@@ -31,7 +31,7 @@ class RawTest extends TestCase
         );
     }
 
-    public function testGetStatementWithEncapsulation()
+    public function testGetStatementWithEncapsulation(): void
     {
         $raw = new Raw('UNIX_TIMESTAMP(?)', [$date = date('Y-m-d H:i:s')]);
         $binds = new BindParamList();

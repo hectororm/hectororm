@@ -160,13 +160,10 @@ class Sqlite extends AbstractGenerator
 
         $isString = preg_match('/(CHAR|CLOB|TEXT)/i', $type) === 1;
 
-        switch (strtolower($matches[1])) {
-            case 'integer':
-                $typeName = 'int';
-                break;
-            default:
-                $typeName = strtolower($matches[1]);
-        }
+        $typeName = match (strtolower($matches[1])) {
+            'integer' => 'int',
+            default => strtolower($matches[1]),
+        };
 
         return [
             'name' => $typeName,

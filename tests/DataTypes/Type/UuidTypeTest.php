@@ -17,7 +17,7 @@ use PHPUnit\Framework\TestCase;
 
 class UuidTypeTest extends TestCase
 {
-    public function testFromSchema()
+    public function testFromSchema(): void
     {
         $type = new UuidType();
 
@@ -35,7 +35,7 @@ class UuidTypeTest extends TestCase
         );
     }
 
-    public function testToSchemaWithStringFormat()
+    public function testToSchemaWithStringFormat(): void
     {
         $type = new UuidType('string');
 
@@ -53,7 +53,7 @@ class UuidTypeTest extends TestCase
         );
     }
 
-    public function testToSchemaWithHexadecimalFormat()
+    public function testToSchemaWithHexadecimalFormat(): void
     {
         $type = new UuidType('hexadecimal');
 
@@ -71,7 +71,7 @@ class UuidTypeTest extends TestCase
         );
     }
 
-    public function testToSchemaWithBinaryFormat()
+    public function testToSchemaWithBinaryFormat(): void
     {
         $type = new UuidType('binary');
 

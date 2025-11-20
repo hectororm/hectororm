@@ -18,7 +18,7 @@ use PHPUnit\Framework\TestCase;
 
 class TableTest extends TestCase
 {
-    public function testConstruct()
+    public function testConstruct(): void
     {
         $attribute = new Table('my_table', 'my_schema', 'my_connection');
 
@@ -27,7 +27,7 @@ class TableTest extends TestCase
         $this->assertEquals('my_connection', $attribute->connection);
     }
 
-    public function testConstructWithoutConnection()
+    public function testConstructWithoutConnection(): void
     {
         $attribute = new Table('my_table', 'my_schema');
 
@@ -36,7 +36,7 @@ class TableTest extends TestCase
         $this->assertEquals(Connection::DEFAULT_NAME, $attribute->connection);
     }
 
-    public function testConstructWithoutSchema()
+    public function testConstructWithoutSchema(): void
     {
         $attribute = new Table('my_table');
 

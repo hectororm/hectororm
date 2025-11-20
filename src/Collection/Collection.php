@@ -476,7 +476,7 @@ class Collection implements CollectionInterface, ArrayAccess
         $variance = .0;
 
         foreach ($items as $value) {
-            $variance += pow(($value - $avg), 2);
+            $variance += ($value - $avg) ** 2;
         }
 
         return $variance / $count;
@@ -493,7 +493,7 @@ class Collection implements CollectionInterface, ArrayAccess
             return .0;
         }
 
-        return pow($this->variance(), .5);
+        return $this->variance() ** .5;
     }
 
     /**

@@ -26,19 +26,19 @@ use TypeError;
 
 class RelationshipsTest extends AbstractTestCase
 {
-    public function testConstruct()
+    public function testConstruct(): void
     {
         $this->expectNotToPerformAssertions();
         new Relationships(Film::class);
     }
 
-    public function testConstructBadEntity()
+    public function testConstructBadEntity(): void
     {
         $this->expectException(TypeError::class);
         new Relationships(stdClass::class);
     }
 
-    public function testGet()
+    public function testGet(): void
     {
         $relationships = new Relationships(Film::class);
         $relationships->hasMany(Actor::class, 'foo', []);
@@ -46,7 +46,7 @@ class RelationshipsTest extends AbstractTestCase
         $this->assertInstanceOf(Relationship::class, $relationships->get('foo'));
     }
 
-    public function testGetWith()
+    public function testGetWith(): void
     {
         $relationships = new Relationships(Film::class);
         $relationships->hasMany(Actor::class, 'foo', []);
@@ -59,7 +59,7 @@ class RelationshipsTest extends AbstractTestCase
         $this->assertEquals('bar', $relationship->getName());
     }
 
-    public function testGetWith_ambiguous()
+    public function testGetWith_ambiguous(): void
     {
         $relationships = new Relationships(Film::class);
         $relationships->hasMany(Actor::class, 'foo', []);
@@ -70,7 +70,7 @@ class RelationshipsTest extends AbstractTestCase
         $relationships->getWith(Actor::class);
     }
 
-    public function testGetWith_nameSpecified()
+    public function testGetWith_nameSpecified(): void
     {
         $relationships = new Relationships(Film::class);
         $relationships->hasMany(Actor::class, 'foo', []);
@@ -83,7 +83,7 @@ class RelationshipsTest extends AbstractTestCase
         $this->assertEquals('qux', $relationship->getName());
     }
 
-    public function testGetWith_nameSpecifiedButBadEntity()
+    public function testGetWith_nameSpecifiedButBadEntity(): void
     {
         $relationships = new Relationships(Film::class);
         $relationships->hasMany(Actor::class, 'foo', []);
@@ -93,7 +93,7 @@ class RelationshipsTest extends AbstractTestCase
         $relationships->getWith(Language::class, 'foo');
     }
 
-    public function testGetWith_notFound()
+    public function testGetWith_notFound(): void
     {
         $relationships = new Relationships(Film::class);
         $relationships->hasMany(Actor::class, 'foo', []);
@@ -102,7 +102,7 @@ class RelationshipsTest extends AbstractTestCase
         $relationships->getWith(Language::class);
     }
 
-    public function testGetWith_notFoundWithNameSpecified()
+    public function testGetWith_notFoundWithNameSpecified(): void
     {
         $relationships = new Relationships(Film::class);
         $relationships->hasMany(Actor::class, 'foo', []);
@@ -111,7 +111,7 @@ class RelationshipsTest extends AbstractTestCase
         $relationships->getWith(Language::class, 'qux');
     }
 
-    public function testGetNonexistent()
+    public function testGetNonexistent(): void
     {
         $relationships = new Relationships(Film::class);
 
@@ -119,7 +119,7 @@ class RelationshipsTest extends AbstractTestCase
         $relationships->get('foo');
     }
 
-    public function testExistsTrue()
+    public function testExistsTrue(): void
     {
         $relationships = new Relationships(Film::class);
         $relationships->hasMany(Actor::class, 'foo', []);
@@ -127,7 +127,7 @@ class RelationshipsTest extends AbstractTestCase
         $this->assertTrue($relationships->exists('foo'));
     }
 
-    public function testExistsFalse()
+    public function testExistsFalse(): void
     {
         $relationships = new Relationships(Film::class);
         $relationships->hasMany(Actor::class, 'foo', []);
@@ -135,7 +135,7 @@ class RelationshipsTest extends AbstractTestCase
         $this->assertFalse($relationships->exists('bar'));
     }
 
-    public function testAssertExistsTrue()
+    public function testAssertExistsTrue(): void
     {
         $relationships = new Relationships(Film::class);
         $relationships->hasMany(Actor::class, 'foo', []);
@@ -144,7 +144,7 @@ class RelationshipsTest extends AbstractTestCase
         $relationships->assertExists('foo');
     }
 
-    public function testAssertExistsFalse()
+    public function testAssertExistsFalse(): void
     {
         $relationships = new Relationships(Film::class);
         $relationships->hasMany(Actor::class, 'foo', []);
@@ -153,7 +153,7 @@ class RelationshipsTest extends AbstractTestCase
         $relationships->assertExists('bar');
     }
 
-    public function testHasOne()
+    public function testHasOne(): void
     {
         $relationships = new Relationships(Film::class);
         $relation = $relationships->hasOne(Actor::class, 'foo', []);
@@ -161,7 +161,7 @@ class RelationshipsTest extends AbstractTestCase
         $this->assertInstanceOf(ManyToOne::class, $relation);
     }
 
-    public function testHasOneWithBadEntity()
+    public function testHasOneWithBadEntity(): void
     {
         $this->expectException(TypeError::class);
 
@@ -169,7 +169,7 @@ class RelationshipsTest extends AbstractTestCase
         $relationships->hasOne(stdClass::class, 'foo', []);
     }
 
-    public function testHasMany()
+    public function testHasMany(): void
     {
         $relationships = new Relationships(Film::class);
         $relation = $relationships->hasMany(Actor::class, 'foo', []);
@@ -177,7 +177,7 @@ class RelationshipsTest extends AbstractTestCase
         $this->assertInstanceOf(OneToMany::class, $relation);
     }
 
-    public function testHasManyWithBadEntity()
+    public function testHasManyWithBadEntity(): void
     {
         $this->expectException(TypeError::class);
 
@@ -185,7 +185,7 @@ class RelationshipsTest extends AbstractTestCase
         $relationships->hasMany(stdClass::class, 'foo', []);
     }
 
-    public function testBelongsTo()
+    public function testBelongsTo(): void
     {
         $relationships = new Relationships(Language::class);
         $relation = $relationships->belongsTo(Film::class, 'films', 'language');
@@ -193,7 +193,7 @@ class RelationshipsTest extends AbstractTestCase
         $this->assertInstanceOf(OneToMany::class, $relation);
     }
 
-    public function testBelongsToWithBadEntity()
+    public function testBelongsToWithBadEntity(): void
     {
         $this->expectException(TypeError::class);
 

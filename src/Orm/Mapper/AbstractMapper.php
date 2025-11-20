@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace Hector\Orm\Mapper;
 
+use Hector\Orm\Attributes\RelationshipAttribute;
 use Generator;
 use Hector\Orm\Assert\EntityAssert;
 use Hector\Orm\Attributes;
@@ -78,7 +79,7 @@ abstract class AbstractMapper implements Mapper
         $attributes =
             $this->reflection->getClass()
                 ->getAttributes(
-                    Attributes\RelationshipAttribute::class,
+                    RelationshipAttribute::class,
                     ReflectionAttribute::IS_INSTANCEOF
                 );
 
@@ -347,7 +348,7 @@ abstract class AbstractMapper implements Mapper
      */
     public function getEntityAlteration(Entity $entity, ?array $columns = null): array
     {
-        $columns = $columns ?? $this->reflection->getTable()->getColumnsName();
+        $columns ??= $this->reflection->getTable()->getColumnsName();
         $originalData = $this->reflection->getHectorData($entity)->get('original');
         $currentData = $this->collectEntity($entity, $columns);
 

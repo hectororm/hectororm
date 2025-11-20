@@ -14,7 +14,7 @@ declare(strict_types=1);
 
 namespace Hector\Orm\Entity;
 
-use Hector\Orm\Attributes;
+use Hector\Orm\Attributes\Mapper;
 use Hector\Orm\Exception\OrmException;
 use Hector\Orm\Mapper\MagicMapper;
 use JsonSerializable;
@@ -24,7 +24,7 @@ use JsonSerializable;
  *
  * @template T of MagicEntity
  */
-#[Attributes\Mapper(MagicMapper::class)]
+#[Mapper(MagicMapper::class)]
 abstract class MagicEntity extends Entity implements JsonSerializable
 {
     protected array $_hectorAttributes = [];
@@ -79,7 +79,7 @@ abstract class MagicEntity extends Entity implements JsonSerializable
      */
     public function __isset(string $name): bool
     {
-        $entityReflection = ReflectionEntity::get($this::class);
+        $entityReflection = ReflectionEntity::get(static::class);
 
         if (in_array($name, $entityReflection->hidden)) {
             return false;
@@ -120,7 +120,7 @@ abstract class MagicEntity extends Entity implements JsonSerializable
             return $this->_hectorAttributes[$name] ?? null;
         }
 
-        throw new OrmException(sprintf('Property "%s" not found for "%s" entity', $name, get_class($this)));
+        throw new OrmException(sprintf('Property "%s" not found for "%s" entity', $name, static::class));
     }
 
     /**
@@ -143,6 +143,6 @@ abstract class MagicEntity extends Entity implements JsonSerializable
             return;
         }
 
-        throw new OrmException(sprintf('Property "%s" not found for "%s" entity', $name, get_class($this)));
+        throw new OrmException(sprintf('Property "%s" not found for "%s" entity', $name, static::class));
     }
 }

@@ -18,7 +18,7 @@ use PHPUnit\Framework\TestCase;
 
 class JoinTest extends TestCase
 {
-    public function testResetJoin()
+    public function testResetJoin(): void
     {
         $clause = new class {
             use Join;
@@ -37,7 +37,7 @@ class JoinTest extends TestCase
         $this->assertEmpty($clause->join->getStatement($binds));
     }
 
-    public function testInnerJoin()
+    public function testInnerJoin(): void
     {
         $clause = new class {
             use Join;
@@ -54,7 +54,7 @@ class JoinTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testLeftJoin()
+    public function testLeftJoin(): void
     {
         $clause = new class {
             use Join;
@@ -71,7 +71,7 @@ class JoinTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testRightJoin()
+    public function testRightJoin(): void
     {
         $clause = new class {
             use Join;
@@ -88,7 +88,7 @@ class JoinTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testJoinWithArrayConditions()
+    public function testJoinWithArrayConditions(): void
     {
         $clause = new class {
             use Join;
@@ -105,7 +105,7 @@ class JoinTest extends TestCase
         $this->assertEmpty($binds);
     }
 
-    public function testInnerJoinWithAlias()
+    public function testInnerJoinWithAlias(): void
     {
         $clause = new class {
             use Join;

@@ -18,7 +18,7 @@ use PHPUnit\Framework\TestCase;
 
 class FromTest extends TestCase
 {
-    public function testResetFrom()
+    public function testResetFrom(): void
     {
         $clause = new class {
             use From;
@@ -37,7 +37,7 @@ class FromTest extends TestCase
         $this->assertEmpty($clause->from->getStatement($binds));
     }
 
-    public function testFrom()
+    public function testFrom(): void
     {
         $clause = new class {
             use From;

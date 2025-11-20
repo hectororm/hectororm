@@ -20,7 +20,7 @@ use PHPUnit\Framework\TestCase;
 
 class ConnectionSetTest extends TestCase
 {
-    public function testConstruct()
+    public function testConstruct(): void
     {
         $connectionSet = new ConnectionSet(
             new Connection('sqlite::memory:'),
@@ -30,14 +30,14 @@ class ConnectionSetTest extends TestCase
         $this->assertCount(2, $connectionSet);
     }
 
-    public function testConstructEmpty()
+    public function testConstructEmpty(): void
     {
         $connectionSet = new ConnectionSet();
 
         $this->assertCount(0, $connectionSet);
     }
 
-    public function testGetConnection()
+    public function testGetConnection(): void
     {
         $connectionSet = new ConnectionSet(
             $defaultConnection = new Connection('sqlite::memory:'),
@@ -49,7 +49,7 @@ class ConnectionSetTest extends TestCase
         $this->assertSame($secondConnection, $connectionSet->getConnection('connection'));
     }
 
-    public function testGetConnection_notFound()
+    public function testGetConnection_notFound(): void
     {
         $this->expectException(NotFoundException::class);
 
@@ -57,7 +57,7 @@ class ConnectionSetTest extends TestCase
         $connectionSet->getConnection();
     }
 
-    public function testGetIterator()
+    public function testGetIterator(): void
     {
         $connectionSet = new ConnectionSet(
             $defaultConnection = new Connection('sqlite::memory:'),
@@ -68,7 +68,7 @@ class ConnectionSetTest extends TestCase
         $this->assertCount(2, $connectionSet->getIterator());
     }
 
-    public function testHasConnection()
+    public function testHasConnection(): void
     {
         $connectionSet = new ConnectionSet(
             $defaultConnection = new Connection('sqlite::memory:'),
@@ -81,7 +81,7 @@ class ConnectionSetTest extends TestCase
         $this->assertFalse($connectionSet->hasConnection('fake'));
     }
 
-    public function testAddConnection()
+    public function testAddConnection(): void
     {
         $connectionSet = new ConnectionSet();
 
@@ -93,7 +93,7 @@ class ConnectionSetTest extends TestCase
         $this->assertSame($connection, $connectionSet->getConnection());
     }
 
-    public function testAddConnection_same()
+    public function testAddConnection_same(): void
     {
         $connectionSet = new ConnectionSet();
 
@@ -104,7 +104,7 @@ class ConnectionSetTest extends TestCase
         $this->assertSame($connection, $connectionSet->getConnection());
     }
 
-    public function testAddConnection_sameNameNotTheSameObject()
+    public function testAddConnection_sameNameNotTheSameObject(): void
     {
         $connectionSet = new ConnectionSet();
 
@@ -116,7 +116,7 @@ class ConnectionSetTest extends TestCase
         $this->assertSame($connection2, $connectionSet->getConnection());
     }
 
-    public function testGetLoggers()
+    public function testGetLoggers(): void
     {
         $connectionSet = new ConnectionSet();
 

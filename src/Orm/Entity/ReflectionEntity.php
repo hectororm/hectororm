@@ -14,6 +14,9 @@ declare(strict_types=1);
 
 namespace Hector\Orm\Entity;
 
+use Hector\Orm\Attributes\Type;
+use Hector\Orm\Attributes\Hidden;
+use Hector\Orm\Attributes\Primary;
 use Exception;
 use Hector\DataTypes\Type\StringType;
 use Hector\DataTypes\Type\TypeInterface;
@@ -54,8 +57,8 @@ class ReflectionEntity
     private string $entity;
     private string $mapper;
     private string $table;
-    private ?string $schema;
-    private ?string $connection;
+    private ?string $schema = null;
+    private ?string $connection = null;
     private ?array $primaryColumns = [];
     private array $types = [];
     private array $hidden = [];
@@ -98,11 +101,7 @@ class ReflectionEntity
         $this->entity = ($entity instanceof Entity ? $entity::class : $entity);
 
         $this->mapper = $this->retrieveMapper();
-        list(
-            'table' => $this->table,
-            'schema' => $this->schema,
-            'connection' => $this->connection
-            ) = $this->retrieveTable();
+        ['table' => $this->table, 'schema' => $this->schema, 'connection' => $this->connection] = $this->retrieveTable();
         $this->primaryColumns = $this->retrievePrimary();
         $this->types = $this->retrieveTypes();
         $this->hidden = $this->retrieveHidden();
@@ -163,7 +162,7 @@ class ReflectionEntity
 
         do {
             $attributes = $reflectionClass->getAttributes(
-                Attributes\Type::class,
+                Type::class,
                 ReflectionAttribute::IS_INSTANCEOF
             );
 
@@ -189,7 +188,7 @@ class ReflectionEntity
 
         do {
             $attributes = $reflectionClass->getAttributes(
-                Attributes\Hidden::class,
+                Hidden::class,
                 ReflectionAttribute::IS_INSTANCEOF
             );
 
@@ -290,7 +289,7 @@ class ReflectionEntity
 
         do {
             $attributes = $reflectionClass->getAttributes(
-                Attributes\Primary::class,
+                Primary::class,
                 ReflectionAttribute::IS_INSTANCEOF
             );
 

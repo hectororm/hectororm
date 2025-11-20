@@ -14,6 +14,11 @@ declare(strict_types=1);
 
 namespace Hector\Orm;
 
+use Hector\Orm\Event\NullEventDispatcher;
+use Hector\Orm\Event\EntityBeforeDeleteEvent;
+use Hector\Orm\Event\EntityAfterDeleteEvent;
+use Hector\Orm\Event\EntityBeforeSaveEvent;
+use Hector\Orm\Event\EntityAfterSaveEvent;
 use Hector\Connection\Connection;
 use Hector\Connection\ConnectionSet;
 use Hector\Connection\Exception\NotFoundException;
@@ -35,7 +40,6 @@ class Orm
     public static int $alias = 0;
     protected ConnectionSet $connections;
     protected TypeSet $types;
-    protected SchemaContainer $schemaContainer;
     protected EventDispatcherInterface $eventDispatcher;
     protected EntityStorage $storage;
     private array $reflections = [];
@@ -52,15 +56,14 @@ class Orm
      */
     public function __construct(
         Connection|ConnectionSet $connection,
-        SchemaContainer $schemaContainer,
+        protected SchemaContainer $schemaContainer,
         ?EventDispatcherInterface $eventDispatcher = null
     ) {
         if ($connection instanceof Connection) {
             $connection = new ConnectionSet($connection);
         }
         $this->connections = $connection;
-        $this->schemaContainer = $schemaContainer;
-        $this->eventDispatcher = $eventDispatcher ?? new Event\NullEventDispatcher();
+        $this->eventDispatcher = $eventDispatcher ?? new NullEventDispatcher();
         $this->types = new TypeSet();
         $this->storage = new EntityStorage();
 
@@ -110,7 +113,7 @@ class Orm
         $this->schemaContainer = $data['schemaContainer'];
         $this->reflections = $data['reflections'];
 
-        $this->eventDispatcher = new Event\NullEventDispatcher();
+        $this->eventDispatcher = new NullEventDispatcher();
         $this->storage = new EntityStorage();
 
         if (null !== self::$instance) {
@@ -364,38 +367,38 @@ class Orm
         switch ($status) {
             case EntityStorage::STATUS_TO_DELETE:
                 /** @var Event\EntityBeforeDeleteEvent $event */
-                $event = $this->eventDispatcher->dispatch(new Event\EntityBeforeDeleteEvent($entity));
+                $event = $this->eventDispatcher->dispatch(new EntityBeforeDeleteEvent($entity));
 
                 if (!$event->isPropagationStopped()) {
                     $mapper->deleteEntity($entity);
 
                     $this->storage->detach($entity);
 
-                    $this->eventDispatcher->dispatch(new Event\EntityAfterDeleteEvent($entity));
+                    $this->eventDispatcher->dispatch(new EntityAfterDeleteEvent($entity));
                 }
                 break;
             case EntityStorage::STATUS_TO_INSERT:
                 /** @var Event\EntityBeforeDeleteEvent $event */
-                $event = $this->eventDispatcher->dispatch(new Event\EntityBeforeSaveEvent($entity));
+                $event = $this->eventDispatcher->dispatch(new EntityBeforeSaveEvent($entity));
 
                 if (!$event->isPropagationStopped()) {
                     $mapper->insertEntity($entity);
 
                     $this->storage->attach($entity, EntityStorage::STATUS_NONE);
 
-                    $this->eventDispatcher->dispatch(new Event\EntityAfterSaveEvent($entity));
+                    $this->eventDispatcher->dispatch(new EntityAfterSaveEvent($entity));
                 }
                 break;
             case EntityStorage::STATUS_TO_UPDATE:
                 /** @var Event\EntityBeforeDeleteEvent $event */
-                $event = $this->eventDispatcher->dispatch(new Event\EntityBeforeSaveEvent($entity, true));
+                $event = $this->eventDispatcher->dispatch(new EntityBeforeSaveEvent($entity, true));
 
                 if (!$event->isPropagationStopped()) {
                     $mapper->updateEntity($entity);
 
                     $this->storage->attach($entity, EntityStorage::STATUS_NONE);
 
-                    $this->eventDispatcher->dispatch(new Event\EntityAfterSaveEvent($entity, true));
+                    $this->eventDispatcher->dispatch(new EntityAfterSaveEvent($entity, true));
                 }
                 break;
         }

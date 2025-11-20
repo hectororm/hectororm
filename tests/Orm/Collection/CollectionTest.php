@@ -19,7 +19,7 @@ use Hector\Orm\Tests\Fake\Entity\Staff;
 
 class CollectionTest extends AbstractTestCase
 {
-    public function testSave()
+    public function testSave(): void
     {
         $films = [
             Film::get(1),
@@ -38,7 +38,7 @@ class CollectionTest extends AbstractTestCase
         }
     }
 
-    public function testDelete()
+    public function testDelete(): void
     {
         $films = [
             new Film(),
@@ -60,7 +60,7 @@ class CollectionTest extends AbstractTestCase
         $this->assertNull(Film::get($newId));
     }
 
-    public function testRefresh()
+    public function testRefresh(): void
     {
         $films = [
             $film1 = Film::get(1),
@@ -81,7 +81,7 @@ class CollectionTest extends AbstractTestCase
         $this->assertNull($newFilm->film_id);
     }
 
-    public function testSaveEmptyCollection()
+    public function testSaveEmptyCollection(): void
     {
         $this->expectNotToPerformAssertions();
 
@@ -89,7 +89,7 @@ class CollectionTest extends AbstractTestCase
         $collection->save();
     }
 
-    public function testDeleteEmptyCollection()
+    public function testDeleteEmptyCollection(): void
     {
         $this->expectNotToPerformAssertions();
 
@@ -97,7 +97,7 @@ class CollectionTest extends AbstractTestCase
         $collection->delete();
     }
 
-    public function testRefreshEmptyCollection()
+    public function testRefreshEmptyCollection(): void
     {
         $this->expectNotToPerformAssertions();
 
@@ -105,7 +105,7 @@ class CollectionTest extends AbstractTestCase
         $collection->refresh();
     }
 
-    public function testContains()
+    public function testContains(): void
     {
         $collection = Film::query()->limit(100)->all();
         $entity = $collection[0];
@@ -113,7 +113,7 @@ class CollectionTest extends AbstractTestCase
         $this->assertTrue($collection->contains($entity));
     }
 
-    public function testContainsFalse()
+    public function testContainsFalse(): void
     {
         $collection = Film::query()->limit(100)->all();
         $entity = new Film();
@@ -121,12 +121,12 @@ class CollectionTest extends AbstractTestCase
         $this->assertFalse($collection->contains($entity));
     }
 
-    public function testLoad()
+    public function testLoad(): void
     {
         $logger = $this->getOrm()->getConnection()->getLogger();
         $nbLogEntries = count($logger);
 
-        $staffs = Staff::all(1, 2);
+        $staffs = Staff::all();
         $this->assertEquals(1, count($logger) - $nbLogEntries);
 
         $staffs->load(['address' => ['city' => ['country']]]);

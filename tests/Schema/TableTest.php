@@ -12,6 +12,7 @@
 
 namespace Hector\Schema\Tests;
 
+use Iterator;
 use Hector\Schema\Column;
 use Hector\Schema\Exception\NotFoundException;
 use Hector\Schema\ForeignKey;
@@ -20,7 +21,7 @@ use Hector\Schema\Schema;
 
 class TableTest extends AbstractTestCase
 {
-    public function testSerialization()
+    public function testSerialization(): void
     {
         $schema = $this->getSchemaContainer()->getSchema('sakila');
         $table = $schema->getTable('customer');
@@ -33,7 +34,7 @@ class TableTest extends AbstractTestCase
         $this->assertCount(count(iterator_to_array($table->getIndexes())), $table2->getIndexes());
     }
 
-    public function testCount()
+    public function testCount(): void
     {
         $schema = $this->getSchemaContainer()->getSchema('sakila');
         $table = $schema->getTable('customer');
@@ -41,18 +42,18 @@ class TableTest extends AbstractTestCase
         $this->assertCount(9, $table);
     }
 
-    public function testGetIterator()
+    public function testGetIterator(): void
     {
         $schema = $this->getSchemaContainer()->getSchema('sakila');
         $table = $schema->getTable('customer');
         $iterator = $table->getIterator();
 
-        $this->assertInstanceOf(\Iterator::class, $iterator);
+        $this->assertInstanceOf(Iterator::class, $iterator);
         $this->assertCount(9, $iterator);
         $this->assertContainsOnlyInstancesOf(Column::class, $iterator);
     }
 
-    public function testGetSchemaName()
+    public function testGetSchemaName(): void
     {
         $schema = $this->getSchemaContainer()->getSchema('sakila');
         $table = $schema->getTable('customer');
@@ -61,7 +62,7 @@ class TableTest extends AbstractTestCase
         $this->assertEquals($table->getSchemaName(), $table->getSchemaName(false));
     }
 
-    public function testGetSchemaNameQuoted()
+    public function testGetSchemaNameQuoted(): void
     {
         $schema = $this->getSchemaContainer()->getSchema('sakila');
         $table = $schema->getTable('customer');
@@ -69,7 +70,7 @@ class TableTest extends AbstractTestCase
         $this->assertEquals('`sakila`', $table->getSchemaName(true));
     }
 
-    public function testGetName()
+    public function testGetName(): void
     {
         $schema = $this->getSchemaContainer()->getSchema('sakila');
         $table = $schema->getTable('customer');
@@ -78,7 +79,7 @@ class TableTest extends AbstractTestCase
         $this->assertEquals($table->getName(), $table->getName(false));
     }
 
-    public function testGetNameQuoted()
+    public function testGetNameQuoted(): void
     {
         $schema = $this->getSchemaContainer()->getSchema('sakila');
         $table = $schema->getTable('customer');
@@ -86,7 +87,7 @@ class TableTest extends AbstractTestCase
         $this->assertEquals('`customer`', $table->getName(true));
     }
 
-    public function testGetFullName()
+    public function testGetFullName(): void
     {
         $schema = $this->getSchemaContainer()->getSchema('sakila');
         $table = $schema->getTable('customer');
@@ -95,7 +96,7 @@ class TableTest extends AbstractTestCase
         $this->assertEquals($table->getFullName(), $table->getFullName(false));
     }
 
-    public function testGetFullNameQuoted()
+    public function testGetFullNameQuoted(): void
     {
         $schema = $this->getSchemaContainer()->getSchema('sakila');
         $table = $schema->getTable('customer');
@@ -103,7 +104,7 @@ class TableTest extends AbstractTestCase
         $this->assertEquals('`sakila`.`customer`', $table->getFullName(true));
     }
 
-    public function testGetCharset()
+    public function testGetCharset(): void
     {
         $schema = $this->getSchemaContainer()->getSchema('sakila');
         $table = $schema->getTable('customer');
@@ -111,7 +112,7 @@ class TableTest extends AbstractTestCase
         $this->assertEquals('utf8mb4', $table->getCharset());
     }
 
-    public function testGetCollation()
+    public function testGetCollation(): void
     {
         $schema = $this->getSchemaContainer()->getSchema('sakila');
         $table = $schema->getTable('customer');
@@ -119,7 +120,7 @@ class TableTest extends AbstractTestCase
         $this->assertEquals($schema->getCollation(), $table->getCollation());
     }
 
-    public function testGetColumns()
+    public function testGetColumns(): void
     {
         $schema = $this->getSchemaContainer()->getSchema('sakila');
         $table = $schema->getTable('customer');
@@ -132,7 +133,7 @@ class TableTest extends AbstractTestCase
         }
     }
 
-    public function testGetColumnsName()
+    public function testGetColumnsName(): void
     {
         $schema = $this->getSchemaContainer()->getSchema('sakila');
         $table = $schema->getTable('customer');
@@ -154,7 +155,7 @@ class TableTest extends AbstractTestCase
         );
     }
 
-    public function testGetColumnsNameQuoted()
+    public function testGetColumnsNameQuoted(): void
     {
         $schema = $this->getSchemaContainer()->getSchema('sakila');
         $table = $schema->getTable('customer');
@@ -176,7 +177,7 @@ class TableTest extends AbstractTestCase
         );
     }
 
-    public function testGetColumnsNameWithTableAlias()
+    public function testGetColumnsNameWithTableAlias(): void
     {
         $schema = $this->getSchemaContainer()->getSchema('sakila');
         $table = $schema->getTable('customer');
@@ -198,7 +199,7 @@ class TableTest extends AbstractTestCase
         );
     }
 
-    public function testGetColumnsNameQuotedWithTableAlias()
+    public function testGetColumnsNameQuotedWithTableAlias(): void
     {
         $schema = $this->getSchemaContainer()->getSchema('sakila');
         $table = $schema->getTable('customer');
@@ -220,7 +221,7 @@ class TableTest extends AbstractTestCase
         );
     }
 
-    public function testHasColumn()
+    public function testHasColumn(): void
     {
         $schema = $this->getSchemaContainer()->getSchema('sakila');
         $table = $schema->getTable('customer');
@@ -228,7 +229,7 @@ class TableTest extends AbstractTestCase
         $this->assertTrue($table->hasColumn('email'));
     }
 
-    public function testHasColumnNonExistent()
+    public function testHasColumnNonExistent(): void
     {
         $schema = $this->getSchemaContainer()->getSchema('sakila');
         $table = $schema->getTable('customer');
@@ -236,7 +237,7 @@ class TableTest extends AbstractTestCase
         $this->assertFalse($table->hasColumn('foo'));
     }
 
-    public function testGetColumn()
+    public function testGetColumn(): void
     {
         $schema = $this->getSchemaContainer()->getSchema('sakila');
         $table = $schema->getTable('customer');
@@ -247,7 +248,7 @@ class TableTest extends AbstractTestCase
         $this->assertSame($table, $column->getTable());
     }
 
-    public function testGetColumnNonexistent()
+    public function testGetColumnNonexistent(): void
     {
         $this->expectException(NotFoundException::class);
 
@@ -256,7 +257,7 @@ class TableTest extends AbstractTestCase
         $table->getColumn('foo');
     }
 
-    public function testGetAutoIncrementColumn()
+    public function testGetAutoIncrementColumn(): void
     {
         $schema = $this->getSchemaContainer()->getSchema('sakila');
         $table = $schema->getTable('customer');
@@ -267,7 +268,7 @@ class TableTest extends AbstractTestCase
         $this->assertSame($table, $column->getTable());
     }
 
-    public function testGetAutoIncrementColumnOnNonAutoIncrementTable()
+    public function testGetAutoIncrementColumnOnNonAutoIncrementTable(): void
     {
         $schema = $this->getSchemaContainer()->getSchema('sakila');
         $table = $schema->getTable('film_category');
@@ -276,7 +277,7 @@ class TableTest extends AbstractTestCase
         $this->assertNull($column);
     }
 
-    public function testGetIndexes()
+    public function testGetIndexes(): void
     {
         $schema = $this->getSchemaContainer()->getSchema('sakila');
         $table = $schema->getTable('customer');
@@ -289,7 +290,7 @@ class TableTest extends AbstractTestCase
         }
     }
 
-    public function testGetIndex()
+    public function testGetIndex(): void
     {
         $schema = $this->getSchemaContainer()->getSchema('sakila');
         $table = $schema->getTable('customer');
@@ -299,7 +300,7 @@ class TableTest extends AbstractTestCase
         $this->assertSame($table, $index->getTable());
     }
 
-    public function testGetIndexNonexistent()
+    public function testGetIndexNonexistent(): void
     {
         $this->expectException(NotFoundException::class);
 
@@ -308,7 +309,7 @@ class TableTest extends AbstractTestCase
         $table->getIndex('fake');
     }
 
-    public function testGetForeignKeys()
+    public function testGetForeignKeys(): void
     {
         $schema = $this->getSchemaContainer()->getSchema('sakila');
         $table = $schema->getTable('customer');
@@ -321,7 +322,7 @@ class TableTest extends AbstractTestCase
         }
     }
 
-    public function testGetForeignKeysWithTable()
+    public function testGetForeignKeysWithTable(): void
     {
         $schema = $this->getSchemaContainer()->getSchema('sakila');
         $table = $schema->getTable('customer');
@@ -335,7 +336,7 @@ class TableTest extends AbstractTestCase
         }
     }
 
-    public function testGetForeignKeysWithBadTable()
+    public function testGetForeignKeysWithBadTable(): void
     {
         $schema = $this->getSchemaContainer()->getSchema('sakila');
         $table = $schema->getTable('customer');
@@ -344,7 +345,7 @@ class TableTest extends AbstractTestCase
         $this->assertCount(0, $table->getForeignKeys($table2));
     }
 
-    public function testGetSchema()
+    public function testGetSchema(): void
     {
         $schema = $this->getSchemaContainer()->getSchema('sakila');
         $table = $schema->getTable('customer');
@@ -353,7 +354,7 @@ class TableTest extends AbstractTestCase
         $this->assertSame($schema, $table->getSchema());
     }
 
-    public function testGetPrimaryIndex()
+    public function testGetPrimaryIndex(): void
     {
         $schema = $this->getSchemaContainer()->getSchema('sakila');
         $table = $schema->getTable('customer');

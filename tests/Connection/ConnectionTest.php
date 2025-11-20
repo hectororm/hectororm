@@ -21,7 +21,7 @@ use ReflectionProperty;
 
 class ConnectionTest extends TestCase
 {
-    public function testFromPdo()
+    public function testFromPdo(): void
     {
         $pdo = new PDO('sqlite::memory:');
         $readPdo = new PDO('sqlite::memory:');
@@ -31,7 +31,7 @@ class ConnectionTest extends TestCase
         $this->assertSame($readPdo, $connection->getReadPdo());
     }
 
-    public function testSerialization()
+    public function testSerialization(): void
     {
         $connection = new Connection('sqlite::memory:');
         $connection2 = unserialize(serialize($connection));
@@ -39,28 +39,28 @@ class ConnectionTest extends TestCase
         $this->assertEquals($connection->__serialize(), $connection2->__serialize());
     }
 
-    public function testConstructBadDSN()
+    public function testConstructBadDSN(): void
     {
         $connection = new Connection('fake::memory:');
 
         $this->assertInstanceOf(Connection::class, $connection);
     }
 
-    public function testGetDefaultName()
+    public function testGetDefaultName(): void
     {
         $connection = new Connection('sqlite::memory:');
 
         $this->assertEquals(Connection::DEFAULT_NAME, $connection->getName());
     }
 
-    public function testGetName()
+    public function testGetName(): void
     {
         $connection = new Connection('sqlite::memory:', name: 'connection');
 
         $this->assertEquals('connection', $connection->getName());
     }
 
-    public function testGetLogger()
+    public function testGetLogger(): void
     {
         $connection = new Connection('sqlite::memory:', logger: new Logger());
 
@@ -68,7 +68,7 @@ class ConnectionTest extends TestCase
         $this->assertSame($connection->getLogger(), $connection->getLogger());
     }
 
-    public function testGetLoggerNull()
+    public function testGetLoggerNull(): void
     {
         $connection = new Connection('sqlite::memory:');
 
@@ -76,7 +76,7 @@ class ConnectionTest extends TestCase
         $this->assertSame($connection->getLogger(), $connection->getLogger());
     }
 
-    public function testGetPdo()
+    public function testGetPdo(): void
     {
         $connection = new Connection('sqlite::memory:');
 
@@ -84,7 +84,7 @@ class ConnectionTest extends TestCase
         $this->assertSame($connection->getPdo(), $connection->getPdo());
     }
 
-    public function testGetReadPdo()
+    public function testGetReadPdo(): void
     {
         $connection = new Connection('sqlite::memory:', readDsn: 'sqlite::memory:');
 
@@ -93,7 +93,7 @@ class ConnectionTest extends TestCase
         $this->assertSame($connection->getReadPdo(), $connection->getReadPdo());
     }
 
-    public function testGetReadPdoNotDefined()
+    public function testGetReadPdoNotDefined(): void
     {
         $connection = new Connection('sqlite::memory:');
 
@@ -101,7 +101,7 @@ class ConnectionTest extends TestCase
         $this->assertSame($connection->getPdo(), $connection->getReadPdo());
     }
 
-    public function testGetReadPdoTransactionStarted()
+    public function testGetReadPdoTransactionStarted(): void
     {
         $connection = new Connection('sqlite::memory:', readDsn: 'sqlite::memory:');
 
@@ -112,21 +112,21 @@ class ConnectionTest extends TestCase
         $this->assertSame($connection->getPdo(), $connection->getReadPdo());
     }
 
-    public function testGetDriverName()
+    public function testGetDriverName(): void
     {
         $connection = new Connection('sqlite::memory:', 'sqlite::memory:');
 
         $this->assertEquals('sqlite', $connection->getDriverName());
     }
 
-    public function testGetDriverInfo()
+    public function testGetDriverInfo(): void
     {
         $connection = new Connection('sqlite::memory:', 'sqlite::memory:');
 
         $this->assertEquals('sqlite', $connection->getDriverInfo()->getDriver());
     }
 
-    public function testGetLastInsertId()
+    public function testGetLastInsertId(): void
     {
         $connection = new Connection('sqlite::memory:');
         $connection->execute(
@@ -144,7 +144,7 @@ class ConnectionTest extends TestCase
         $this->assertEquals(1, $connection->getLastInsertId());
     }
 
-    public function testBeginTransaction()
+    public function testBeginTransaction(): void
     {
         $connection = new Connection('sqlite::memory:');
         $connection->beginTransaction();
@@ -156,7 +156,7 @@ class ConnectionTest extends TestCase
         $this->assertEquals(1, $reflectionProperty->getValue($connection));
     }
 
-    public function testBeginTransactionAnother()
+    public function testBeginTransactionAnother(): void
     {
         $connection = new Connection('sqlite::memory:');
         $connection->beginTransaction();
@@ -171,7 +171,7 @@ class ConnectionTest extends TestCase
         $connection->rollBack();
     }
 
-    public function testCommit()
+    public function testCommit(): void
     {
         $reflectionProperty = new ReflectionProperty(Connection::class, 'transactions');
         $reflectionProperty->setAccessible(true);
@@ -186,7 +186,7 @@ class ConnectionTest extends TestCase
         $this->assertEquals(0, $reflectionProperty->getValue($connection));
     }
 
-    public function testCommitWithNoTransaction()
+    public function testCommitWithNoTransaction(): void
     {
         $reflectionProperty = new ReflectionProperty(Connection::class, 'transactions');
         $reflectionProperty->setAccessible(true);
@@ -200,7 +200,7 @@ class ConnectionTest extends TestCase
         $this->assertEquals(0, $reflectionProperty->getValue($connection));
     }
 
-    public function testCommitWithMultipleTransactions()
+    public function testCommitWithMultipleTransactions(): void
     {
         $reflectionProperty = new ReflectionProperty(Connection::class, 'transactions');
         $reflectionProperty->setAccessible(true);
@@ -220,7 +220,7 @@ class ConnectionTest extends TestCase
         $this->assertEquals(0, $reflectionProperty->getValue($connection));
     }
 
-    public function testRollBack()
+    public function testRollBack(): void
     {
         $reflectionProperty = new ReflectionProperty(Connection::class, 'transactions');
         $reflectionProperty->setAccessible(true);
@@ -235,7 +235,7 @@ class ConnectionTest extends TestCase
         $this->assertEquals(0, $reflectionProperty->getValue($connection));
     }
 
-    public function testRollBackNoTransactions()
+    public function testRollBackNoTransactions(): void
     {
         $reflectionProperty = new ReflectionProperty(Connection::class, 'transactions');
         $reflectionProperty->setAccessible(true);
@@ -249,7 +249,7 @@ class ConnectionTest extends TestCase
         $this->assertEquals(0, $reflectionProperty->getValue($connection));
     }
 
-    public function testRollBackWithMultipleTransactions()
+    public function testRollBackWithMultipleTransactions(): void
     {
         $reflectionProperty = new ReflectionProperty(Connection::class, 'transactions');
         $reflectionProperty->setAccessible(true);
@@ -265,7 +265,7 @@ class ConnectionTest extends TestCase
         $this->assertEquals(0, $reflectionProperty->getValue($connection));
     }
 
-    public function testInTransaction()
+    public function testInTransaction(): void
     {
         $connection = new Connection('sqlite::memory:');
         $connection->beginTransaction();
@@ -273,14 +273,14 @@ class ConnectionTest extends TestCase
         $this->assertTrue($connection->inTransaction());
     }
 
-    public function testInTransactionFalse()
+    public function testInTransactionFalse(): void
     {
         $connection = new Connection('sqlite::memory:');
 
         $this->assertFalse($connection->inTransaction());
     }
 
-    public function testExecute()
+    public function testExecute(): void
     {
         $connection = new Connection('sqlite:' . realpath(__DIR__ . '/test.sqlite'));
         $result = $connection->execute('SELECT * FROM `table`;');
@@ -288,7 +288,7 @@ class ConnectionTest extends TestCase
         $this->assertEquals(0, $result);
     }
 
-    public function testExecuteWithParam()
+    public function testExecuteWithParam(): void
     {
         $connection = new Connection('sqlite:' . realpath(__DIR__ . '/test.sqlite'));
         $result = $connection->execute('SELECT * FROM `table` WHERE `table_id` = ?;', [2]);
@@ -296,7 +296,7 @@ class ConnectionTest extends TestCase
         $this->assertEquals(0, $result);
     }
 
-    public function testFetchAll()
+    public function testFetchAll(): void
     {
         $connection = new Connection('sqlite:' . realpath(__DIR__ . '/test.sqlite'));
         $result = $connection->fetchAll('SELECT * FROM `table` LIMIT 2;');
@@ -305,7 +305,7 @@ class ConnectionTest extends TestCase
         $this->assertCount(2, $result);
     }
 
-    public function testFetchAllWithParam()
+    public function testFetchAllWithParam(): void
     {
         $connection = new Connection('sqlite:' . realpath(__DIR__ . '/test.sqlite'));
         $result = $connection->fetchAll('SELECT * FROM `table` WHERE `table_id` = :p;', ['p' => 2]);
@@ -314,7 +314,7 @@ class ConnectionTest extends TestCase
         $this->assertCount(1, $result);
     }
 
-    public function testFetchAllWithBindParam()
+    public function testFetchAllWithBindParam(): void
     {
         $connection = new Connection('sqlite:' . realpath(__DIR__ . '/test.sqlite'));
         $var = 2;
@@ -324,7 +324,7 @@ class ConnectionTest extends TestCase
         $this->assertCount(1, $result);
     }
 
-    public function testYieldAll()
+    public function testYieldAll(): void
     {
         $connection = new Connection('sqlite:' . realpath(__DIR__ . '/test.sqlite'));
         $iterator = $connection->yieldAll('SELECT * FROM `table` LIMIT 2;');
@@ -333,7 +333,7 @@ class ConnectionTest extends TestCase
         $this->assertCount(2, iterator_to_array($iterator));
     }
 
-    public function testYieldAllWithParam()
+    public function testYieldAllWithParam(): void
     {
         $connection = new Connection('sqlite:' . realpath(__DIR__ . '/test.sqlite'));
         $iterator = $connection->yieldAll('SELECT * FROM `table` WHERE `table_id` = :p;', ['p' => 2]);
@@ -342,7 +342,7 @@ class ConnectionTest extends TestCase
         $this->assertCount(1, iterator_to_array($iterator));
     }
 
-    public function testYieldAllWithBindParam()
+    public function testYieldAllWithBindParam(): void
     {
         $connection = new Connection('sqlite:' . realpath(__DIR__ . '/test.sqlite'));
         $var = 2;
@@ -352,7 +352,7 @@ class ConnectionTest extends TestCase
         $this->assertCount(1, iterator_to_array($iterator));
     }
 
-    public function testFetchOne()
+    public function testFetchOne(): void
     {
         $connection = new Connection('sqlite:' . realpath(__DIR__ . '/test.sqlite'));
 
@@ -362,7 +362,7 @@ class ConnectionTest extends TestCase
         $this->assertEquals('Foo', $result['table_col']);
     }
 
-    public function testFetchOneWithParam()
+    public function testFetchOneWithParam(): void
     {
         $connection = new Connection('sqlite:' . realpath(__DIR__ . '/test.sqlite'));
         $result = $connection->fetchOne('SELECT * FROM `table` WHERE `table_id` = :_h_0;', [2]);
@@ -371,7 +371,7 @@ class ConnectionTest extends TestCase
         $this->assertEquals('Bar', $result['table_col']);
     }
 
-    public function testFetchOneWithNamedParam()
+    public function testFetchOneWithNamedParam(): void
     {
         $connection = new Connection('sqlite:' . realpath(__DIR__ . '/test.sqlite'));
         $result = $connection->fetchOne('SELECT * FROM `table` WHERE `table_id` = :id;', ['id' => 2]);
@@ -380,7 +380,7 @@ class ConnectionTest extends TestCase
         $this->assertEquals('Bar', $result['table_col']);
     }
 
-    public function testFetchColumn()
+    public function testFetchColumn(): void
     {
         $connection = new Connection('sqlite:' . realpath(__DIR__ . '/test.sqlite'));
         $result = $connection->fetchColumn('SELECT * FROM `table`;', [], 1);
@@ -391,7 +391,7 @@ class ConnectionTest extends TestCase
         $this->assertEquals('Bar', $result[1]);
     }
 
-    public function testYieldColumn()
+    public function testYieldColumn(): void
     {
         $connection = new Connection('sqlite:' . realpath(__DIR__ . '/test.sqlite'));
         $iterator = $connection->yieldColumn('SELECT * FROM `table`;', [], 1);
@@ -403,7 +403,7 @@ class ConnectionTest extends TestCase
         $this->assertEquals('Bar', $result[1]);
     }
 
-    public function testFetchColumnWithParam()
+    public function testFetchColumnWithParam(): void
     {
         $connection = new Connection('sqlite:' . realpath(__DIR__ . '/test.sqlite'));
         $result = $connection->fetchColumn('SELECT * FROM `table` WHERE `table_id` = ?;', [2], 1);
@@ -413,7 +413,7 @@ class ConnectionTest extends TestCase
         $this->assertEquals('Bar', $result[0]);
     }
 
-    public function testYieldColumnWithParam()
+    public function testYieldColumnWithParam(): void
     {
         $connection = new Connection('sqlite:' . realpath(__DIR__ . '/test.sqlite'));
         $iterator = $connection->yieldColumn('SELECT * FROM `table` WHERE `table_id` = ?;', [2], 1);

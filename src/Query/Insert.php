@@ -14,18 +14,23 @@ declare(strict_types=1);
 
 namespace Hector\Query;
 
+use Hector\Query\Clause\BindParams;
+use Hector\Query\Clause\Columns;
+use Hector\Query\Clause\From;
+use Hector\Query\Clause\Assignments;
+use Hector\Query\Component\EncapsulateHelperTrait;
 use Closure;
 use Hector\Connection\Bind\BindParamList;
 
 class Insert implements StatementInterface
 {
-    use Clause\BindParams;
-    use Clause\Columns;
-    use Clause\From;
-    use Clause\Assignments;
-    use Component\EncapsulateHelperTrait;
+    use BindParams;
+    use Columns;
+    use From;
+    use Assignments;
+    use EncapsulateHelperTrait;
 
-    protected ?Select $select;
+    protected ?Select $select = null;
     protected bool|Closure $ignore = false;
 
     public function __construct(?BindParamList $binds = null)

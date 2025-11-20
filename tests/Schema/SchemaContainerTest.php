@@ -20,7 +20,7 @@ use Iterator;
 
 class SchemaContainerTest extends AbstractTestCase
 {
-    public function testSerialization()
+    public function testSerialization(): void
     {
         $schemaContainer = $this->getSchemaContainer();
         $schemaContainer2 = unserialize(serialize($schemaContainer));
@@ -28,14 +28,14 @@ class SchemaContainerTest extends AbstractTestCase
         $this->assertEquals($schemaContainer, $schemaContainer2);
     }
 
-    public function testCount()
+    public function testCount(): void
     {
         $schemaContainer = $this->getSchemaContainer();
 
         $this->assertCount(1, $schemaContainer);
     }
 
-    public function testGetIterator()
+    public function testGetIterator(): void
     {
         $schemaContainer = $this->getSchemaContainer();
         $iterator = $schemaContainer->getIterator();
@@ -45,7 +45,7 @@ class SchemaContainerTest extends AbstractTestCase
         $this->assertContainsOnlyInstancesOf(Schema::class, $iterator);
     }
 
-    public function testGetSchemas()
+    public function testGetSchemas(): void
     {
         $schemaContainer = $this->getSchemaContainer();
 
@@ -57,7 +57,7 @@ class SchemaContainerTest extends AbstractTestCase
         }
     }
 
-    public function testGetSchema()
+    public function testGetSchema(): void
     {
         $schemaContainer = $this->getSchemaContainer();
         $schema = $schemaContainer->getSchema('sakila');
@@ -65,7 +65,7 @@ class SchemaContainerTest extends AbstractTestCase
         $this->assertInstanceOf(Schema::class, $schema);
     }
 
-    public function testGetSchemaNonexistent()
+    public function testGetSchemaNonexistent(): void
     {
         $this->expectException(NotFoundException::class);
 
@@ -73,7 +73,7 @@ class SchemaContainerTest extends AbstractTestCase
         $schemaContainer->getSchema('foo');
     }
 
-    public function testHasTable()
+    public function testHasTable(): void
     {
         $schemaContainer = $this->getSchemaContainer();
         $result = $schemaContainer->hasTable('customer', 'sakila');
@@ -81,7 +81,7 @@ class SchemaContainerTest extends AbstractTestCase
         $this->assertTrue($result);
     }
 
-    public function testHasTableWithoutSchemaName()
+    public function testHasTableWithoutSchemaName(): void
     {
         $schemaContainer = $this->getSchemaContainer();
         $result = $schemaContainer->hasTable('customer');
@@ -89,7 +89,7 @@ class SchemaContainerTest extends AbstractTestCase
         $this->assertTrue($result);
     }
 
-    public function testHasTableWithUnexistentTable()
+    public function testHasTableWithUnexistentTable(): void
     {
         $schemaContainer = $this->getSchemaContainer();
         $result = $schemaContainer->hasTable('foo');
@@ -97,7 +97,7 @@ class SchemaContainerTest extends AbstractTestCase
         $this->assertFalse($result);
     }
 
-    public function testGetTable()
+    public function testGetTable(): void
     {
         $schemaContainer = $this->getSchemaContainer();
         $table = $schemaContainer->getTable('customer', 'sakila');
@@ -107,7 +107,7 @@ class SchemaContainerTest extends AbstractTestCase
         $this->assertEquals('sakila', $table->getSchemaName());
     }
 
-    public function testGetTable_byAlias()
+    public function testGetTable_byAlias(): void
     {
         $schemaContainer = new SchemaContainer([
             new Schema(connection: 'test', name: 'table1_name', charset: 'utf8mb4'),
@@ -119,7 +119,7 @@ class SchemaContainerTest extends AbstractTestCase
         $this->assertSame($expected, $schemaContainer->getSchema('table2_name'));
     }
 
-    public function testGetTableWithoutSchemaName()
+    public function testGetTableWithoutSchemaName(): void
     {
         $schemaContainer = $this->getSchemaContainer();
         $table = $schemaContainer->getTable('customer');
@@ -129,7 +129,7 @@ class SchemaContainerTest extends AbstractTestCase
         $this->assertEquals('sakila', $table->getSchemaName());
     }
 
-    public function testGetTableWithBadSchemaName()
+    public function testGetTableWithBadSchemaName(): void
     {
         $this->expectException(NotFoundException::class);
 
@@ -137,7 +137,7 @@ class SchemaContainerTest extends AbstractTestCase
         $schemaContainer->getTable('customer', 'foo');
     }
 
-    public function testGetTableNonexistent()
+    public function testGetTableNonexistent(): void
     {
         $this->expectException(NotFoundException::class);
 

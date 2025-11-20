@@ -26,7 +26,7 @@ use TypeError;
 
 class ManyToManyTest extends AbstractTestCase
 {
-    public function testConstruct()
+    public function testConstruct(): void
     {
         $relationship = new ManyToMany(
             'actors',
@@ -45,7 +45,7 @@ class ManyToManyTest extends AbstractTestCase
         $this->assertEquals(['actor_id'], $relationship->getTargetColumns());
     }
 
-    public function testConstructWithDeductionOfPivotTable()
+    public function testConstructWithDeductionOfPivotTable(): void
     {
         $relationship = new ManyToMany(
             'actors',
@@ -64,7 +64,7 @@ class ManyToManyTest extends AbstractTestCase
         $this->assertEquals(['actor_id'], $relationship->getTargetColumns());
     }
 
-    public function testConstructWithDeductionOfColumns()
+    public function testConstructWithDeductionOfColumns(): void
     {
         $relationship = new ManyToMany('actors', Film::class, Actor::class);
 
@@ -76,7 +76,7 @@ class ManyToManyTest extends AbstractTestCase
         $this->assertEquals(['actor_id'], $relationship->getTargetColumns());
     }
 
-    public function testGetBuilder()
+    public function testGetBuilder(): void
     {
         $relationship = new ManyToMany('actors', Film::class, Actor::class);
         $builder = $relationship->getBuilder(Film::find(1), Film::find(2));
@@ -96,7 +96,7 @@ class ManyToManyTest extends AbstractTestCase
         );
     }
 
-    public function testGetBuilderWithBadEntity()
+    public function testGetBuilderWithBadEntity(): void
     {
         $this->expectException(TypeError::class);
 
@@ -104,7 +104,7 @@ class ManyToManyTest extends AbstractTestCase
         $relationship->getBuilder(Language::get(2));
     }
 
-    public function testGet()
+    public function testGet(): void
     {
         $relationship = new ManyToMany('actors', Film::class, Actor::class);
         $film = Film::get(1);
@@ -115,7 +115,7 @@ class ManyToManyTest extends AbstractTestCase
         $this->assertEquals($film->getRelated()->actors, $foreigners);
     }
 
-    public function testGetPivotTargetColumns()
+    public function testGetPivotTargetColumns(): void
     {
         $relationship = new ManyToMany(
             'actors',
@@ -130,7 +130,7 @@ class ManyToManyTest extends AbstractTestCase
         $this->assertEquals(['id_film', 'actor'], $relationship->getPivotTargetColumns());
     }
 
-    public function testGetPivotSourceColumns()
+    public function testGetPivotSourceColumns(): void
     {
         $relationship = new ManyToMany(
             'actors',
@@ -145,7 +145,7 @@ class ManyToManyTest extends AbstractTestCase
         $this->assertEquals(['id_actor'], $relationship->getPivotSourceColumns());
     }
 
-    public function testReverse()
+    public function testReverse(): void
     {
         $relationship = new ManyToMany('actors', Film::class, Actor::class);
         $reverse = $relationship->reverse('films');
@@ -161,7 +161,7 @@ class ManyToManyTest extends AbstractTestCase
         $this->assertEquals($reverse->getTargetColumns(), $relationship->getSourceColumns());
     }
 
-    public function testLinkNative()
+    public function testLinkNative(): void
     {
         $relationship = new ManyToMany('actors', Film::class, Actor::class);
         $film = Film::get(2);

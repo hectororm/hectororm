@@ -14,6 +14,12 @@ declare(strict_types=1);
 
 namespace Hector\DataTypes;
 
+use Hector\DataTypes\Type\TypeInterface;
+use Hector\DataTypes\Type\StringType;
+use Hector\DataTypes\Type\NumericType;
+use Hector\DataTypes\Type\DateTimeType;
+use Hector\DataTypes\Type\SetType;
+use Hector\DataTypes\Type\JsonType;
 use Countable;
 use UnexpectedValueException;
 
@@ -27,7 +33,7 @@ class TypeSet implements Countable
     public function __construct(array $types = [])
     {
         $this->reset();
-        array_walk($types, fn(Type\TypeInterface $object, string $type) => $this->add($type, $object));
+        array_walk($types, fn(TypeInterface $object, string $type) => $this->add($type, $object));
     }
 
     /**
@@ -45,10 +51,10 @@ class TypeSet implements Countable
     {
         $this->types = [];
 
-        $stringType = new Type\StringType();
-        $intType = new Type\NumericType('int');
-        $floatType = new Type\NumericType('float');
-        $dateTimeType = new Type\DateTimeType();
+        $stringType = new StringType();
+        $intType = new NumericType('int');
+        $floatType = new NumericType('float');
+        $dateTimeType = new DateTimeType();
 
         // String
         $this->add('char', $stringType);
@@ -74,15 +80,15 @@ class TypeSet implements Countable
         $this->add('float', $floatType);
         $this->add('double', $floatType);
         // Date
-        $this->add('date', new Type\DateTimeType('Y-m-d'));
+        $this->add('date', new DateTimeType('Y-m-d'));
         $this->add('datetime', $dateTimeType);
         $this->add('timestamp', $dateTimeType);
         $this->add('year', $intType);
         // List
         $this->add('enum', $stringType);
-        $this->add('set', new Type\SetType());
+        $this->add('set', new SetType());
         // Json
-        $this->add('json', new Type\JsonType());
+        $this->add('json', new JsonType());
     }
 
     /**
@@ -93,7 +99,7 @@ class TypeSet implements Countable
      *
      * @return void
      */
-    public function add(string $type, Type\TypeInterface $object): void
+    public function add(string $type, TypeInterface $object): void
     {
         $this->types[$type] = $object;
     }
@@ -105,7 +111,7 @@ class TypeSet implements Countable
      *
      * @return Type\TypeInterface
      */
-    public function get(string $type): Type\TypeInterface
+    public function get(string $type): TypeInterface
     {
         if (!array_key_exists($type, $this->types)) {
             throw new UnexpectedValueException(sprintf('Type "%s" not declared in Hector', $type));

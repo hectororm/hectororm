@@ -17,14 +17,14 @@ use PHPUnit\Framework\TestCase;
 
 class HiddenTest extends TestCase
 {
-    public function testConstruct()
+    public function testConstruct(): void
     {
         $attribute = new Hidden('foo', 'bar', 'baz');
 
         $this->assertEquals(['foo', 'bar', 'baz'], $attribute->columns);
     }
 
-    public function testConstructEmpty()
+    public function testConstructEmpty(): void
     {
         $attribute = new Hidden();
 

@@ -64,7 +64,7 @@ class ManyToOne extends RegularRelationship
             return false;
         }
 
-        return ($this->getTargetEntity() === get_class($related));
+        return ($this->getTargetEntity() === $related::class);
     }
 
     /**

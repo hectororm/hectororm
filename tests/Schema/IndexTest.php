@@ -17,7 +17,7 @@ use Hector\Schema\Index;
 
 class IndexTest extends AbstractTestCase
 {
-    public function testSerialization()
+    public function testSerialization(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('store');
         $index = $table->getIndex('idx_unique_manager');
@@ -28,7 +28,7 @@ class IndexTest extends AbstractTestCase
         $this->assertEquals($index->getColumnsName(), $index2->getColumnsName());
     }
 
-    public function testGetName()
+    public function testGetName(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('store');
         $index = $table->getIndex('idx_unique_manager');
@@ -36,7 +36,7 @@ class IndexTest extends AbstractTestCase
         $this->assertEquals('idx_unique_manager', $index->getName());
     }
 
-    public function testGetNameOnPrimary()
+    public function testGetNameOnPrimary(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('store');
         $index = $table->getPrimaryIndex();
@@ -44,7 +44,7 @@ class IndexTest extends AbstractTestCase
         $this->assertEquals('PRIMARY', $index->getName());
     }
 
-    public function testGetTypeWithPrimary()
+    public function testGetTypeWithPrimary(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('store');
         $index = $table->getPrimaryIndex();
@@ -52,7 +52,7 @@ class IndexTest extends AbstractTestCase
         $this->assertEquals(Index::PRIMARY, $index->getType());
     }
 
-    public function testGetTypeWithUnique()
+    public function testGetTypeWithUnique(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('store');
         $index = $table->getIndex('idx_unique_manager');
@@ -60,7 +60,7 @@ class IndexTest extends AbstractTestCase
         $this->assertEquals(Index::UNIQUE, $index->getType());
     }
 
-    public function testGetTypeWithStandard()
+    public function testGetTypeWithStandard(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('store');
         $index = $table->getIndex('idx_fk_address_id');
@@ -68,7 +68,7 @@ class IndexTest extends AbstractTestCase
         $this->assertEquals(Index::INDEX, $index->getType());
     }
 
-    public function testGetColumnsName()
+    public function testGetColumnsName(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('store');
         $index = $table->getPrimaryIndex();
@@ -76,7 +76,7 @@ class IndexTest extends AbstractTestCase
         $this->assertEquals(['store_id'], $index->getColumnsName());
     }
 
-    public function testGetTable()
+    public function testGetTable(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('store');
         $index = $table->getPrimaryIndex();
@@ -84,7 +84,7 @@ class IndexTest extends AbstractTestCase
         $this->assertSame($table, $index->getTable());
     }
 
-    public function testGetColumns()
+    public function testGetColumns(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('store');
         $index = $table->getPrimaryIndex();
@@ -96,7 +96,7 @@ class IndexTest extends AbstractTestCase
         }
     }
 
-    public function testHasColumn()
+    public function testHasColumn(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('store');
         $index = $table->getPrimaryIndex();

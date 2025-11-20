@@ -17,7 +17,7 @@ use PHPUnit\Framework\TestCase;
 
 class OrderByTest extends TestCase
 {
-    public function testConstruct()
+    public function testConstruct(): void
     {
         $attribute = new OrderBy('foo', 'ASC');
 
@@ -25,7 +25,7 @@ class OrderByTest extends TestCase
         $this->assertEquals('ASC', $attribute->order);
     }
 
-    public function testConstructWithoutOrder()
+    public function testConstructWithoutOrder(): void
     {
         $attribute = new OrderBy('foo');
 

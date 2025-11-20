@@ -12,6 +12,7 @@
 
 namespace Hector\DataTypes\Tests\Type;
 
+use stdClass;
 use Hector\DataTypes\Exception\ValueException;
 use Hector\DataTypes\ExpectedType;
 use Hector\DataTypes\Type\SetType;
@@ -19,14 +20,14 @@ use PHPUnit\Framework\TestCase;
 
 class SetTypeTest extends TestCase
 {
-    public function testFromSchema()
+    public function testFromSchema(): void
     {
         $type = new SetType();
 
         $this->assertEquals(['foo', 'bar'], $type->fromSchema('foo, bar'));
     }
 
-    public function testFromSchemaWithNotValid()
+    public function testFromSchemaWithNotValid(): void
     {
         $this->expectException(ValueException::class);
 
@@ -34,7 +35,7 @@ class SetTypeTest extends TestCase
         $type->fromSchema(1);
     }
 
-    public function testFromSchemaWithNotScalar()
+    public function testFromSchemaWithNotScalar(): void
     {
         $this->expectException(ValueException::class);
 
@@ -42,7 +43,7 @@ class SetTypeTest extends TestCase
         $type->fromSchema(['foo']);
     }
 
-    public function testFromSchemaWithDeclaredTypeBuiltinArray()
+    public function testFromSchemaWithDeclaredTypeBuiltinArray(): void
     {
         $expectedType = new ExpectedType('array', false, true);
         $type = new SetType();
@@ -50,7 +51,7 @@ class SetTypeTest extends TestCase
         $this->assertEquals(['foo', 'bar'], $type->fromSchema('foo, bar', $expectedType));
     }
 
-    public function testFromSchemaWithDeclaredTypeBuiltinString()
+    public function testFromSchemaWithDeclaredTypeBuiltinString(): void
     {
         $expectedType = new ExpectedType('string', false, true);
         $type = new SetType();
@@ -58,7 +59,7 @@ class SetTypeTest extends TestCase
         $this->assertEquals('foo,bar', $type->fromSchema('foo, bar', $expectedType));
     }
 
-    public function testFromSchemaWithDeclaredTypeBuiltinInvalid()
+    public function testFromSchemaWithDeclaredTypeBuiltinInvalid(): void
     {
         $this->expectException(ValueException::class);
 
@@ -68,16 +69,16 @@ class SetTypeTest extends TestCase
         $type->fromSchema('foo, bar', $expectedType);
     }
 
-    public function testFromSchemaWithDeclaredTypeBuiltinAndBadValue()
+    public function testFromSchemaWithDeclaredTypeBuiltinAndBadValue(): void
     {
         $this->expectException(ValueException::class);
         $expectedType = new ExpectedType('string', false, true);
 
         $type = new SetType();
-        $type->fromSchema(new \stdClass(), $expectedType);
+        $type->fromSchema(new stdClass(), $expectedType);
     }
 
-    public function testFromSchemaWithDeclaredTypeNotBuiltin()
+    public function testFromSchemaWithDeclaredTypeNotBuiltin(): void
     {
         $this->expectException(ValueException::class);
 
@@ -87,14 +88,14 @@ class SetTypeTest extends TestCase
         $type->fromSchema('foo, bar', $expectedType);
     }
 
-    public function testToSchema()
+    public function testToSchema(): void
     {
         $type = new SetType();
 
         $this->assertSame('foo,bar', $type->toSchema(['foo', 'bar']));
     }
 
-    public function testToSchemaWithBadType()
+    public function testToSchemaWithBadType(): void
     {
         $this->expectException(ValueException::class);
 
@@ -105,7 +106,7 @@ class SetTypeTest extends TestCase
         $type->toSchema($fakeObject);
     }
 
-    public function testEquals()
+    public function testEquals(): void
     {
         $type = new SetType();
 
