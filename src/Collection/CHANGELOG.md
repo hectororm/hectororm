@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Improve PHPDoc to enable IDE type inference for concrete entity classes
+- Performed code cleanup and refactoring using Rector
+
 ## [1.0.0] - 2025-07-02
 
 Initial release.

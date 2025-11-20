@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Perf: replace a loop with foreach to avoid repeated count()
+- Performed code cleanup and refactoring using Rector
+
 ## [1.0.0] - 2025-07-02
 
 Initial release.

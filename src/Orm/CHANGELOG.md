@@ -10,11 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Parameter `$cascade` to method `Entity::save()` (default to false) to persist related entities
-- Improve PHPDoc to enable IDE type inference for concrete entity classes
 
 ### Changed
 
 - `*Many` relationships also accept an `array` instead of just `Collection`
+- Improve PHPDoc to enable IDE type inference for concrete entity classes
+- Performed code cleanup and refactoring using Rector
 
 ## [1.0.0] - 2025-07-02
 
