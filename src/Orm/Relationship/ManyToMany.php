@@ -153,11 +153,11 @@ class ManyToMany extends Relationship
                 $pivotTable->getFullName(true),
                 array_combine(
                     array_map(
-                        fn($value) => $pivotTable->getColumn($value)->getName(true, $aliasPivot),
+                        fn($value): string => $pivotTable->getColumn($value)->getName(true, $aliasPivot),
                         $this->pivotSourceColumns
                     ),
                     array_map(
-                        fn($value) => $this->targetEntity
+                        fn($value): string => $this->targetEntity
                             ->getTable()
                             ->getColumn($value)
                             ->getName(true, Builder::FROM_ALIAS),
@@ -208,11 +208,11 @@ class ManyToMany extends Relationship
                     $pivotTable->getFullName(true),
                     array_combine(
                         array_map(
-                            fn($value) => $sourceTable->getColumn($value)->getName(true, $initialAlias),
+                            fn($value): string => $sourceTable->getColumn($value)->getName(true, $initialAlias),
                             $this->getSourceColumns()
                         ),
                         array_map(
-                            fn($value) => $pivotTable->getColumn($value)->getName(true, $aliasPivot),
+                            fn($value): string => $pivotTable->getColumn($value)->getName(true, $aliasPivot),
                             $this->getPivotTargetColumns()
                         ),
                     ),
@@ -221,11 +221,11 @@ class ManyToMany extends Relationship
                     $tableName,
                     array_combine(
                         array_map(
-                            fn($value) => $pivotTable->getColumn($value)->getName(true, $aliasPivot),
+                            fn($value): string => $pivotTable->getColumn($value)->getName(true, $aliasPivot),
                             $this->getPivotSourceColumns()
                         ),
                         array_map(
-                            fn($value) => $targetTable->getColumn($value)->getName(true, $alias),
+                            fn($value): string => $targetTable->getColumn($value)->getName(true, $alias),
                             $this->getTargetColumns()
                         ),
                     ),

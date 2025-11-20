@@ -155,7 +155,7 @@ class QueryBuilderTest extends TestCase
         );
         $this->assertEquals(
             ['_h_0' => 'baz'],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
 
         $binds = new BindParamList();
@@ -165,7 +165,7 @@ class QueryBuilderTest extends TestCase
         );
         $this->assertEquals(
             ['_h_0' => 'baz'],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 
@@ -177,7 +177,7 @@ class QueryBuilderTest extends TestCase
         $queryBuilder = new QueryBuilder($this->getConnection());
         $queryBuilder->from('`foo`')
             ->where(
-                fn() => 'bar',
+                fn(): string => 'bar',
                 'test'
             );
 
@@ -188,7 +188,7 @@ class QueryBuilderTest extends TestCase
         );
         $this->assertEquals(
             ['_h_0' => 'test'],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 
@@ -201,7 +201,7 @@ class QueryBuilderTest extends TestCase
         $queryBuilder->from('`foo`')
             ->where(
                 'bar',
-                fn() => 'test'
+                fn(): string => 'test'
             );
 
         $binds = new BindParamList();
@@ -211,7 +211,7 @@ class QueryBuilderTest extends TestCase
         );
         $this->assertEquals(
             ['_h_0' => 'test'],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 
@@ -333,7 +333,7 @@ class QueryBuilderTest extends TestCase
         );
         $this->assertEquals(
             ['_h_0' => 'baz'],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 
@@ -349,7 +349,7 @@ class QueryBuilderTest extends TestCase
         );
         $this->assertEquals(
             ['_h_0' => 'bar_value'],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $queryBuilder->input_parameters)
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $queryBuilder->input_parameters)
         );
     }
 
@@ -365,7 +365,7 @@ class QueryBuilderTest extends TestCase
         );
         $this->assertEquals(
             ['_h_0' => 'bar_value'],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $queryBuilder->input_parameters)
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $queryBuilder->input_parameters)
         );
     }
 
@@ -382,7 +382,7 @@ class QueryBuilderTest extends TestCase
         );
         $this->assertEquals(
             ['_h_0' => 'bar_value'],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $queryBuilder->input_parameters)
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $queryBuilder->input_parameters)
         );
     }
 
@@ -402,7 +402,7 @@ class QueryBuilderTest extends TestCase
         );
         $this->assertEquals(
             ['_h_0' => 'bar_value'],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 }

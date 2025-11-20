@@ -67,7 +67,7 @@ class GroupTest extends TestCase
         );
         $this->assertEquals(
             ['test' => 'value'],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 

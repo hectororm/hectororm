@@ -108,7 +108,7 @@ class WhereTest extends TestCase
         );
         $this->assertEquals(
             ['_h_0' => 'bar'],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 
@@ -126,7 +126,7 @@ class WhereTest extends TestCase
         );
         $this->assertEquals(
             ['_h_0' => 'bar'],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 
@@ -185,7 +185,7 @@ class WhereTest extends TestCase
         );
         $this->assertEquals(
             ['_h_0' => 'bar'],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 
@@ -203,7 +203,7 @@ class WhereTest extends TestCase
         );
         $this->assertEquals(
             ['_h_0' => 'bar'],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 
@@ -231,7 +231,7 @@ class WhereTest extends TestCase
                 '_h_1' => 'qux',
                 '_h_2' => 'quux'
             ],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 
@@ -254,7 +254,7 @@ class WhereTest extends TestCase
                 '_h_2' => 'qux',
                 '_h_3' => 'foo'
             ],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 
@@ -275,7 +275,7 @@ class WhereTest extends TestCase
                 '_h_0' => 'bar',
                 '_h_1' => 'baz'
             ],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 
@@ -293,7 +293,7 @@ class WhereTest extends TestCase
         );
         $this->assertEquals(
             [],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 
@@ -311,7 +311,7 @@ class WhereTest extends TestCase
         );
         $this->assertEquals(
             [],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 
@@ -332,7 +332,7 @@ class WhereTest extends TestCase
                 '_h_0' => 1,
                 '_h_1' => 10
             ],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 
@@ -353,7 +353,7 @@ class WhereTest extends TestCase
                 '_h_0' => 1,
                 '_h_1' => 10
             ],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 
@@ -373,7 +373,7 @@ class WhereTest extends TestCase
             [
                 '_h_0' => 10
             ],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 
@@ -393,7 +393,7 @@ class WhereTest extends TestCase
             [
                 '_h_0' => 10
             ],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 
@@ -411,7 +411,7 @@ class WhereTest extends TestCase
         );
         $this->assertEquals(
             ['_h_0' => 10],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 
@@ -429,7 +429,7 @@ class WhereTest extends TestCase
         );
         $this->assertEquals(
             ['_h_0' => 10],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 
@@ -477,7 +477,7 @@ class WhereTest extends TestCase
         );
         $this->assertEquals(
             ['_h_0' => '%bar%'],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 
@@ -495,7 +495,7 @@ class WhereTest extends TestCase
         );
         $this->assertEquals(
             ['_h_0' => 'bar%'],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 
@@ -513,7 +513,7 @@ class WhereTest extends TestCase
         );
         $this->assertEquals(
             ['_h_0' => '%bar'],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 }

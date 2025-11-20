@@ -435,7 +435,7 @@ abstract class AbstractMapper implements Mapper
      */
     private function extractPrimaryValue(array $values): array
     {
-        $values = array_filter($values, fn($value) => null !== $value);
+        $values = array_filter($values, fn($value): bool => null !== $value);
         $primaryColumns = $this->reflection->getPrimaryIndex()?->getColumnsName();
 
         if (null === $primaryColumns) {
@@ -481,7 +481,7 @@ abstract class AbstractMapper implements Mapper
      */
     protected function quoteArrayValues(array $values): array
     {
-        array_walk($values, fn(&$value) => $value = sprintf('`%s`', $value));
+        array_walk($values, fn(&$value): string => $value = sprintf('`%s`', $value));
 
         return $values;
     }

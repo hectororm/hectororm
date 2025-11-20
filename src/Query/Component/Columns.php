@@ -54,7 +54,7 @@ class Columns extends AbstractComponent implements Countable
     {
         $column =
             array_map(
-                fn($value) => [
+                fn($value): array => [
                     'column' => $value,
                     'alias' => null,
                 ],

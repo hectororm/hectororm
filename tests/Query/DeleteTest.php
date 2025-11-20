@@ -41,7 +41,7 @@ class DeleteTest extends TestCase
         );
         $this->assertEquals(
             [],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 
@@ -57,7 +57,7 @@ class DeleteTest extends TestCase
         );
         $this->assertEquals(
             [],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 
@@ -74,7 +74,7 @@ class DeleteTest extends TestCase
         );
         $this->assertEquals(
             ['_h_0' => 'value'],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 
@@ -92,7 +92,7 @@ class DeleteTest extends TestCase
         );
         $this->assertEquals(
             ['_h_0' => 'value'],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 
@@ -110,7 +110,7 @@ class DeleteTest extends TestCase
         );
         $this->assertEquals(
             [],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 }

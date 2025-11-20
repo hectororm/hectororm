@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace Hector\Query\Statement;
 
+use Hector\Connection\Bind\BindParam;
 use Hector\Connection\Bind\BindParamList;
 use Hector\Query\StatementInterface;
 
@@ -35,7 +36,7 @@ class Raw implements StatementInterface
     public function getStatement(BindParamList $bindParams, bool $encapsulate = false): ?string
     {
         array_map(
-            fn($name, $value) => $bindParams->add($value, name: (string)$name),
+            fn($name, $value): BindParam => $bindParams->add($value, name: (string)$name),
             array_keys($this->binds),
             array_values($this->binds)
         );

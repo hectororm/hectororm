@@ -288,8 +288,8 @@ class LazyCollection implements CollectionInterface
     {
         if (false === is_callable($needle)) {
             $needle = match ($strict) {
-                true => fn(mixed $value) => $value === $needle,
-                false => fn(mixed $value) => $value == $needle
+                true => fn(mixed $value): bool => $value === $needle,
+                false => fn(mixed $value): bool => $value == $needle
             };
         }
 

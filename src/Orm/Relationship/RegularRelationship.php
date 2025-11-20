@@ -101,11 +101,11 @@ abstract class RegularRelationship extends Relationship
                 $tableName,
                 array_combine(
                     array_map(
-                        fn($value) => $sourceTable->getColumn($value)->getName(true, $initialAlias),
+                        fn($value): string => $sourceTable->getColumn($value)->getName(true, $initialAlias),
                         $this->getSourceColumns()
                     ),
                     array_map(
-                        fn($value) => $targetTable->getColumn($value)->getName(true, $alias),
+                        fn($value): string => $targetTable->getColumn($value)->getName(true, $alias),
                         $this->getTargetColumns()
                     ),
                 ),

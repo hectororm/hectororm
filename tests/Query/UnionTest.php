@@ -48,7 +48,7 @@ class UnionTest extends TestCase
         );
         $this->assertEquals(
             ['_h_0' => 'baz', '_h_1' => 'baz'],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 
@@ -75,7 +75,7 @@ class UnionTest extends TestCase
         );
         $this->assertEquals(
             ['_h_0' => 'baz', '_h_1' => 'baz'],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 
@@ -101,7 +101,7 @@ class UnionTest extends TestCase
         );
         $this->assertEquals(
             ['_h_0' => 'baz', '_h_1' => 'baz'],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 
@@ -132,7 +132,7 @@ class UnionTest extends TestCase
         );
         $this->assertEquals(
             ['_h_0' => 'baz', '_h_1' => 'baz'],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 }

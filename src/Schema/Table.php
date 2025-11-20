@@ -202,7 +202,7 @@ class Table implements Countable, IteratorAggregate
      */
     public function getColumnsName(bool $quoted = false, ?string $tableAlias = null): array
     {
-        return array_values(array_map(fn(Column $column) => $column->getName($quoted, $tableAlias), $this->columns));
+        return array_values(array_map(fn(Column $column): string => $column->getName($quoted, $tableAlias), $this->columns));
     }
 
     /**

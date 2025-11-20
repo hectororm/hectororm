@@ -27,7 +27,7 @@ class RawTest extends TestCase
         $this->assertEquals('UNIX_TIMESTAMP(?)', $raw->getStatement($binds));
         $this->assertEquals(
             [$date],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 
@@ -39,7 +39,7 @@ class RawTest extends TestCase
         $this->assertEquals('UNIX_TIMESTAMP(?)', $raw->getStatement($binds, true));
         $this->assertEquals(
             [$date],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 }

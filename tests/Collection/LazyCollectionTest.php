@@ -61,7 +61,7 @@ class LazyCollectionTest extends TestCase
     public function testConstruct_notIterable(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        new LazyCollection(fn() => new stdClass());
+        new LazyCollection(fn(): stdClass => new stdClass());
     }
 
     public function testGetIterator(): void

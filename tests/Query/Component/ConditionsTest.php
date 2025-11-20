@@ -70,7 +70,7 @@ class ConditionsTest extends TestCase
         );
         $this->assertEquals(
             ['_h_0' => 'test'],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 
@@ -87,7 +87,7 @@ class ConditionsTest extends TestCase
         );
         $this->assertEquals(
             ['_h_0' => 'test'],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 
@@ -103,7 +103,7 @@ class ConditionsTest extends TestCase
         );
         $this->assertEquals(
             ['_h_0' => 'bar'],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 
@@ -132,7 +132,7 @@ class ConditionsTest extends TestCase
         );
         $this->assertEquals(
             ['_h_0' => 1, '_h_1' => 2],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 
@@ -156,7 +156,7 @@ class ConditionsTest extends TestCase
         );
         $this->assertEquals(
             ['_h_0' => $obj, '_h_1' => $obj, '_h_2' => $obj],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 
@@ -177,7 +177,7 @@ class ConditionsTest extends TestCase
         );
         $this->assertEquals(
             ['_h_0' => $obj],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 
@@ -197,7 +197,7 @@ class ConditionsTest extends TestCase
         );
         $this->assertEquals(
             ['_h_0' => FakeEnum::FOO->value, '_h_1' => FakeEnum::BAR->value],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 
@@ -237,7 +237,7 @@ class ConditionsTest extends TestCase
                 '_h_6' => 4,
                 '_h_7' => 'test'
             ],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 
@@ -259,7 +259,7 @@ class ConditionsTest extends TestCase
         );
         $this->assertEquals(
             ['_h_0' => 1],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 
@@ -282,7 +282,7 @@ class ConditionsTest extends TestCase
                 '_h_4' => 5,
                 '_h_5' => 6
             ],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 
@@ -307,7 +307,7 @@ class ConditionsTest extends TestCase
         );
         $this->assertEquals(
             ['_h_0' => 'bar'],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
         $this->assertEquals(1, $nbCallbackCalled);
     }
@@ -335,7 +335,7 @@ class ConditionsTest extends TestCase
         );
         $this->assertEquals(
             ['_h_0' => 'bar'],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
         $this->assertEquals(1, $nbCallbackCalled);
     }

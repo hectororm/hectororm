@@ -257,7 +257,7 @@ abstract class Relationship
                 throw RelationException::notAttemptedColumns($this->name, $columns, $entity::class);
             }
 
-            if (empty(array_filter($entityValue, fn($value) => null !== $value))) {
+            if (empty(array_filter($entityValue, fn($value): bool => null !== $value))) {
                 continue;
             }
 
@@ -278,7 +278,7 @@ abstract class Relationship
     protected function hasRelationValues(Entity $entity): bool
     {
         $values = Orm::get()->getMapper($entity)->collectEntity($entity, $this->getSourceColumns());
-        $values = array_filter($values, fn($value) => null !== $value);
+        $values = array_filter($values, fn($value): bool => null !== $value);
 
         return count($values) === count($this->getSourceColumns());
     }

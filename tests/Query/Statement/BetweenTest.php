@@ -28,7 +28,7 @@ class BetweenTest extends TestCase
         $this->assertEquals('foo BETWEEN :_h_0 AND :_h_1', $between->getStatement($binds));
         $this->assertEquals(
             ['_h_0' => 1, '_h_1' => 10],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 
@@ -40,7 +40,7 @@ class BetweenTest extends TestCase
         $this->assertEquals('foo BETWEEN :_h_0 AND :_h_1', $between->getStatement($binds, true));
         $this->assertEquals(
             ['_h_0' => 1, '_h_1' => 10],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 
@@ -61,7 +61,7 @@ class BetweenTest extends TestCase
         );
         $this->assertEquals(
             ['_h_0' => 'qux', '_h_1' => 1, '_h_2' => 10],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 }

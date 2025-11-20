@@ -97,7 +97,7 @@ class ColumnsTest extends TestCase
         );
         $this->assertEquals(
             ['_h_0' => 1],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 }

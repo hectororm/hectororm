@@ -40,7 +40,7 @@ class Conditions extends \Hector\Query\Component\Conditions
         if (is_string($column) && $this->isConditionOnRelationship($column)) {
             $columns = explode('.', $column);
             $columns = array_map(
-                fn(string $name) => Helper::trim($name),
+                fn(string $name): ?string => Helper::trim($name),
                 $columns
             );
             $depth = count($columns) - 1;

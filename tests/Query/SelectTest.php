@@ -114,7 +114,7 @@ class SelectTest extends TestCase
         );
         $this->assertEquals(
             ['_h_0' => 'baz_value'],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 
@@ -135,7 +135,7 @@ class SelectTest extends TestCase
         );
         $this->assertEquals(
             ['_h_0' => 'baz_value'],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 
@@ -156,7 +156,7 @@ class SelectTest extends TestCase
         );
         $this->assertEquals(
             ['_h_0' => 'baz_value', '_h_1' => 'bar_value'],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 

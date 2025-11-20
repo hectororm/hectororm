@@ -51,7 +51,7 @@ class UpdateTest extends TestCase
         );
         $this->assertEquals(
             ['_h_0' => 'value_bar'],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 
@@ -72,7 +72,7 @@ class UpdateTest extends TestCase
                 '_h_0' => 'value_bar',
                 '_h_1' => 'value_baz'
             ],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 
@@ -97,7 +97,7 @@ class UpdateTest extends TestCase
                 '_h_1' => 'value_baz',
                 '_h_2' => 1
             ],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 
@@ -114,7 +114,7 @@ class UpdateTest extends TestCase
         );
         $this->assertEquals(
             ['_h_0' => 'value_bar'],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 }

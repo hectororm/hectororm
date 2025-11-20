@@ -73,12 +73,12 @@ class PivotData
     {
         $data = array_filter(
             $data,
-            fn($key) => str_starts_with($key, $prefix),
+            fn($key): bool => str_starts_with($key, $prefix),
             ARRAY_FILTER_USE_KEY
         );
 
         $keys = array_keys($data);
-        array_walk($keys, fn(&$key) => $key = substr($key, strlen($prefix)));
+        array_walk($keys, fn(&$key): string => $key = substr($key, strlen($prefix)));
 
         return array_combine($keys, array_values($data));
     }

@@ -117,7 +117,7 @@ abstract class AbstractGenerator implements GeneratorInterface
             }
             uasort(
                 $columns,
-                fn(Column $column1, Column $column2) => $column1->getPosition() <=> $column2->getPosition()
+                fn(Column $column1, Column $column2): int => $column1->getPosition() <=> $column2->getPosition()
             );
 
             $indexes = [];

@@ -51,7 +51,7 @@ class MagicMapper extends AbstractMapper
             // Filter bad properties
             $data = array_filter(
                 $data,
-                fn($key) => $this->reflection->getTable()->hasColumn($key),
+                fn($key): bool => $this->reflection->getTable()->hasColumn($key),
                 ARRAY_FILTER_USE_KEY
             );
 

@@ -222,8 +222,8 @@ class CollectionInterfaceTest extends TestCase
             ],
             (new $class($arr))
                 ->multiSort(
-                    fn($value1, $value2) => $value1['name'] <=> $value2['name'],
-                    fn($value1, $value2) => $value1['nb'] <=> $value2['nb'],
+                    fn($value1, $value2): int => $value1['name'] <=> $value2['name'],
+                    fn($value1, $value2): int => $value1['nb'] <=> $value2['nb'],
                 )->getArrayCopy()
         );
     }
@@ -237,7 +237,7 @@ class CollectionInterfaceTest extends TestCase
 
         $this->assertSame(
             ['foo', 3 => 'qux'],
-            $collection->filter(fn($value) => in_array($value, ['foo', 'qux']))->getArrayCopy()
+            $collection->filter(fn($value): bool => in_array($value, ['foo', 'qux']))->getArrayCopy()
         );
 
         $collection = new $class(['foo', 0, 'baz', false, '']);
@@ -281,7 +281,7 @@ class CollectionInterfaceTest extends TestCase
      */
     public function testMap(string $class): void
     {
-        $callback = fn($value) => $value . 'Mapped';
+        $callback = fn($value): string => $value . 'Mapped';
         $collection = new $class($arr = ['foo', 'bar', 'baz', 'qux', 'quxx']);
 
         $this->assertSame(array_map($callback, $arr), $collection->map($callback)->getArrayCopy());
@@ -293,7 +293,7 @@ class CollectionInterfaceTest extends TestCase
     public function testEach(string $class): void
     {
         $result = 0;
-        $callback = fn($value) => $result++;
+        $callback = fn($value): int => $result++;
         $collection = new $class($arr = ['foo', 'bar', 'baz', 'qux', 'quxx']);
 
         $collection = $collection->each($callback);
@@ -307,7 +307,7 @@ class CollectionInterfaceTest extends TestCase
     public function testSearch(string $class): void
     {
         $arr = ['foo', 'bar', '1', 1, 'quxx'];
-        $callback = fn($value) => str_starts_with($value, 'ba');
+        $callback = fn($value): bool => str_starts_with($value, 'ba');
 
         $this->assertSame(2, (new $class($arr))->search(1));
         $this->assertSame(3, (new $class($arr))->search(1, true));
@@ -335,7 +335,7 @@ class CollectionInterfaceTest extends TestCase
     public function testFirst(string $class): void
     {
         $arr = ['foo', 'bar', 'baz', 'qux', 'quxx'];
-        $callback = fn($value) => str_starts_with($value, 'ba');
+        $callback = fn($value): bool => str_starts_with($value, 'ba');
 
         $this->assertEquals('bar', (new $class($arr))->first($callback));
         $this->assertEquals('foo', (new $class($arr))->first());
@@ -350,7 +350,7 @@ class CollectionInterfaceTest extends TestCase
     public function testLast(string $class): void
     {
         $arr = ['foo', 'bar', 'baz', 'qux', 'quxx'];
-        $callback = fn($value) => str_starts_with($value, 'ba');
+        $callback = fn($value): bool => str_starts_with($value, 'ba');
 
         $this->assertEquals('baz', (new $class($arr))->last($callback));
         $this->assertEquals('quxx', (new $class($arr))->last());
@@ -706,15 +706,15 @@ class CollectionInterfaceTest extends TestCase
 
         $this->assertEquals(
             15,
-            (new $class($arr))->reduce(fn($carry, $item) => $carry + $item)
+            (new $class($arr))->reduce(fn($carry, $item): float|int|array => $carry + $item)
         );
         $this->assertEquals(
             1200,
-            (new $class($arr))->reduce(fn($carry, $item) => $carry * $item, 10)
+            (new $class($arr))->reduce(fn($carry, $item): int|float => $carry * $item, 10)
         );
         $this->assertEquals(
             'Empty collection',
-            (new $class())->reduce(fn($carry, $item) => $carry * $item, 'Empty collection')
+            (new $class())->reduce(fn($carry, $item): int|float => $carry * $item, 'Empty collection')
         );
     }
 }

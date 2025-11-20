@@ -42,7 +42,7 @@ class UpdateAssignmentsTest extends TestCase
         );
         $this->assertEquals(
             ['_h_0' => 'value'],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 
@@ -59,7 +59,7 @@ class UpdateAssignmentsTest extends TestCase
         );
         $this->assertEquals(
             ['_h_0' => 'value', '_h_1' => 'value2'],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 
@@ -81,7 +81,7 @@ class UpdateAssignmentsTest extends TestCase
         );
         $this->assertEquals(
             ['_h_0' => 'value', '2020-04-10', '_h_1' => 'value3'],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 
@@ -101,7 +101,7 @@ class UpdateAssignmentsTest extends TestCase
         );
         $this->assertEquals(
             ['_h_0' => 1],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 
@@ -122,7 +122,7 @@ class UpdateAssignmentsTest extends TestCase
         );
         $this->assertEquals(
             ['_h_0' => null, '_h_1' => 'baz'],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 }

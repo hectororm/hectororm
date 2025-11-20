@@ -88,7 +88,7 @@ class MySQL extends AbstractGenerator
             ];
         }
 
-        usort($tablesInfo, fn($table1, $table2) => strcmp($table1['name'], $table2['name']));
+        usort($tablesInfo, fn($table1, $table2): int => strcmp($table1['name'], $table2['name']));
 
         return $tablesInfo;
     }

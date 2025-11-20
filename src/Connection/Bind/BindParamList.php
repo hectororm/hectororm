@@ -30,7 +30,7 @@ class BindParamList implements Countable, IteratorAggregate
         if (!empty($values)) {
             $valuesIsList = b_array_is_list($values);
             array_map(
-                fn($name, $value) => $this->add(
+                fn($name, $value): BindParam => $this->add(
                     value: $value,
                     name: $valuesIsList ? $name + 1 : $name
                 ),

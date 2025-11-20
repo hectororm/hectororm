@@ -92,7 +92,7 @@ class OrderTest extends TestCase
         );
         $this->assertEquals(
             ['foo'],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy())
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
 }

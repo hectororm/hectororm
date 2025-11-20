@@ -77,7 +77,7 @@ class ManyToOne extends RegularRelationship
         $foreigners = $this->tidyEntities($this->targetColumns, ...$foreigners);
 
         foreach ($entities as $entity) {
-            $foreignersFiltered = array_filter($foreigners, fn($foreign) => $foreign['columns'] == $entity['columns']);
+            $foreignersFiltered = array_filter($foreigners, fn($foreign): bool => $foreign['columns'] == $entity['columns']);
             $foreignersFiltered = array_column($foreignersFiltered, 'entity');
 
             $entity['entity']->getRelated()->set($this->getName(), reset($foreignersFiltered) ?: null);

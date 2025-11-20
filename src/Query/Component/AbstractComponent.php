@@ -105,8 +105,8 @@ abstract class AbstractComponent implements StatementInterface
             $statementValues = [];
             foreach ($value as &$subValue) {
                 if (is_array($subValue)) {
-                    $paramsName = array_map(fn($value) => $bindParams->add($value)->getName(), $subValue);
-                    $statementValues[] = '(' . implode(', ', array_map(fn($name) => ':' . $name, $paramsName)) . ')';
+                    $paramsName = array_map(fn($value): int|string => $bindParams->add($value)->getName(), $subValue);
+                    $statementValues[] = '(' . implode(', ', array_map(fn($name): string => ':' . $name, $paramsName)) . ')';
                     continue;
                 }
 

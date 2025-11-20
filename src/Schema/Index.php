@@ -131,11 +131,11 @@ class Index
     {
         $columnsPosition = array_flip($this->getColumnsName());
         $columns = iterator_to_array($this->getTable()->getColumns());
-        $columns = array_filter($columns, fn(Column $column) => $this->hasColumn($column));
+        $columns = array_filter($columns, fn(Column $column): bool => $this->hasColumn($column));
 
         usort(
             $columns,
-            fn(Column $column1, Column $column2) => strcmp(
+            fn(Column $column1, Column $column2): int => strcmp(
                 $columnsPosition[$column1->getName()],
                 $columnsPosition[$column2->getName()]
             )

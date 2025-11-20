@@ -67,7 +67,7 @@ trait BindParams
     private function mergeBindParamsTo(BindParamList $binds): void
     {
         array_map(
-            fn(BindParam $param) => $binds->add($param),
+            fn(BindParam $param): BindParam => $binds->add($param),
             $this->getBindParams()->getArrayCopy(),
         );
     }

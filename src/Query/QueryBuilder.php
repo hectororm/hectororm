@@ -158,7 +158,7 @@ class QueryBuilder implements StatementInterface
         $queryBuilder = clone $this;
 
         $select = new Select($this->getBindParams());
-        $select->distinct(fn() => $queryBuilder->distinct);
+        $select->distinct(fn(): bool => $queryBuilder->distinct);
         $select->columns = $queryBuilder->columns;
         $select->from = $queryBuilder->from;
         $select->join = $queryBuilder->join;
@@ -229,7 +229,7 @@ class QueryBuilder implements StatementInterface
         $queryBuilder = clone $this;
 
         $insert = new Insert($this->getBindParams());
-        $insert->ignore(fn() => $queryBuilder->ignore);
+        $insert->ignore(fn(): bool => $queryBuilder->ignore);
         $insert->from = clone $this->from;
         $insert->from->useAlias(false);
 

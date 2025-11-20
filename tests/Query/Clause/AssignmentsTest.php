@@ -52,7 +52,7 @@ class AssignmentsTest extends TestCase
             [
                 '_h_0' => 'bar',
             ],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy()),
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy()),
         );
     }
 
@@ -75,7 +75,7 @@ class AssignmentsTest extends TestCase
                 '_h_0' => 'qux',
                 '_h_1' => 'baz'
             ],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy()),
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy()),
         );
     }
 
@@ -101,7 +101,7 @@ class AssignmentsTest extends TestCase
             [
                 '_h_0' => 1,
             ],
-            array_map(fn(BindParam $bind) => $bind->getValue(), $binds->getArrayCopy()),
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy()),
         );
     }
 }
