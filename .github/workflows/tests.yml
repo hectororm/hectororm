@@ -19,10 +19,12 @@ jobs:
         php-versions: [ '8.0', '8.1', '8.2', '8.3', '8.4', '8.5' ]
         stability: [ 'prefer-lowest', 'prefer-stable' ]
         mysql-versions: [
+          { distribution: 'mysql', version: '9.5' },
           { distribution: 'mysql', version: '8.4' },
           { distribution: 'mysql', version: '8.0' },
           { distribution: 'mysql', version: '5.7' },
-          { distribution: 'mariadb', version: '11.7' },
+          { distribution: 'mariadb', version: '12.1' },
+          { distribution: 'mariadb', version: '11.8' },
           { distribution: 'mariadb', version: '11.4' },
           { distribution: 'mariadb', version: '10.11' },
           { distribution: 'mariadb', version: '10.6' },
