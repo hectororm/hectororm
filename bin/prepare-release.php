@@ -7,11 +7,9 @@
 //   php bin/prepare-release.php 1.1.0 2025-09-19 [--dry-run]
 //   php bin/prepare-release.php 1.1.0 2025-09-19 Orm Query
 //
-// Logic per package:
-// 1. Checks if target version (e.g. 1.1.0) already exists in CHANGELOG.md.
-// 2. If EXISTS: Merges "Unreleased" items into existing 1.1.0 items, then clears "Unreleased".
-// 3. If NOT EXISTS: Renames "Unreleased" to 1.1.0 and creates a new empty "Unreleased".
-// 4. Aggregates the final content of 1.1.0 into the root CHANGELOG.md with proper spacing.
+// Logic:
+// 1. For each package: Merge Unreleased -> Version, collect items.
+// 2. For Root: Merge (Existing Root Version + Root Unreleased + Collected Items) -> Root Version.
 
 declare(strict_types=1);
 
@@ -140,8 +138,6 @@ function rebuildBody(array $categories): string {
         // Add the subsection block + an extra newline to separate from next section
         $output .= $sb . "\n";
     }
-
-    // Remove the very last newline to avoid double spacing at end of file/block
     return trim($output);
 }
 
@@ -150,7 +146,9 @@ function rebuildBody(array $categories): string {
 echo "Preparing release $version ($date)...\n";
 if ($dryRun) echo "!! DRY RUN MODE - No files will be written !!\n";
 
-$buckets = []; // For Root Changelog aggregation
+$packageBuckets = []; // New items from packages
+
+// --- PART 1: PROCESS PACKAGES ---
 
 foreach ($pkgs as $pkg) {
     $clPath = $srcDir . '/' . $pkg . '/CHANGELOG.md';
@@ -174,22 +172,19 @@ foreach ($pkgs as $pkg) {
         $versionItems    = parseKeepAChangelog($blockVersion['body']);
 
         $mergedItems = array_merge_recursive($versionItems, $unreleasedItems);
-
         $finalVersionBody = rebuildBody($mergedItems);
         if ($finalVersionBody === '') $finalVersionBody = PLACEHOLDER;
 
         $newVersionBlock = "## [$version] - $date\n\n" . $finalVersionBody . "\n\n";
-
-        // Empty Unreleased block (no placeholder)
         $newUnreleasedBlock = "## [Unreleased]\n\n";
 
+        // Reconstruct content
         $head = substr($content, 0, $blockUnreleased['start']);
         $between = substr($content, $blockUnreleased['start'] + $blockUnreleased['length'], $blockVersion['start'] - ($blockUnreleased['start'] + $blockUnreleased['length']));
         $tail = substr($content, $blockVersion['start'] + $blockVersion['length']);
 
         $newPkgContent = $head . $newUnreleasedBlock . $between . $newVersionBlock . $tail;
         $actionLog = "Merged 'Unreleased' into existing [$version]";
-
     }
     // CASE 2: Version does not exist -> RENAME Unreleased
     elseif ($blockUnreleased) {
@@ -199,7 +194,6 @@ foreach ($pkgs as $pkg) {
         }
         $finalVersionBody = $body;
 
-        // Empty Unreleased block (no placeholder)
         $replacement = "## [Unreleased]\n\n";
         $replacement .= "## [$version] - $date\n\n";
         $replacement .= $body . "\n\n";
@@ -219,60 +213,100 @@ foreach ($pkgs as $pkg) {
         } else {
             echo "  [DRY]  $pkg: $actionLog\n";
         }
-    } else {
-        echo "  [SKIP] $pkg (No content changes detected)\n";
     }
 
-    // AGGREGATION Logic
-    if ($finalVersionBody === '' || trim($finalVersionBody) === PLACEHOLDER) {
-        continue;
-    }
-
-    $cats = parseKeepAChangelog($finalVersionBody);
-    $prefix = 'hectororm/' . strtolower($pkg);
-
-    foreach ($cats as $cat => $items) {
-        foreach ($items as $it) {
-            if (str_starts_with($it, $prefix)) {
-                $buckets[$cat][] = $it;
-            } else {
-                $buckets[$cat][] = "**$prefix**: " . $it;
+    // Collect items for Root Aggregation
+    if ($finalVersionBody !== '' && trim($finalVersionBody) !== PLACEHOLDER) {
+        $cats = parseKeepAChangelog($finalVersionBody);
+        $prefix = 'hectororm/' . strtolower($pkg);
+        foreach ($cats as $cat => $items) {
+            foreach ($items as $it) {
+                // Prevent double prefixing
+                if (str_starts_with($it, $prefix)) {
+                    $packageBuckets[$cat][] = $it;
+                } else {
+                    $packageBuckets[$cat][] = "**$prefix**: " . $it;
+                }
             }
         }
     }
 }
 
-// ------- Root Changelog Update --------------------------------------------
+// --- PART 2: UPDATE ROOT CHANGELOG ---
 
-if (empty($buckets)) {
-    echo "No changes found to aggregate in root CHANGELOG.\n";
+if (!is_file($rootFile)) {
+    echo "Root CHANGELOG.md not found.\n";
     exit(0);
 }
 
-// Rebuild with explicit double spacing logic
-$newRootSection = "## [$version] - $date\n\n" . rebuildBody($buckets) . "\n\n";
+$rootContent = normEol(file_get_contents($rootFile));
 
-$rootContent = is_file($rootFile) ? normEol(file_get_contents($rootFile)) : '';
+// Regex for Root sections
+$reRootUnreleased = '/^##\s*\[?Unreleased\]?\s*$/m';
+$reRootVersion    = '/^##\s*\[' . preg_quote($version, '/') . '\]\s*(?:-\s*[\d-]{10})?\s*$/m';
 
-if (preg_match('/^##\s*\[' . preg_quote($version, '/') . '\]/m', $rootContent)) {
-    $newRootContent = preg_replace(
-        '/^##\s*\[' . preg_quote($version, '/') . '\].*?(?=^##\s*\[|\z)/ims',
-        $newRootSection,
-        $rootContent,
-        1
-    );
-    $action = "Updated existing root section";
+$blkRootUnrel = extractRawSection($rootContent, $reRootUnreleased);
+$blkRootVer   = extractRawSection($rootContent, $reRootVersion);
+
+$existingRootItems = [];
+$unreleasedRootItems = [];
+
+if ($blkRootVer) {
+    $existingRootItems = parseKeepAChangelog($blkRootVer['body']);
 }
-elseif (preg_match('/^##\s*\[?Unreleased\]?\s*\n(.*?)(?=^##\s*\[|\z)/ims', $rootContent, $m, PREG_OFFSET_CAPTURE)) {
-    $insertPos = (int)$m[0][1] + strlen($m[0][0]);
-    // Ensure we have breathing room before the insertion if needed
-    if (!str_ends_with(substr($rootContent, 0, $insertPos), "\n\n")) {
-        $newRootSection = "\n" . $newRootSection;
-    }
-    $newRootContent = substr($rootContent, 0, $insertPos) . $newRootSection . substr($rootContent, $insertPos);
-    $action = "Added new root section";
+if ($blkRootUnrel) {
+    $unreleasedRootItems = parseKeepAChangelog($blkRootUnrel['body']);
+}
+
+// MERGE: Existing Root Version + Root Unreleased + New Package Items
+$allRootItems = array_merge_recursive($existingRootItems, $unreleasedRootItems, $packageBuckets);
+
+// Deduplicate items (in case script runs multiple times)
+foreach ($allRootItems as $cat => $list) {
+    $allRootItems[$cat] = array_values(array_unique($list));
+}
+
+if (empty($allRootItems)) {
+    echo "No content to update in Root CHANGELOG.\n";
+    exit(0);
+}
+
+$newRootBody = rebuildBody($allRootItems);
+$newRootSection = "## [$version] - $date\n\n" . $newRootBody . "\n\n";
+$emptyUnreleased = "## [Unreleased]\n\n";
+
+$newRootContent = $rootContent;
+$action = "";
+
+if ($blkRootVer && $blkRootUnrel) {
+    // Update both sections
+    // 1. Replace Version
+    $newRootContent = substr_replace($newRootContent, $newRootSection, $blkRootVer['start'], $blkRootVer['length']);
+
+    // Recalculate positions is risky with substr_replace sequentially on raw strings if length changes.
+    // Easier strategy: Replace placeholders or reconstruct.
+    // Let's reconstruct assuming Unreleased is TOP, Version is BELOW.
+
+    $head = substr($rootContent, 0, $blkRootUnrel['start']);
+    $between = substr($rootContent, $blkRootUnrel['start'] + $blkRootUnrel['length'], $blkRootVer['start'] - ($blkRootUnrel['start'] + $blkRootUnrel['length']));
+    $tail = substr($rootContent, $blkRootVer['start'] + $blkRootVer['length']);
+
+    $newRootContent = $head . $emptyUnreleased . $between . $newRootSection . $tail;
+    $action = "Merged Unreleased & Existing Version into [$version]";
+
+} elseif ($blkRootVer) {
+    // Just update the version block (no unreleased found or touched)
+    $newRootContent = substr_replace($rootContent, $newRootSection, $blkRootVer['start'], $blkRootVer['length']);
+    $action = "Updated existing [$version] block";
+
+} elseif ($blkRootUnrel) {
+    // Standard Release: Rename Unreleased -> Version, Create new Unreleased
+    $replacement = $emptyUnreleased . $newRootSection;
+    $newRootContent = substr_replace($rootContent, $replacement, $blkRootUnrel['start'], $blkRootUnrel['length']);
+    $action = "Created [$version] from Unreleased + Packages";
+
 } else {
-    echo "Error: Root CHANGELOG.md has no 'Unreleased' section.\n";
+    echo "Error: Root CHANGELOG.md has no 'Unreleased' or '[$version]' section.\n";
     exit(1);
 }
 
