@@ -432,6 +432,18 @@ $collection->reduce(fn($carry, $item) => $carry + $item); // Returns `10`
 
 Similar to `array_reduce()` function.
 
+#### `CollectionInterface::join(string $glue = '', ?string $finalGlue = null): string`
+
+Join collection items as a string.
+
+```php
+$collection = Collection::new(['foo', 'bar', 'baz']);
+$collection->join(', '); // Returns `'foo, bar, baz'`
+$collection->join(', ', ' and '); // Returns `'foo, bar and baz'`
+```
+
+Similar to `implode()` function.
+
 ### `Collection` methods
 
 `Collection` class implement `ArrayAccess` interface to allow to manipulate collection like an array.

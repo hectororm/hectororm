@@ -579,4 +579,12 @@ class LazyCollection implements CollectionInterface
     {
         return $this->collect()->reduce($callback, $initial);
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function join(string $glue = '', ?string $finalGlue = null): string
+    {
+        return $this->collect()->join($glue, $finalGlue);
+    }
 }

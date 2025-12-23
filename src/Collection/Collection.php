@@ -504,6 +504,26 @@ class Collection implements CollectionInterface, ArrayAccess
         return array_reduce($this->items, $callback, $initial);
     }
 
+    /**
+     * @inheritDoc
+     */
+    public function join(string $glue = '', ?string $finalGlue = null): string
+    {
+        if ($this->isEmpty()) {
+            return '';
+        }
+
+        $items = $this->items;
+
+        if (null === $finalGlue || count($items) < 2) {
+            return implode($glue, $items);
+        }
+
+        $last = array_pop($items);
+
+        return implode($glue, $items) . $finalGlue . $last;
+    }
+
     ///////////////////
     /// ArrayAccess ///
     ///////////////////

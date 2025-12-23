@@ -717,4 +717,33 @@ class CollectionInterfaceTest extends TestCase
             (new $class())->reduce(fn($carry, $item): int|float => $carry * $item, 'Empty collection')
         );
     }
+
+    /**
+     * @dataProvider collectionTypeProvider
+     */
+    public function testJoin(string $class): void
+    {
+        $arr = ['foo', 'bar', 'baz'];
+
+        $this->assertSame(
+            'foo, bar, baz',
+            (new $class($arr))->join(', ')
+        );
+        $this->assertSame(
+            'foo, bar and baz',
+            (new $class($arr))->join(', ', ' and ')
+        );
+        $this->assertSame(
+            'foo',
+            (new $class(['foo']))->join(', ', ' and ')
+        );
+        $this->assertSame(
+            'foo and bar',
+            (new $class(['foo', 'bar']))->join(', ', ' and ')
+        );
+        $this->assertSame(
+            '',
+            (new $class([]))->join(', ', ' and ')
+        );
+    }
 }

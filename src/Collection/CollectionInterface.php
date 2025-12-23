@@ -320,4 +320,15 @@ interface CollectionInterface extends IteratorAggregate, JsonSerializable, Count
      * @see array_reduce()
      */
     public function reduce(callable $callback, mixed $initial = null): mixed;
+
+    /**
+     * Join collection items as a string.
+     *
+     * @param string $glue
+     * @param string|null $finalGlue
+     *
+     * @return string
+     * @see implode()
+     */
+    public function join(string $glue = '', ?string $finalGlue = null): string;
 }
