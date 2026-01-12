@@ -361,16 +361,27 @@ class Builder extends QueryBuilder
             return;
         }
 
+        $initialOffset = $this->limit->getOffset() ?? 0;
+        $maxRows = $this->limit->getLimit();
+
         $offset = 0;
         do {
-            // Get collection
-            $this->limit($limit, $offset);
+            $chunkSize = $limit;
+            if (null !== $maxRows) {
+                $remaining = $maxRows - $offset;
+                if ($remaining <= 0) {
+                    break;
+                }
+                $chunkSize = min($limit, $remaining);
+            }
+
+            $this->limit($chunkSize, $initialOffset + $offset);
             $collection = $this->all();
 
             if (false === $collection->isEmpty()) {
                 $callback($collection);
-                $offset += $limit;
+                $offset += $collection->count();
             }
-        } while (false === $collection->isEmpty());
+        } while (false === $collection->isEmpty() && (null === $maxRows || $offset < $maxRows));
     }
 }
