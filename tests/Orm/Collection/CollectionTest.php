@@ -138,4 +138,19 @@ class CollectionTest extends AbstractTestCase
         $this->assertEquals(576, $staffs[1]->address->getCity()->city_id);
         $this->assertEquals(4, count($logger) - $nbLogEntries);
     }
+
+    public function testChunk(): void
+    {
+        $array = [];
+        Film::query()->offset(9)->limit(90)->chunk(
+            10,
+            function (Collection $collection) use (&$array): void {
+                $array[] = $collection;
+            }
+        );
+
+        $this->assertEquals(10, $array[0][0]->film_id);
+        $this->assertEquals(99, $array[8][89]->film_id);
+        $this->assertCount(9, $array);
+    }
 }
