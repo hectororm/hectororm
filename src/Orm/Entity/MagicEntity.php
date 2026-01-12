@@ -21,8 +21,6 @@ use JsonSerializable;
 
 /**
  * Entity with dynamic attributes stored in an internal array.
- *
- * @template T of MagicEntity
  */
 #[Mapper(MagicMapper::class)]
 abstract class MagicEntity extends Entity implements JsonSerializable

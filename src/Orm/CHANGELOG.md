@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- Remove unnecessary PhpDoc template
+
 ### Fixed
 
 - `Builder::chunk()` now respects pre-defined `limit` and `offset` constraints
