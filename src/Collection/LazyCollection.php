@@ -587,4 +587,12 @@ class LazyCollection implements CollectionInterface
     {
         return $this->collect()->join($glue, $finalGlue);
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function groupBy(string|int|Closure $groupBy): static
+    {
+        return new static($this->collect()->groupBy($groupBy));
+    }
 }

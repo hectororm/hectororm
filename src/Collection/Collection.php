@@ -524,6 +524,31 @@ class Collection implements CollectionInterface, ArrayAccess
         return implode($glue, $items) . $finalGlue . $last;
     }
 
+    /**
+     * @inheritDoc
+     */
+    public function groupBy(string|int|Closure $groupBy): static
+    {
+        $result = [];
+
+        foreach ($this->items as $key => $item) {
+            $groupKey = match (true) {
+                $groupBy instanceof Closure => $groupBy($item, $key),
+                is_array($item) => $item[$groupBy] ?? null,
+                is_object($item) => $item->{$groupBy} ?? null,
+                default => null,
+            };
+
+            if (!isset($result[$groupKey])) {
+                $result[$groupKey] = new static();
+            }
+
+            $result[$groupKey]->append($item);
+        }
+
+        return new static($result);
+    }
+
     ///////////////////
     /// ArrayAccess ///
     ///////////////////

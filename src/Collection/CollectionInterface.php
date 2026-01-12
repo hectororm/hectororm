@@ -331,4 +331,13 @@ interface CollectionInterface extends IteratorAggregate, JsonSerializable, Count
      * @see implode()
      */
     public function join(string $glue = '', ?string $finalGlue = null): string;
+
+    /**
+     * Group items by a key or callback result.
+     *
+     * @param string|int|Closure $groupBy
+     *
+     * @return static
+     */
+    public function groupBy(string|int|Closure $groupBy): static;
 }

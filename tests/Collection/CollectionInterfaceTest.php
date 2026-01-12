@@ -746,4 +746,47 @@ class CollectionInterfaceTest extends TestCase
             (new $class([]))->join(', ', ' and ')
         );
     }
+
+    /**
+     * @dataProvider collectionTypeProvider
+     */
+    public function testGroupBy(string $class): void
+    {
+        $arr = [
+            ['name' => 'Alice', 'role' => 'admin'],
+            ['name' => 'Bob', 'role' => 'user'],
+            ['name' => 'Charlie', 'role' => 'admin'],
+        ];
+
+        // Group by array key
+        $result = (new $class($arr))->groupBy('role')->collect();
+        $this->assertCount(2, $result);
+        $this->assertCount(2, $result['admin']);
+        $this->assertCount(1, $result['user']);
+        $this->assertSame('Alice', $result['admin'][0]['name']);
+        $this->assertSame('Charlie', $result['admin'][1]['name']);
+        $this->assertSame('Bob', $result['user'][0]['name']);
+
+        // Group by closure
+        $result = (new $class($arr))->groupBy(fn($item) => $item['name'][0])->collect();
+        $this->assertCount(3, $result);
+        $this->assertCount(1, $result['A']);
+        $this->assertCount(1, $result['B']);
+        $this->assertCount(1, $result['C']);
+
+        // Group by object property
+        $objects = [
+            (object)['type' => 'fruit', 'name' => 'apple'],
+            (object)['type' => 'vegetable', 'name' => 'carrot'],
+            (object)['type' => 'fruit', 'name' => 'banana'],
+        ];
+        $result = (new $class($objects))->groupBy('type')->collect();
+        $this->assertCount(2, $result);
+        $this->assertCount(2, $result['fruit']);
+        $this->assertCount(1, $result['vegetable']);
+
+        // Empty collection
+        $result = (new $class([]))->groupBy('key')->collect();
+        $this->assertTrue($result->isEmpty());
+    }
 }

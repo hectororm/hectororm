@@ -444,6 +444,37 @@ $collection->join(', ', ' and '); // Returns `'foo, bar and baz'`
 
 Similar to `implode()` function.
 
+#### `CollectionInterface::groupBy(string|int|Closure $groupBy): static`
+
+Group items by a key or callback result.
+
+```php
+$collection = Collection::new([
+['name' => 'Alice', 'role' => 'admin'],
+['name' => 'Bob', 'role' => 'user'],
+['name' => 'Charlie', 'role' => 'admin'],
+]);
+
+// Group by array key
+$collection->groupBy('role')->getArrayCopy();
+// Returns:
+// [
+//     'admin' => [['name' => 'Alice', 'role' => 'admin'], ['name' => 'Charlie', 'role' => 'admin']],
+//     'user'  => [['name' => 'Bob', 'role' => 'user']],
+// ]
+
+// Group by callback
+$collection->groupBy(fn($item) => $item['name'][0])->getArrayCopy();
+// Returns:
+// [
+//     'A' => [['name' => 'Alice', 'role' => 'admin']],
+//     'B' => [['name' => 'Bob', 'role' => 'user']],
+//     'C' => [['name' => 'Charlie', 'role' => 'admin']],
+// ]
+```
+
+### `Collection` methods
+
 ### `Collection` methods
 
 `Collection` class implement `ArrayAccess` interface to allow to manipulate collection like an array.

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Method `CollectionInterface::join()` to join items with a glue string and optional final glue
+- Method `CollectionInterface::groupBy()` to group items by a key or callback result
 
 ## [1.1.0] - 2025-11-21
 
