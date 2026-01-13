@@ -20,7 +20,7 @@ use Hector\DataTypes\ExpectedType;
 class NumericType extends AbstractType
 {
     public function __construct(
-        protected string $type = 'int'
+        protected string $numericType = 'int'
     ) {
     }
 
@@ -41,7 +41,7 @@ class NumericType extends AbstractType
             throw ValueException::castNotBuiltin($this);
         }
 
-        settype($value, $this->type);
+        settype($value, $this->numericType);
 
         return $value;
     }
@@ -53,7 +53,7 @@ class NumericType extends AbstractType
     {
         $this->assertScalar($value);
 
-        settype($value, $this->type);
+        settype($value, $this->numericType);
 
         return $value;
     }
