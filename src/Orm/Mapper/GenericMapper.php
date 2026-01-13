@@ -63,7 +63,6 @@ class GenericMapper extends AbstractMapper
                     }
                 }
 
-                $reflectionProperty->setAccessible(true);
                 $reflectionProperty->setValue($entity, $value);
             }
         } catch (OrmException|ValueError $e) {

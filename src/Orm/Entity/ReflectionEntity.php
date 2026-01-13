@@ -374,13 +374,13 @@ class ReflectionEntity
         try {
             if (null === $class) {
                 $propertyReflection = $this->getClass()->getProperty($name);
-                $propertyReflection->setAccessible(true);
+                PHP_VERSION_ID < 80100 && $propertyReflection->setAccessible(true);
 
                 return $propertyReflection;
             }
 
             $propertyReflection = new ReflectionProperty($class, $name);
-            $propertyReflection->setAccessible(true);
+            PHP_VERSION_ID < 80100 && $propertyReflection->setAccessible(true);
 
             return $propertyReflection;
         } catch (ReflectionException $e) {
@@ -399,7 +399,7 @@ class ReflectionEntity
     {
         $classReflection = new ReflectionClass(Entity::class);
         $propertyReflection = $classReflection->getProperty('_hectorData');
-        $propertyReflection->setAccessible(true);
+        PHP_VERSION_ID < 80100 && $propertyReflection->setAccessible(true);
 
         if ($propertyReflection->isInitialized($entity)) {
             return $propertyReflection->getValue($entity);
