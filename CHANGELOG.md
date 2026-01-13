@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-01-13
+
+### Added
+
+- **hectororm/collection**: Method `CollectionInterface::join()` to join items with a glue string and optional final glue
+- **hectororm/collection**: Method `CollectionInterface::groupBy()` to group items by a key or callback result
+
+### Removed
+
+- **hectororm/orm**: Remove unnecessary PhpDoc template
+
+### Fixed
+
+- **hectororm/datatypes**: Argument `$type` renamed to `$numericType` in `NumericType` constructor
+- **hectororm/orm**: `Builder::chunk()` now respects pre-defined `limit` and `offset` constraints
+
 ## [1.1.0] - 2025-11-21
 
 ### Added
