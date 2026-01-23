@@ -27,6 +27,16 @@ class Order extends AbstractComponent implements Countable
     private array $order = [];
 
     /**
+     * Get current order.
+     *
+     * @return array
+     */
+    public function getOrder(): array
+    {
+        return $this->order;
+    }
+
+    /**
      * @inheritDoc
      */
     public function count(): int
