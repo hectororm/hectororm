@@ -21,6 +21,14 @@ use Hector\Connection\Driver\DriverInfo;
 use Hector\Query\Delete;
 use Hector\Query\QueryBuilder;
 use Hector\Query\Select;
+use Hector\Pagination\CursorPagination;
+use Hector\Pagination\OffsetPagination;
+use Hector\Pagination\RangePagination;
+use Hector\Pagination\Request\CursorPaginationRequest;
+use Hector\Pagination\Request\OffsetPaginationRequest;
+use Hector\Pagination\Request\PaginationRequestInterface;
+use Hector\Pagination\Request\RangePaginationRequest;
+use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 
 class QueryBuilderTest extends TestCase
@@ -404,5 +412,74 @@ class QueryBuilderTest extends TestCase
             ['_h_0' => 'bar_value'],
             array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
+    }
+
+    public function testPaginateWithOffsetRequest(): void
+    {
+        $queryBuilder = new QueryBuilder($this->getConnection());
+        $queryBuilder->from('`table`')->columns('*');
+
+        $result = $queryBuilder->paginate(new OffsetPaginationRequest(page: 1, perPage: 2));
+
+        $this->assertInstanceOf(OffsetPagination::class, $result);
+        $this->assertEquals(2, $result->getPerPage());
+    }
+
+    public function testPaginateWithRangeRequest(): void
+    {
+        $queryBuilder = new QueryBuilder($this->getConnection());
+        $queryBuilder->from('`table`')->columns('*');
+
+        $result = $queryBuilder->paginate(new RangePaginationRequest(start: 0, end: 1));
+
+        $this->assertInstanceOf(RangePagination::class, $result);
+        $this->assertEquals(0, $result->getStart());
+        $this->assertEquals(1, $result->getEnd());
+    }
+
+    public function testPaginateWithCursorRequest(): void
+    {
+        $queryBuilder = new QueryBuilder($this->getConnection());
+        $queryBuilder->from('`table`')->columns('*')->orderBy('table_id');
+
+        $result = $queryBuilder->paginate(new CursorPaginationRequest(perPage: 2));
+
+        $this->assertInstanceOf(CursorPagination::class, $result);
+        $this->assertEquals(2, $result->getPerPage());
+    }
+
+    public function testPaginateWithTotalEnabled(): void
+    {
+        $queryBuilder = new QueryBuilder($this->getConnection());
+        $queryBuilder->from('`table`')->columns('*');
+
+        $result = $queryBuilder->paginate(new OffsetPaginationRequest(page: 1, perPage: 1), withTotal: true);
+
+        $this->assertNotNull($result->getTotal());
+    }
+
+    public function testPaginateWithTotalDisabled(): void
+    {
+        $queryBuilder = new QueryBuilder($this->getConnection());
+        $queryBuilder->from('`table`')->columns('*');
+
+        $result = $queryBuilder->paginate(new OffsetPaginationRequest(page: 1, perPage: 1), withTotal: false);
+
+        $this->assertNull($result->getTotal());
+    }
+
+    public function testPaginateThrowsOnUnsupportedRequestType(): void
+    {
+        $queryBuilder = new QueryBuilder($this->getConnection());
+        $queryBuilder->from('`table`')->columns('*');
+
+        $unsupportedRequest = new class implements PaginationRequestInterface {
+            public function getOffset(): int { return 0; }
+            public function getLimit(): int { return 10; }
+        };
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Unsupported pagination request type');
+        $queryBuilder->paginate($unsupportedRequest);
     }
 }

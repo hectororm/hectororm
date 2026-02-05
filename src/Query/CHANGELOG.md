@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Method `Component\Order::getOrder()` to get defined order
+- Method `QueryBuilder::paginate()` for built-in pagination support (offset, cursor, range)
+- Namespace `Pagination` with `QueryOffsetPaginator`, `QueryCursorPaginator`, `QueryRangePaginator`
 
 ## [1.2.2] - 2026-02-05
 

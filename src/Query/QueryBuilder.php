@@ -14,19 +14,32 @@ declare(strict_types=1);
 
 namespace Hector\Query;
 
-use Hector\Query\Clause\BindParams;
-use Hector\Query\Clause\Columns;
-use Hector\Query\Clause\From;
-use Hector\Query\Clause\Join;
-use Hector\Query\Clause\Where;
-use Hector\Query\Clause\Group;
-use Hector\Query\Clause\Having;
-use Hector\Query\Clause\Order;
-use Hector\Query\Clause\Limit;
 use Generator;
 use Hector\Connection\Bind\BindParamList;
 use Hector\Connection\Connection;
+use Hector\Pagination\CursorPagination;
+use Hector\Pagination\OffsetPagination;
+use Hector\Pagination\PaginationInterface;
+use Hector\Pagination\RangePagination;
+use Hector\Pagination\Request\CursorPaginationRequest;
+use Hector\Pagination\Request\OffsetPaginationRequest;
+use Hector\Pagination\Request\PaginationRequestInterface;
+use Hector\Pagination\Request\RangePaginationRequest;
+use Hector\Query\Clause\BindParams;
+use Hector\Query\Clause\Columns;
+use Hector\Query\Clause\From;
+use Hector\Query\Clause\Group;
+use Hector\Query\Clause\Having;
+use Hector\Query\Clause\Join;
+use Hector\Query\Clause\Limit;
+use Hector\Query\Clause\Order;
+use Hector\Query\Clause\Where;
+use Hector\Query\Pagination\QueryCursorPaginator;
+use Hector\Query\Pagination\QueryOffsetPaginator;
+use Hector\Query\Pagination\QueryRangePaginator;
 use Hector\Query\Statement\Exists;
+use InvalidArgumentException;
+
 
 class QueryBuilder implements StatementInterface
 {
@@ -457,5 +470,32 @@ class QueryBuilder implements StatementInterface
     public function getStatement(BindParamList $bindParams, bool $encapsulate = false): ?string
     {
         return $this->makeSelect()->getStatement($bindParams, $encapsulate);
+    }
+
+    /**
+     * Paginate results (auto-detection based on request type).
+     *
+     * @param PaginationRequestInterface $request
+     * @param bool $withTotal
+     *
+     * @return PaginationInterface
+     * @phpstan-return (
+     *     $request is CursorPaginationRequest ? CursorPagination :
+     *     ($request is RangePaginationRequest ? RangePagination : OffsetPagination)
+     * )
+     */
+    public function paginate(PaginationRequestInterface $request, bool $withTotal = false): PaginationInterface
+    {
+        $queryPaginator = match (true) {
+            $request instanceof CursorPaginationRequest => new QueryCursorPaginator($this, $withTotal),
+            $request instanceof RangePaginationRequest => new QueryRangePaginator($this, $withTotal),
+            $request instanceof OffsetPaginationRequest => new QueryOffsetPaginator($this, $withTotal),
+            default => throw new InvalidArgumentException(sprintf(
+                'Unsupported pagination request type: %s',
+                get_class($request)
+            )),
+        };
+
+        return $queryPaginator->paginate($request);
     }
 }
