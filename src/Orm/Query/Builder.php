@@ -22,11 +22,24 @@ use Hector\Orm\Exception\MapperException;
 use Hector\Orm\Exception\NotFoundException;
 use Hector\Orm\Exception\OrmException;
 use Hector\Orm\Orm;
+use Hector\Orm\Pagination\BuilderCursorPaginator;
+use Hector\Orm\Pagination\BuilderOffsetPaginator;
+use Hector\Orm\Pagination\BuilderRangePaginator;
 use Hector\Orm\Query\Component\Conditions;
+use Hector\Pagination\CursorPagination;
+use Hector\Pagination\Encoder\CursorEncoderInterface;
+use Hector\Pagination\OffsetPagination;
+use Hector\Pagination\PaginationInterface;
+use Hector\Pagination\RangePagination;
+use Hector\Pagination\Request\CursorPaginationRequest;
+use Hector\Pagination\Request\OffsetPaginationRequest;
+use Hector\Pagination\Request\PaginationRequestInterface;
+use Hector\Pagination\Request\RangePaginationRequest;
 use Hector\Query\QueryBuilder;
 use Hector\Query\Statement\Row;
 use Hector\Query\Statement\SqlFunction;
 use Hector\Schema\Column;
+use InvalidArgumentException;
 
 /**
  * Query builder for a specific entity.
@@ -383,5 +396,30 @@ class Builder extends QueryBuilder
                 $offset += $collection->count();
             }
         } while (false === $collection->isEmpty() && (null === $maxRows || $offset < $maxRows));
+    }
+
+    /**
+     * Paginate results (auto-detection based on request type).
+     *
+     * @template P of PaginationInterface
+     *
+     * @param PaginationRequestInterface $request
+     * @param bool $withTotal
+     *
+     * @return P
+     */
+    public function paginate(PaginationRequestInterface $request, bool $withTotal = false): PaginationInterface
+    {
+        $queryPaginator = match (true) {
+            $request instanceof CursorPaginationRequest => new BuilderCursorPaginator($this, $withTotal),
+            $request instanceof RangePaginationRequest => new BuilderRangePaginator($this, $withTotal),
+            $request instanceof OffsetPaginationRequest => new BuilderOffsetPaginator($this, $withTotal),
+            default => throw new InvalidArgumentException(sprintf(
+                'Unsupported pagination request type: %s',
+                get_class($request)
+            )),
+        };
+
+        return $queryPaginator->paginate($request);
     }
 }

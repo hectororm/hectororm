@@ -24,9 +24,17 @@ use Hector\Orm\Tests\AbstractTestCase;
 use Hector\Orm\Tests\Fake\Entity\Film;
 use Hector\Orm\Tests\Fake\Entity\Language;
 use Hector\Orm\Tests\Fake\Entity\Staff;
+use Hector\Pagination\CursorPagination;
+use Hector\Pagination\OffsetPagination;
+use Hector\Pagination\RangePagination;
+use Hector\Pagination\Request\CursorPaginationRequest;
+use Hector\Pagination\Request\OffsetPaginationRequest;
+use Hector\Pagination\Request\PaginationRequestInterface;
+use Hector\Pagination\Request\RangePaginationRequest;
 use Hector\Query\Component\Conditions;
 use Hector\Query\Component\Limit;
 use Hector\Query\Component\Order;
+use InvalidArgumentException;
 
 class BuilderTest extends AbstractTestCase
 {
@@ -390,5 +398,86 @@ class BuilderTest extends AbstractTestCase
             'LEFT JOIN `sakila`.`language` AS `language` ON ( `main`.`language_id` = `language`.`language_id` ) ' .
             'WHERE `language`.`name` = :_h_0 OR `language`.`name` = :_h_1',
             $statement);
+    }
+
+    public function testPaginateWithOffsetRequest(): void
+    {
+        $builder = new Builder(Film::class);
+        $request = new OffsetPaginationRequest(page: 1, perPage: 5);
+
+        $result = $builder->paginate($request);
+
+        $this->assertInstanceOf(OffsetPagination::class, $result);
+        $this->assertLessThanOrEqual(5, count($result->getItems()));
+        $this->assertEquals(5, $result->getPerPage());
+        $this->assertEquals(1, $result->getCurrentPage());
+        $this->assertContainsOnlyInstancesOf(Film::class, $result->getItems());
+    }
+
+    public function testPaginateWithCursorRequest(): void
+    {
+        $builder = new Builder(Film::class);
+        $builder->orderBy('film_id', 'ASC');
+        $request = new CursorPaginationRequest(perPage: 5);
+
+        $result = $builder->paginate($request);
+
+        $this->assertInstanceOf(CursorPagination::class, $result);
+        $this->assertEquals(5, $result->getPerPage());
+        $this->assertContainsOnlyInstancesOf(Film::class, $result->getItems());
+    }
+
+    public function testPaginateWithRangeRequest(): void
+    {
+        $builder = new Builder(Film::class);
+        $request = new RangePaginationRequest(start: 0, end: 4);
+
+        $result = $builder->paginate($request);
+
+        $this->assertInstanceOf(RangePagination::class, $result);
+        $this->assertEquals(0, $result->getStart());
+        $this->assertEquals(4, $result->getEnd());
+        $this->assertContainsOnlyInstancesOf(Film::class, $result->getItems());
+    }
+
+    public function testPaginateWithTotal(): void
+    {
+        $builder = new Builder(Film::class);
+        $request = new OffsetPaginationRequest(page: 1, perPage: 5);
+
+        $result = $builder->paginate($request, withTotal: true);
+
+        $this->assertNotNull($result->getTotal());
+        $this->assertGreaterThan(0, $result->getTotal());
+    }
+
+    public function testPaginateWithoutTotal(): void
+    {
+        $builder = new Builder(Film::class);
+        $request = new OffsetPaginationRequest(page: 1, perPage: 5);
+
+        $result = $builder->paginate($request, withTotal: false);
+
+        $this->assertNull($result->getTotal());
+    }
+
+    public function testPaginateWithUnsupportedRequestThrows(): void
+    {
+        $builder = new Builder(Film::class);
+        $request = new class implements PaginationRequestInterface {
+            public function getLimit(): int
+            {
+                return 10;
+            }
+
+            public function getOffset(): int
+            {
+                return 0;
+            }
+        };
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Unsupported pagination request type');
+        $builder->paginate($request);
     }
 }

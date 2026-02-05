@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Method `Builder::paginate()` for built-in pagination support (offset, cursor, range)
+- Namespace `Hector\Orm\Pagination` with `BuilderOffsetPaginator`, `BuilderCursorPaginator`, `BuilderRangePaginator`
+
 ## [1.2.2] - 2026-02-05
 
 _No changes in this release._
