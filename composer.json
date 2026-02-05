@@ -57,7 +57,7 @@
     "ext-pdo_mysql": "*",
     "ext-pdo_sqlite": "*",
     "ext-sodium": "*",
-    "berlioz/http-message": "^2.0",
+    "berlioz/http-message": "^2.5",
     "phpunit/phpunit": "^9.6",
     "ramsey/uuid": "^4.0",
     "rector/rector": "^2.2"
