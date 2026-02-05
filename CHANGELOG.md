@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.2] - 2026-02-05
+
+### Fixed
+
+- **hectororm/query**: Closure binding issue in `Conditions::getStatement()` by removing unnecessary reference in foreach loop
+
 ## [1.2.1] - 2026-01-13
 
 ### Fixed
