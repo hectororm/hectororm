@@ -27,6 +27,9 @@
     <testsuite name="Hector Orm test suite">
       <directory suffix="Test.php">./tests/Orm</directory>
     </testsuite>
+    <testsuite name="Hector Pagination test suite">
+      <directory suffix="Test.php">./tests/Pagination</directory>
+    </testsuite>
     <testsuite name="Hector Query test suite">
       <directory suffix="Test.php">./tests/Query</directory>
     </testsuite>

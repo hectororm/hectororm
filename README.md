@@ -44,6 +44,7 @@ composer require hectororm/orm
 composer require hectororm/collection
 composer require hectororm/connection
 composer require hectororm/data-types
+composer require hectororm/pagination
 composer require hectororm/query
 composer require hectororm/schema
 ```

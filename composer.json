@@ -19,6 +19,7 @@
       "Hector\\Connection\\": "src/Connection/",
       "Hector\\DataTypes\\": "src/DataTypes/",
       "Hector\\Orm\\": "src/Orm/",
+      "Hector\\Pagination\\": "src/Pagination/",
       "Hector\\Query\\": "src/Query/",
       "Hector\\Schema\\": "src/Schema/"
     }
@@ -29,6 +30,7 @@
       "Hector\\Connection\\Tests\\": "tests/Connection/",
       "Hector\\DataTypes\\Tests\\": "tests/DataTypes/",
       "Hector\\Orm\\Tests\\": "tests/Orm/",
+      "Hector\\Pagination\\Tests\\": "tests/Pagination/",
       "Hector\\Query\\Tests\\": "tests/Query/",
       "Hector\\Schema\\Tests\\": "tests/Schema/"
     }
@@ -38,6 +40,7 @@
     "hectororm/connection": "self.version",
     "hectororm/data-types": "self.version",
     "hectororm/orm": "self.version",
+    "hectororm/pagination": "self.version",
     "hectororm/query": "self.version",
     "hectororm/schema": "self.version"
   },
@@ -46,15 +49,22 @@
     "ext-mbstring": "*",
     "ext-pdo": "*",
     "berlioz/helpers": "^1.6",
-    "psr/simple-cache": "^1.0 || ^2.0 || ^3.0",
-    "psr/event-dispatcher": "^1.0"
+    "psr/event-dispatcher": "^1.0",
+    "psr/http-message": "^1.0 || ^2.0",
+    "psr/simple-cache": "^1.0 || ^2.0 || ^3.0"
   },
   "require-dev": {
     "ext-pdo_mysql": "*",
     "ext-pdo_sqlite": "*",
+    "ext-sodium": "*",
+    "berlioz/http-message": "^2.0",
     "phpunit/phpunit": "^9.6",
     "ramsey/uuid": "^4.0",
     "rector/rector": "^2.2"
+  },
+  "suggest": {
+    "ext-sodium": "For encrypted cursor pagination",
+    "ramsey/uuid": "For UUID data type support"
   },
   "extra": {
     "branch-alias": {

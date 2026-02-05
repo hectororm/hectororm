@@ -21,6 +21,11 @@
       "target": "git@github.com:hectororm/orm.git"
     },
     {
+      "name": "pagination",
+      "directory": "src/Pagination",
+      "target": "git@github.com:hectororm/pagination.git"
+    },
+    {
       "name": "query",
       "directory": "src/Query",
       "target": "git@github.com:hectororm/query.git"

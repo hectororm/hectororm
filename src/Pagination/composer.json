@@ -1,0 +1,37 @@
+{
+  "name": "hectororm/pagination",
+  "description": "Hector Pagination",
+  "license": "MIT",
+  "homepage": "https://gethectororm.com",
+  "support": {
+    "issues": "https://github.com/hectororm/hectororm/issues",
+    "source": "https://github.com/hectororm/hectororm"
+  },
+  "authors": [
+    {
+      "name": "Ronan Giron",
+      "email": "ronan@getberlioz.com"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "Hector\\Pagination\\": ""
+    }
+  },
+  "require": {
+    "php": "^8.0",
+    "psr/http-message": "^1.0 || ^2.0"
+  },
+  "suggest": {
+    "ext-sodium": "For encrypted cursors",
+    "psr/simple-cache": "For CacheCursorStorage"
+  },
+  "extra": {
+    "branch-alias": {
+      "dev-main": "1.x-dev"
+    }
+  },
+  "config": {
+    "sort-packages": true
+  }
+}
