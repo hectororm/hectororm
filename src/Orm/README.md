@@ -17,6 +17,8 @@
 
 **Hector Orm** is an independent ORM.
 
+📖 **[Full documentation](https://gethectororm.com/)**
+
 ## Installation
 
 You can install **Hector Orm** with [Composer](https://getcomposer.org/), it's the recommended installation.
@@ -27,4 +29,5 @@ $ composer require hectororm/orm
 
 ## Documentation
 
-For more information, and use of Hector ORM, go to website and online documentation : https://gethectororm.com
+For usage and examples, visit
+the [official documentation on **gethectororm.com**](https://gethectororm.com/).

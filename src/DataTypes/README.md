@@ -15,7 +15,9 @@
 
 ---
 
-Hector Data Types is the module to manage types of Hector ORM. Can be used independently of ORM.
+**Hector Data Types** is the module to manage types of Hector ORM. Can be used independently of ORM.
+
+📖 **[Full documentation](https://gethectororm.com/docs/current/components/data-types)**
 
 ## Installation
 
@@ -25,57 +27,7 @@ You can install **Hector Data Types** with [Composer](https://getcomposer.org/),
 $ composer require hectororm/data-types
 ```
 
-## Usage
+## Documentation
 
-Each type converter implement interface:
-
-```php
-use Hector\DataTypes\ExpectedType;
-
-interface TypeInterface
-{
-    /**
-     * From schema function.
-     *
-     * @return string|null
-     */
-    public function fromSchemaFunction(): ?string;
-
-    /**
-     * From schema to entity.
-     *
-     * @param mixed $value
-     * @param ExpectedType|null $expected
-     *
-     * @return mixed
-     */
-    public function fromSchema(mixed $value, ?ExpectedType $expected = null): mixed;
-
-    /**
-     * To schema function.
-     *
-     * @return string|null
-     */
-    public function toSchemaFunction(): ?string;
-
-    /**
-     * From entity to schema.
-     *
-     * @param mixed $value
-     * @param ExpectedType|null $expected
-     *
-     * @return mixed
-     */
-    public function toSchema(mixed $value, ?ExpectedType $expected = null): mixed;
-
-    /**
-     * Get binding type.
-     * Must return a PDO::PARAM_* value.
-     *
-     * @return int|null
-     */
-    public function getBindingType(): ?int;
-}
-```
-
-Attempted excepted type is a PHP representation of a property type.
+For usage and examples, visit
+the [official documentation on **gethectororm.com**](https://gethectororm.com/docs/current/components/data-types).
