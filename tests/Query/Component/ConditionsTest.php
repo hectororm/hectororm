@@ -298,15 +298,19 @@ class ConditionsTest extends TestCase
                 $nbCallbackCalled++;
 
                 $select->where('foo', 'bar');
+                $this->where('baz', 'qux');
             }
         );
 
         $this->assertEquals(
-            '( foo = :_h_0 )',
+            '( foo = :_h_0 ) AND baz = :_h_1',
             $conditions->getStatement($binds)
         );
         $this->assertEquals(
-            ['_h_0' => 'bar'],
+            [
+                '_h_0' => 'bar',
+                '_h_1' => 'qux'
+            ],
             array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
         $this->assertEquals(1, $nbCallbackCalled);

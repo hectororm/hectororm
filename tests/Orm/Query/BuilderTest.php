@@ -373,4 +373,22 @@ class BuilderTest extends AbstractTestCase
             'WHERE ( `language`.`name` = :_h_0 OR `language`.`name` = :_h_1 )',
             $statement);
     }
+
+    public function testEncapsuledWhere(): void
+    {
+        Orm::$alias = 0;
+        $builder = new Builder(Film::class);
+        $builder->where(function (): void {
+            $this->where('language.name', 'French');
+            $this->orWhere('language.name', 'Italian');
+        });
+
+        $statement = $builder->getStatement(new BindParamList());
+        $this->assertEquals(
+            'SELECT DISTINCT `main`.`film_id`, `main`.`title`, `main`.`description`, `main`.`release_year`, `main`.`language_id`, `main`.`original_language_id`, `main`.`rental_duration`, `main`.`rental_rate`, `main`.`length`, `main`.`replacement_cost`, `main`.`rating`, `main`.`special_features`, `main`.`last_update` ' .
+            'FROM `sakila`.`film` AS `main` ' .
+            'LEFT JOIN `sakila`.`language` AS `language` ON ( `main`.`language_id` = `language`.`language_id` ) ' .
+            'WHERE `language`.`name` = :_h_0 OR `language`.`name` = :_h_1',
+            $statement);
+    }
 }
