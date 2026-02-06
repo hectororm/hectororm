@@ -17,7 +17,6 @@ namespace Hector\Query\Pagination;
 
 use Hector\Pagination\OffsetPagination;
 use Hector\Pagination\Request\PaginationRequestInterface;
-use Hector\Query\QueryBuilder;
 
 /**
  * @template T of array

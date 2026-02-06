@@ -16,8 +16,6 @@ declare(strict_types=1);
 namespace Hector\Query\Pagination;
 
 use Hector\Pagination\CursorPagination;
-use Hector\Pagination\Encoder\CursorEncoderInterface;
-use Hector\Pagination\PaginationInterface;
 use Hector\Pagination\Request\CursorPaginationRequest;
 use Hector\Pagination\Request\PaginationRequestInterface;
 use Hector\Query\QueryBuilder;
@@ -59,6 +57,10 @@ class QueryCursorPaginator extends AbstractQueryPaginator
         $countBuilder = $this->withTotal ? clone $this->builder : null;
         $builder = clone $this->builder;
         $position = $request->getPosition();
+
+        if (null !== $position && !$this->isPositionValid($orderColumns, $position)) {
+            $position = null;
+        }
 
         if (null !== $position) {
             $this->applyCursorConditions($builder, $orderColumns, $position);
@@ -117,21 +119,15 @@ class QueryCursorPaginator extends AbstractQueryPaginator
 
     /**
      * Apply cursor conditions to builder.
+     *
+     * @param array<array{column: string, order: string}> $orderColumns
+     * @param array<string, mixed> $position
      */
     protected function applyCursorConditions(
         QueryBuilder $builder,
         array $orderColumns,
         array $position,
     ): void {
-        $orderColumns = array_values(array_filter(
-            $orderColumns,
-            fn($col) => array_key_exists($this->normalizeColumnKey($col['column']), $position)
-        ));
-
-        if (empty($orderColumns)) {
-            return;
-        }
-
         $normalizeColumnKey = fn(string $column) => $this->normalizeColumnKey($column);
         $builder->where(function ($where) use ($normalizeColumnKey, $orderColumns, $position) {
             foreach ($orderColumns as $i => $orderItem) {
@@ -140,7 +136,15 @@ class QueryCursorPaginator extends AbstractQueryPaginator
                 $operator = $orderItem['order'] === 'DESC' ? '<' : '>';
                 $value = $position[$columnKey];
 
-                $where->orWhere(function ($w) use ($normalizeColumnKey, $orderColumns, $position, $i, $column, $operator, $value) {
+                $where->orWhere(function ($w) use (
+                    $normalizeColumnKey,
+                    $orderColumns,
+                    $position,
+                    $i,
+                    $column,
+                    $operator,
+                    $value
+                ) {
                     for ($j = 0; $j < $i; $j++) {
                         $prevKey = $normalizeColumnKey($orderColumns[$j]['column']);
                         $w->where($orderColumns[$j]['column'], '=', $position[$prevKey]);
@@ -171,5 +175,30 @@ class QueryCursorPaginator extends AbstractQueryPaginator
         }
 
         return $position;
+    }
+
+    /**
+     * Validate cursor position against order columns.
+     *
+     * @param array<array{column: string, order: string}> $orderColumns
+     * @param array<string, mixed> $position
+     */
+    protected function isPositionValid(array $orderColumns, array $position): bool
+    {
+        foreach ($orderColumns as $orderItem) {
+            $key = $this->normalizeColumnKey($orderItem['column']);
+
+            if (!array_key_exists($key, $position)) {
+                return false;
+            }
+
+            $value = $position[$key];
+
+            if (null !== $value && !is_scalar($value)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

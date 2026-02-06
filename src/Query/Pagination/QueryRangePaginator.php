@@ -15,11 +15,9 @@ declare(strict_types=1);
 
 namespace Hector\Query\Pagination;
 
-use Hector\Pagination\PaginationInterface;
 use Hector\Pagination\RangePagination;
 use Hector\Pagination\Request\PaginationRequestInterface;
 use Hector\Pagination\Request\RangePaginationRequest;
-use Hector\Query\QueryBuilder;
 use InvalidArgumentException;
 
 /**

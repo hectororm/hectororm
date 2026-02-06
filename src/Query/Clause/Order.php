@@ -16,6 +16,7 @@ namespace Hector\Query\Clause;
 
 use Closure;
 use Hector\Query\Component;
+use Hector\Query\Sort\SortInterface;
 use Hector\Query\StatementInterface;
 
 trait Order
@@ -45,6 +46,18 @@ trait Order
     public function orderBy(Closure|StatementInterface|string $column, ?string $order = null): static
     {
         $this->order->orderBy($column, $order);
+
+        return $this;
+    }
+
+    /**
+     * Apply sort to query builder.
+     *
+     * @return static
+     */
+    public function applySort(SortInterface $sort): static
+    {
+        $sort->apply($this);
 
         return $this;
     }

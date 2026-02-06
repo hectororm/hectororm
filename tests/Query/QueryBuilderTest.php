@@ -13,14 +13,10 @@
 namespace Hector\Query\Tests;
 
 use Generator;
-use ReflectionMethod;
 use Hector\Connection\Bind\BindParam;
 use Hector\Connection\Bind\BindParamList;
 use Hector\Connection\Connection;
 use Hector\Connection\Driver\DriverInfo;
-use Hector\Query\Delete;
-use Hector\Query\QueryBuilder;
-use Hector\Query\Select;
 use Hector\Pagination\CursorPagination;
 use Hector\Pagination\OffsetPagination;
 use Hector\Pagination\RangePagination;
@@ -28,8 +24,12 @@ use Hector\Pagination\Request\CursorPaginationRequest;
 use Hector\Pagination\Request\OffsetPaginationRequest;
 use Hector\Pagination\Request\PaginationRequestInterface;
 use Hector\Pagination\Request\RangePaginationRequest;
+use Hector\Query\Delete;
+use Hector\Query\QueryBuilder;
+use Hector\Query\Select;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
+use ReflectionMethod;
 
 class QueryBuilderTest extends TestCase
 {
@@ -474,8 +474,15 @@ class QueryBuilderTest extends TestCase
         $queryBuilder->from('`table`')->columns('*');
 
         $unsupportedRequest = new class implements PaginationRequestInterface {
-            public function getOffset(): int { return 0; }
-            public function getLimit(): int { return 10; }
+            public function getOffset(): int
+            {
+                return 0;
+            }
+
+            public function getLimit(): int
+            {
+                return 10;
+            }
         };
 
         $this->expectException(InvalidArgumentException::class);

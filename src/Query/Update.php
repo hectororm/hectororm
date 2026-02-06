@@ -14,14 +14,14 @@ declare(strict_types=1);
 
 namespace Hector\Query;
 
-use Hector\Query\Component\Order;
+use Hector\Connection\Bind\BindParamList;
+use Hector\Query\Clause\Assignments;
 use Hector\Query\Clause\BindParams;
 use Hector\Query\Clause\From;
-use Hector\Query\Clause\Assignments;
-use Hector\Query\Clause\Where;
 use Hector\Query\Clause\Limit;
+use Hector\Query\Clause\Where;
 use Hector\Query\Component\EncapsulateHelperTrait;
-use Hector\Connection\Bind\BindParamList;
+use Hector\Query\Component\Order;
 
 class Update implements StatementInterface
 {

@@ -14,10 +14,10 @@ declare(strict_types=1);
 
 namespace Hector\Query\Clause;
 
-use Hector\Query\Component\InsertAssignments;
-use Hector\Query\Component\UpdateAssignments;
 use Closure;
 use Hector\Query\Component;
+use Hector\Query\Component\InsertAssignments;
+use Hector\Query\Component\UpdateAssignments;
 use Hector\Query\Insert;
 use Hector\Query\StatementInterface;
 use Hector\Query\Update;

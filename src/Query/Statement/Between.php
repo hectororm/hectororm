@@ -28,8 +28,11 @@ class Between implements StatementInterface
      * @param mixed $value1
      * @param mixed $value2
      */
-    public function __construct(protected StatementInterface|string $column, protected mixed $value1, protected mixed $value2)
-    {
+    public function __construct(
+        protected StatementInterface|string $column,
+        protected mixed $value1,
+        protected mixed $value2
+    ) {
     }
 
     /**

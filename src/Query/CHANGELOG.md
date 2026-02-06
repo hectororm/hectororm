@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Method `Component\Order::getOrder()` to get defined order
 - Method `QueryBuilder::paginate()` for built-in pagination support (offset, cursor, range)
 - Namespace `Pagination` with `QueryOffsetPaginator`, `QueryCursorPaginator`, `QueryRangePaginator`
+- Namespace `Sort` with `SortInterface`, `Sort`, `MultiSort` and `SortConfig` for type-safe, composable sorting
+- Method `QueryBuilder::applySort(SortInterface)` to apply a sort object to the query builder
+- Cursor position validation in `QueryCursorPaginator` (columns match, scalar values only)
 
 ## [1.2.2] - 2026-02-05
 

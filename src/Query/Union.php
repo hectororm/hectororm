@@ -14,10 +14,10 @@ declare(strict_types=1);
 
 namespace Hector\Query;
 
-use Hector\Query\Clause\Order;
-use Hector\Query\Clause\Limit;
-use Hector\Query\Component\EncapsulateHelperTrait;
 use Hector\Connection\Bind\BindParamList;
+use Hector\Query\Clause\Limit;
+use Hector\Query\Clause\Order;
+use Hector\Query\Component\EncapsulateHelperTrait;
 
 class Union implements StatementInterface
 {

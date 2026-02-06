@@ -14,8 +14,8 @@ declare(strict_types=1);
 
 namespace Hector\Query\Clause;
 
-use Hector\Query\Component\Conditions;
 use Closure;
+use Hector\Query\Component\Conditions;
 use Hector\Query\Statement\Between;
 use Hector\Query\Statement\NotBetween;
 use Hector\Query\Statement\SqlFunction;

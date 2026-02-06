@@ -14,13 +14,13 @@ declare(strict_types=1);
 
 namespace Hector\Query;
 
+use Closure;
+use Hector\Connection\Bind\BindParamList;
+use Hector\Query\Clause\Assignments;
 use Hector\Query\Clause\BindParams;
 use Hector\Query\Clause\Columns;
 use Hector\Query\Clause\From;
-use Hector\Query\Clause\Assignments;
 use Hector\Query\Component\EncapsulateHelperTrait;
-use Closure;
-use Hector\Connection\Bind\BindParamList;
 
 class Insert implements StatementInterface
 {

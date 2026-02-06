@@ -108,8 +108,80 @@ class QueryCursorPaginatorTest extends TestCase
         // Simulate next page with position
         $nextPosition = $firstPage->getNextPosition();
         if (null !== $nextPosition) {
-            $secondPage = $paginator->paginate(new CursorPaginationRequest(perPage: 1, position: $nextPosition));
+            $secondPage = $paginator->paginate(new CursorPaginationRequest(
+                perPage: 1,
+                position: $nextPosition,
+            ));
             $this->assertInstanceOf(CursorPagination::class, $secondPage);
         }
+    }
+
+    public function testCursorValidWhenOrderMatches(): void
+    {
+        $builder = (new QueryBuilder($this->getConnection()))
+            ->from('`table`')
+            ->columns('*')
+            ->orderBy('table_id', 'ASC');
+
+        $paginator = new QueryCursorPaginator($builder, withTotal: false);
+
+        $firstPage = $paginator->paginate(new CursorPaginationRequest(perPage: 1));
+        $firstItems = $firstPage->getItems();
+        $this->assertNotEmpty($firstItems);
+
+        $nextPosition = $firstPage->getNextPosition();
+        $this->assertNotNull($nextPosition);
+
+        $secondPage = $paginator->paginate(new CursorPaginationRequest(
+            perPage: 1,
+            position: $nextPosition,
+        ));
+
+        $secondItems = $secondPage->getItems();
+        $this->assertNotEmpty($secondItems);
+        $this->assertNotEquals($firstItems[0]['table_id'], $secondItems[0]['table_id']);
+        $this->assertGreaterThan($firstItems[0]['table_id'], $secondItems[0]['table_id']);
+    }
+
+    public function testCursorInvalidatedWhenPositionMissingColumns(): void
+    {
+        $builder = (new QueryBuilder($this->getConnection()))
+            ->from('`table`')
+            ->columns('*')
+            ->orderBy('table_id', 'ASC');
+
+        $paginator = new QueryCursorPaginator($builder, withTotal: false);
+
+        $firstPage = $paginator->paginate(new CursorPaginationRequest(perPage: 1));
+        $firstItems = $firstPage->getItems();
+
+        $result = $paginator->paginate(new CursorPaginationRequest(
+            perPage: 1,
+            position: ['unknown_column' => 999],
+        ));
+
+        $resultItems = $result->getItems();
+        $this->assertEquals($firstItems[0]['table_id'], $resultItems[0]['table_id']);
+    }
+
+    public function testCursorInvalidatedWhenPositionHasNonScalarValue(): void
+    {
+        $builder = (new QueryBuilder($this->getConnection()))
+            ->from('`table`')
+            ->columns('*')
+            ->orderBy('table_id', 'ASC');
+
+        $paginator = new QueryCursorPaginator($builder, withTotal: false);
+
+        $firstPage = $paginator->paginate(new CursorPaginationRequest(perPage: 1));
+        $firstItems = $firstPage->getItems();
+
+        $result = $paginator->paginate(new CursorPaginationRequest(
+            perPage: 1,
+            position: ['table_id' => ['malicious' => 'array']],
+        ));
+
+        $resultItems = $result->getItems();
+        $this->assertEquals($firstItems[0]['table_id'], $resultItems[0]['table_id']);
     }
 }

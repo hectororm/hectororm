@@ -14,18 +14,18 @@ declare(strict_types=1);
 
 namespace Hector\Query;
 
-use Hector\Query\Component\Join;
-use Hector\Query\Component\Order;
+use Closure;
+use Hector\Connection\Bind\BindParamList;
 use Hector\Query\Clause\BindParams;
 use Hector\Query\Clause\Columns;
 use Hector\Query\Clause\From;
-use Hector\Query\Clause\Where;
 use Hector\Query\Clause\Group;
 use Hector\Query\Clause\Having;
 use Hector\Query\Clause\Limit;
+use Hector\Query\Clause\Where;
 use Hector\Query\Component\EncapsulateHelperTrait;
-use Closure;
-use Hector\Connection\Bind\BindParamList;
+use Hector\Query\Component\Join;
+use Hector\Query\Component\Order;
 
 class Select implements StatementInterface
 {
