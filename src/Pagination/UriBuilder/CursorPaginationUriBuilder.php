@@ -53,7 +53,11 @@ final class CursorPaginationUriBuilder implements PaginationUriBuilderInterface
 
         $position = $request->getPosition();
         if (null !== $position) {
-            $query[$this->cursorParam] = $this->encoder->encode($position);
+            $payload = $position;
+            if ($request->isBackward()) {
+                $payload['__direction'] = CursorPaginationRequest::DIRECTION_BACKWARD;
+            }
+            $query[$this->cursorParam] = $this->encoder->encode($payload);
         } else {
             unset($query[$this->cursorParam]);
         }

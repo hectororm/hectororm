@@ -23,12 +23,17 @@ final class CursorPaginationRequest implements PaginationRequestInterface
 {
     public const DEFAULT_PER_PAGE = 15;
 
+    public const DIRECTION_FORWARD = 'forward';
+    public const DIRECTION_BACKWARD = 'backward';
+
     /**
      * @param array<string, mixed>|null $position Decoded cursor position
+     * @param string $direction Navigation direction (forward or backward)
      */
     public function __construct(
         private int $perPage = self::DEFAULT_PER_PAGE,
         private ?array $position = null,
+        private string $direction = self::DIRECTION_FORWARD,
     ) {
     }
 
@@ -41,13 +46,22 @@ final class CursorPaginationRequest implements PaginationRequestInterface
         ?CursorEncoderInterface $encoder = null,
     ): self {
         $position = null;
+        $direction = self::DIRECTION_FORWARD;
 
         if (null !== $cursor && '' !== $cursor) {
             $encoder ??= new Base64CursorEncoder();
             $position = $encoder->decode($cursor);
+
+            // Extract direction from encoded payload
+            if (isset($position['__direction'])) {
+                $direction = $position['__direction'] === self::DIRECTION_BACKWARD
+                    ? self::DIRECTION_BACKWARD
+                    : self::DIRECTION_FORWARD;
+                unset($position['__direction']);
+            }
         }
 
-        return new self($perPage, $position);
+        return new self($perPage, $position, $direction);
     }
 
     /**
@@ -82,6 +96,26 @@ final class CursorPaginationRequest implements PaginationRequestInterface
     public function getPosition(): ?array
     {
         return $this->position;
+    }
+
+    /**
+     * Get navigation direction.
+     *
+     * @return string
+     */
+    public function getDirection(): string
+    {
+        return $this->direction;
+    }
+
+    /**
+     * Whether this request navigates backward.
+     *
+     * @return bool
+     */
+    public function isBackward(): bool
+    {
+        return $this->direction === self::DIRECTION_BACKWARD;
     }
 
     /**

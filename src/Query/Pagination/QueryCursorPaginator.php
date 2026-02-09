@@ -57,13 +57,26 @@ class QueryCursorPaginator extends AbstractQueryPaginator
         $countBuilder = $this->withTotal ? clone $this->builder : null;
         $builder = clone $this->builder;
         $position = $request->getPosition();
+        $isBackward = $request->isBackward();
 
         if (null !== $position && !$this->isPositionValid($orderColumns, $position)) {
             $position = null;
         }
 
+        // For backward navigation without a valid position, fallback to forward first page
+        if ($isBackward && null === $position) {
+            $isBackward = false;
+        }
+
         if (null !== $position) {
-            $this->applyCursorConditions($builder, $orderColumns, $position);
+            if ($isBackward) {
+                // Backward: reverse operators to seek in opposite direction
+                $this->applyCursorConditions($builder, $orderColumns, $position, reverse: true);
+                // Reverse ORDER BY to get nearest items before cursor
+                $this->reverseOrderBy($builder, $orderColumns);
+            } else {
+                $this->applyCursorConditions($builder, $orderColumns, $position);
+            }
         }
 
         $items = $this->fetchItems($builder->limit($request->getLimit() + 1));
@@ -73,15 +86,29 @@ class QueryCursorPaginator extends AbstractQueryPaginator
             array_pop($items);
         }
 
+        // For backward navigation, re-sort items in original order
+        if ($isBackward) {
+            $items = array_reverse($items);
+        }
+
         $nextPosition = null;
         $previousPosition = null;
 
         if (!empty($items)) {
-            if ($hasMore) {
+            if ($isBackward) {
+                // Going backward: there are always more items forward (we came from there)
                 $nextPosition = $this->extractCursorPosition(end($items), $orderColumns);
-            }
-            if (null !== $position) {
-                $previousPosition = $this->extractCursorPosition(reset($items), $orderColumns);
+                // There is a previous page only if we got more items than requested
+                if ($hasMore) {
+                    $previousPosition = $this->extractCursorPosition(reset($items), $orderColumns);
+                }
+            } else {
+                if ($hasMore) {
+                    $nextPosition = $this->extractCursorPosition(end($items), $orderColumns);
+                }
+                if (null !== $position) {
+                    $previousPosition = $this->extractCursorPosition(reset($items), $orderColumns);
+                }
             }
         }
 
@@ -122,18 +149,21 @@ class QueryCursorPaginator extends AbstractQueryPaginator
      *
      * @param array<array{column: string, order: string}> $orderColumns
      * @param array<string, mixed> $position
+     * @param bool $reverse Reverse operators (for backward navigation)
      */
     protected function applyCursorConditions(
         QueryBuilder $builder,
         array $orderColumns,
         array $position,
+        bool $reverse = false,
     ): void {
         $normalizeColumnKey = fn(string $column) => $this->normalizeColumnKey($column);
-        $builder->where(function ($where) use ($normalizeColumnKey, $orderColumns, $position) {
+        $builder->where(function ($where) use ($normalizeColumnKey, $orderColumns, $position, $reverse) {
             foreach ($orderColumns as $i => $orderItem) {
                 $column = $orderItem['column'];
                 $columnKey = $normalizeColumnKey($column);
-                $operator = $orderItem['order'] === 'DESC' ? '<' : '>';
+                $isDesc = $orderItem['order'] === 'DESC';
+                $operator = ($isDesc xor $reverse) ? '<' : '>';
                 $value = $position[$columnKey];
 
                 $where->orWhere(function ($w) use (
@@ -153,6 +183,24 @@ class QueryCursorPaginator extends AbstractQueryPaginator
                 });
             }
         });
+    }
+
+    /**
+     * Reverse ORDER BY on builder for backward navigation.
+     *
+     * @param QueryBuilder $builder
+     * @param array<array{column: string, order: string}> $orderColumns
+     */
+    protected function reverseOrderBy(QueryBuilder $builder, array $orderColumns): void
+    {
+        $builder->resetOrder();
+
+        foreach ($orderColumns as $orderItem) {
+            $builder->orderBy(
+                $orderItem['column'],
+                $orderItem['order'] === 'DESC' ? 'ASC' : 'DESC',
+            );
+        }
     }
 
     /**

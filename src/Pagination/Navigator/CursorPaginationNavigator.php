@@ -79,6 +79,7 @@ final class CursorPaginationNavigator implements PaginationNavigatorInterface
         return new CursorPaginationRequest(
             perPage: $this->pagination->getPerPage(),
             position: $this->pagination->getPreviousPosition(),
+            direction: CursorPaginationRequest::DIRECTION_BACKWARD,
         );
     }
 
