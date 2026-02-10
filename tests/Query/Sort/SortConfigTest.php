@@ -19,6 +19,7 @@ use Hector\Query\Sort\Sort;
 use Hector\Query\Sort\SortConfig;
 use Hector\Query\Sort\SortInterface;
 use InvalidArgumentException;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 class SortConfigTest extends TestCase
@@ -43,8 +44,8 @@ class SortConfigTest extends TestCase
         );
 
         $this->assertTrue($config->isAllowed('name'));
-        $this->assertTrue($config->isAllowed('user_name'));
-        $this->assertFalse($config->isAllowed('created_at_alias'));
+        $this->assertTrue($config->isAllowed('date'));
+        $this->assertFalse($config->isAllowed('user_name'));
     }
 
     public function testConstructThrowsOnInvalidDefault(): void
@@ -67,12 +68,21 @@ class SortConfigTest extends TestCase
         );
     }
 
-    // --- Default sort formats ---
+    public function testConstructThrowsOnNonStringDefault(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('"column:dir" format');
 
-    public function testDefaultSortStringFormat(): void
+        new SortConfig(
+            allowed: ['title', 'id'],
+            default: [['title', 'DESC']],
+        );
+    }
+
+    public function testDefaultSortUsesDefaultDir(): void
     {
         $config = new SortConfig(
-            allowed: ['title', 'id'],
+            allowed: ['title'],
             default: ['title'],
         );
 
@@ -83,53 +93,37 @@ class SortConfigTest extends TestCase
         $this->assertSame('ASC', $sort->getDir());
     }
 
-    public function testDefaultSortStringFormatUsesDefaultDir(): void
+    public function testDefaultSortUsesCustomDefaultDir(): void
     {
         $config = new SortConfig(
-            allowed: ['title', 'id'],
+            allowed: ['title'],
             default: ['title'],
             defaultDir: 'DESC',
         );
 
         $sort = $config->getDefaultSort();
 
-        $this->assertInstanceOf(Sort::class, $sort);
         $this->assertSame('DESC', $sort->getDir());
     }
 
-    public function testDefaultSortIndexedArrayFormat(): void
+    public function testDefaultSortWithExplicitDirection(): void
     {
         $config = new SortConfig(
-            allowed: ['title', 'id'],
-            default: [['title', 'DESC']],
+            allowed: ['title'],
+            default: ['title:desc'],
         );
 
         $sort = $config->getDefaultSort();
 
-        $this->assertInstanceOf(Sort::class, $sort);
         $this->assertSame('title', $sort->getColumn());
         $this->assertSame('DESC', $sort->getDir());
     }
 
-    public function testDefaultSortAssociativeArrayFormat(): void
+    public function testDefaultSortMultiple(): void
     {
         $config = new SortConfig(
             allowed: ['title', 'id'],
-            default: [['column' => 'title', 'dir' => 'DESC']],
-        );
-
-        $sort = $config->getDefaultSort();
-
-        $this->assertInstanceOf(Sort::class, $sort);
-        $this->assertSame('title', $sort->getColumn());
-        $this->assertSame('DESC', $sort->getDir());
-    }
-
-    public function testDefaultSortMultipleReturnsMultiSort(): void
-    {
-        $config = new SortConfig(
-            allowed: ['title', 'id'],
-            default: ['title', ['id', 'DESC']],
+            default: ['title', 'id:desc'],
         );
 
         $sort = $config->getDefaultSort();
@@ -138,6 +132,7 @@ class SortConfigTest extends TestCase
         $sorts = $sort->getSorts();
         $this->assertCount(2, $sorts);
         $this->assertSame('title', $sorts[0]->getColumn());
+        $this->assertSame('ASC', $sorts[0]->getDir());
         $this->assertSame('id', $sorts[1]->getColumn());
         $this->assertSame('DESC', $sorts[1]->getDir());
     }
@@ -151,143 +146,227 @@ class SortConfigTest extends TestCase
 
         $sort = $config->getDefaultSort();
 
-        $this->assertInstanceOf(Sort::class, $sort);
         $this->assertSame('user_name', $sort->getColumn());
     }
 
-    // --- resolve ---
-
-    public function testResolveWithSingleItem(): void
+    public static function resolveProvider(): iterable
     {
-        $config = new SortConfig(
-            allowed: ['title', 'created_at'],
-            default: ['title'],
-        );
+        // [description, config args, query params, expected columns+dirs]
 
-        $sort = $config->resolve(['sort' => 'created_at:desc']);
+        // --- Free direction (mapping without :dir) ---
 
-        $this->assertInstanceOf(Sort::class, $sort);
-        $this->assertSame('created_at', $sort->getColumn());
-        $this->assertSame('DESC', $sort->getDir());
+        yield 'free direction: user chooses desc' => [
+            ['allowed' => ['title', 'created_at'], 'default' => ['title']],
+            ['sort' => 'created_at:desc'],
+            [['created_at', 'DESC']],
+        ];
+
+        yield 'free direction: user chooses asc' => [
+            ['allowed' => ['title', 'created_at'], 'default' => ['title']],
+            ['sort' => 'created_at:asc'],
+            [['created_at', 'ASC']],
+        ];
+
+        yield 'free direction: no dir uses defaultDir' => [
+            ['allowed' => ['title'], 'default' => ['title'], 'defaultDir' => 'DESC'],
+            ['sort' => 'title'],
+            [['title', 'DESC']],
+        ];
+
+        yield 'free direction: with mapping' => [
+            ['allowed' => ['date' => 'created_at'], 'default' => ['date']],
+            ['sort' => 'date:asc'],
+            [['created_at', 'ASC']],
+        ];
+
+        // --- Locked direction (mapping with :dir) ---
+
+        yield 'locked direction: user dir ignored' => [
+            ['allowed' => ['status' => 'create_time:desc'], 'default' => ['status']],
+            ['sort' => 'status:asc'],
+            [['create_time', 'DESC']],
+        ];
+
+        yield 'locked direction: same dir as locked' => [
+            ['allowed' => ['status' => 'create_time:desc'], 'default' => ['status']],
+            ['sort' => 'status:desc'],
+            [['create_time', 'DESC']],
+        ];
+
+        yield 'locked direction: no user dir' => [
+            ['allowed' => ['status' => 'create_time:desc'], 'default' => ['status']],
+            ['sort' => 'status'],
+            [['create_time', 'DESC']],
+        ];
+
+        // --- Multi-column mapping ---
+
+        yield 'multi-column: free + locked' => [
+            ['allowed' => ['status' => ['status', 'create_time:desc']], 'default' => ['status']],
+            ['sort' => 'status:asc'],
+            [['status', 'ASC'], ['create_time', 'DESC']],
+        ];
+
+        yield 'multi-column: all locked, user dir ignored' => [
+            ['allowed' => ['status' => ['status:asc', 'create_time:desc']], 'default' => ['status']],
+            ['sort' => 'status:desc'],
+            [['status', 'ASC'], ['create_time', 'DESC']],
+        ];
+
+        yield 'multi-column: all free' => [
+            ['allowed' => ['status' => ['status', 'create_time']], 'default' => ['status']],
+            ['sort' => 'status:desc'],
+            [['status', 'DESC'], ['create_time', 'DESC']],
+        ];
+
+        // --- Multiple sort items ---
+
+        yield 'multiple items' => [
+            ['allowed' => ['name', 'date'], 'default' => ['name']],
+            ['sort' => ['name:asc', 'date:desc']],
+            [['name', 'ASC'], ['date', 'DESC']],
+        ];
+
+        yield 'multiple items: one invalid, one valid' => [
+            ['allowed' => ['name', 'date'], 'default' => ['name']],
+            ['sort' => ['unknown:asc', 'date:desc']],
+            [['date', 'DESC']],
+        ];
+
+        // --- Fallback to default ---
+
+        yield 'fallback: unknown column' => [
+            ['allowed' => ['title', 'id'], 'default' => ['title']],
+            ['sort' => 'malicious_column:asc'],
+            [['title', 'ASC']],
+        ];
+
+        yield 'fallback: missing sort param' => [
+            ['allowed' => ['title'], 'default' => ['title:desc']],
+            [],
+            [['title', 'DESC']],
+        ];
+
+        yield 'fallback: null sort param' => [
+            ['allowed' => ['title'], 'default' => ['title:desc']],
+            ['sort' => null],
+            [['title', 'DESC']],
+        ];
+
+        // --- Direction normalization ---
+
+        yield 'normalize: desc lowercase' => [
+            ['allowed' => ['title'], 'default' => ['title']],
+            ['sort' => 'title:desc'],
+            [['title', 'DESC']],
+        ];
+
+        yield 'normalize: DESC uppercase' => [
+            ['allowed' => ['title'], 'default' => ['title']],
+            ['sort' => 'title:DESC'],
+            [['title', 'DESC']],
+        ];
+
+        yield 'normalize: invalid direction defaults to ASC' => [
+            ['allowed' => ['title'], 'default' => ['title']],
+            ['sort' => 'title:invalid'],
+            [['title', 'ASC']],
+        ];
+
+        // --- Custom sort param ---
+
+        yield 'custom sort param' => [
+            ['allowed' => ['title'], 'default' => ['title'], 'sortParam' => 'order_by'],
+            ['order_by' => 'title:desc'],
+            [['title', 'DESC']],
+        ];
+
+        // --- Full scenario ---
+
+        yield 'full scenario: create_time:asc with free mapping' => [
+            [
+                'allowed' => ['create_time' => 'review_id', 'status' => ['status', 'create_time:desc']],
+                'default' => ['create_time:desc'],
+                'defaultDir' => 'asc',
+            ],
+            ['sort' => 'create_time:asc'],
+            [['review_id', 'ASC']],
+        ];
+
+        yield 'full scenario: create_time:desc with locked mapping' => [
+            [
+                'allowed' => ['create_time' => 'review_id:desc'],
+                'default' => ['create_time'],
+            ],
+            ['sort' => 'create_time:asc'],
+            [['review_id', 'DESC']],  // Locked: ignores user asc
+        ];
+
+        yield 'full scenario: status:asc multi-column' => [
+            [
+                'allowed' => ['create_time' => 'review_id', 'status' => ['status', 'create_time:desc']],
+                'default' => ['create_time:desc'],
+                'defaultDir' => 'asc',
+            ],
+            ['sort' => 'status:asc'],
+            [['status', 'ASC'], ['create_time', 'DESC']],
+        ];
+
+        yield 'full scenario: status without dir uses defaultDir' => [
+            [
+                'allowed' => ['create_time' => 'review_id', 'status' => ['status', 'create_time:desc']],
+                'default' => ['create_time:desc'],
+                'defaultDir' => 'asc',
+            ],
+            ['sort' => 'status'],
+            [['status', 'ASC'], ['create_time', 'DESC']],
+        ];
+
+        yield 'full scenario: unknown falls back to default' => [
+            [
+                'allowed' => ['create_time' => 'review_id', 'status' => ['status', 'create_time:desc']],
+                'default' => ['create_time:desc'],
+                'defaultDir' => 'asc',
+            ],
+            ['sort' => 'unknown'],
+            [['review_id', 'DESC']],
+        ];
     }
 
-    public function testResolveWithMultipleItems(): void
+    /**
+     * @dataProvider resolveProvider
+     *
+     * @param array $configArgs SortConfig constructor args (allowed, default, defaultDir?, sortParam?)
+     * @param array $params Query parameters to resolve
+     * @param array $expected Expected result as [[column, dir], ...]
+     */
+    public function testResolve(array $configArgs, array $params, array $expected): void
     {
         $config = new SortConfig(
-            allowed: ['name', 'date'],
-            default: ['name'],
+            allowed: $configArgs['allowed'],
+            default: $configArgs['default'],
+            defaultDir: $configArgs['defaultDir'] ?? 'ASC',
+            sortParam: $configArgs['sortParam'] ?? 'sort',
         );
 
-        $sort = $config->resolve(['sort' => ['name:asc', 'date:desc']]);
+        $result = $config->resolve($params);
 
-        $this->assertInstanceOf(MultiSort::class, $sort);
-        $sorts = $sort->getSorts();
-        $this->assertCount(2, $sorts);
-        $this->assertSame('name', $sorts[0]->getColumn());
-        $this->assertSame('ASC', $sorts[0]->getDir());
-        $this->assertSame('date', $sorts[1]->getColumn());
-        $this->assertSame('DESC', $sorts[1]->getDir());
-    }
+        $this->assertInstanceOf(SortInterface::class, $result);
 
-    public function testResolveWithMapping(): void
-    {
-        $config = new SortConfig(
-            allowed: ['name' => 'user_name', 'date' => 'created_at'],
-            default: ['name'],
-        );
+        if (count($expected) === 1) {
+            $this->assertInstanceOf(Sort::class, $result);
+            $this->assertSame($expected[0][0], $result->getColumn());
+            $this->assertSame($expected[0][1], $result->getDir());
+        } else {
+            $this->assertInstanceOf(MultiSort::class, $result);
+            $sorts = $result->getSorts();
+            $this->assertCount(count($expected), $sorts);
 
-        $sort = $config->resolve(['sort' => 'date:asc']);
-
-        $this->assertInstanceOf(Sort::class, $sort);
-        $this->assertSame('created_at', $sort->getColumn());
-    }
-
-    public function testResolveWithInvalidColumnReturnsDefault(): void
-    {
-        $config = new SortConfig(
-            allowed: ['title', 'id'],
-            default: ['title'],
-        );
-
-        $sort = $config->resolve(['sort' => 'malicious_column:asc']);
-
-        $this->assertInstanceOf(Sort::class, $sort);
-        $this->assertSame('title', $sort->getColumn());
-    }
-
-    public function testResolveWithMissingParamsReturnsDefault(): void
-    {
-        $config = new SortConfig(
-            allowed: ['title', 'id'],
-            default: [['title', 'DESC']],
-        );
-
-        $sort = $config->resolve([]);
-
-        $this->assertInstanceOf(Sort::class, $sort);
-        $this->assertSame('title', $sort->getColumn());
-        $this->assertSame('DESC', $sort->getDir());
-    }
-
-    public function testResolveWithoutDirUsesDefaultDir(): void
-    {
-        $config = new SortConfig(
-            allowed: ['title'],
-            default: ['title'],
-            defaultDir: 'DESC',
-        );
-
-        $sort = $config->resolve(['sort' => 'title']);
-
-        $this->assertInstanceOf(Sort::class, $sort);
-        $this->assertSame('DESC', $sort->getDir());
-    }
-
-    public function testResolveNormalizesDirection(): void
-    {
-        $config = new SortConfig(
-            allowed: ['title'],
-            default: ['title'],
-        );
-
-        $sort = $config->resolve(['sort' => 'title:desc']);
-        $this->assertInstanceOf(Sort::class, $sort);
-        $this->assertSame('DESC', $sort->getDir());
-
-        $sort = $config->resolve(['sort' => 'title:DESC']);
-        $this->assertSame('DESC', $sort->getDir());
-
-        $sort = $config->resolve(['sort' => 'title:asc']);
-        $this->assertSame('ASC', $sort->getDir());
-
-        $sort = $config->resolve(['sort' => 'title:invalid']);
-        $this->assertSame('ASC', $sort->getDir());
-    }
-
-    public function testResolveWithCustomSortParam(): void
-    {
-        $config = new SortConfig(
-            allowed: ['title'],
-            default: ['title'],
-            sortParam: 'order_by',
-        );
-
-        $sort = $config->resolve(['order_by' => 'title:desc']);
-
-        $this->assertInstanceOf(Sort::class, $sort);
-        $this->assertSame('DESC', $sort->getDir());
-    }
-
-    public function testResolveReturnsSortInterface(): void
-    {
-        $config = new SortConfig(
-            allowed: ['title'],
-            default: ['title'],
-        );
-
-        $sort = $config->resolve(['sort' => 'title:asc']);
-
-        $this->assertInstanceOf(SortInterface::class, $sort);
+            foreach ($expected as $i => [$expectedColumn, $expectedDir]) {
+                $this->assertSame($expectedColumn, $sorts[$i]->getColumn(), "Column mismatch at index $i");
+                $this->assertSame($expectedDir, $sorts[$i]->getDir(), "Direction mismatch at index $i");
+            }
+        }
     }
 
     // --- Accessors ---
