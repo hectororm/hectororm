@@ -76,4 +76,4 @@ $response = $paginator->prepareResponse($response, $serverRequest->getUri(), $pa
 - **JSON Serialization**: All pagination classes implement `JsonSerializable`
 - **PSR-7 Compatible**: Works with any PSR-7 implementation
 
-📖 **[See full documentation for all features](https://gethectororm.com/components/pagination)**
+📖 **[See full documentation for all features](https://gethectororm.com/docs/current/components/pagination)**
