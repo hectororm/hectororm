@@ -18,9 +18,6 @@ use Hector\Schema\Exception\SchemaException;
 use Hector\Schema\Schema;
 use Hector\Schema\SchemaContainer;
 
-/**
- * Interface GeneratorInterface.
- */
 interface GeneratorInterface
 {
     /**

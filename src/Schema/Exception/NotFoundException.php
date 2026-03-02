@@ -14,9 +14,6 @@ declare(strict_types=1);
 
 namespace Hector\Schema\Exception;
 
-/**
- * Class NotFoundException.
- */
 class NotFoundException extends SchemaException
 {
 }

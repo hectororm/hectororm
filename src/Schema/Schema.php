@@ -20,9 +20,6 @@ use Generator;
 use Hector\Schema\Exception\NotFoundException;
 use IteratorAggregate;
 
-/**
- * Class Schema.
- */
 class Schema implements Countable, IteratorAggregate
 {
     public function __construct(

@@ -16,9 +16,6 @@ namespace Hector\Schema\Exception;
 
 use Exception;
 
-/**
- * Class SchemaException.
- */
 class SchemaException extends Exception
 {
 }

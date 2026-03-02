@@ -19,9 +19,6 @@ use Generator;
 use Hector\Schema\Exception\NotFoundException;
 use IteratorAggregate;
 
-/**
- * Interface SchemaContainerInterface.
- */
 interface SchemaContainerInterface extends Countable, IteratorAggregate
 {
     /**

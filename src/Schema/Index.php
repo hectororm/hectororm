@@ -16,9 +16,6 @@ namespace Hector\Schema;
 
 use Hector\Schema\Exception\SchemaException;
 
-/**
- * Class Index.
- */
 class Index
 {
     use NameHelperTrait;

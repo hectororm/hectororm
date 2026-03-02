@@ -23,9 +23,6 @@ use Hector\Schema\Schema;
 use Hector\Schema\SchemaContainer;
 use Hector\Schema\Table;
 
-/**
- * Class AbstractGenerator.
- */
 abstract class AbstractGenerator implements GeneratorInterface
 {
     public function __construct(protected Connection $connection)

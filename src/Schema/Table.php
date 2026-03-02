@@ -21,9 +21,6 @@ use Hector\Schema\Exception\NotFoundException;
 use Hector\Schema\Exception\SchemaException;
 use IteratorAggregate;
 
-/**
- * Class Table.
- */
 class Table implements Countable, IteratorAggregate
 {
     public const TYPE_TABLE = 'table';

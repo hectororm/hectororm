@@ -18,9 +18,6 @@ use Hector\Schema\Exception\SchemaException;
 use Hector\Schema\Index;
 use Hector\Schema\Table;
 
-/**
- * Class Sqlite.
- */
 class Sqlite extends AbstractGenerator
 {
     private ?string $encoding = null;

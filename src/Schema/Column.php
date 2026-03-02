@@ -16,9 +16,6 @@ namespace Hector\Schema;
 
 use Hector\Schema\Exception\SchemaException;
 
-/**
- * Class Column.
- */
 class Column
 {
     use NameHelperTrait;

@@ -17,9 +17,6 @@ namespace Hector\Schema;
 use Generator;
 use Hector\Schema\Exception\SchemaException;
 
-/**
- * Class ForeignKey.
- */
 class ForeignKey
 {
     use NameHelperTrait;
