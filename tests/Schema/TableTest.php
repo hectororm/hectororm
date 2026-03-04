@@ -30,8 +30,8 @@ class TableTest extends AbstractTestCase
         $this->assertEquals($table->getName(), $table2->getName());
         $this->assertEquals($table->getCharset(), $table2->getCharset());
         $this->assertEquals($table->getCollation(), $table2->getCollation());
-        $this->assertCount(count(iterator_to_array($table->getColumns())), $table2->getColumns());
-        $this->assertCount(count(iterator_to_array($table->getIndexes())), $table2->getIndexes());
+        $this->assertCount(count(iterator_to_array($table->getColumns())), iterator_to_array($table2->getColumns()));
+        $this->assertCount(count(iterator_to_array($table->getIndexes())), iterator_to_array($table2->getIndexes()));
     }
 
     public function testCount(): void
@@ -125,8 +125,8 @@ class TableTest extends AbstractTestCase
         $schema = $this->getSchemaContainer()->getSchema('sakila');
         $table = $schema->getTable('customer');
 
-        $this->assertCount(9, $table->getColumns());
-        $this->assertContainsOnlyInstancesOf(Column::class, $table->getColumns());
+        $this->assertCount(9, iterator_to_array($table->getColumns()));
+        $this->assertContainsOnlyInstancesOf(Column::class, iterator_to_array($table->getColumns()));
 
         foreach ($table->getColumns() as $column) {
             $this->assertSame($table, $column->getTable());
@@ -282,8 +282,8 @@ class TableTest extends AbstractTestCase
         $schema = $this->getSchemaContainer()->getSchema('sakila');
         $table = $schema->getTable('customer');
 
-        $this->assertCount(4, $table->getIndexes());
-        $this->assertContainsOnlyInstancesOf(Index::class, $table->getIndexes());
+        $this->assertCount(4, iterator_to_array($table->getIndexes()));
+        $this->assertContainsOnlyInstancesOf(Index::class, iterator_to_array($table->getIndexes()));
 
         foreach ($table->getIndexes() as $index) {
             $this->assertSame($table, $index->getTable());
@@ -314,8 +314,8 @@ class TableTest extends AbstractTestCase
         $schema = $this->getSchemaContainer()->getSchema('sakila');
         $table = $schema->getTable('customer');
 
-        $this->assertCount(2, $table->getForeignKeys());
-        $this->assertContainsOnlyInstancesOf(ForeignKey::class, $table->getForeignKeys());
+        $this->assertCount(2, iterator_to_array($table->getForeignKeys()));
+        $this->assertContainsOnlyInstancesOf(ForeignKey::class, iterator_to_array($table->getForeignKeys()));
 
         foreach ($table->getForeignKeys() as $foreignKey) {
             $this->assertSame($table, $foreignKey->getTable());
@@ -328,8 +328,8 @@ class TableTest extends AbstractTestCase
         $table = $schema->getTable('customer');
         $table2 = $schema->getTable('address');
 
-        $this->assertCount(1, $table->getForeignKeys($table2));
-        $this->assertContainsOnlyInstancesOf(ForeignKey::class, $table->getForeignKeys($table2));
+        $this->assertCount(1, iterator_to_array($table->getForeignKeys($table2)));
+        $this->assertContainsOnlyInstancesOf(ForeignKey::class, iterator_to_array($table->getForeignKeys($table2)));
 
         foreach ($table->getForeignKeys($table2) as $foreignKey) {
             $this->assertSame($table2, $foreignKey->getReferencedTable());
@@ -342,7 +342,7 @@ class TableTest extends AbstractTestCase
         $table = $schema->getTable('customer');
         $table2 = $schema->getTable('actor');
 
-        $this->assertCount(0, $table->getForeignKeys($table2));
+        $this->assertCount(0, iterator_to_array($table->getForeignKeys($table2)));
     }
 
     public function testGetSchema(): void

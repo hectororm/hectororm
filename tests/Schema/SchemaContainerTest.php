@@ -49,8 +49,8 @@ class SchemaContainerTest extends AbstractTestCase
     {
         $schemaContainer = $this->getSchemaContainer();
 
-        $this->assertCount(1, $schemaContainer->getSchemas());
-        $this->assertContainsOnlyInstancesOf(Schema::class, $schemaContainer->getSchemas());
+        $this->assertCount(1, iterator_to_array($schemaContainer->getSchemas()));
+        $this->assertContainsOnlyInstancesOf(Schema::class, iterator_to_array($schemaContainer->getSchemas()));
 
         foreach ($schemaContainer->getSchemas() as $schema) {
             $this->assertSame($schemaContainer, $schema->getContainer());

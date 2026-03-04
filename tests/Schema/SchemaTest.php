@@ -28,7 +28,7 @@ class SchemaTest extends AbstractTestCase
         $this->assertEquals($schema->getName(), $schema2->getName());
         $this->assertEquals($schema->getCharset(), $schema2->getCharset());
         $this->assertEquals($schema->getCollation(), $schema2->getCollation());
-        $this->assertCount(count(iterator_to_array($schema->getTables())), $schema2->getTables());
+        $this->assertCount(count(iterator_to_array($schema->getTables())), iterator_to_array($schema2->getTables()));
     }
 
     public function testCount(): void
@@ -95,8 +95,8 @@ class SchemaTest extends AbstractTestCase
     {
         $schema = $this->getSchemaContainer()->getSchema('sakila');
 
-        $this->assertCount(23, $schema->getTables());
-        $this->assertContainsOnlyInstancesOf(Table::class, $schema->getTables());
+        $this->assertCount(23, iterator_to_array($schema->getTables()));
+        $this->assertContainsOnlyInstancesOf(Table::class, iterator_to_array($schema->getTables()));
 
         foreach ($schema->getTables() as $table) {
             $this->assertEquals('sakila', $table->getSchemaName());
@@ -108,10 +108,10 @@ class SchemaTest extends AbstractTestCase
     {
         $schema = $this->getSchemaContainer()->getSchema('sakila');
 
-        $tables = $schema->getTables(Table::TYPE_TABLE);
+        $tables = iterator_to_array($schema->getTables(Table::TYPE_TABLE));
         $this->assertCount(16, $tables);
 
-        $tables = $schema->getTables(Table::TYPE_VIEW);
+        $tables = iterator_to_array($schema->getTables(Table::TYPE_VIEW));
         $this->assertCount(7, $tables);
     }
 
