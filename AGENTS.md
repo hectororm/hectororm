@@ -73,6 +73,21 @@ Tests require `pdo_sqlite` and optionally `pdo_mysql`.
 
 ---
 
+## Coding Style
+
+- **Conditions:** Use Yoda conditions for literal comparisons: `false === $var`, `true === $var`, `null === $var` instead of `!$var`, `$var === true`, etc.
+- **Guard clauses:** Prefer `continue`/`return` as early exits instead of wrapping blocks in `if (!condition) { ... }`.
+- **Collections/Plans:** Implement `IteratorAggregate` + `Countable`, provide `getArrayCopy(): array` for array access.
+
+---
+
+## Changelogs
+
+- **Root `CHANGELOG.md`**: auto-generated, **do NOT edit manually**. Only add new packages to it if needed.
+- **Sub-package `src/<Package>/CHANGELOG.md`**: maintained manually. Update the `[Unreleased]` section when adding features or fixes to that package.
+
+---
+
 ## Contributing
 
 - All issues and PRs must be opened in the **monorepo** (`hectororm/hectororm`).
