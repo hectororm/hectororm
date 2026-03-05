@@ -24,7 +24,6 @@ use Hector\Query\Clause\Group;
 use Hector\Query\Clause\Having;
 use Hector\Query\Clause\Limit;
 use Hector\Query\Clause\Where;
-use Hector\Query\Component\EncapsulateHelperTrait;
 use Hector\Query\Component\Join;
 use Hector\Query\Component\Order;
 
@@ -45,7 +44,6 @@ class Select implements CompoundStatementInterface
     use Having;
     use Clause\Order;
     use Limit;
-    use EncapsulateHelperTrait;
 
     protected bool|Closure $distinct = false;
 

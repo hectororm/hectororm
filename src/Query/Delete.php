@@ -20,7 +20,6 @@ use Hector\Query\Clause\BindParams;
 use Hector\Query\Clause\From;
 use Hector\Query\Clause\Limit;
 use Hector\Query\Clause\Where;
-use Hector\Query\Component\EncapsulateHelperTrait;
 use Hector\Query\Component\Order;
 
 class Delete implements CompoundStatementInterface
@@ -33,7 +32,6 @@ class Delete implements CompoundStatementInterface
     use Where;
     use Clause\Order;
     use Limit;
-    use EncapsulateHelperTrait;
 
     public function __construct(?BindParamList $binds = null)
     {

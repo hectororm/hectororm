@@ -18,14 +18,12 @@ use Hector\Connection\Bind\BindParamList;
 use Hector\Connection\Driver\DriverCapabilities;
 use Hector\Query\Clause\Limit;
 use Hector\Query\Clause\Order;
-use Hector\Query\Component\EncapsulateHelperTrait;
 use Hector\Query\Statement\Encapsulated;
 
 class Union implements CompoundStatementInterface
 {
     use Order;
     use Limit;
-    use EncapsulateHelperTrait;
 
     private bool $all = false;
     private array $selects = [];

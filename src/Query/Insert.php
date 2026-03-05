@@ -21,7 +21,6 @@ use Hector\Query\Clause\Assignments;
 use Hector\Query\Clause\BindParams;
 use Hector\Query\Clause\Columns;
 use Hector\Query\Clause\From;
-use Hector\Query\Component\EncapsulateHelperTrait;
 
 class Insert implements CompoundStatementInterface
 {
@@ -29,7 +28,6 @@ class Insert implements CompoundStatementInterface
     use Columns;
     use From;
     use Assignments;
-    use EncapsulateHelperTrait;
 
     protected ?Select $select = null;
     protected bool|Closure $ignore = false;

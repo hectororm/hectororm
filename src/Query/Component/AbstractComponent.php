@@ -23,8 +23,6 @@ use Hector\Query\StatementInterface;
 
 abstract class AbstractComponent implements StatementInterface
 {
-    use EncapsulateHelperTrait;
-
     /**
      * AbstractComponent constructor.
      *
