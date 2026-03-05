@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `Statement\Quoted` for driver-aware deferred identifier quoting (supports composite `schema.table.column` and `*` wildcard)
 - `Statement\Encapsulated` wrapper class for explicit sub-expression parenthesization
 - `CompoundStatementInterface` marker interface for statements (queries, grouped conditions) that should be auto-encapsulated as sub-expressions
 - Driver-aware identifier quoting via `DriverCapabilities` parameter on `StatementInterface::getStatement()`
