@@ -19,6 +19,7 @@ use Hector\Connection\Driver\DriverCapabilities;
 use Hector\Query\Clause\Limit;
 use Hector\Query\Clause\Order;
 use Hector\Query\Component\EncapsulateHelperTrait;
+use Hector\Query\Statement\Encapsulated;
 
 class Union implements StatementInterface
 {
@@ -91,21 +92,19 @@ class Union implements StatementInterface
         $selectStatements = [];
         /** @var Select $select */
         foreach ($this->selects as $select) {
-            $selectStatements[] = $select->getStatement($bindParams, $driverCapabilities, true);
+            $selectStatements[] = (new Encapsulated($select))->getStatement($bindParams, $driverCapabilities);
         }
 
         $str = implode(' UNION ' . ($this->all ? 'ALL ' : 'DISTINCT '), $selectStatements);
 
         if (null !== $this->limit->getLimit() || count($this->order) > 0) {
-            $encapsulate = true;
-        }
-
-        if ($encapsulate) {
-            $str = $this->encapsulate($str, $encapsulate);
+            $str = '( ' . $str . ' )';
             $str .= rtrim(' ' . ($this->order->getStatement($bindParams, $driverCapabilities) ?? ''));
             $str .= rtrim(' ' . ($this->limit->getStatement($bindParams, $driverCapabilities) ?? ''));
+
+            return $str;
         }
 
-        return $str;
+        return $this->encapsulate($str, $encapsulate);
     }
 }
