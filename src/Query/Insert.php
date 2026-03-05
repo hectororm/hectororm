@@ -23,7 +23,7 @@ use Hector\Query\Clause\Columns;
 use Hector\Query\Clause\From;
 use Hector\Query\Component\EncapsulateHelperTrait;
 
-class Insert implements StatementInterface
+class Insert implements CompoundStatementInterface
 {
     use BindParams;
     use Columns;

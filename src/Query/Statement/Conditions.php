@@ -18,9 +18,9 @@ use Hector\Connection\Bind\BindParamList;
 use Hector\Connection\Driver\DriverCapabilities;
 use Hector\Query\Clause\Having;
 use Hector\Query\Clause\Where;
-use Hector\Query\StatementInterface;
+use Hector\Query\CompoundStatementInterface;
 
-class Conditions implements StatementInterface
+class Conditions implements CompoundStatementInterface
 {
     use Where;
     use Having;

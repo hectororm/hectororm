@@ -28,7 +28,7 @@ use Hector\Query\Component\EncapsulateHelperTrait;
 use Hector\Query\Component\Join;
 use Hector\Query\Component\Order;
 
-class Select implements StatementInterface
+class Select implements CompoundStatementInterface
 {
     public const INNER_JOIN = Join::INNER_JOIN;
     public const LEFT_JOIN = Join::LEFT_JOIN;

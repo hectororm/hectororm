@@ -21,7 +21,7 @@ use Hector\Query\Clause\Order;
 use Hector\Query\Component\EncapsulateHelperTrait;
 use Hector\Query\Statement\Encapsulated;
 
-class Union implements StatementInterface
+class Union implements CompoundStatementInterface
 {
     use Order;
     use Limit;

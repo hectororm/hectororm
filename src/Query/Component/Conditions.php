@@ -19,9 +19,10 @@ use Countable;
 use Hector\Connection\Bind\BindParamList;
 use Hector\Connection\Driver\DriverCapabilities;
 use Hector\Query\Select;
+use Hector\Query\CompoundStatementInterface;
 use Hector\Query\StatementInterface;
 
-class Conditions extends AbstractComponent implements Countable
+class Conditions extends AbstractComponent implements CompoundStatementInterface, Countable
 {
     public const LINK_AND = 'AND';
     public const LINK_OR = 'OR';
@@ -136,7 +137,7 @@ class Conditions extends AbstractComponent implements Countable
         $statement = '';
 
         foreach ($this->conditions as &$condition) {
-            if (null === ($subStatement = $this->getSubStatement($condition['column'], $bindParams, $driverCapabilities, true))) {
+            if (null === ($subStatement = $this->getSubStatement($condition['column'], $bindParams, $driverCapabilities))) {
                 continue;
             }
 
@@ -153,7 +154,7 @@ class Conditions extends AbstractComponent implements Countable
             $statement .= ' ' . $condition['operator'];
 
             if (null !== $condition['value']) {
-                $statement .= ' ' . $this->getSubStatementValue($condition['value'], $bindParams, $driverCapabilities, true);
+                $statement .= ' ' . $this->getSubStatementValue($condition['value'], $bindParams, $driverCapabilities);
             }
         }
 

@@ -42,7 +42,7 @@ use Hector\Query\Statement\Exists;
 use InvalidArgumentException;
 
 
-class QueryBuilder implements StatementInterface
+class QueryBuilder implements CompoundStatementInterface
 {
     use BindParams;
     use Columns;

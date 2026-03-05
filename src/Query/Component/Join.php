@@ -146,20 +146,20 @@ class Join extends AbstractComponent
 
             foreach ($condition as $key => $value) {
                 if (is_numeric($key)) {
-                    $conditions[] = $this->getSubStatement($value, $bindParams, $driverCapabilities, false);
+                    $conditions[] = $this->getSubStatement($value, $bindParams, $driverCapabilities);
                     continue;
                 }
 
                 $conditions[] = sprintf(
                     '%s = %s',
-                    $this->getSubStatement($key, $bindParams, $driverCapabilities, false),
-                    $this->getSubStatement($value, $bindParams, $driverCapabilities, false)
+                    $this->getSubStatement($key, $bindParams, $driverCapabilities),
+                    $this->getSubStatement($value, $bindParams, $driverCapabilities)
                 );
             }
 
             return implode(' AND ', $conditions);
         }
 
-        return $this->getSubStatement($condition, $bindParams, $driverCapabilities, false);
+        return $this->getSubStatement($condition, $bindParams, $driverCapabilities);
     }
 }

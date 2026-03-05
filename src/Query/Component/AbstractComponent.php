@@ -17,6 +17,8 @@ namespace Hector\Query\Component;
 use Closure;
 use Hector\Connection\Bind\BindParamList;
 use Hector\Connection\Driver\DriverCapabilities;
+use Hector\Query\CompoundStatementInterface;
+use Hector\Query\Statement\Encapsulated;
 use Hector\Query\StatementInterface;
 
 abstract class AbstractComponent implements StatementInterface
@@ -38,7 +40,6 @@ abstract class AbstractComponent implements StatementInterface
      * @param Closure|StatementInterface|string|null $statement
      * @param BindParamList $bindParams
      * @param ?DriverCapabilities $driverCapabilities
-     * @param bool $encapsulate
      *
      * @return string|null
      */
@@ -46,15 +47,19 @@ abstract class AbstractComponent implements StatementInterface
         Closure|StatementInterface|string|null $statement,
         BindParamList $bindParams,
         ?DriverCapabilities $driverCapabilities = null,
-        bool $encapsulate = true,
     ): ?string {
         if (null === $statement) {
             return null;
         }
 
-        // Statement
+        // Compound statement: encapsulate automatically
+        if ($statement instanceof CompoundStatementInterface) {
+            return (new Encapsulated($statement))->getStatement($bindParams, $driverCapabilities);
+        }
+
+        // Simple statement
         if ($statement instanceof StatementInterface) {
-            return $statement->getStatement($bindParams, $driverCapabilities, $encapsulate);
+            return $statement->getStatement($bindParams, $driverCapabilities);
         }
 
         // Callable statement
@@ -67,8 +72,10 @@ abstract class AbstractComponent implements StatementInterface
             $str = '';
 
             foreach ($args as $arg) {
-                if ($arg instanceof StatementInterface) {
-                    $str .= $arg->getStatement($bindParams, $driverCapabilities, $encapsulate);
+                if ($arg instanceof CompoundStatementInterface) {
+                    $str .= (new Encapsulated($arg))->getStatement($bindParams, $driverCapabilities);
+                } elseif ($arg instanceof StatementInterface) {
+                    $str .= $arg->getStatement($bindParams, $driverCapabilities);
                 }
             }
 
@@ -83,12 +90,11 @@ abstract class AbstractComponent implements StatementInterface
     }
 
     /**
-     * Get sub statement.
+     * Get sub statement value.
      *
      * @param mixed $value
      * @param BindParamList $bindParams
      * @param ?DriverCapabilities $driverCapabilities
-     * @param bool $encapsulate
      *
      * @return string|null
      */
@@ -96,16 +102,20 @@ abstract class AbstractComponent implements StatementInterface
         mixed $value,
         BindParamList $bindParams,
         ?DriverCapabilities $driverCapabilities = null,
-        bool $encapsulate = true,
     ): ?string {
-        // Statement value
+        // Compound statement value: encapsulate automatically
+        if ($value instanceof CompoundStatementInterface) {
+            return (new Encapsulated($value))->getStatement($bindParams, $driverCapabilities);
+        }
+
+        // Simple statement value
         if ($value instanceof StatementInterface) {
-            return $value->getStatement($bindParams, $driverCapabilities, $encapsulate);
+            return $value->getStatement($bindParams, $driverCapabilities);
         }
 
         // Callable statement value
         if ($value instanceof Closure) {
-            return $this->getSubStatementValue($value->call($this), $bindParams, $driverCapabilities, $encapsulate);
+            return $this->getSubStatementValue($value->call($this), $bindParams, $driverCapabilities);
         }
 
         // Array statement value

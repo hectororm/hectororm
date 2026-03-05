@@ -24,7 +24,7 @@ use Hector\Query\Clause\Where;
 use Hector\Query\Component\EncapsulateHelperTrait;
 use Hector\Query\Component\Order;
 
-class Update implements StatementInterface
+class Update implements CompoundStatementInterface
 {
     public const ORDER_ASC = Order::ORDER_ASC;
     public const ORDER_DESC = Order::ORDER_DESC;

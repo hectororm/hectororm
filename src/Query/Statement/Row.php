@@ -40,12 +40,6 @@ class Row implements StatementInterface
         ?DriverCapabilities $driverCapabilities = null,
         bool $encapsulate = false,
     ): ?string {
-        $str = implode(', ', $this->values);
-
-        if ($encapsulate) {
-            return sprintf('(%s)', $str);
-        }
-
-        return $str;
+        return '(' . implode(', ', $this->values) . ')';
     }
 }
