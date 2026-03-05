@@ -15,6 +15,7 @@ namespace Hector\Query\Tests;
 use Hector\Connection\Bind\BindParam;
 use Hector\Connection\Bind\BindParamList;
 use Hector\Query\Select;
+use Hector\Query\Statement\Encapsulated;
 use PHPUnit\Framework\TestCase;
 
 class SelectTest extends TestCase
@@ -168,7 +169,7 @@ class SelectTest extends TestCase
 
         $this->assertEquals(
             '( SELECT * FROM foo AS `f` )',
-            $select->getStatement($binds, encapsulate: true)
+            (new Encapsulated($select))->getStatement($binds)
         );
         $this->assertEmpty($binds);
     }

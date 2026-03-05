@@ -88,7 +88,6 @@ class Assignments extends AbstractComponent
     public function getStatement(
         BindParamList $bindParams,
         ?DriverCapabilities $driverCapabilities = null,
-        bool $encapsulate = false,
     ): ?string {
         return null;
     }

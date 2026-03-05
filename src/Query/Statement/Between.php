@@ -43,7 +43,6 @@ class Between implements StatementInterface
     public function getStatement(
         BindParamList $bindParams,
         ?DriverCapabilities $driverCapabilities = null,
-        bool $encapsulate = false,
     ): ?string {
         if ($this->column instanceof StatementInterface) {
             return sprintf(

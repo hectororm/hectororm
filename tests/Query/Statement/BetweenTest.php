@@ -16,6 +16,7 @@ use Hector\Connection\Bind\BindParam;
 use Hector\Connection\Bind\BindParamList;
 use Hector\Query\Select;
 use Hector\Query\Statement\Between;
+use Hector\Query\Statement\Encapsulated;
 use PHPUnit\Framework\TestCase;
 
 class BetweenTest extends TestCase
@@ -37,7 +38,7 @@ class BetweenTest extends TestCase
         $between = new Between('foo', 1, 10);
         $binds = new BindParamList();
 
-        $this->assertEquals('foo BETWEEN :_h_0 AND :_h_1', $between->getStatement($binds, encapsulate: true));
+        $this->assertEquals('( foo BETWEEN :_h_0 AND :_h_1 )', (new Encapsulated($between))->getStatement($binds));
         $this->assertEquals(
             ['_h_0' => 1, '_h_1' => 10],
             array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())

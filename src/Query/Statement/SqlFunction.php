@@ -37,14 +37,13 @@ class SqlFunction implements StatementInterface
     public function getStatement(
         BindParamList $bindParams,
         ?DriverCapabilities $driverCapabilities = null,
-        bool $encapsulate = false,
     ): ?string {
         if ($this->expression instanceof StatementInterface) {
             return
                 sprintf(
                     '%s( %s )',
                     $this->function,
-                    $this->expression->getStatement($bindParams, $driverCapabilities, false)
+                    $this->expression->getStatement($bindParams, $driverCapabilities)
                 );
         }
 

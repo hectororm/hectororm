@@ -58,14 +58,12 @@ class Group extends AbstractComponent implements Countable
     public function getStatement(
         BindParamList $bindParams,
         ?DriverCapabilities $driverCapabilities = null,
-        bool $encapsulate = false,
     ): ?string {
         if (empty($this->group)) {
             return null;
         }
 
-        return $this->encapsulate(
-            'GROUP BY ' .
+        return 'GROUP BY ' .
             implode(
                 ', ',
                 array_map(
@@ -75,8 +73,6 @@ class Group extends AbstractComponent implements Countable
                     $this->group
                 )
             ) .
-            ($this->withRollup ? ' WITH ROLLUP' : ''),
-            $encapsulate
-        );
+            ($this->withRollup ? ' WITH ROLLUP' : '');
     }
 }

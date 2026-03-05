@@ -71,29 +71,27 @@ class Columns extends AbstractComponent implements Countable
     public function getStatement(
         BindParamList $bindParams,
         ?DriverCapabilities $driverCapabilities = null,
-        bool $encapsulate = false,
     ): ?string {
         $quote = $driverCapabilities?->getIdentifierQuote() ?? '`';
 
-        return $this->encapsulate(
-            implode(
-                ', ',
-                array_map(
-                    function ($column) use ($bindParams, $driverCapabilities, $quote) {
-                        if ($column['alias']) {
-                            return sprintf(
-                                '%s AS %s',
-                                rtrim($this->getSubStatement($column['column'], $bindParams, $driverCapabilities)),
-                                Helper::quote($column['alias'], $quote),
-                            );
-                        }
+        $str = implode(
+            ', ',
+            array_map(
+                function ($column) use ($bindParams, $driverCapabilities, $quote) {
+                    if ($column['alias']) {
+                        return sprintf(
+                            '%s AS %s',
+                            rtrim($this->getSubStatement($column['column'], $bindParams, $driverCapabilities)),
+                            Helper::quote($column['alias'], $quote),
+                        );
+                    }
 
-                        return $this->getSubStatement($column['column'], $bindParams, $driverCapabilities);
-                    },
-                    $this->columns
-                )
-            ),
-            $encapsulate
+                    return $this->getSubStatement($column['column'], $bindParams, $driverCapabilities);
+                },
+                $this->columns
+            )
         );
+
+        return $str ?: null;
     }
 }

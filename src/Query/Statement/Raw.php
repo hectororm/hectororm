@@ -37,7 +37,6 @@ class Raw implements StatementInterface
     public function getStatement(
         BindParamList $bindParams,
         ?DriverCapabilities $driverCapabilities = null,
-        bool $encapsulate = false,
     ): ?string {
         array_map(
             fn($name, $value): BindParam => $bindParams->add($value, name: (string)$name),

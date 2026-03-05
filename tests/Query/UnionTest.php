@@ -15,6 +15,7 @@ namespace Hector\Query\Tests;
 use Hector\Connection\Bind\BindParam;
 use Hector\Connection\Bind\BindParamList;
 use Hector\Query\Select;
+use Hector\Query\Statement\Encapsulated;
 use Hector\Query\Union;
 use PHPUnit\Framework\TestCase;
 
@@ -71,7 +72,7 @@ class UnionTest extends TestCase
             ' UNION DISTINCT ' .
             '( SELECT * FROM foo2 AS `f` WHERE bar = :_h_1 )' .
             ' )',
-            $union->getStatement($binds, encapsulate: true)
+            (new Encapsulated($union))->getStatement($binds)
         );
         $this->assertEquals(
             ['_h_0' => 'baz', '_h_1' => 'baz'],

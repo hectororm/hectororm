@@ -104,7 +104,6 @@ class Insert implements CompoundStatementInterface
     public function getStatement(
         BindParamList $bindParams,
         ?DriverCapabilities $driverCapabilities = null,
-        bool $encapsulate = false,
     ): ?string {
         $this->mergeBindParamsTo($bindParams);
 
@@ -124,6 +123,6 @@ class Insert implements CompoundStatementInterface
         $str .= ' INTO ' . ($this->from->getStatement($bindParams, $driverCapabilities) ?? '') . ' ' .
             $assignmentsStr;
 
-        return $this->encapsulate($str, $encapsulate);
+        return $str;
     }
 }

@@ -26,31 +26,29 @@ class UpdateAssignments extends Assignments
     public function getStatement(
         BindParamList $bindParams,
         ?DriverCapabilities $driverCapabilities = null,
-        bool $encapsulate = false,
     ): ?string {
         if ($this->assignments instanceof StatementInterface) {
-            return $this->assignments->getStatement($bindParams, $driverCapabilities, $encapsulate);
+            return $this->assignments->getStatement($bindParams, $driverCapabilities);
         }
 
-        return $this->encapsulate(
-            implode(
-                ', ',
-                array_map(
-                    function ($assignment) use (&$bindParams, $driverCapabilities) {
-                        if (!array_key_exists('value', $assignment)) {
-                            return $this->getSubStatement($assignment['column'], $bindParams, $driverCapabilities);
-                        }
+        $str = implode(
+            ', ',
+            array_map(
+                function ($assignment) use (&$bindParams, $driverCapabilities) {
+                    if (!array_key_exists('value', $assignment)) {
+                        return $this->getSubStatement($assignment['column'], $bindParams, $driverCapabilities);
+                    }
 
-                        return sprintf(
-                            '%s = %s',
-                            $this->getSubStatement($assignment['column'], $bindParams, $driverCapabilities),
-                            $this->getSubStatementValue($assignment['value'], $bindParams, $driverCapabilities)
-                        );
-                    },
-                    $this->assignments
-                )
-            ),
-            $encapsulate
+                    return sprintf(
+                        '%s = %s',
+                        $this->getSubStatement($assignment['column'], $bindParams, $driverCapabilities),
+                        $this->getSubStatementValue($assignment['value'], $bindParams, $driverCapabilities)
+                    );
+                },
+                $this->assignments
+            )
         );
+
+        return $str ?: null;
     }
 }

@@ -14,6 +14,7 @@ namespace Hector\Query\Tests\Statement;
 
 use Hector\Connection\Bind\BindParam;
 use Hector\Connection\Bind\BindParamList;
+use Hector\Query\Statement\Encapsulated;
 use Hector\Query\Statement\NotBetween;
 use PHPUnit\Framework\TestCase;
 
@@ -36,7 +37,7 @@ class NotBetweenTest extends TestCase
         $between = new NotBetween('foo', 1, 10);
         $binds = new BindParamList();
 
-        $this->assertEquals('foo NOT BETWEEN :_h_0 AND :_h_1', $between->getStatement($binds, encapsulate: true));
+        $this->assertEquals('( foo NOT BETWEEN :_h_0 AND :_h_1 )', (new Encapsulated($between))->getStatement($binds));
         $this->assertEquals(
             ['_h_0' => 1, '_h_1' => 10],
             array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())

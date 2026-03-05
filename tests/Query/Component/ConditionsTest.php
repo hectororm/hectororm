@@ -17,6 +17,7 @@ use Hector\Connection\Bind\BindParam;
 use Hector\Connection\Bind\BindParamList;
 use Hector\Query\Component\Conditions;
 use Hector\Query\Select;
+use Hector\Query\Statement\Encapsulated;
 use Hector\Query\Statement\Row;
 use Hector\Query\Tests\FakeEnum;
 use PHPUnit\Framework\TestCase;
@@ -83,7 +84,7 @@ class ConditionsTest extends TestCase
 
         $this->assertEquals(
             '( foo IS NULL OR `bar` = :_h_0 )',
-            $condition->getStatement($binds, encapsulate: true)
+            (new Encapsulated($condition))->getStatement($binds)
         );
         $this->assertEquals(
             ['_h_0' => 'test'],

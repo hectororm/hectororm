@@ -38,7 +38,6 @@ class Row implements StatementInterface
     public function getStatement(
         BindParamList $bindParams,
         ?DriverCapabilities $driverCapabilities = null,
-        bool $encapsulate = false,
     ): ?string {
         return '(' . implode(', ', $this->values) . ')';
     }

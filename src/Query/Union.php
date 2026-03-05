@@ -83,7 +83,6 @@ class Union implements CompoundStatementInterface
     public function getStatement(
         BindParamList $bindParams,
         ?DriverCapabilities $driverCapabilities = null,
-        bool $encapsulate = false,
     ): ?string {
         if (empty($this->selects)) {
             return null;
@@ -105,6 +104,6 @@ class Union implements CompoundStatementInterface
             return $str;
         }
 
-        return $this->encapsulate($str, $encapsulate);
+        return $str;
     }
 }

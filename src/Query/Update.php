@@ -67,7 +67,6 @@ class Update implements CompoundStatementInterface
     public function getStatement(
         BindParamList $bindParams,
         ?DriverCapabilities $driverCapabilities = null,
-        bool $encapsulate = false,
     ): ?string {
         $this->mergeBindParamsTo($bindParams);
 
@@ -88,6 +87,6 @@ class Update implements CompoundStatementInterface
         $str .= rtrim(' ' . ($this->order->getStatement($bindParams, $driverCapabilities) ?? ''));
         $str .= rtrim(' ' . ($this->limit->getStatement($bindParams, $driverCapabilities) ?? ''));
 
-        return $this->encapsulate($str, $encapsulate);
+        return $str;
     }
 }

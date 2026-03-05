@@ -47,10 +47,9 @@ class Conditions implements CompoundStatementInterface
     public function getStatement(
         BindParamList $bindParams,
         ?DriverCapabilities $driverCapabilities = null,
-        bool $encapsulate = false,
     ): ?string {
         return
-            $this->where->getStatement($bindParams, $driverCapabilities, $encapsulate) .
-            $this->having->getStatement($bindParams, $driverCapabilities, $encapsulate);
+            $this->where->getStatement($bindParams, $driverCapabilities) .
+            $this->having->getStatement($bindParams, $driverCapabilities);
     }
 }

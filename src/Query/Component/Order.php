@@ -65,14 +65,12 @@ class Order extends AbstractComponent implements Countable
     public function getStatement(
         BindParamList $bindParams,
         ?DriverCapabilities $driverCapabilities = null,
-        bool $encapsulate = false,
     ): ?string {
         if (empty($this->order)) {
             return null;
         }
 
-        return $this->encapsulate(
-            'ORDER BY ' .
+        return 'ORDER BY ' .
             implode(
                 ', ',
                 array_map(
@@ -89,8 +87,6 @@ class Order extends AbstractComponent implements Countable
                     },
                     $this->order
                 )
-            ),
-            $encapsulate
-        );
+            );
     }
 }

@@ -25,10 +25,9 @@ class InsertAssignments extends Assignments
     public function getStatement(
         BindParamList $bindParams,
         ?DriverCapabilities $driverCapabilities = null,
-        bool $encapsulate = false,
     ): ?string {
         if ($this->assignments instanceof StatementInterface) {
-            return $this->assignments->getStatement($bindParams, $driverCapabilities, $encapsulate);
+            return $this->assignments->getStatement($bindParams, $driverCapabilities);
         }
 
         $keys = [];
@@ -49,6 +48,6 @@ class InsertAssignments extends Assignments
             $values[] = $this->getSubStatementValue($assignment['value'] ?? null, $bindParams, $driverCapabilities);
         }
 
-        return $this->encapsulate(implode(', ', $keys)) . ' VALUES ' . $this->encapsulate(implode(', ', $values));
+        return '( ' . implode(', ', $keys) . ' ) VALUES ( ' . implode(', ', $values) . ' )';
     }
 }

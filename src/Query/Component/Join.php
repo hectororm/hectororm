@@ -93,34 +93,32 @@ class Join extends AbstractComponent
     public function getStatement(
         BindParamList $bindParams,
         ?DriverCapabilities $driverCapabilities = null,
-        bool $encapsulate = false,
     ): ?string {
         $quote = $driverCapabilities?->getIdentifierQuote() ?? '`';
 
-        return $this->encapsulate(
-            implode(
-                ' ',
-                array_map(
-                    function ($join) use (&$bindParams, $driverCapabilities, $quote) {
-                        $str = sprintf('%s JOIN %s', $join['join'],
-                            $this->getSubStatement($join['table'], $bindParams, $driverCapabilities));
+        $str = implode(
+            ' ',
+            array_map(
+                function ($join) use (&$bindParams, $driverCapabilities, $quote) {
+                    $str = sprintf('%s JOIN %s', $join['join'],
+                        $this->getSubStatement($join['table'], $bindParams, $driverCapabilities));
 
-                        if (null !== $join['alias']) {
-                            $str .= sprintf(' AS %s', Helper::quote($join['alias'], $quote));
-                        }
+                    if (null !== $join['alias']) {
+                        $str .= sprintf(' AS %s', Helper::quote($join['alias'], $quote));
+                    }
 
-                        $joinCondition = $this->getJoinCondition($join['condition'], $bindParams, $driverCapabilities);
-                        if (null !== $joinCondition) {
-                            $str .= sprintf(' ON ( %s )', $joinCondition);
-                        }
+                    $joinCondition = $this->getJoinCondition($join['condition'], $bindParams, $driverCapabilities);
+                    if (null !== $joinCondition) {
+                        $str .= sprintf(' ON ( %s )', $joinCondition);
+                    }
 
-                        return $str;
-                    },
-                    $this->joins
-                )
-            ),
-            $encapsulate
+                    return $str;
+                },
+                $this->joins
+            )
         );
+
+        return $str ?: null;
     }
 
     /**

@@ -54,29 +54,27 @@ class Table extends AbstractComponent
     public function getStatement(
         BindParamList $bindParams,
         ?DriverCapabilities $driverCapabilities = null,
-        bool $encapsulate = false,
     ): ?string {
         $quote = $driverCapabilities?->getIdentifierQuote() ?? '`';
 
-        return $this->encapsulate(
-            implode(
-                ', ',
-                array_map(
-                    function ($from) use (&$bindParams, $driverCapabilities, $quote) {
-                        if ($from['alias'] && $this->alias) {
-                            return sprintf(
-                                '%s AS %s',
-                                $this->getSubStatement($from['table'], $bindParams, $driverCapabilities),
-                                Helper::quote($from['alias'], $quote)
-                            );
-                        }
+        $str = implode(
+            ', ',
+            array_map(
+                function ($from) use (&$bindParams, $driverCapabilities, $quote) {
+                    if ($from['alias'] && $this->alias) {
+                        return sprintf(
+                            '%s AS %s',
+                            $this->getSubStatement($from['table'], $bindParams, $driverCapabilities),
+                            Helper::quote($from['alias'], $quote)
+                        );
+                    }
 
-                        return $this->getSubStatement($from['table'], $bindParams, $driverCapabilities);
-                    },
-                    $this->tables
-                )
-            ),
-            $encapsulate
+                    return $this->getSubStatement($from['table'], $bindParams, $driverCapabilities);
+                },
+                $this->tables
+            )
         );
+
+        return $str ?: null;
     }
 }

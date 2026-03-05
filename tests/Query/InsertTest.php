@@ -16,6 +16,7 @@ use Hector\Connection\Bind\BindParam;
 use Hector\Connection\Bind\BindParamList;
 use Hector\Query\Insert;
 use Hector\Query\Select;
+use Hector\Query\Statement\Encapsulated;
 use Hector\Query\Statement\Raw;
 use PHPUnit\Framework\TestCase;
 
@@ -125,7 +126,7 @@ class InsertTest extends TestCase
 
         $this->assertEquals(
             '( INSERT INTO `foo` ( `bar` ) VALUES ( :_h_0 ) )',
-            $insert->getStatement($binds, encapsulate: true)
+            (new Encapsulated($insert))->getStatement($binds)
         );
         $this->assertEquals(
             ['_h_0' => 'value_bar'],

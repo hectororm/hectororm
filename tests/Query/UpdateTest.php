@@ -14,6 +14,7 @@ namespace Hector\Query\Tests;
 
 use Hector\Connection\Bind\BindParam;
 use Hector\Connection\Bind\BindParamList;
+use Hector\Query\Statement\Encapsulated;
 use Hector\Query\Update;
 use PHPUnit\Framework\TestCase;
 
@@ -110,7 +111,7 @@ class UpdateTest extends TestCase
 
         $this->assertEquals(
             '( UPDATE foo SET bar = :_h_0 )',
-            $update->getStatement($binds, encapsulate: true)
+            (new Encapsulated($update))->getStatement($binds)
         );
         $this->assertEquals(
             ['_h_0' => 'value_bar'],

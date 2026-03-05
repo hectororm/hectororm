@@ -13,6 +13,7 @@
 namespace Hector\Query\Tests\Statement;
 
 use Hector\Connection\Bind\BindParamList;
+use Hector\Query\Statement\Encapsulated;
 use Hector\Query\Statement\Row;
 use PHPUnit\Framework\TestCase;
 
@@ -32,7 +33,7 @@ class RowTest extends TestCase
         $row = new Row('foo', '`bar`', 'baz');
         $binds = new BindParamList();
 
-        $this->assertEquals('(foo, `bar`, baz)', $row->getStatement($binds, encapsulate: true));
+        $this->assertEquals('( (foo, `bar`, baz) )', (new Encapsulated($row))->getStatement($binds));
         $this->assertEmpty($binds);
     }
 }

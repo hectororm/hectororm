@@ -13,6 +13,7 @@
 namespace Hector\Query\Tests\Statement;
 
 use Hector\Connection\Bind\BindParamList;
+use Hector\Query\Statement\Encapsulated;
 use Hector\Query\Statement\NotExists;
 use PHPUnit\Framework\TestCase;
 
@@ -32,7 +33,7 @@ class NotExistsTest extends TestCase
         $exists = new NotExists('SELECT 1');
         $binds = new BindParamList();
 
-        $this->assertEquals('NOT EXISTS( SELECT 1 )', $exists->getStatement($binds, encapsulate: true));
+        $this->assertEquals('( NOT EXISTS( SELECT 1 ) )', (new Encapsulated($exists))->getStatement($binds));
         $this->assertEmpty($binds);
     }
 }

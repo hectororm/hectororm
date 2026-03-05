@@ -132,7 +132,6 @@ class Conditions extends AbstractComponent implements CompoundStatementInterface
     public function getStatement(
         BindParamList $bindParams,
         ?DriverCapabilities $driverCapabilities = null,
-        bool $encapsulate = false,
     ): ?string {
         $statement = '';
 
@@ -158,6 +157,6 @@ class Conditions extends AbstractComponent implements CompoundStatementInterface
             }
         }
 
-        return $this->encapsulate($statement, $encapsulate);
+        return $statement ?: null;
     }
 }

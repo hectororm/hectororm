@@ -479,9 +479,8 @@ class QueryBuilder implements CompoundStatementInterface
     public function getStatement(
         BindParamList $bindParams,
         ?DriverCapabilities $driverCapabilities = null,
-        bool $encapsulate = false,
     ): ?string {
-        return $this->makeSelect()->getStatement($bindParams, $driverCapabilities, $encapsulate);
+        return $this->makeSelect()->getStatement($bindParams, $driverCapabilities);
     }
 
     /**

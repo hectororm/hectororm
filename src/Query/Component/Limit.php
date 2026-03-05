@@ -68,16 +68,15 @@ class Limit extends AbstractComponent
     public function getStatement(
         BindParamList $bindParams,
         ?DriverCapabilities $driverCapabilities = null,
-        bool $encapsulate = false,
     ): ?string {
         if (null === $this->limit) {
             return null;
         }
 
         if (null === $this->offset) {
-            return $this->encapsulate(sprintf('LIMIT %d', $this->limit), $encapsulate);
+            return sprintf('LIMIT %d', $this->limit);
         }
 
-        return $this->encapsulate(sprintf('LIMIT %d OFFSET %d', $this->limit, $this->offset), $encapsulate);
+        return sprintf('LIMIT %d OFFSET %d', $this->limit, $this->offset);
     }
 }

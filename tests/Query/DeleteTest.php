@@ -16,6 +16,7 @@ use Hector\Connection\Bind\BindParam;
 use Hector\Connection\Bind\BindParamList;
 use Hector\Query\Component\Order;
 use Hector\Query\Delete;
+use Hector\Query\Statement\Encapsulated;
 use PHPUnit\Framework\TestCase;
 
 class DeleteTest extends TestCase
@@ -53,7 +54,7 @@ class DeleteTest extends TestCase
 
         $this->assertEquals(
             '( DELETE FROM `foo` )',
-            $delete->getStatement($binds, encapsulate: true)
+            (new Encapsulated($delete))->getStatement($binds)
         );
         $this->assertEquals(
             [],

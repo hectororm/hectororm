@@ -15,6 +15,7 @@ namespace Hector\Query\Tests\Statement;
 use Hector\Connection\Bind\BindParam;
 use Hector\Connection\Bind\BindParamList;
 use Hector\Query\Select;
+use Hector\Query\Statement\Encapsulated;
 use Hector\Query\Statement\Exists;
 use PHPUnit\Framework\TestCase;
 
@@ -34,7 +35,7 @@ class ExistsTest extends TestCase
         $exists = new Exists('SELECT 1');
         $binds = new BindParamList();
 
-        $this->assertEquals('EXISTS( SELECT 1 )', $exists->getStatement($binds, encapsulate: true));
+        $this->assertEquals('( EXISTS( SELECT 1 ) )', (new Encapsulated($exists))->getStatement($binds));
         $this->assertEmpty($binds);
     }
 
