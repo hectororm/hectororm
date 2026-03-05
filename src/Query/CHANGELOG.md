@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `Statement\Encapsulated` wrapper class for explicit sub-expression parenthesization
+- `CompoundStatementInterface` marker interface for statements (queries, grouped conditions) that should be auto-encapsulated as sub-expressions
 - Driver-aware identifier quoting via `DriverCapabilities` parameter on `StatementInterface::getStatement()`
 - `Helper::quote()` and `Helper::trim()` now accept a `$quote` parameter for driver-specific quote character
 - `Helper::quote()` now escapes embedded quote characters by doubling them
@@ -18,6 +20,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Namespace `Sort` with `SortInterface`, `Sort`, `MultiSort` and `SortConfig` for type-safe, composable sorting
 - Method `QueryBuilder::applySort(SortInterface)` to apply a sort object to the query builder
 - Cursor position validation in `QueryCursorPaginator` (columns match, scalar values only)
+
+### Changed
+
+- **BREAKING:** Removed `bool $encapsulate` parameter from `StatementInterface::getStatement()` — callers needing parentheses should use `Statement\Encapsulated` wrapper instead
+- `Statement\Row::getStatement()` now always returns parenthesized format `(val1, val2)`
+- `Component\AbstractComponent::getSubStatement()` and `getSubStatementValue()` auto-encapsulate `CompoundStatementInterface` instances
+
+### Removed
+
+- `Component\EncapsulateHelperTrait` — replaced by `Statement\Encapsulated` and `CompoundStatementInterface`
 
 ## [1.2.2] - 2026-02-05
 
