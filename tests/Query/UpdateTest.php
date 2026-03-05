@@ -110,7 +110,7 @@ class UpdateTest extends TestCase
 
         $this->assertEquals(
             '( UPDATE foo SET bar = :_h_0 )',
-            $update->getStatement($binds, true)
+            $update->getStatement($binds, encapsulate: true)
         );
         $this->assertEquals(
             ['_h_0' => 'value_bar'],

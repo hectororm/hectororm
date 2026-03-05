@@ -23,31 +23,33 @@ class Helper
      * Trim name.
      *
      * @param string|null $name
+     * @param string $quote
      *
      * @return string|null
      */
-    public static function trim(?string $name): ?string
+    public static function trim(?string $name, string $quote = '`'): ?string
     {
         if (null === $name) {
             return null;
         }
 
-        return trim($name, " \t\n\r\0\x0B`") ?: null;
+        return trim($name, " \t\n\r\0\x0B" . $quote) ?: null;
     }
 
     /**
      * Quote.
      *
      * @param string|null $name
+     * @param string $quote
      *
      * @return string|null
      */
-    public static function quote(?string $name): ?string
+    public static function quote(?string $name, string $quote = '`'): ?string
     {
         if (null === $name) {
             return null;
         }
 
-        return sprintf('`%s`', $name);
+        return sprintf('%1$s%2$s%1$s', $quote, str_replace($quote, $quote . $quote, $name));
     }
 }

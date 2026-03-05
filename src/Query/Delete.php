@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace Hector\Query;
 
 use Hector\Connection\Bind\BindParamList;
+use Hector\Connection\Driver\DriverCapabilities;
 use Hector\Query\Clause\BindParams;
 use Hector\Query\Clause\From;
 use Hector\Query\Clause\Limit;
@@ -60,24 +61,27 @@ class Delete implements StatementInterface
     /**
      * @inheritDoc
      */
-    public function getStatement(BindParamList $bindParams, bool $encapsulate = false): ?string
-    {
+    public function getStatement(
+        BindParamList $bindParams,
+        ?DriverCapabilities $driverCapabilities = null,
+        bool $encapsulate = false,
+    ): ?string {
         $this->mergeBindParamsTo($bindParams);
 
-        $fromStr = $this->from->getStatement($bindParams);
+        $fromStr = $this->from->getStatement($bindParams, $driverCapabilities);
 
         if (null === $fromStr) {
             return null;
         }
 
-        $str = 'DELETE FROM ' . ($this->from->getStatement($bindParams) ?? '');
+        $str = 'DELETE FROM ' . ($this->from->getStatement($bindParams, $driverCapabilities) ?? '');
 
-        if (null !== ($whereStr = $this->where->getStatement($bindParams))) {
+        if (null !== ($whereStr = $this->where->getStatement($bindParams, $driverCapabilities))) {
             $str .= ' WHERE ' . $whereStr;
         }
 
-        $str .= rtrim(' ' . ($this->order->getStatement($bindParams) ?? ''));
-        $str .= rtrim(' ' . ($this->limit->getStatement($bindParams) ?? ''));
+        $str .= rtrim(' ' . ($this->order->getStatement($bindParams, $driverCapabilities) ?? ''));
+        $str .= rtrim(' ' . ($this->limit->getStatement($bindParams, $driverCapabilities) ?? ''));
 
         return $this->encapsulate($str, $encapsulate);
     }

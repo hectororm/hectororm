@@ -17,6 +17,7 @@ namespace Hector\Query\Component;
 use Closure;
 use Countable;
 use Hector\Connection\Bind\BindParamList;
+use Hector\Connection\Driver\DriverCapabilities;
 use Hector\Query\StatementInterface;
 
 class Order extends AbstractComponent implements Countable
@@ -61,8 +62,11 @@ class Order extends AbstractComponent implements Countable
     /**
      * @inheritDoc
      */
-    public function getStatement(BindParamList $bindParams, bool $encapsulate = false): ?string
-    {
+    public function getStatement(
+        BindParamList $bindParams,
+        ?DriverCapabilities $driverCapabilities = null,
+        bool $encapsulate = false,
+    ): ?string {
         if (empty($this->order)) {
             return null;
         }
@@ -72,16 +76,16 @@ class Order extends AbstractComponent implements Countable
             implode(
                 ', ',
                 array_map(
-                    function ($column) use (&$bindParams) {
+                    function ($column) use (&$bindParams, $driverCapabilities) {
                         if ($column['order']) {
                             return sprintf(
                                 '%s %s',
-                                $this->getSubStatement($column['column'], $bindParams),
+                                $this->getSubStatement($column['column'], $bindParams, $driverCapabilities),
                                 $column['order']
                             );
                         }
 
-                        return $this->getSubStatement($column['column'], $bindParams);
+                        return $this->getSubStatement($column['column'], $bindParams, $driverCapabilities);
                     },
                     $this->order
                 )

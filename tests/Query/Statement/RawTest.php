@@ -36,7 +36,7 @@ class RawTest extends TestCase
         $raw = new Raw('UNIX_TIMESTAMP(?)', [$date = date('Y-m-d H:i:s')]);
         $binds = new BindParamList();
 
-        $this->assertEquals('UNIX_TIMESTAMP(?)', $raw->getStatement($binds, true));
+        $this->assertEquals('UNIX_TIMESTAMP(?)', $raw->getStatement($binds, encapsulate: true));
         $this->assertEquals(
             [$date],
             array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())

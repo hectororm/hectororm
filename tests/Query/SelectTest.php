@@ -168,7 +168,7 @@ class SelectTest extends TestCase
 
         $this->assertEquals(
             '( SELECT * FROM foo AS `f` )',
-            $select->getStatement($binds, true)
+            $select->getStatement($binds, encapsulate: true)
         );
         $this->assertEmpty($binds);
     }

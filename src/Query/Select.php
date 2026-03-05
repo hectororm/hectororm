@@ -16,6 +16,7 @@ namespace Hector\Query;
 
 use Closure;
 use Hector\Connection\Bind\BindParamList;
+use Hector\Connection\Driver\DriverCapabilities;
 use Hector\Query\Clause\BindParams;
 use Hector\Query\Clause\Columns;
 use Hector\Query\Clause\From;
@@ -93,18 +94,21 @@ class Select implements StatementInterface
     /**
      * @inheritDoc
      */
-    public function getStatement(BindParamList $bindParams, bool $encapsulate = false): ?string
-    {
+    public function getStatement(
+        BindParamList $bindParams,
+        ?DriverCapabilities $driverCapabilities = null,
+        bool $encapsulate = false,
+    ): ?string {
         $this->mergeBindParamsTo($bindParams);
 
-        $columnStr = $this->columns->getStatement($bindParams);
-        $whereStr = $this->where->getStatement($bindParams);
-        $havingStr = $this->having->getStatement($bindParams);
-        $groupStr = $this->group->getStatement($bindParams);
-        $orderStr = $this->order->getStatement($bindParams);
-        $limitStr = $this->limit->getStatement($bindParams);
-        $joinStr = $this->join->getStatement($bindParams);
-        $fromStr = $this->from->getStatement($bindParams);
+        $columnStr = $this->columns->getStatement($bindParams, $driverCapabilities);
+        $whereStr = $this->where->getStatement($bindParams, $driverCapabilities);
+        $havingStr = $this->having->getStatement($bindParams, $driverCapabilities);
+        $groupStr = $this->group->getStatement($bindParams, $driverCapabilities);
+        $orderStr = $this->order->getStatement($bindParams, $driverCapabilities);
+        $limitStr = $this->limit->getStatement($bindParams, $driverCapabilities);
+        $joinStr = $this->join->getStatement($bindParams, $driverCapabilities);
+        $fromStr = $this->from->getStatement($bindParams, $driverCapabilities);
 
         $str = 'SELECT';
 

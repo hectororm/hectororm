@@ -32,7 +32,7 @@ class RowTest extends TestCase
         $row = new Row('foo', '`bar`', 'baz');
         $binds = new BindParamList();
 
-        $this->assertEquals('(foo, `bar`, baz)', $row->getStatement($binds, true));
+        $this->assertEquals('(foo, `bar`, baz)', $row->getStatement($binds, encapsulate: true));
         $this->assertEmpty($binds);
     }
 }

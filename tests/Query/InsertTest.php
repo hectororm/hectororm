@@ -125,7 +125,7 @@ class InsertTest extends TestCase
 
         $this->assertEquals(
             '( INSERT INTO `foo` ( `bar` ) VALUES ( :_h_0 ) )',
-            $insert->getStatement($binds, true)
+            $insert->getStatement($binds, encapsulate: true)
         );
         $this->assertEquals(
             ['_h_0' => 'value_bar'],

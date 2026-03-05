@@ -83,7 +83,7 @@ class ConditionsTest extends TestCase
 
         $this->assertEquals(
             '( foo IS NULL OR `bar` = :_h_0 )',
-            $condition->getStatement($binds, true)
+            $condition->getStatement($binds, encapsulate: true)
         );
         $this->assertEquals(
             ['_h_0' => 'test'],

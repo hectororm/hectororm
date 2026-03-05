@@ -53,7 +53,7 @@ class DeleteTest extends TestCase
 
         $this->assertEquals(
             '( DELETE FROM `foo` )',
-            $delete->getStatement($binds, true)
+            $delete->getStatement($binds, encapsulate: true)
         );
         $this->assertEquals(
             [],

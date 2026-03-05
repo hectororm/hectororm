@@ -32,7 +32,7 @@ class NotExistsTest extends TestCase
         $exists = new NotExists('SELECT 1');
         $binds = new BindParamList();
 
-        $this->assertEquals('NOT EXISTS( SELECT 1 )', $exists->getStatement($binds, true));
+        $this->assertEquals('NOT EXISTS( SELECT 1 )', $exists->getStatement($binds, encapsulate: true));
         $this->assertEmpty($binds);
     }
 }

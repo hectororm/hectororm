@@ -37,7 +37,7 @@ class BetweenTest extends TestCase
         $between = new Between('foo', 1, 10);
         $binds = new BindParamList();
 
-        $this->assertEquals('foo BETWEEN :_h_0 AND :_h_1', $between->getStatement($binds, true));
+        $this->assertEquals('foo BETWEEN :_h_0 AND :_h_1', $between->getStatement($binds, encapsulate: true));
         $this->assertEquals(
             ['_h_0' => 1, '_h_1' => 10],
             array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())

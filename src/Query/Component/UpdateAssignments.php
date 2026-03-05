@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace Hector\Query\Component;
 
 use Hector\Connection\Bind\BindParamList;
+use Hector\Connection\Driver\DriverCapabilities;
 use Hector\Query\StatementInterface;
 
 class UpdateAssignments extends Assignments
@@ -22,25 +23,28 @@ class UpdateAssignments extends Assignments
     /**
      * @inheritDoc
      */
-    public function getStatement(BindParamList $bindParams, bool $encapsulate = false): ?string
-    {
+    public function getStatement(
+        BindParamList $bindParams,
+        ?DriverCapabilities $driverCapabilities = null,
+        bool $encapsulate = false,
+    ): ?string {
         if ($this->assignments instanceof StatementInterface) {
-            return $this->assignments->getStatement($bindParams, $encapsulate);
+            return $this->assignments->getStatement($bindParams, $driverCapabilities, $encapsulate);
         }
 
         return $this->encapsulate(
             implode(
                 ', ',
                 array_map(
-                    function ($assignment) use (&$bindParams) {
+                    function ($assignment) use (&$bindParams, $driverCapabilities) {
                         if (!array_key_exists('value', $assignment)) {
-                            return $this->getSubStatement($assignment['column'], $bindParams);
+                            return $this->getSubStatement($assignment['column'], $bindParams, $driverCapabilities);
                         }
 
                         return sprintf(
                             '%s = %s',
-                            $this->getSubStatement($assignment['column'], $bindParams),
-                            $this->getSubStatementValue($assignment['value'], $bindParams)
+                            $this->getSubStatement($assignment['column'], $bindParams, $driverCapabilities),
+                            $this->getSubStatementValue($assignment['value'], $bindParams, $driverCapabilities)
                         );
                     },
                     $this->assignments

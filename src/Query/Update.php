@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace Hector\Query;
 
 use Hector\Connection\Bind\BindParamList;
+use Hector\Connection\Driver\DriverCapabilities;
 use Hector\Query\Clause\Assignments;
 use Hector\Query\Clause\BindParams;
 use Hector\Query\Clause\From;
@@ -63,26 +64,29 @@ class Update implements StatementInterface
     /**
      * @inheritDoc
      */
-    public function getStatement(BindParamList $bindParams, bool $encapsulate = false): ?string
-    {
+    public function getStatement(
+        BindParamList $bindParams,
+        ?DriverCapabilities $driverCapabilities = null,
+        bool $encapsulate = false,
+    ): ?string {
         $this->mergeBindParamsTo($bindParams);
 
-        $fromStr = $this->from->getStatement($bindParams);
-        $assignmentsStr = $this->assignments->getStatement($bindParams);
+        $fromStr = $this->from->getStatement($bindParams, $driverCapabilities);
+        $assignmentsStr = $this->assignments->getStatement($bindParams, $driverCapabilities);
 
         if (null === $fromStr || null === $assignmentsStr) {
             return null;
         }
 
-        $str = 'UPDATE ' . ($this->from->getStatement($bindParams) ?? '') . ' SET ' . $assignmentsStr;
+        $str = 'UPDATE ' . ($this->from->getStatement($bindParams, $driverCapabilities) ?? '') . ' SET ' . $assignmentsStr;
 
-        $whereStr = $this->where->getStatement($bindParams);
+        $whereStr = $this->where->getStatement($bindParams, $driverCapabilities);
         if (null !== $whereStr) {
             $str .= ' WHERE ' . $whereStr;
         }
 
-        $str .= rtrim(' ' . ($this->order->getStatement($bindParams) ?? ''));
-        $str .= rtrim(' ' . ($this->limit->getStatement($bindParams) ?? ''));
+        $str .= rtrim(' ' . ($this->order->getStatement($bindParams, $driverCapabilities) ?? ''));
+        $str .= rtrim(' ' . ($this->limit->getStatement($bindParams, $driverCapabilities) ?? ''));
 
         return $this->encapsulate($str, $encapsulate);
     }

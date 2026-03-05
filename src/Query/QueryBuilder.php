@@ -17,6 +17,7 @@ namespace Hector\Query;
 use Generator;
 use Hector\Connection\Bind\BindParamList;
 use Hector\Connection\Connection;
+use Hector\Connection\Driver\DriverCapabilities;
 use Hector\Pagination\CursorPagination;
 use Hector\Pagination\OffsetPagination;
 use Hector\Pagination\PaginationInterface;
@@ -296,9 +297,10 @@ class QueryBuilder implements StatementInterface
     public function fetchOne(bool $lock = false): ?array
     {
         $select = $this->makeSelect();
+        $driverCapabilities = $this->connection->getDriverInfo()->getCapabilities();
 
         $binds = new BindParamList();
-        $statement = $select->getStatement($binds);
+        $statement = $select->getStatement($binds, $driverCapabilities);
 
         true === $lock && $statement = $this->addLockForUpdate($statement);
 
@@ -315,9 +317,10 @@ class QueryBuilder implements StatementInterface
     public function fetchAll(bool $lock = false): Generator
     {
         $select = $this->makeSelect();
+        $driverCapabilities = $this->connection->getDriverInfo()->getCapabilities();
 
         $binds = new BindParamList();
-        $statement = $select->getStatement($binds);
+        $statement = $select->getStatement($binds, $driverCapabilities);
 
         true === $lock && $statement = $this->addLockForUpdate($statement);
 
@@ -335,9 +338,10 @@ class QueryBuilder implements StatementInterface
     public function fetchColumn(int $column = 0, bool $lock = false): Generator
     {
         $select = $this->makeSelect();
+        $driverCapabilities = $this->connection->getDriverInfo()->getCapabilities();
 
         $binds = new BindParamList();
-        $statement = $select->getStatement($binds);
+        $statement = $select->getStatement($binds, $driverCapabilities);
 
         true === $lock && $statement = $this->addLockForUpdate($statement);
 
@@ -369,9 +373,10 @@ class QueryBuilder implements StatementInterface
     public function count(): int
     {
         $select = $this->makeCount();
+        $driverCapabilities = $this->connection->getDriverInfo()->getCapabilities();
 
         $binds = new BindParamList();
-        $statement = $select->getStatement($binds);
+        $statement = $select->getStatement($binds, $driverCapabilities);
         $result = $this->connection->fetchOne($statement, $binds->getArrayCopy());
 
         if (null === $result) {
@@ -388,8 +393,9 @@ class QueryBuilder implements StatementInterface
      */
     public function exists(): bool
     {
+        $driverCapabilities = $this->connection->getDriverInfo()->getCapabilities();
         $binds = new BindParamList();
-        $statement = $this->makeExists()->getStatement($binds);
+        $statement = $this->makeExists()->getStatement($binds, $driverCapabilities);
 
         $result = $this->connection->fetchOne($statement, $binds->getArrayCopy());
 
@@ -424,9 +430,10 @@ class QueryBuilder implements StatementInterface
     {
         $insert = $this->makeInsert();
         $insert->assigns($values);
+        $driverCapabilities = $this->connection->getDriverInfo()->getCapabilities();
 
         $binds = new BindParamList();
-        $statement = $insert->getStatement($binds);
+        $statement = $insert->getStatement($binds, $driverCapabilities);
 
         return $this->execute($statement, $binds->getArrayCopy());
     }
@@ -442,9 +449,10 @@ class QueryBuilder implements StatementInterface
     {
         $update = $this->makeUpdate();
         $update->assigns($values);
+        $driverCapabilities = $this->connection->getDriverInfo()->getCapabilities();
 
         $binds = new BindParamList();
-        $statement = $update->getStatement($binds);
+        $statement = $update->getStatement($binds, $driverCapabilities);
 
         return $this->execute($statement, $binds->getArrayCopy());
     }
@@ -457,9 +465,10 @@ class QueryBuilder implements StatementInterface
     public function delete(): int
     {
         $delete = $this->makeDelete();
+        $driverCapabilities = $this->connection->getDriverInfo()->getCapabilities();
 
         $binds = new BindParamList();
-        $statement = $delete->getStatement($binds);
+        $statement = $delete->getStatement($binds, $driverCapabilities);
 
         return $this->execute($statement, $binds->getArrayCopy());
     }
@@ -467,9 +476,12 @@ class QueryBuilder implements StatementInterface
     /**
      * @inheritDoc
      */
-    public function getStatement(BindParamList $bindParams, bool $encapsulate = false): ?string
-    {
-        return $this->makeSelect()->getStatement($bindParams, $encapsulate);
+    public function getStatement(
+        BindParamList $bindParams,
+        ?DriverCapabilities $driverCapabilities = null,
+        bool $encapsulate = false,
+    ): ?string {
+        return $this->makeSelect()->getStatement($bindParams, $driverCapabilities, $encapsulate);
     }
 
     /**

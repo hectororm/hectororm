@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Driver-aware identifier quoting via `DriverCapabilities` parameter on `StatementInterface::getStatement()`
+- `Helper::quote()` and `Helper::trim()` now accept a `$quote` parameter for driver-specific quote character
+- `Helper::quote()` now escapes embedded quote characters by doubling them
 - Method `Component\Order::getOrder()` to get defined order
 - Method `QueryBuilder::paginate()` for built-in pagination support (offset, cursor, range)
 - Namespace `Pagination` with `QueryOffsetPaginator`, `QueryCursorPaginator`, `QueryRangePaginator`

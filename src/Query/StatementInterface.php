@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace Hector\Query;
 
 use Hector\Connection\Bind\BindParamList;
+use Hector\Connection\Driver\DriverCapabilities;
 
 interface StatementInterface
 {
@@ -22,9 +23,14 @@ interface StatementInterface
      * Get statement.
      *
      * @param BindParamList $bindParams Bind parameters
+     * @param DriverCapabilities|null $driverCapabilities Driver capabilities (default: null, fallback to backtick quoting)
      * @param bool $encapsulate Encapsulate statement? (default: false)
      *
      * @return string|null
      */
-    public function getStatement(BindParamList $bindParams, bool $encapsulate = false): ?string;
+    public function getStatement(
+        BindParamList $bindParams,
+        ?DriverCapabilities $driverCapabilities = null,
+        bool $encapsulate = false,
+    ): ?string;
 }

@@ -16,6 +16,7 @@ namespace Hector\Query\Component;
 
 use Closure;
 use Hector\Connection\Bind\BindParamList;
+use Hector\Connection\Driver\DriverCapabilities;
 use Hector\Query\StatementInterface;
 
 abstract class AbstractComponent implements StatementInterface
@@ -36,6 +37,7 @@ abstract class AbstractComponent implements StatementInterface
      *
      * @param Closure|StatementInterface|string|null $statement
      * @param BindParamList $bindParams
+     * @param ?DriverCapabilities $driverCapabilities
      * @param bool $encapsulate
      *
      * @return string|null
@@ -43,7 +45,8 @@ abstract class AbstractComponent implements StatementInterface
     protected function getSubStatement(
         Closure|StatementInterface|string|null $statement,
         BindParamList $bindParams,
-        bool $encapsulate = true
+        ?DriverCapabilities $driverCapabilities = null,
+        bool $encapsulate = true,
     ): ?string {
         if (null === $statement) {
             return null;
@@ -51,7 +54,7 @@ abstract class AbstractComponent implements StatementInterface
 
         // Statement
         if ($statement instanceof StatementInterface) {
-            return $statement->getStatement($bindParams, $encapsulate);
+            return $statement->getStatement($bindParams, $driverCapabilities, $encapsulate);
         }
 
         // Callable statement
@@ -65,7 +68,7 @@ abstract class AbstractComponent implements StatementInterface
 
             foreach ($args as $arg) {
                 if ($arg instanceof StatementInterface) {
-                    $str .= $arg->getStatement($bindParams, $encapsulate);
+                    $str .= $arg->getStatement($bindParams, $driverCapabilities, $encapsulate);
                 }
             }
 
@@ -84,20 +87,25 @@ abstract class AbstractComponent implements StatementInterface
      *
      * @param mixed $value
      * @param BindParamList $bindParams
+     * @param ?DriverCapabilities $driverCapabilities
      * @param bool $encapsulate
      *
      * @return string|null
      */
-    protected function getSubStatementValue(mixed $value, BindParamList $bindParams, bool $encapsulate = true): ?string
-    {
+    protected function getSubStatementValue(
+        mixed $value,
+        BindParamList $bindParams,
+        ?DriverCapabilities $driverCapabilities = null,
+        bool $encapsulate = true,
+    ): ?string {
         // Statement value
         if ($value instanceof StatementInterface) {
-            return $value->getStatement($bindParams, $encapsulate);
+            return $value->getStatement($bindParams, $driverCapabilities, $encapsulate);
         }
 
         // Callable statement value
         if ($value instanceof Closure) {
-            return $this->getSubStatementValue($value->call($this), $bindParams, $encapsulate);
+            return $this->getSubStatementValue($value->call($this), $bindParams, $driverCapabilities, $encapsulate);
         }
 
         // Array statement value

@@ -13,6 +13,7 @@
 namespace Hector\Query\Component;
 
 use Hector\Connection\Bind\BindParamList;
+use Hector\Connection\Driver\DriverCapabilities;
 use Hector\Query\Statement\Raw;
 use Hector\Query\StatementInterface;
 
@@ -21,10 +22,13 @@ class InsertAssignments extends Assignments
     /**
      * @inheritDoc
      */
-    public function getStatement(BindParamList $bindParams, bool $encapsulate = false): ?string
-    {
+    public function getStatement(
+        BindParamList $bindParams,
+        ?DriverCapabilities $driverCapabilities = null,
+        bool $encapsulate = false,
+    ): ?string {
         if ($this->assignments instanceof StatementInterface) {
-            return $this->assignments->getStatement($bindParams, $encapsulate);
+            return $this->assignments->getStatement($bindParams, $driverCapabilities, $encapsulate);
         }
 
         $keys = [];
@@ -41,8 +45,8 @@ class InsertAssignments extends Assignments
                 $assignment['value'] = new Raw(trim($tmp[1]));
             }
 
-            $keys[] = $this->getSubStatement($assignment['column'], $bindParams);
-            $values[] = $this->getSubStatementValue($assignment['value'] ?? null, $bindParams);
+            $keys[] = $this->getSubStatement($assignment['column'], $bindParams, $driverCapabilities);
+            $values[] = $this->getSubStatementValue($assignment['value'] ?? null, $bindParams, $driverCapabilities);
         }
 
         return $this->encapsulate(implode(', ', $keys)) . ' VALUES ' . $this->encapsulate(implode(', ', $values));

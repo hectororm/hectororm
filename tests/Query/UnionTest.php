@@ -71,7 +71,7 @@ class UnionTest extends TestCase
             ' UNION DISTINCT ' .
             '( SELECT * FROM foo2 AS `f` WHERE bar = :_h_1 )' .
             ' )',
-            $union->getStatement($binds, true)
+            $union->getStatement($binds, encapsulate: true)
         );
         $this->assertEquals(
             ['_h_0' => 'baz', '_h_1' => 'baz'],

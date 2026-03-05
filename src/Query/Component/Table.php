@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace Hector\Query\Component;
 
 use Hector\Connection\Bind\BindParamList;
+use Hector\Connection\Driver\DriverCapabilities;
 use Hector\Query\Helper;
 use Hector\Query\StatementInterface;
 
@@ -50,22 +51,27 @@ class Table extends AbstractComponent
     /**
      * @inheritDoc
      */
-    public function getStatement(BindParamList $bindParams, bool $encapsulate = false): ?string
-    {
+    public function getStatement(
+        BindParamList $bindParams,
+        ?DriverCapabilities $driverCapabilities = null,
+        bool $encapsulate = false,
+    ): ?string {
+        $quote = $driverCapabilities?->getIdentifierQuote() ?? '`';
+
         return $this->encapsulate(
             implode(
                 ', ',
                 array_map(
-                    function ($from) use (&$bindParams) {
+                    function ($from) use (&$bindParams, $driverCapabilities, $quote) {
                         if ($from['alias'] && $this->alias) {
                             return sprintf(
                                 '%s AS %s',
-                                $this->getSubStatement($from['table'], $bindParams),
-                                Helper::quote($from['alias'])
+                                $this->getSubStatement($from['table'], $bindParams, $driverCapabilities),
+                                Helper::quote($from['alias'], $quote)
                             );
                         }
 
-                        return $this->getSubStatement($from['table'], $bindParams);
+                        return $this->getSubStatement($from['table'], $bindParams, $driverCapabilities);
                     },
                     $this->tables
                 )

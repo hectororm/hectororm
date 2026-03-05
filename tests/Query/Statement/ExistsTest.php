@@ -34,7 +34,7 @@ class ExistsTest extends TestCase
         $exists = new Exists('SELECT 1');
         $binds = new BindParamList();
 
-        $this->assertEquals('EXISTS( SELECT 1 )', $exists->getStatement($binds, true));
+        $this->assertEquals('EXISTS( SELECT 1 )', $exists->getStatement($binds, encapsulate: true));
         $this->assertEmpty($binds);
     }
 
