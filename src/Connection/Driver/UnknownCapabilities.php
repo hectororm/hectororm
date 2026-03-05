@@ -55,4 +55,12 @@ class UnknownCapabilities implements DriverCapabilities
     {
         return false;
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function getIdentifierQuote(): string
+    {
+        return '`';
+    }
 }

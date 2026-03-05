@@ -59,4 +59,12 @@ class MySQLCapabilities implements DriverCapabilities
     {
         return version_compare($this->driverInfo->getVersion(), '5.7.0', '>=');
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function getIdentifierQuote(): string
+    {
+        return '`';
+    }
 }

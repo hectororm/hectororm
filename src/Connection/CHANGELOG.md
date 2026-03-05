@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added `DriverCapabilities::getIdentifierQuote()` method to expose the driver-specific identifier quoting character
+- Added `Connection::quoteIdentifier()` method for driver-aware identifier quoting with proper escaping
+
 ## [1.2.2] - 2026-02-05
 
 _No changes in this release._

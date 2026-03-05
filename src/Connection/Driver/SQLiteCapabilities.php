@@ -59,4 +59,12 @@ class SQLiteCapabilities implements DriverCapabilities
     {
         return false;
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function getIdentifierQuote(): string
+    {
+        return '"';
+    }
 }

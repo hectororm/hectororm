@@ -126,6 +126,20 @@ class ConnectionTest extends TestCase
         $this->assertEquals('sqlite', $connection->getDriverInfo()->getDriver());
     }
 
+    public function testQuoteIdentifier(): void
+    {
+        $connection = new Connection('sqlite::memory:');
+
+        $this->assertSame('"table_name"', $connection->quoteIdentifier('table_name'));
+    }
+
+    public function testQuoteIdentifierWithQuoteCharacter(): void
+    {
+        $connection = new Connection('sqlite::memory:');
+
+        $this->assertSame('"table""name"', $connection->quoteIdentifier('table"name'));
+    }
+
     public function testGetLastInsertId(): void
     {
         $connection = new Connection('sqlite::memory:');

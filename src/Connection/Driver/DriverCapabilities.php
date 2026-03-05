@@ -51,4 +51,11 @@ interface DriverCapabilities
      * @return bool
      */
     public function hasStrictMode(): bool;
+
+    /**
+     * Get the character used to quote identifiers.
+     *
+     * @return string
+     */
+    public function getIdentifierQuote(): string;
 }

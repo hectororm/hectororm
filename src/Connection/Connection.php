@@ -203,6 +203,20 @@ class Connection
     }
 
     /**
+     * Quote an identifier (table name, column name, etc.) with the appropriate character for the driver.
+     *
+     * @param string $name
+     *
+     * @return string
+     */
+    public function quoteIdentifier(string $name): string
+    {
+        $quote = $this->getDriverInfo()->getCapabilities()->getIdentifierQuote();
+
+        return sprintf('%1$s%2$s%1$s', $quote, str_replace($quote, $quote . $quote, $name));
+    }
+
+    /**
      * Get last insert id.
      *
      * @param string|null $name
