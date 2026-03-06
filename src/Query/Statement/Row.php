@@ -25,9 +25,9 @@ class Row implements StatementInterface
     /**
      * Row constructor.
      *
-     * @param string ...$value
+     * @param StatementInterface|string ...$value
      */
-    public function __construct(string ...$value)
+    public function __construct(StatementInterface|string ...$value)
     {
         $this->values = $value;
     }
@@ -39,6 +39,17 @@ class Row implements StatementInterface
         BindParamList $bindParams,
         ?DriverCapabilities $driverCapabilities = null,
     ): ?string {
-        return '(' . implode(', ', $this->values) . ')';
+        $parts = array_map(
+            function (StatementInterface|string $value) use ($bindParams, $driverCapabilities): string {
+                if ($value instanceof StatementInterface) {
+                    return $value->getStatement($bindParams, $driverCapabilities) ?? '';
+                }
+
+                return $value;
+            },
+            $this->values
+        );
+
+        return '( ' . implode(', ', $parts) . ' )';
     }
 }

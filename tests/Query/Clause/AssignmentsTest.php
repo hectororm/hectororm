@@ -14,9 +14,12 @@ namespace Hector\Query\Tests\Clause;
 
 use Hector\Connection\Bind\BindParam;
 use Hector\Connection\Bind\BindParamList;
+use Hector\Connection\Driver\DriverCapabilities;
 use Hector\Query\Clause\Assignments;
+use Hector\Query\Component\InsertAssignments;
 use Hector\Query\Component\UpdateAssignments;
 use Hector\Query\Select;
+use Hector\Query\Statement\Quoted;
 use PHPUnit\Framework\TestCase;
 
 class AssignmentsTest extends TestCase
@@ -102,6 +105,69 @@ class AssignmentsTest extends TestCase
                 '_h_0' => 1,
             ],
             array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy()),
+        );
+    }
+
+    public function testAssignsTupleFormat(): void
+    {
+        $clause = new class {
+            use Assignments;
+        };
+        $binds = new BindParamList();
+        $clause->resetAssignments();
+
+        $clause->assigns([
+            [new Quoted('foo'), 'qux'],
+            [new Quoted('bar'), 'baz'],
+        ]);
+
+        $this->assertSame(
+            '`foo` = :_h_0, `bar` = :_h_1',
+            UpdateAssignments::createFromAssignments($clause->assignments)->getStatement($binds)
+        );
+        $this->assertEquals(
+            ['_h_0' => 'qux', '_h_1' => 'baz'],
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy()),
+        );
+    }
+
+    public function testAssignsTupleWithDriverCapabilities(): void
+    {
+        $capabilities = $this->createMock(DriverCapabilities::class);
+        $capabilities->method('getIdentifierQuote')->willReturn('"');
+
+        $clause = new class {
+            use Assignments;
+        };
+        $binds = new BindParamList();
+        $clause->resetAssignments();
+
+        $clause->assigns([
+            [new Quoted('foo'), 'bar'],
+        ]);
+
+        $this->assertSame(
+            '"foo" = :_h_0',
+            UpdateAssignments::createFromAssignments($clause->assignments)->getStatement($binds, $capabilities)
+        );
+    }
+
+    public function testAssignsTupleInsert(): void
+    {
+        $clause = new class {
+            use Assignments;
+        };
+        $binds = new BindParamList();
+        $clause->resetAssignments();
+
+        $clause->assigns([
+            [new Quoted('foo'), 'qux'],
+            [new Quoted('bar'), 'baz'],
+        ]);
+
+        $this->assertSame(
+            '( `foo`, `bar` ) VALUES ( :_h_0, :_h_1 )',
+            InsertAssignments::createFromAssignments($clause->assignments)->getStatement($binds)
         );
     }
 }

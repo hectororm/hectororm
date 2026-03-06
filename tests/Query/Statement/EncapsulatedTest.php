@@ -36,7 +36,7 @@ class EncapsulatedTest extends TestCase
         $encapsulated = new Encapsulated($row);
         $binds = new BindParamList();
 
-        $this->assertEquals('( (foo, `bar`, baz) )', $encapsulated->getStatement($binds));
+        $this->assertEquals('( ( foo, `bar`, baz ) )', $encapsulated->getStatement($binds));
     }
 
     public function testGetStatementWithSelect(): void

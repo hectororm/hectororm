@@ -9,9 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `Statement\Expression` for composing heterogeneous SQL fragments (`StatementInterface|string`) with deferred driver-aware resolution
 - `Statement\Quoted` for driver-aware deferred identifier quoting (supports composite `schema.table.column` and `*` wildcard)
 - `Statement\Encapsulated` wrapper class for explicit sub-expression parenthesization
 - `CompoundStatementInterface` marker interface for statements (queries, grouped conditions) that should be auto-encapsulated as sub-expressions
+- Tuple format `[column, value]` in `Assignments::assignments()` and `Conditions::equals()` to allow `StatementInterface` column names (e.g. `Quoted`)
 - Driver-aware identifier quoting via `DriverCapabilities` parameter on `StatementInterface::getStatement()`
 - `Helper::quote()` and `Helper::trim()` now accept a `$quote` parameter for driver-specific quote character
 - `Helper::quote()` now escapes embedded quote characters by doubling them
@@ -25,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **BREAKING:** Removed `bool $encapsulate` parameter from `StatementInterface::getStatement()` — callers needing parentheses should use `Statement\Encapsulated` wrapper instead
+- `Statement\Row` now accepts `StatementInterface|string` values (was `string` only)
 - `Statement\Row::getStatement()` now always returns parenthesized format `(val1, val2)`
 - `Component\AbstractComponent::getSubStatement()` and `getSubStatementValue()` auto-encapsulate `CompoundStatementInterface` instances
 

@@ -74,10 +74,18 @@ class Assignments extends AbstractComponent
 
         foreach ($values as $column => $value) {
             if (is_int($column)) {
+                if (is_array($value)) {
+                    $this->assignment(
+                        array_shift($value),
+                        array_shift($value),
+                        array_shift($value),
+                    );
+                    continue;
+                }
+
                 $this->assignments[] = ['column' => $value];
                 continue;
             }
-
             $this->assignment($column, $value);
         }
     }

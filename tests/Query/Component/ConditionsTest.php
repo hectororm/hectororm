@@ -15,9 +15,11 @@ namespace Hector\Query\Tests\Component;
 use BackedEnum;
 use Hector\Connection\Bind\BindParam;
 use Hector\Connection\Bind\BindParamList;
+use Hector\Connection\Driver\DriverCapabilities;
 use Hector\Query\Component\Conditions;
 use Hector\Query\Select;
 use Hector\Query\Statement\Encapsulated;
+use Hector\Query\Statement\Quoted;
 use Hector\Query\Statement\Row;
 use Hector\Query\Tests\FakeEnum;
 use PHPUnit\Framework\TestCase;
@@ -223,7 +225,7 @@ class ConditionsTest extends TestCase
             'baz IS NOT NULL ' .
             'AND qux IN ( :_h_0, :_h_1 ) ' .
             'AND quux = :_h_2 ' .
-            'AND (corge, grault) IN ( (:_h_3, :_h_4), (:_h_5, :_h_6) ) ' .
+            'AND ( corge, grault ) IN ( (:_h_3, :_h_4), (:_h_5, :_h_6) ) ' .
             'AND garply IN ( SELECT waldo FROM table WHERE fred = :_h_7 )',
             $condition->getStatement($binds)
         );
@@ -271,7 +273,7 @@ class ConditionsTest extends TestCase
         $binds = new BindParamList();
 
         $this->assertEquals(
-            '(foo, bar) IN ( (:_h_0, :_h_1), (:_h_2, :_h_3), (:_h_4, :_h_5) )',
+            '( foo, bar ) IN ( (:_h_0, :_h_1), (:_h_2, :_h_3), (:_h_4, :_h_5) )',
             $conditions->getStatement($binds)
         );
         $this->assertEquals(
@@ -343,5 +345,59 @@ class ConditionsTest extends TestCase
             array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
         $this->assertEquals(1, $nbCallbackCalled);
+    }
+
+    public function testEqualsTupleFormat(): void
+    {
+        $condition = new Conditions();
+        $binds = new BindParamList();
+
+        $condition->equals([
+            [new Quoted('foo'), 'bar'],
+            [new Quoted('baz'), 42],
+        ]);
+
+        $this->assertSame(
+            '`foo` = :_h_0 AND `baz` = :_h_1',
+            $condition->getStatement($binds)
+        );
+        $this->assertEquals(
+            ['_h_0' => 'bar', '_h_1' => 42],
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
+        );
+    }
+
+    public function testEqualsTupleWithDriverCapabilities(): void
+    {
+        $capabilities = $this->createMock(DriverCapabilities::class);
+        $capabilities->method('getIdentifierQuote')->willReturn('"');
+
+        $condition = new Conditions();
+        $binds = new BindParamList();
+
+        $condition->equals([
+            [new Quoted('foo'), 'bar'],
+        ]);
+
+        $this->assertSame(
+            '"foo" = :_h_0',
+            $condition->getStatement($binds, $capabilities)
+        );
+    }
+
+    public function testEqualsMixedFormats(): void
+    {
+        $condition = new Conditions();
+        $binds = new BindParamList();
+
+        $condition->equals([
+            'legacy_col' => 'value1',
+            [new Quoted('modern_col'), 'value2'],
+        ]);
+
+        $this->assertSame(
+            'legacy_col = :_h_0 AND `modern_col` = :_h_1',
+            $condition->getStatement($binds)
+        );
     }
 }

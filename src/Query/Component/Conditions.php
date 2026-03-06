@@ -86,6 +86,15 @@ class Conditions extends AbstractComponent implements CompoundStatementInterface
                     continue;
                 }
 
+                if (is_array($value)) {
+                    $this->equal(
+                        array_shift($value),
+                        array_shift($value),
+                        array_shift($value) ?? Conditions::LINK_AND,
+                    );
+                    continue;
+                }
+
                 $this->add($value);
                 continue;
             }
