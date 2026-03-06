@@ -18,6 +18,8 @@ use Hector\Orm\Collection\Collection;
 use Hector\Orm\Entity\Entity;
 use Hector\Orm\Exception\OrmException;
 use Hector\Orm\Query\Builder;
+use Hector\Query\Statement\Expression;
+use Hector\Query\Statement\Quoted;
 use Hector\Query\Statement\Row;
 use Hector\Schema\Exception\SchemaException;
 
@@ -93,21 +95,22 @@ abstract class RegularRelationship extends Relationship
     ): string {
         $sourceTable = $this->sourceEntity->getTable();
         $targetTable = $this->targetEntity->getTable();
-        $tableName = $targetTable->getFullName(true);
+        $tableName = new Quoted($targetTable->getFullName());
+        $sourceColumns = $this->getSourceColumns();
+        $targetColumns = $this->getTargetColumns();
 
         if (false === $builder->join->hasAlias($alias)) {
 //            $alias = $this->getName() . ++Orm::$alias;
             $builder->leftJoin(
                 $tableName,
-                array_combine(
-                    array_map(
-                        fn($value): string => $sourceTable->getColumn($value)->getName(true, $initialAlias),
-                        $this->getSourceColumns()
+                array_map(
+                    fn(string $src, string $tgt): Expression => new Expression(
+                        new Quoted($sourceTable->getColumn($src)->getName(tableAlias: $initialAlias)),
+                        ' = ',
+                        new Quoted($targetTable->getColumn($tgt)->getName(tableAlias: $alias)),
                     ),
-                    array_map(
-                        fn($value): string => $targetTable->getColumn($value)->getName(true, $alias),
-                        $this->getTargetColumns()
-                    ),
+                    $sourceColumns,
+                    $targetColumns,
                 ),
                 $alias
             );

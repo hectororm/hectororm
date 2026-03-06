@@ -29,6 +29,7 @@ use Hector\Orm\Orm;
 use Hector\Orm\Query\Builder;
 use Hector\Orm\Query\Component\Conditions;
 use Hector\Orm\Storage\EntityStorage;
+use Hector\Query\Statement\Quoted;
 use Hector\Query\StatementInterface;
 use Hector\Schema\Exception\SchemaException;
 
@@ -166,7 +167,7 @@ abstract class Relationship
             $builder->{match ($link) {
                 Conditions::LINK_OR => 'orWhere',
                 default => 'where',
-            }}($targetTable->getColumn($column)->getName(true, $joinAlias), ...$condition);
+            }}(new Quoted($targetTable->getColumn($column)->getName(tableAlias: $joinAlias)), ...$condition);
         } catch (SchemaException $exception) {
             throw new OrmException(
                 sprintf(

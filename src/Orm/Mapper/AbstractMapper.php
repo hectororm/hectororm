@@ -468,12 +468,10 @@ abstract class AbstractMapper implements Mapper
      */
     protected function quotedTuples(array $values): array
     {
-        $tuples = [];
-
-        foreach ($values as $column => $value) {
-            $tuples[] = [new Quoted((string)$column), $value];
-        }
-
-        return $tuples;
+        return array_map(
+            fn(string $column, mixed $value): array => [new Quoted($column), $value],
+            array_keys($values),
+            array_values($values),
+        );
     }
 }

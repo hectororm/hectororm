@@ -24,6 +24,8 @@ use Hector\Orm\Exception\RelationException;
 use Hector\Orm\Orm;
 use Hector\Orm\Query\Builder;
 use Hector\Query\QueryBuilder;
+use Hector\Query\Statement\Expression;
+use Hector\Query\Statement\Quoted;
 use Hector\Query\Statement\Row;
 use Hector\Schema\Exception\SchemaException;
 use Hector\Schema\Table;
@@ -149,20 +151,17 @@ class ManyToMany extends Relationship
 
         try {
             // Define join
+            $targetTable = $this->targetEntity->getTable();
             $builder->innerJoin(
-                $pivotTable->getFullName(true),
-                array_combine(
-                    array_map(
-                        fn($value): string => $pivotTable->getColumn($value)->getName(true, $aliasPivot),
-                        $this->pivotSourceColumns
+                new Quoted($pivotTable->getFullName()),
+                array_map(
+                    fn(string $src, string $tgt): Expression => new Expression(
+                        new Quoted($pivotTable->getColumn($src)->getName(tableAlias: $aliasPivot)),
+                        ' = ',
+                        new Quoted($targetTable->getColumn($tgt)->getName(tableAlias: Builder::FROM_ALIAS)),
                     ),
-                    array_map(
-                        fn($value): string => $this->targetEntity
-                            ->getTable()
-                            ->getColumn($value)
-                            ->getName(true, Builder::FROM_ALIAS),
-                        $this->targetColumns
-                    ),
+                    $this->pivotSourceColumns,
+                    $this->targetColumns,
                 ),
                 $aliasPivot
             );
@@ -172,7 +171,7 @@ class ManyToMany extends Relationship
                 $pivotColumn = $pivotTable->getColumn($pivotColumnName);
 
                 $builder->withPivotColumn(
-                    $pivotColumn->getName(true, $aliasPivot),
+                    new Quoted($pivotColumn->getName(tableAlias: $aliasPivot)),
                     PivotData::PIVOT_KEY_PREFIX . $pivotColumn->getName()
                 );
             }
@@ -198,36 +197,38 @@ class ManyToMany extends Relationship
         $sourceTable = $this->sourceEntity->getTable();
         $pivotTable = $this->resolvePivotTable($this->pivotTable);
         $targetTable = $this->targetEntity->getTable();
-        $tableName = $targetTable->getFullName(true);
+        $tableName = new Quoted($targetTable->getFullName());
 
         if (false === $builder->join->hasAlias($alias)) {
             $aliasPivot = 'pivot' . ++Orm::$alias;
+            $sourceColumns = $this->getSourceColumns();
+            $pivotTargetColumns = $this->getPivotTargetColumns();
+            $pivotSourceColumns = $this->getPivotSourceColumns();
+            $targetColumns = $this->getTargetColumns();
 
             try {
                 $builder->leftJoin(
-                    $pivotTable->getFullName(true),
-                    array_combine(
-                        array_map(
-                            fn($value): string => $sourceTable->getColumn($value)->getName(true, $initialAlias),
-                            $this->getSourceColumns()
+                    new Quoted($pivotTable->getFullName()),
+                    array_map(
+                        fn(string $src, string $tgt): Expression => new Expression(
+                            new Quoted($sourceTable->getColumn($src)->getName(tableAlias: $initialAlias)),
+                            ' = ',
+                            new Quoted($pivotTable->getColumn($tgt)->getName(tableAlias: $aliasPivot)),
                         ),
-                        array_map(
-                            fn($value): string => $pivotTable->getColumn($value)->getName(true, $aliasPivot),
-                            $this->getPivotTargetColumns()
-                        ),
+                        $sourceColumns,
+                        $pivotTargetColumns,
                     ),
                     $aliasPivot
                 )->leftJoin(
                     $tableName,
-                    array_combine(
-                        array_map(
-                            fn($value): string => $pivotTable->getColumn($value)->getName(true, $aliasPivot),
-                            $this->getPivotSourceColumns()
+                    array_map(
+                        fn(string $src, string $tgt): Expression => new Expression(
+                            new Quoted($pivotTable->getColumn($src)->getName(tableAlias: $aliasPivot)),
+                            ' = ',
+                            new Quoted($targetTable->getColumn($tgt)->getName(tableAlias: $alias)),
                         ),
-                        array_map(
-                            fn($value): string => $targetTable->getColumn($value)->getName(true, $alias),
-                            $this->getTargetColumns()
-                        ),
+                        $pivotSourceColumns,
+                        $targetColumns,
                     ),
                     $alias
                 );

@@ -39,6 +39,7 @@ use Hector\Query\QueryBuilder;
 use Hector\Query\Statement\Quoted;
 use Hector\Query\Statement\Row;
 use Hector\Query\Statement\SqlFunction;
+use Hector\Query\StatementInterface;
 use Hector\Schema\Column;
 use InvalidArgumentException;
 
@@ -160,7 +161,7 @@ class Builder extends QueryBuilder
      * @internal
      *
      */
-    public function withPivotColumn(string $column, string $alias): static
+    public function withPivotColumn(StatementInterface|string $column, string $alias): static
     {
         $this->column($column, $alias);
 
