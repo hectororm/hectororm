@@ -19,6 +19,7 @@ use Hector\Orm\Entity\ReflectionEntity;
 use Hector\Orm\Orm;
 use Hector\Orm\Query\Builder;
 use Hector\Query\Helper;
+use Hector\Query\Statement\Quoted;
 use Hector\Query\StatementInterface;
 
 class Conditions extends \Hector\Query\Component\Conditions
@@ -40,7 +41,7 @@ class Conditions extends \Hector\Query\Component\Conditions
         if (is_string($column) && $this->isConditionOnRelationship($column)) {
             $columns = explode('.', $column);
             $columns = array_map(
-                fn(string $name): ?string => Helper::trim($name),
+                fn(string $name): string => Helper::trim($name) ?? $name,
                 $columns
             );
             $depth = count($columns) - 1;
@@ -49,7 +50,7 @@ class Conditions extends \Hector\Query\Component\Conditions
             // Relation already join
             if (true === $this->builder->join->hasAlias($alias)) {
                 parent::add(
-                    sprintf('%s.%s', Helper::quote($alias), Helper::quote(end($columns))),
+                    new Quoted($alias . '.' . end($columns)),
                     $operator,
                     $value,
                     $link,
@@ -108,7 +109,7 @@ class Conditions extends \Hector\Query\Component\Conditions
             return false;
         }
 
-        return preg_match('/^(\w+\.)+[\w`]+$/i', $condition) === 1;
+        return preg_match('/^(\w+\.)+[\w`"]+$/i', $condition) === 1;
     }
 
     /**
