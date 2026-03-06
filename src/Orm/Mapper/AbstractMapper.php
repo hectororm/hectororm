@@ -28,6 +28,7 @@ use Hector\Orm\Exception\OrmException;
 use Hector\Orm\Orm;
 use Hector\Orm\Query\Builder;
 use Hector\Orm\Relationship\Relationships;
+use Hector\Query\Statement\Quoted;
 use Hector\Orm\Storage\EntityStorage;
 use ReflectionAttribute;
 
@@ -247,7 +248,7 @@ abstract class AbstractMapper implements Mapper
             ARRAY_FILTER_USE_BOTH
         );
 
-        $nbAffected = $entity::query()->insert($this->quoteArrayKeys($collected));
+        $nbAffected = $entity::query()->insert($this->quotedTuples($collected));
 
         if ($nbAffected === 1) {
             if (null !== ($autoIncrementColumn = $this->reflection->getTable()->getAutoIncrementColumn())) {
@@ -290,8 +291,8 @@ abstract class AbstractMapper implements Mapper
 
             $nbAffected =
                 $entity::query()
-                    ->whereEquals($this->quoteArrayKeys($primaryValue))
-                    ->update($this->quoteArrayKeys($values));
+                    ->whereEquals($this->quotedTuples($primaryValue))
+                    ->update($this->quotedTuples($values));
         }
 
         $entity->getRelated()->linkNative();
@@ -313,7 +314,7 @@ abstract class AbstractMapper implements Mapper
             throw new MapperException('Unable to delete entity');
         }
 
-        $affected = $entity::query()->whereEquals($this->quoteArrayKeys($conditions))->delete();
+        $affected = $entity::query()->whereEquals($this->quotedTuples($conditions))->delete();
 
         if ($affected !== 0) {
             $this->updateOriginalData($entity, [], true);
@@ -331,7 +332,7 @@ abstract class AbstractMapper implements Mapper
         $values = $this->reflection->getHectorData($entity)->get('original') ?? $this->collectEntity($entity);
         $conditions = $this->extractPrimaryValue($values) ?: $values;
 
-        $data = $entity::query()->whereEquals($this->quoteArrayKeys($conditions))->fetchOne();
+        $data = $entity::query()->whereEquals($this->quotedTuples($conditions))->fetchOne();
 
         if (null === $data) {
             throw new MapperException('Unable to refresh an unexciting entity');
@@ -459,30 +460,20 @@ abstract class AbstractMapper implements Mapper
     }
 
     /**
-     * Quote array keys.
+     * Build array of [Quoted column, value] tuples for driver-aware quoting.
      *
-     * @param array $values
+     * @param array $values Associative array of column name => value
      *
-     * @return array
+     * @return array<array{Quoted, mixed}>
      */
-    protected function quoteArrayKeys(array $values): array
+    protected function quotedTuples(array $values): array
     {
-        $keys = $this->quoteArrayValues(array_keys($values));
+        $tuples = [];
 
-        return array_combine($keys, array_values($values));
-    }
+        foreach ($values as $column => $value) {
+            $tuples[] = [new Quoted((string)$column), $value];
+        }
 
-    /**
-     * Quote array values.
-     *
-     * @param array $values
-     *
-     * @return array
-     */
-    protected function quoteArrayValues(array $values): array
-    {
-        array_walk($values, fn(&$value): string => $value = sprintf('`%s`', $value));
-
-        return $values;
+        return $tuples;
     }
 }

@@ -84,7 +84,7 @@ class ManyToManyTest extends AbstractTestCase
 
         $this->assertInstanceOf(Builder::class, $builder);
         $this->assertEquals(
-            '(film_id) IN ( (:_h_0), (:_h_1) )',
+            '( film_id ) IN ( (:_h_0), (:_h_1) )',
             $builder->where->getStatement($binds)
         );
         $this->assertEquals(

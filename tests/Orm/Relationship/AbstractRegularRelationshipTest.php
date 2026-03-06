@@ -162,7 +162,7 @@ class AbstractRegularRelationshipTest extends AbstractTestCase
         $binds = new BindParamList();
 
         $this->assertInstanceOf(Builder::class, $builder);
-        $this->assertEquals('(language_id) IN ( (:_h_0) )', $builder->where->getStatement($binds));
+        $this->assertEquals('( language_id ) IN ( (:_h_0) )', $builder->where->getStatement($binds));
         $this->assertEquals(
             ['_h_0' => 1],
             array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
