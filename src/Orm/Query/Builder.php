@@ -36,6 +36,7 @@ use Hector\Pagination\Request\OffsetPaginationRequest;
 use Hector\Pagination\Request\PaginationRequestInterface;
 use Hector\Pagination\Request\RangePaginationRequest;
 use Hector\Query\QueryBuilder;
+use Hector\Query\Statement\Quoted;
 use Hector\Query\Statement\Row;
 use Hector\Query\Statement\SqlFunction;
 use Hector\Schema\Column;
@@ -90,7 +91,7 @@ class Builder extends QueryBuilder
         parent::resetFrom();
 
         $table = $this->entityReflection->getTable();
-        $this->from($table->getFullName(true), static::FROM_ALIAS);
+        $this->from(new Quoted($table->getFullName()), static::FROM_ALIAS);
 
         return $this;
     }
@@ -123,13 +124,13 @@ class Builder extends QueryBuilder
 
             if (null !== ($sqlFunction = $type->fromSchemaFunction())) {
                 $this->column(
-                    new SqlFunction($sqlFunction, $column->getName(true, static::FROM_ALIAS)),
-                    $column->getName(true)
+                    new SqlFunction($sqlFunction, new Quoted(static::FROM_ALIAS . '.' . $column->getName())),
+                    $column->getName()
                 );
                 continue;
             }
 
-            $this->column($column->getName(true, static::FROM_ALIAS));
+            $this->column(new Quoted(static::FROM_ALIAS . '.' . $column->getName()));
         }
 
         return $this;
@@ -239,7 +240,10 @@ class Builder extends QueryBuilder
             throw new MapperException(sprintf('No primary key on "%s" table', $table->getFullName()));
         }
 
-        $primaryColumns = $primaryIndex->getColumnsName(true, static::FROM_ALIAS);
+        $primaryColumns = array_map(
+            fn(string $name): Quoted => new Quoted(static::FROM_ALIAS . '.' . $name),
+            $primaryIndex->getColumnsName()
+        );
         $nbColumns = count($primaryColumns);
 
         foreach ($primaryValues as &$primaryValue) {
