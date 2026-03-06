@@ -9,8 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Driver-aware identifier quoting in `AbstractMapper`, `Builder`, `Conditions`, and all Relationship classes using `Statement\Quoted` and `Statement\Expression`
+- `Builder::withPivotColumn()` now accepts `StatementInterface|string` (was `string` only)
 - Method `Builder::paginate()` for built-in pagination support (offset, cursor, range)
 - Namespace `Hector\Orm\Pagination` with `BuilderOffsetPaginator`, `BuilderCursorPaginator`, `BuilderRangePaginator`
+
+### Changed
+
+- `AbstractMapper::quotedTuples()` replaces `quoteArrayKeys()`/`quoteArrayValues()` — builds `[Quoted, value]` tuples for driver-aware column quoting
+- Relationship join conditions use `Expression` arrays (numeric-keyed) instead of `array_combine` (string-keyed) for driver-aware quoting
+- ORM `Conditions::add()` regex accepts both backtick and double-quote styles for relationship detection
 
 ## [1.2.2] - 2026-02-05
 
