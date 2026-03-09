@@ -18,6 +18,13 @@ namespace Hector\Pagination\Storage;
 use DateInterval;
 use Psr\SimpleCache\CacheInterface;
 
+if (false === interface_exists(CacheInterface::class)) {
+    throw new \LogicException(
+        'You cannot use "CacheCursorStorage" as the "psr/simple-cache" package is not installed. ' .
+        'Try running "composer require psr/simple-cache".'
+    );
+}
+
 class CacheCursorStorage implements CursorStorageInterface
 {
     private const PREFIX = 'hector_cursor_';

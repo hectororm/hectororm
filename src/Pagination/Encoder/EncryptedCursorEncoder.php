@@ -15,6 +15,7 @@ declare(strict_types=1);
 
 namespace Hector\Pagination\Encoder;
 
+use LogicException;
 use RuntimeException;
 use SodiumException;
 
@@ -23,7 +24,12 @@ final class EncryptedCursorEncoder implements CursorEncoderInterface
     public function __construct(
         private string $key,
     ) {
-        extension_loaded('sodium') || throw new RuntimeException('Sodium extension is required');
+        if (false === extension_loaded('sodium')) {
+            throw new LogicException(
+                'You cannot use "EncryptedCursorEncoder" as the "sodium" extension is not loaded. ' .
+                'Try enabling "extension=sodium" in your php.ini.'
+            );
+        }
 
         if (strlen($key) !== SODIUM_CRYPTO_SECRETBOX_KEYBYTES) {
             throw new RuntimeException(
