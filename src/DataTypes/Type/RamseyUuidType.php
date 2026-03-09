@@ -19,6 +19,13 @@ use Hector\DataTypes\ExpectedType;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
 
+if (false === class_exists(Uuid::class)) {
+    throw new \LogicException(
+        'You cannot use "RamseyUuidType" as the "ramsey/uuid" package is not installed. ' .
+        'Try running "composer require ramsey/uuid".'
+    );
+}
+
 class RamseyUuidType extends UuidType
 {
     /**
