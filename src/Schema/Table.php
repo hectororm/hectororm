@@ -108,13 +108,18 @@ class Table implements Countable, IteratorAggregate
     /**
      * Get schema name.
      *
-     * @param bool $quoted
+     * @param bool $quoted Deprecated, use Hector\Query\Statement\Quoted instead
      *
      * @return string
      */
     public function getSchemaName(bool $quoted = false): string
     {
         if ($quoted) {
+            trigger_error(
+                'The $quoted parameter of ' . __METHOD__ . '() is deprecated, use Hector\Query\Statement\Quoted instead.',
+                E_USER_DEPRECATED
+            );
+
             return sprintf('`%s`', $this->schema_name);
         }
 
@@ -124,13 +129,18 @@ class Table implements Countable, IteratorAggregate
     /**
      * Get name.
      *
-     * @param bool $quoted
+     * @param bool $quoted Deprecated, use Hector\Query\Statement\Quoted instead
      *
      * @return string
      */
     public function getName(bool $quoted = false): string
     {
         if ($quoted) {
+            trigger_error(
+                'The $quoted parameter of ' . __METHOD__ . '() is deprecated, use Hector\Query\Statement\Quoted instead.',
+                E_USER_DEPRECATED
+            );
+
             return sprintf('`%s`', $this->name);
         }
 
@@ -140,13 +150,22 @@ class Table implements Countable, IteratorAggregate
     /**
      * Get full name.
      *
-     * @param bool $quoted
+     * @param bool $quoted Deprecated, use Hector\Query\Statement\Quoted instead
      *
      * @return string
      */
     public function getFullName(bool $quoted = false): string
     {
-        return sprintf('%s.%s', $this->getSchemaName($quoted), $this->getName($quoted));
+        if ($quoted) {
+            trigger_error(
+                'The $quoted parameter of ' . __METHOD__ . '() is deprecated, use Hector\Query\Statement\Quoted instead.',
+                E_USER_DEPRECATED
+            );
+
+            return sprintf('`%s`.`%s`', $this->schema_name, $this->name);
+        }
+
+        return sprintf('%s.%s', $this->getSchemaName(), $this->getName());
     }
 
     /**
@@ -192,14 +211,35 @@ class Table implements Countable, IteratorAggregate
     /**
      * Get columns name.
      *
-     * @param bool $quoted
+     * @param bool $quoted Deprecated, use Hector\Query\Statement\Quoted instead
      * @param string|null $tableAlias
      *
      * @return string[]
      */
     public function getColumnsName(bool $quoted = false, ?string $tableAlias = null): array
     {
-        return array_values(array_map(fn(Column $column): string => $column->getName($quoted, $tableAlias), $this->columns));
+        if ($quoted) {
+            trigger_error(
+                'The $quoted parameter of ' . __METHOD__ . '() is deprecated, use Hector\Query\Statement\Quoted instead.',
+                E_USER_DEPRECATED
+            );
+
+            return array_values(
+                array_map(
+                    function (Column $column) use ($tableAlias): string {
+                        $name = sprintf('`%s`', $column->getName());
+                        if (null !== $tableAlias) {
+                            $name = sprintf('`%s`.%s', $tableAlias, $name);
+                        }
+
+                        return $name;
+                    },
+                    $this->columns
+                )
+            );
+        }
+
+        return array_values(array_map(fn(Column $column): string => $column->getName(tableAlias: $tableAlias), $this->columns));
     }
 
     /**

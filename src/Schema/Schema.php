@@ -106,13 +106,18 @@ class Schema implements Countable, IteratorAggregate
     /**
      * Get name.
      *
-     * @param bool $quoted
+     * @param bool $quoted Deprecated, use Hector\Query\Statement\Quoted instead
      *
      * @return string
      */
     public function getName(bool $quoted = false): string
     {
         if ($quoted) {
+            trigger_error(
+                'The $quoted parameter of ' . __METHOD__ . '() is deprecated, use Hector\Query\Statement\Quoted instead.',
+                E_USER_DEPRECATED
+            );
+
             return sprintf('`%s`', $this->name);
         }
 

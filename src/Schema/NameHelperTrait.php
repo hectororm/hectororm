@@ -60,11 +60,11 @@ trait NameHelperTrait
     }
 
     /**
-     * Quote names.
+     * Add alias to names.
      *
      * @param string[] $names
      * @param string|null $alias
-     * @param bool $quote
+     * @param bool $quote Deprecated, use Hector\Query\Statement\Quoted instead
      *
      * @return string[]
      */
@@ -78,7 +78,7 @@ trait NameHelperTrait
      *
      * @param string $name
      * @param string|null $alias
-     * @param bool $quoted
+     * @param bool $quoted Deprecated, use Hector\Query\Statement\Quoted instead
      *
      * @return string
      */

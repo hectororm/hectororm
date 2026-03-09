@@ -64,10 +64,16 @@ class TableTest extends AbstractTestCase
 
     public function testGetSchemaNameQuoted(): void
     {
+        $deprecated = false;
+        set_error_handler(function () use (&$deprecated) { $deprecated = true; return true; }, E_USER_DEPRECATED);
+
         $schema = $this->getSchemaContainer()->getSchema('sakila');
         $table = $schema->getTable('customer');
 
         $this->assertEquals('`sakila`', $table->getSchemaName(true));
+
+        restore_error_handler();
+        $this->assertTrue($deprecated);
     }
 
     public function testGetName(): void
@@ -81,10 +87,16 @@ class TableTest extends AbstractTestCase
 
     public function testGetNameQuoted(): void
     {
+        $deprecated = false;
+        set_error_handler(function () use (&$deprecated) { $deprecated = true; return true; }, E_USER_DEPRECATED);
+
         $schema = $this->getSchemaContainer()->getSchema('sakila');
         $table = $schema->getTable('customer');
 
         $this->assertEquals('`customer`', $table->getName(true));
+
+        restore_error_handler();
+        $this->assertTrue($deprecated);
     }
 
     public function testGetFullName(): void
@@ -98,10 +110,16 @@ class TableTest extends AbstractTestCase
 
     public function testGetFullNameQuoted(): void
     {
+        $deprecated = false;
+        set_error_handler(function () use (&$deprecated) { $deprecated = true; return true; }, E_USER_DEPRECATED);
+
         $schema = $this->getSchemaContainer()->getSchema('sakila');
         $table = $schema->getTable('customer');
 
         $this->assertEquals('`sakila`.`customer`', $table->getFullName(true));
+
+        restore_error_handler();
+        $this->assertTrue($deprecated);
     }
 
     public function testGetCharset(): void
@@ -157,6 +175,9 @@ class TableTest extends AbstractTestCase
 
     public function testGetColumnsNameQuoted(): void
     {
+        $deprecated = false;
+        set_error_handler(function () use (&$deprecated) { $deprecated = true; return true; }, E_USER_DEPRECATED);
+
         $schema = $this->getSchemaContainer()->getSchema('sakila');
         $table = $schema->getTable('customer');
         $columnsName = $table->getColumnsName(true);
@@ -175,6 +196,9 @@ class TableTest extends AbstractTestCase
             ],
             $columnsName
         );
+
+        restore_error_handler();
+        $this->assertTrue($deprecated);
     }
 
     public function testGetColumnsNameWithTableAlias(): void
@@ -201,6 +225,9 @@ class TableTest extends AbstractTestCase
 
     public function testGetColumnsNameQuotedWithTableAlias(): void
     {
+        $deprecated = false;
+        set_error_handler(function () use (&$deprecated) { $deprecated = true; return true; }, E_USER_DEPRECATED);
+
         $schema = $this->getSchemaContainer()->getSchema('sakila');
         $table = $schema->getTable('customer');
         $columnsName = $table->getColumnsName(true, 'alias');
@@ -219,6 +246,9 @@ class TableTest extends AbstractTestCase
             ],
             $columnsName
         );
+
+        restore_error_handler();
+        $this->assertTrue($deprecated);
     }
 
     public function testHasColumn(): void

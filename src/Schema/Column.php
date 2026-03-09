@@ -85,13 +85,20 @@ class Column
     /**
      * Get name.
      *
-     * @param bool $quoted
+     * @param bool $quoted Deprecated, use Hector\Query\Statement\Quoted instead
      * @param string|null $tableAlias
      *
      * @return string
      */
     public function getName(bool $quoted = false, ?string $tableAlias = null): string
     {
+        if ($quoted) {
+            trigger_error(
+                'The $quoted parameter of ' . __METHOD__ . '() is deprecated, use Hector\Query\Statement\Quoted instead.',
+                E_USER_DEPRECATED
+            );
+        }
+
         $name = $this->name;
 
         return $this->addAliasToName($name, $tableAlias, $quoted);
@@ -100,14 +107,25 @@ class Column
     /**
      * Get full name.
      *
-     * @param bool $quoted
+     * @param bool $quoted Deprecated, use Hector\Query\Statement\Quoted instead
      *
      * @return string
      * @throws SchemaException
      */
     public function getFullName(bool $quoted = false): string
     {
-        return sprintf('%s.%s', $this->getTable()->getFullName($quoted), $this->getName($quoted));
+        if ($quoted) {
+            trigger_error(
+                'The $quoted parameter of ' . __METHOD__ . '() is deprecated, use Hector\Query\Statement\Quoted instead.',
+                E_USER_DEPRECATED
+            );
+
+            $table = $this->getTable();
+
+            return sprintf('`%s`.`%s`.`%s`', $table->getSchemaName(), $table->getName(), $this->name);
+        }
+
+        return sprintf('%s.%s', $this->getTable()->getFullName(), $this->getName());
     }
 
     /**

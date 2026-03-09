@@ -82,13 +82,20 @@ class Index
     /**
      * Get columns name.
      *
-     * @param bool $quoted
+     * @param bool $quoted Deprecated, use Hector\Query\Statement\Quoted instead
      * @param string|null $tableAlias
      *
      * @return string[]
      */
     public function getColumnsName(bool $quoted = false, ?string $tableAlias = null): array
     {
+        if ($quoted) {
+            trigger_error(
+                'The $quoted parameter of ' . __METHOD__ . '() is deprecated, use Hector\Query\Statement\Quoted instead.',
+                E_USER_DEPRECATED
+            );
+        }
+
         $names = $this->columns_name;
 
         $quoted && $names = $this->quoteNames($names);

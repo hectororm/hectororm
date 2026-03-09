@@ -49,11 +49,17 @@ class ColumnTest extends AbstractTestCase
 
     public function testGetNameQuoted(): void
     {
+        $deprecated = false;
+        set_error_handler(function () use (&$deprecated) { $deprecated = true; return true; }, E_USER_DEPRECATED);
+
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('customer');
         $column = $table->getColumn('first_name');
 
         $this->assertEquals('`first_name`', $column->getName(true));
         $this->assertEquals('`foo`.`first_name`', $column->getName(true, 'foo'));
+
+        restore_error_handler();
+        $this->assertTrue($deprecated);
     }
 
     public function testGetFullName(): void
@@ -67,10 +73,16 @@ class ColumnTest extends AbstractTestCase
 
     public function testGetFullNameQuoted(): void
     {
+        $deprecated = false;
+        set_error_handler(function () use (&$deprecated) { $deprecated = true; return true; }, E_USER_DEPRECATED);
+
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('customer');
         $column = $table->getColumn('first_name');
 
         $this->assertEquals('`sakila`.`customer`.`first_name`', $column->getFullName(true));
+
+        restore_error_handler();
+        $this->assertTrue($deprecated);
     }
 
     public function testGetPosition(): void

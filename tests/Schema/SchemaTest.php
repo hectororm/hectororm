@@ -58,9 +58,15 @@ class SchemaTest extends AbstractTestCase
 
     public function testGetNameQuoted(): void
     {
+        $deprecated = false;
+        set_error_handler(function () use (&$deprecated) { $deprecated = true; return true; }, E_USER_DEPRECATED);
+
         $schema = $this->getSchemaContainer()->getSchema('sakila');
 
         $this->assertEquals('`sakila`', $schema->getName(true));
+
+        restore_error_handler();
+        $this->assertTrue($deprecated);
     }
 
     public function testGetAlias(): void
