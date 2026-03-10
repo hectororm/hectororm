@@ -69,7 +69,7 @@ class SqliteCompiler extends AbstractCompiler
         if (false === $hasAutoIncrement) {
             array_push($definitions, ...array_map(
                 fn(AddIndex $op) => sprintf('PRIMARY KEY (%s)', $this->quoteIdentifiers($op->getColumns())),
-                array_filter($remaining, fn($op) => $op instanceof AddIndex && 'primary' === $op->getType()),
+                array_filter($remaining, fn($op) => $op instanceof AddIndex && Index::PRIMARY === $op->getType()),
             ));
         }
 
@@ -93,7 +93,7 @@ class SqliteCompiler extends AbstractCompiler
         // Non-primary indexes must be created separately in SQLite
         array_push($statements, ...array_map(
             fn(AddIndex $op) => $this->compileCreateIndex($createTable->getObjectName(), $op),
-            array_filter($remaining, fn($op) => $op instanceof AddIndex && 'primary' !== $op->getType()),
+            array_filter($remaining, fn($op) => $op instanceof AddIndex && Index::PRIMARY !== $op->getType()),
         ));
 
         return $statements;
@@ -508,7 +508,7 @@ class SqliteCompiler extends AbstractCompiler
      */
     protected function compileCreateIndex(string $tableName, AddIndex $operation): string
     {
-        $unique = 'unique' === $operation->getType() ? 'UNIQUE ' : '';
+        $unique = Index::UNIQUE === $operation->getType() ? 'UNIQUE ' : '';
 
         return sprintf(
             'CREATE %sINDEX %s ON %s (%s)',

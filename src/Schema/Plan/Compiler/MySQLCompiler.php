@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace Hector\Schema\Plan\Compiler;
 
+use Hector\Schema\Index;
 use Hector\Schema\Plan\ObjectPlan;
 use Hector\Schema\Plan\Operation\AddColumn;
 use Hector\Schema\Plan\Operation\AddForeignKey;
@@ -273,8 +274,8 @@ class MySQLCompiler extends AbstractCompiler
         $columns = $this->quoteIdentifiers($operation->getColumns());
 
         return match ($operation->getType()) {
-            'primary' => sprintf('PRIMARY KEY (%s)', $columns),
-            'unique' => sprintf('UNIQUE INDEX %s (%s)', $this->quoteIdentifier($operation->getName()), $columns),
+            Index::PRIMARY => sprintf('PRIMARY KEY (%s)', $columns),
+            Index::UNIQUE => sprintf('UNIQUE INDEX %s (%s)', $this->quoteIdentifier($operation->getName()), $columns),
             default => sprintf('INDEX %s (%s)', $this->quoteIdentifier($operation->getName()), $columns),
         };
     }
