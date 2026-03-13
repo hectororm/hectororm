@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added `DriverInfo::getIdentifierQuote()` method to expose the driver-specific identifier quoting character
 - Added `Connection::quoteIdentifier()` method for driver-aware identifier quoting with proper escaping
+- Added `DriverCapabilities::hasRenameColumn()` to detect support for `RENAME COLUMN` syntax (false on MySQL < 8.0)
 
 ## [1.2.2] - 2026-02-05
 
