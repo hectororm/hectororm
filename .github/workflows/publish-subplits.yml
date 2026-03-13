@@ -17,8 +17,10 @@ jobs:
   publish_subsplits:
     runs-on: ubuntu-latest
     name: Publish package sub-splits
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: '0'
           persist-credentials: 'false'
@@ -29,7 +31,7 @@ jobs:
           user_email: 'ElGigi@users.noreply.github.com'
       - name: Cache splitsh-lite
         id: splitsh-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: './.splitsh'
           key: '${{ runner.os }}-splitsh'
