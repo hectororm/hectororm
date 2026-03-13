@@ -15,13 +15,20 @@ declare(strict_types=1);
 namespace Hector\Schema\Tests\Plan;
 
 use Hector\Schema\Index;
-use Hector\Schema\Plan\Operation\AlterView;
-use Hector\Schema\Plan\Operation\CreateView;
-use Hector\Schema\Plan\Operation\DropView;
-use Hector\Schema\Plan\Operation\MigrateData;
+use Hector\Schema\Plan\AlterTable;
+use Hector\Schema\Plan\AlterView;
+use Hector\Schema\Plan\CreateTable;
+use Hector\Schema\Plan\CreateTrigger;
+use Hector\Schema\Plan\CreateView;
+use Hector\Schema\Plan\DisableForeignKeyChecks;
+use Hector\Schema\Plan\DropTable;
+use Hector\Schema\Plan\DropTrigger;
+use Hector\Schema\Plan\DropView;
+use Hector\Schema\Plan\EnableForeignKeyChecks;
+use Hector\Schema\Plan\MigrateData;
 use Hector\Schema\Plan\Plan;
-use Hector\Schema\Plan\TablePlan;
-use Hector\Schema\Plan\ViewPlan;
+use Hector\Schema\Plan\RawStatement;
+use Hector\Schema\Plan\TableOperation;
 use Hector\Schema\Table;
 use IteratorAggregate;
 use PHPUnit\Framework\TestCase;
@@ -40,13 +47,14 @@ class PlanTest extends TestCase
         $this->assertSame([], $plan->getArrayCopy());
     }
 
-    public function testCreateReturnsTablePlan(): void
+    public function testCreateReturnsCreateTable(): void
     {
         $plan = new Plan();
         $result = $plan->create('users');
 
-        $this->assertInstanceOf(TablePlan::class, $result);
-        $this->assertSame('users', $result->getName());
+        $this->assertInstanceOf(CreateTable::class, $result);
+        $this->assertInstanceOf(TableOperation::class, $result);
+        $this->assertSame('users', $result->getObjectName());
         $this->assertFalse($plan->isEmpty());
         $this->assertCount(1, $plan);
     }
@@ -56,9 +64,9 @@ class PlanTest extends TestCase
         $plan = new Plan();
         $called = false;
 
-        $result = $plan->create('users', function (TablePlan $t) use (&$called) {
+        $result = $plan->create('users', function (CreateTable $t) use (&$called) {
             $called = true;
-            $this->assertSame('users', $t->getName());
+            $this->assertSame('users', $t->getObjectName());
             $t->addColumn('id', 'int', autoIncrement: true);
         });
 
@@ -67,14 +75,14 @@ class PlanTest extends TestCase
         $this->assertCount(1, $plan);
     }
 
-    public function testAlterReturnsTablePlan(): void
+    public function testAlterReturnsAlterTable(): void
     {
         $plan = new Plan();
         $result = $plan->alter('users');
 
-        $this->assertInstanceOf(TablePlan::class, $result);
-        $this->assertSame('users', $result->getName());
-        $this->assertSame('users', $result->getName());
+        $this->assertInstanceOf(AlterTable::class, $result);
+        $this->assertInstanceOf(TableOperation::class, $result);
+        $this->assertSame('users', $result->getObjectName());
         $this->assertCount(1, $plan);
     }
 
@@ -83,7 +91,7 @@ class PlanTest extends TestCase
         $plan = new Plan();
         $called = false;
 
-        $result = $plan->alter('users', function (TablePlan $t) use (&$called) {
+        $result = $plan->alter('users', function (AlterTable $t) use (&$called) {
             $called = true;
             $t->addColumn('email', 'varchar(255)');
         });
@@ -98,8 +106,8 @@ class PlanTest extends TestCase
         $plan = new Plan();
         $result = $plan->alter($table);
 
-        $this->assertInstanceOf(TablePlan::class, $result);
-        $this->assertSame('users', $result->getName());
+        $this->assertInstanceOf(AlterTable::class, $result);
+        $this->assertSame('users', $result->getObjectName());
     }
 
     public function testDropReturnsPlan(): void
@@ -118,7 +126,10 @@ class PlanTest extends TestCase
         $plan->drop($table);
 
         $this->assertCount(1, $plan);
-        $this->assertSame('legacy', $plan->getArrayCopy()[0]->getName());
+
+        $entry = $plan->getArrayCopy()[0];
+        $this->assertInstanceOf(DropTable::class, $entry);
+        $this->assertSame('legacy', $entry->getObjectName());
     }
 
     public function testRenameReturnsPlan(): void
@@ -139,7 +150,7 @@ class PlanTest extends TestCase
         $this->assertCount(1, $plan);
     }
 
-    public function testCountReflectsTablePlans(): void
+    public function testCountReflectsTableOperations(): void
     {
         $plan = new Plan();
         $this->assertCount(0, $plan);
@@ -170,12 +181,12 @@ class PlanTest extends TestCase
         $plan->alter('posts')->dropColumn('legacy');
         $plan->drop('old_table');
 
-        $tablePlans = $plan->getArrayCopy();
+        $entries = $plan->getArrayCopy();
 
-        $this->assertCount(3, $tablePlans);
-        $this->assertSame('users', $tablePlans[0]->getName());
-        $this->assertSame('posts', $tablePlans[1]->getName());
-        $this->assertSame('old_table', $tablePlans[2]->getName());
+        $this->assertCount(3, $entries);
+        $this->assertSame('users', $entries[0]->getObjectName());
+        $this->assertSame('posts', $entries[1]->getObjectName());
+        $this->assertSame('old_table', $entries[2]->getObjectName());
     }
 
     public function testIteratorAggregate(): void
@@ -186,17 +197,17 @@ class PlanTest extends TestCase
         $plan->alter('users')->addColumn('email', 'varchar(255)');
         $plan->alter('posts')->dropColumn('legacy');
 
-        $tablePlans = [];
-        foreach ($plan as $tablePlan) {
-            $tablePlans[] = $tablePlan;
+        $entries = [];
+        foreach ($plan as $entry) {
+            $entries[] = $entry;
         }
 
-        $this->assertCount(2, $tablePlans);
-        $this->assertSame('users', $tablePlans[0]->getName());
-        $this->assertSame('posts', $tablePlans[1]->getName());
+        $this->assertCount(2, $entries);
+        $this->assertSame('users', $entries[0]->getObjectName());
+        $this->assertSame('posts', $entries[1]->getObjectName());
     }
 
-    public function testMultipleAlterOnSameTableCreatesMultipleTablePlans(): void
+    public function testMultipleAlterOnSameTableCreatesMultipleEntries(): void
     {
         $plan = new Plan();
         $plan->alter('users')->addColumn('email', 'varchar(255)');
@@ -204,20 +215,20 @@ class PlanTest extends TestCase
 
         $this->assertCount(2, $plan);
 
-        $tablePlans = $plan->getArrayCopy();
-        $this->assertSame('users', $tablePlans[0]->getName());
-        $this->assertSame('users', $tablePlans[1]->getName());
-        $this->assertNotSame($tablePlans[0], $tablePlans[1]);
+        $entries = $plan->getArrayCopy();
+        $this->assertSame('users', $entries[0]->getObjectName());
+        $this->assertSame('users', $entries[1]->getObjectName());
+        $this->assertNotSame($entries[0], $entries[1]);
     }
 
     public function testChainingCreateAlterDropRename(): void
     {
         $plan = new Plan();
 
-        $plan->create('comments', function (TablePlan $t) {
+        $plan->create('comments', function (CreateTable $t) {
             $t->addColumn('id', 'int', autoIncrement: true)
-              ->addColumn('body', 'text')
-              ->addIndex('PRIMARY', ['id'], Index::PRIMARY);
+                ->addColumn('body', 'text')
+                ->addIndex('PRIMARY', ['id'], Index::PRIMARY);
         });
 
         $plan->alter('users')
@@ -243,16 +254,14 @@ class PlanTest extends TestCase
         $plan = new Plan();
         $plan->migrate('users', 'users_v2');
 
-        $tablePlans = $plan->getArrayCopy();
-        $this->assertCount(1, $tablePlans);
-        $this->assertSame('users', $tablePlans[0]->getName());
+        $entries = $plan->getArrayCopy();
+        $this->assertCount(1, $entries);
 
-        $ops = $tablePlans[0]->getArrayCopy();
-        $this->assertCount(1, $ops);
-        $this->assertInstanceOf(MigrateData::class, $ops[0]);
-        $this->assertSame('users', $ops[0]->getObjectName());
-        $this->assertSame('users_v2', $ops[0]->getTargetTable());
-        $this->assertSame([], $ops[0]->getColumnMapping());
+        $entry = $entries[0];
+        $this->assertInstanceOf(MigrateData::class, $entry);
+        $this->assertSame('users', $entry->getObjectName());
+        $this->assertSame('users_v2', $entry->getTargetTable());
+        $this->assertSame([], $entry->getColumnMapping());
     }
 
     public function testMigrateWithMapping(): void
@@ -260,9 +269,9 @@ class PlanTest extends TestCase
         $plan = new Plan();
         $plan->migrate('users', 'users_v2', ['id' => 'id', 'name' => 'full_name']);
 
-        $ops = $plan->getArrayCopy()[0]->getArrayCopy();
-        $this->assertInstanceOf(MigrateData::class, $ops[0]);
-        $this->assertSame(['id' => 'id', 'name' => 'full_name'], $ops[0]->getColumnMapping());
+        $entry = $plan->getArrayCopy()[0];
+        $this->assertInstanceOf(MigrateData::class, $entry);
+        $this->assertSame(['id' => 'id', 'name' => 'full_name'], $entry->getColumnMapping());
     }
 
     public function testMigrateAcceptsTableObjects(): void
@@ -273,13 +282,13 @@ class PlanTest extends TestCase
         $plan = new Plan();
         $plan->migrate($source, $target);
 
-        $ops = $plan->getArrayCopy()[0]->getArrayCopy();
-        $this->assertInstanceOf(MigrateData::class, $ops[0]);
-        $this->assertSame('users', $ops[0]->getObjectName());
-        $this->assertSame('users_v2', $ops[0]->getTargetTable());
+        $entry = $plan->getArrayCopy()[0];
+        $this->assertInstanceOf(MigrateData::class, $entry);
+        $this->assertSame('users', $entry->getObjectName());
+        $this->assertSame('users_v2', $entry->getTargetTable());
     }
 
-    public function testMigrateCountsAsTablePlan(): void
+    public function testMigrateCountsAsEntry(): void
     {
         $plan = new Plan();
         $plan->alter('users')->addColumn('email', 'varchar(255)');
@@ -304,23 +313,20 @@ class PlanTest extends TestCase
         $this->assertFalse($plan->isEmpty());
     }
 
-    public function testCreateViewCreatesViewPlan(): void
+    public function testCreateViewCreatesAtomicEntry(): void
     {
         $plan = new Plan();
         $plan->createView('active_users', 'SELECT * FROM users WHERE active = 1');
 
-        $objectPlans = $plan->getArrayCopy();
-        $this->assertCount(1, $objectPlans);
-        $this->assertInstanceOf(ViewPlan::class, $objectPlans[0]);
-        $this->assertSame('active_users', $objectPlans[0]->getName());
+        $entries = $plan->getArrayCopy();
+        $this->assertCount(1, $entries);
 
-        $ops = $objectPlans[0]->getArrayCopy();
-        $this->assertCount(1, $ops);
-        $this->assertInstanceOf(CreateView::class, $ops[0]);
-        $this->assertSame('active_users', $ops[0]->getObjectName());
-        $this->assertSame('SELECT * FROM users WHERE active = 1', $ops[0]->getStatement());
-        $this->assertFalse($ops[0]->orReplace());
-        $this->assertNull($ops[0]->getAlgorithm());
+        $entry = $entries[0];
+        $this->assertInstanceOf(CreateView::class, $entry);
+        $this->assertSame('active_users', $entry->getObjectName());
+        $this->assertSame('SELECT * FROM users WHERE active = 1', $entry->getStatement());
+        $this->assertFalse($entry->orReplace());
+        $this->assertNull($entry->getAlgorithm());
     }
 
     public function testCreateViewWithOrReplace(): void
@@ -328,8 +334,9 @@ class PlanTest extends TestCase
         $plan = new Plan();
         $plan->createView('active_users', 'SELECT * FROM users WHERE active = 1', orReplace: true);
 
-        $ops = $plan->getArrayCopy()[0]->getArrayCopy();
-        $this->assertTrue($ops[0]->orReplace());
+        $entry = $plan->getArrayCopy()[0];
+        $this->assertInstanceOf(CreateView::class, $entry);
+        $this->assertTrue($entry->orReplace());
     }
 
     public function testCreateViewWithAlgorithm(): void
@@ -337,8 +344,9 @@ class PlanTest extends TestCase
         $plan = new Plan();
         $plan->createView('active_users', 'SELECT * FROM users WHERE active = 1', algorithm: 'MERGE');
 
-        $ops = $plan->getArrayCopy()[0]->getArrayCopy();
-        $this->assertSame('MERGE', $ops[0]->getAlgorithm());
+        $entry = $plan->getArrayCopy()[0];
+        $this->assertInstanceOf(CreateView::class, $entry);
+        $this->assertSame('MERGE', $entry->getAlgorithm());
     }
 
     // =========================================================================
@@ -354,18 +362,16 @@ class PlanTest extends TestCase
         $this->assertCount(1, $plan);
     }
 
-    public function testDropViewCreatesViewPlan(): void
+    public function testDropViewCreatesAtomicEntry(): void
     {
         $plan = new Plan();
         $plan->dropView('old_view', ifExists: true);
 
-        $objectPlans = $plan->getArrayCopy();
-        $this->assertInstanceOf(ViewPlan::class, $objectPlans[0]);
-
-        $ops = $objectPlans[0]->getArrayCopy();
-        $this->assertInstanceOf(DropView::class, $ops[0]);
-        $this->assertSame('old_view', $ops[0]->getObjectName());
-        $this->assertTrue($ops[0]->ifExists());
+        $entries = $plan->getArrayCopy();
+        $entry = $entries[0];
+        $this->assertInstanceOf(DropView::class, $entry);
+        $this->assertSame('old_view', $entry->getObjectName());
+        $this->assertTrue($entry->ifExists());
     }
 
     public function testDropViewAcceptsTableObject(): void
@@ -374,7 +380,7 @@ class PlanTest extends TestCase
         $plan = new Plan();
         $plan->dropView($table);
 
-        $this->assertSame('old_view', $plan->getArrayCopy()[0]->getName());
+        $this->assertSame('old_view', $plan->getArrayCopy()[0]->getObjectName());
     }
 
     // =========================================================================
@@ -390,19 +396,17 @@ class PlanTest extends TestCase
         $this->assertCount(1, $plan);
     }
 
-    public function testAlterViewCreatesViewPlan(): void
+    public function testAlterViewCreatesAtomicEntry(): void
     {
         $plan = new Plan();
         $plan->alterView('my_view', 'SELECT id, name FROM users');
 
-        $objectPlans = $plan->getArrayCopy();
-        $this->assertInstanceOf(ViewPlan::class, $objectPlans[0]);
-
-        $ops = $objectPlans[0]->getArrayCopy();
-        $this->assertInstanceOf(AlterView::class, $ops[0]);
-        $this->assertSame('my_view', $ops[0]->getObjectName());
-        $this->assertSame('SELECT id, name FROM users', $ops[0]->getStatement());
-        $this->assertNull($ops[0]->getAlgorithm());
+        $entries = $plan->getArrayCopy();
+        $entry = $entries[0];
+        $this->assertInstanceOf(AlterView::class, $entry);
+        $this->assertSame('my_view', $entry->getObjectName());
+        $this->assertSame('SELECT id, name FROM users', $entry->getStatement());
+        $this->assertNull($entry->getAlgorithm());
     }
 
     public function testAlterViewAcceptsTableObject(): void
@@ -411,7 +415,7 @@ class PlanTest extends TestCase
         $plan = new Plan();
         $plan->alterView($table, 'SELECT id FROM users');
 
-        $this->assertSame('my_view', $plan->getArrayCopy()[0]->getName());
+        $this->assertSame('my_view', $plan->getArrayCopy()[0]->getObjectName());
     }
 
     public function testAlterViewWithAlgorithm(): void
@@ -419,8 +423,9 @@ class PlanTest extends TestCase
         $plan = new Plan();
         $plan->alterView('my_view', 'SELECT id FROM users', algorithm: 'TEMPTABLE');
 
-        $ops = $plan->getArrayCopy()[0]->getArrayCopy();
-        $this->assertSame('TEMPTABLE', $ops[0]->getAlgorithm());
+        $entry = $plan->getArrayCopy()[0];
+        $this->assertInstanceOf(AlterView::class, $entry);
+        $this->assertSame('TEMPTABLE', $entry->getAlgorithm());
     }
 
     // =========================================================================
@@ -430,12 +435,343 @@ class PlanTest extends TestCase
     public function testViewAndTableMixedCount(): void
     {
         $plan = new Plan();
-        $plan->create('users', function (TablePlan $t) {
+        $plan->create('users', function (CreateTable $t) {
             $t->addColumn('id', 'int', autoIncrement: true);
         });
         $plan->createView('active_users', 'SELECT * FROM users WHERE active = 1');
         $plan->dropView('old_view');
 
         $this->assertCount(3, $plan);
+    }
+
+    // =========================================================================
+    // raw
+    // =========================================================================
+
+    public function testRawReturnsPlan(): void
+    {
+        $plan = new Plan();
+        $result = $plan->raw('CREATE FULLTEXT INDEX ft_name ON users (name)');
+
+        $this->assertSame($plan, $result);
+    }
+
+    public function testRawCountsAsEntry(): void
+    {
+        $plan = new Plan();
+        $plan->raw('ALTER TABLE users ENGINE = InnoDB');
+
+        $this->assertCount(1, $plan);
+        $this->assertFalse($plan->isEmpty());
+    }
+
+    public function testRawAppearsInGetArrayCopy(): void
+    {
+        $plan = new Plan();
+        $plan->alter('users')->addColumn('email', 'varchar(255)', nullable: true);
+        $plan->raw('CREATE FULLTEXT INDEX ft_email ON users (email)');
+
+        $entries = $plan->getArrayCopy();
+
+        $this->assertCount(2, $entries);
+        $this->assertInstanceOf(AlterTable::class, $entries[0]);
+        $this->assertInstanceOf(RawStatement::class, $entries[1]);
+        $this->assertSame('CREATE FULLTEXT INDEX ft_email ON users (email)', $entries[1]->getStatement());
+    }
+
+    public function testRawAppearsInIterator(): void
+    {
+        $plan = new Plan();
+        $plan->raw('SET FOREIGN_KEY_CHECKS = 0');
+        $plan->alter('users')->addColumn('email', 'varchar(255)', nullable: true);
+        $plan->raw('SET FOREIGN_KEY_CHECKS = 1');
+
+        $entries = iterator_to_array($plan);
+
+        $this->assertCount(3, $entries);
+        $this->assertInstanceOf(RawStatement::class, $entries[0]);
+        $this->assertInstanceOf(AlterTable::class, $entries[1]);
+        $this->assertInstanceOf(RawStatement::class, $entries[2]);
+    }
+
+    public function testRawChainingWithOtherMethods(): void
+    {
+        $plan = new Plan();
+        $plan->create('users', function (CreateTable $t) {
+            $t->addColumn('id', 'int', autoIncrement: true)
+                ->addColumn('name', 'varchar(255)')
+                ->addIndex('PRIMARY', ['id'], Index::PRIMARY);
+        })
+            ->raw('CREATE FULLTEXT INDEX ft_name ON users (name)')
+            ->drop('old_table');
+
+        $this->assertCount(3, $plan);
+    }
+
+    public function testMultipleRawStatements(): void
+    {
+        $plan = new Plan();
+        $plan->raw('SET @OLD_SQL_MODE=@@SQL_MODE');
+        $plan->raw('SET SQL_MODE="NO_AUTO_VALUE_ON_ZERO"');
+
+        $this->assertCount(2, $plan);
+
+        $entries = $plan->getArrayCopy();
+        $this->assertInstanceOf(RawStatement::class, $entries[0]);
+        $this->assertInstanceOf(RawStatement::class, $entries[1]);
+    }
+
+    // =========================================================================
+    // createTrigger
+    // =========================================================================
+
+    public function testCreateTriggerReturnsPlan(): void
+    {
+        $plan = new Plan();
+        $result = $plan->createTrigger(
+            'trg_audit',
+            'users',
+            CreateTrigger::AFTER,
+            CreateTrigger::INSERT,
+            'INSERT INTO audit_log (action) VALUES (\'insert\')',
+        );
+
+        $this->assertSame($plan, $result);
+        $this->assertCount(1, $plan);
+        $this->assertFalse($plan->isEmpty());
+    }
+
+    public function testCreateTriggerCreatesAtomicEntry(): void
+    {
+        $plan = new Plan();
+        $plan->createTrigger(
+            'trg_audit',
+            'users',
+            CreateTrigger::AFTER,
+            CreateTrigger::INSERT,
+            'INSERT INTO audit_log (action) VALUES (\'insert\')',
+        );
+
+        $entries = $plan->getArrayCopy();
+        $this->assertCount(1, $entries);
+
+        $entry = $entries[0];
+        $this->assertInstanceOf(CreateTrigger::class, $entry);
+        $this->assertSame('users', $entry->getObjectName());
+        $this->assertSame('trg_audit', $entry->getName());
+        $this->assertSame(CreateTrigger::AFTER, $entry->getTiming());
+        $this->assertSame(CreateTrigger::INSERT, $entry->getEvent());
+        $this->assertSame('INSERT INTO audit_log (action) VALUES (\'insert\')', $entry->getBody());
+        $this->assertNull($entry->getWhen());
+    }
+
+    public function testCreateTriggerWithWhen(): void
+    {
+        $plan = new Plan();
+        $plan->createTrigger(
+            'trg_check',
+            'users',
+            CreateTrigger::BEFORE,
+            CreateTrigger::UPDATE,
+            'INSERT INTO audit_log (action) VALUES (\'update\')',
+            when: 'NEW.status != OLD.status',
+        );
+
+        $entry = $plan->getArrayCopy()[0];
+        $this->assertInstanceOf(CreateTrigger::class, $entry);
+        $this->assertSame('NEW.status != OLD.status', $entry->getWhen());
+    }
+
+    public function testCreateTriggerAcceptsTableObject(): void
+    {
+        $table = new Table('mydb', Table::TYPE_TABLE, 'users');
+        $plan = new Plan();
+        $plan->createTrigger(
+            'trg_audit',
+            $table,
+            CreateTrigger::AFTER,
+            CreateTrigger::INSERT,
+            'INSERT INTO audit_log (action) VALUES (\'insert\')',
+        );
+
+        $this->assertSame('users', $plan->getArrayCopy()[0]->getObjectName());
+    }
+
+    // =========================================================================
+    // dropTrigger
+    // =========================================================================
+
+    public function testDropTriggerReturnsPlan(): void
+    {
+        $plan = new Plan();
+        $result = $plan->dropTrigger('trg_audit', 'users');
+
+        $this->assertSame($plan, $result);
+        $this->assertCount(1, $plan);
+    }
+
+    public function testDropTriggerCreatesAtomicEntry(): void
+    {
+        $plan = new Plan();
+        $plan->dropTrigger('trg_audit', 'users');
+
+        $entries = $plan->getArrayCopy();
+        $this->assertCount(1, $entries);
+
+        $entry = $entries[0];
+        $this->assertInstanceOf(DropTrigger::class, $entry);
+        $this->assertSame('users', $entry->getObjectName());
+        $this->assertSame('trg_audit', $entry->getName());
+    }
+
+    public function testDropTriggerAcceptsTableObject(): void
+    {
+        $table = new Table('mydb', Table::TYPE_TABLE, 'users');
+        $plan = new Plan();
+        $plan->dropTrigger('trg_audit', $table);
+
+        $this->assertSame('users', $plan->getArrayCopy()[0]->getObjectName());
+    }
+
+    // =========================================================================
+    // Trigger inside CreateTable / AlterTable
+    // =========================================================================
+
+    public function testCreateTableWithTriggerCountsCorrectly(): void
+    {
+        $plan = new Plan();
+        $plan->create('users', function (CreateTable $t) {
+            $t->addColumn('id', 'int', autoIncrement: true)
+                ->addIndex('PRIMARY', ['id'], Index::PRIMARY)
+                ->createTrigger(
+                    'trg_audit',
+                    CreateTrigger::AFTER,
+                    CreateTrigger::INSERT,
+                    'INSERT INTO audit_log (action) VALUES (\'insert\')',
+                );
+        });
+
+        $this->assertCount(1, $plan);
+    }
+
+    public function testAlterTableDropTriggerCountsCorrectly(): void
+    {
+        $plan = new Plan();
+        $plan->alter('users')->dropTrigger('trg_audit');
+
+        $this->assertCount(1, $plan);
+    }
+
+    // =========================================================================
+    // Trigger + Table mixed ordering
+    // =========================================================================
+
+    public function testTriggerAndTableMixedCount(): void
+    {
+        $plan = new Plan();
+        $plan->create('users', function (CreateTable $t) {
+            $t->addColumn('id', 'int', autoIncrement: true);
+        });
+        $plan->createTrigger(
+            'trg_audit',
+            'users',
+            CreateTrigger::AFTER,
+            CreateTrigger::INSERT,
+            'INSERT INTO audit_log (action) VALUES (\'insert\')',
+        );
+        $plan->dropTrigger('trg_old', 'users');
+
+        $this->assertCount(3, $plan);
+    }
+
+    // =========================================================================
+    // raw with driver filter
+    // =========================================================================
+
+    public function testRawWithDriversReturnsPlan(): void
+    {
+        $plan = new Plan();
+        $result = $plan->raw('ALTER TABLE users ENGINE = InnoDB', drivers: ['mysql']);
+
+        $this->assertSame($plan, $result);
+        $this->assertCount(1, $plan);
+    }
+
+    public function testRawWithDriversCreatesEntry(): void
+    {
+        $plan = new Plan();
+        $plan->raw('ALTER TABLE users ENGINE = InnoDB', drivers: ['mysql', 'mariadb']);
+
+        $entries = $plan->getArrayCopy();
+        $this->assertCount(1, $entries);
+
+        $entry = $entries[0];
+        $this->assertInstanceOf(RawStatement::class, $entry);
+        $this->assertSame('ALTER TABLE users ENGINE = InnoDB', $entry->getStatement());
+        $this->assertSame(['mysql', 'mariadb'], $entry->getDrivers());
+    }
+
+    public function testRawWithoutDriversDefaultsToNull(): void
+    {
+        $plan = new Plan();
+        $plan->raw('SELECT 1');
+
+        $entry = $plan->getArrayCopy()[0];
+        $this->assertInstanceOf(RawStatement::class, $entry);
+        $this->assertNull($entry->getDrivers());
+    }
+
+    public function testRawWithDriversCountsAsEntry(): void
+    {
+        $plan = new Plan();
+        $plan->raw('ALTER TABLE users ENGINE = InnoDB', drivers: ['mysql']);
+        $plan->raw('PRAGMA journal_mode = WAL', drivers: ['sqlite']);
+        $plan->raw('SELECT 1');
+
+        $this->assertCount(3, $plan);
+        $this->assertFalse($plan->isEmpty());
+    }
+
+    // =========================================================================
+    // DisableForeignKeyChecks / EnableForeignKeyChecks
+    // =========================================================================
+
+    public function testDisableForeignKeyChecksAddsEntry(): void
+    {
+        $plan = new Plan();
+        $plan->add(new DisableForeignKeyChecks());
+
+        $this->assertCount(1, $plan);
+        $this->assertFalse($plan->isEmpty());
+
+        $entry = $plan->getArrayCopy()[0];
+        $this->assertInstanceOf(DisableForeignKeyChecks::class, $entry);
+        $this->assertNull($entry->getObjectName());
+    }
+
+    public function testEnableForeignKeyChecksAddsEntry(): void
+    {
+        $plan = new Plan();
+        $plan->add(new EnableForeignKeyChecks());
+
+        $this->assertCount(1, $plan);
+        $this->assertFalse($plan->isEmpty());
+
+        $entry = $plan->getArrayCopy()[0];
+        $this->assertInstanceOf(EnableForeignKeyChecks::class, $entry);
+        $this->assertNull($entry->getObjectName());
+    }
+
+    public function testFkChecksWrappingCount(): void
+    {
+        $plan = new Plan();
+        $plan->add(new DisableForeignKeyChecks());
+        $plan->create('users', function (CreateTable $t) {
+            $t->addColumn('id', 'int', autoIncrement: true);
+        });
+        $plan->drop('old_table');
+        $plan->add(new EnableForeignKeyChecks());
+
+        $this->assertCount(4, $plan);
     }
 }

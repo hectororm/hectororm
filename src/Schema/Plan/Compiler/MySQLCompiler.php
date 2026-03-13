@@ -14,25 +14,37 @@ declare(strict_types=1);
 
 namespace Hector\Schema\Plan\Compiler;
 
+use Hector\Schema\Column;
+use Hector\Schema\Exception\PlanException;
 use Hector\Schema\Index;
-use Hector\Schema\Plan\ObjectPlan;
+use Hector\Schema\Plan\AlterTable;
+use Hector\Schema\Plan\AlterView;
+use Hector\Schema\Plan\CreateTable;
+use Hector\Schema\Plan\CreateTrigger;
+use Hector\Schema\Plan\CreateView;
 use Hector\Schema\Plan\Operation\AddColumn;
-use Hector\Schema\Plan\Operation\AddForeignKey;
 use Hector\Schema\Plan\Operation\AddIndex;
-use Hector\Schema\Plan\Operation\AlterView;
-use Hector\Schema\Plan\Operation\CreateTable;
-use Hector\Schema\Plan\Operation\CreateView;
 use Hector\Schema\Plan\Operation\DropColumn;
-use Hector\Schema\Plan\Operation\DropForeignKey;
 use Hector\Schema\Plan\Operation\DropIndex;
+use Hector\Schema\Plan\Operation\ModifyCharset;
 use Hector\Schema\Plan\Operation\ModifyColumn;
-use Hector\Schema\Plan\Operation\OperationInterface;
+use Hector\Schema\Plan\Operation\PostOperationInterface;
+use Hector\Schema\Plan\Operation\PreOperationInterface;
 use Hector\Schema\Plan\Operation\RenameColumn;
 use Hector\Schema\Plan\Operation\RenameTable;
+use Hector\Schema\Plan\OperationInterface;
 use Hector\Schema\Schema;
 
-class MySQLCompiler extends AbstractCompiler
+final class MySQLCompiler extends AbstractCompiler
 {
+    /**
+     * @inheritDoc
+     */
+    protected function getDriverNames(): array
+    {
+        return ['mysql', 'mariadb', 'vitess'];
+    }
+
     /**
      * @inheritDoc
      */
@@ -44,32 +56,65 @@ class MySQLCompiler extends AbstractCompiler
     /**
      * @inheritDoc
      */
-    protected function compileCreateTable(ObjectPlan $objectPlan): array
+    protected function compileStandaloneOperation(OperationInterface $operation): iterable
     {
-        $operations = $objectPlan->getArrayCopy();
-        $createTable = $operations[0];
-        assert($createTable instanceof CreateTable);
+        $tableName = $operation->getObjectName();
 
+        if (null === $tableName) {
+            return [];
+        }
+
+        $clause = $this->compileAlterClause($operation, $tableName, null);
+
+        if (null === $clause) {
+            return [];
+        }
+
+        $quotedTable = $this->quoteIdentifier($tableName);
+
+        return array_map(
+            fn(string $c) => sprintf('ALTER TABLE %s %s', $quotedTable, $c),
+            (array)$clause,
+        );
+    }
+
+    /**
+     * @inheritDoc
+     */
+    protected function compileDisableForeignKeyChecks(): string
+    {
+        return 'SET FOREIGN_KEY_CHECKS = 0';
+    }
+
+    /**
+     * @inheritDoc
+     */
+    protected function compileEnableForeignKeyChecks(): string
+    {
+        return 'SET FOREIGN_KEY_CHECKS = 1';
+    }
+
+    /**
+     * @inheritDoc
+     */
+    protected function compileCreateTable(CreateTable $createTable): iterable
+    {
         $tableName = $this->quoteIdentifier($createTable->getObjectName());
-        $remaining = array_slice($operations, 1);
+        $operations = $createTable->getArrayCopy();
 
         // Column definitions first
         $definitions = array_map(
             fn(AddColumn $op) => $this->compileColumnDefinition($op),
-            array_filter($remaining, fn($op) => $op instanceof AddColumn),
+            array_filter($operations, fn($op) => $op instanceof AddColumn),
         );
 
-        // Indexes and foreign keys after columns
+        // Indexes after columns (FK excluded — handled by Post pass)
         array_push($definitions, ...array_map(
             fn(AddIndex $op) => $this->compileIndexDefinition($op),
-            array_filter($remaining, fn($op) => $op instanceof AddIndex),
-        ));
-        array_push($definitions, ...array_map(
-            fn(AddForeignKey $op) => $this->compileForeignKeyDefinition($op),
-            array_filter($remaining, fn($op) => $op instanceof AddForeignKey),
+            array_filter($operations, fn($op) => $op instanceof AddIndex),
         ));
 
-        if (empty($definitions)) {
+        if ([] === $definitions) {
             return [];
         }
 
@@ -88,7 +133,7 @@ class MySQLCompiler extends AbstractCompiler
         if (null !== $createTable->getCollation()) {
             $options[] = sprintf('COLLATE=%s', $createTable->getCollation());
         }
-        if (false === empty($options)) {
+        if ([] !== $options) {
             $sql .= ' ' . implode(' ', $options);
         }
 
@@ -98,36 +143,51 @@ class MySQLCompiler extends AbstractCompiler
     /**
      * @inheritDoc
      */
-    protected function compileRenameTable(RenameTable $operation): string
+    protected function compileAlterTable(AlterTable $alterTable, ?Schema $schema = null): iterable
     {
-        return sprintf(
-            'RENAME TABLE %s TO %s',
-            $this->quoteIdentifier($operation->getObjectName()),
-            $this->quoteIdentifier($operation->getNewName()),
-        );
-    }
+        // Validate operations
+        $this->validateAlterOperations($alterTable);
 
-    /**
-     * @inheritDoc
-     */
-    protected function compileAlterTable(ObjectPlan $objectPlan, ?Schema $schema = null): array
-    {
-        $tableName = $this->quoteIdentifier($objectPlan->getName());
+        $tableName = $this->quoteIdentifier($alterTable->getObjectName());
 
-        // Compile each operation into a clause (string, string[] or null)
-        $clauses = array_filter(array_map(
-            fn(OperationInterface $op) => $this->compileAlterClause($op, $objectPlan->getName(), $schema),
-            $objectPlan->getArrayCopy(),
-        ));
+        // Filter out Pre/Post operations (handled in passes 1 and 3)
+        // and RenameTable (emitted separately after other clauses)
+        $clauses = [];
+        $renameOperation = null;
 
-        if (empty($clauses)) {
-            return [];
+        foreach ($alterTable as $operation) {
+            if ($operation instanceof PreOperationInterface ||
+                $operation instanceof PostOperationInterface) {
+                continue;
+            }
+
+            if ($operation instanceof RenameTable) {
+                $renameOperation = $operation;
+                continue;
+            }
+
+            $clause = $this->compileAlterClause($operation, $alterTable->getObjectName(), $schema);
+
+            if (null !== $clause) {
+                $clauses[] = $clause;
+            }
         }
 
-        // Flatten: each clause can be a string or string[]
-        $clauses = array_merge(...array_map(fn(string|array $clause) => (array)$clause, $clauses));
+        if ([] !== $clauses) {
+            // Flatten: each clause can be a string or string[]
+            $clauses = array_merge(...array_map(fn(string|array $clause) => (array)$clause, $clauses));
 
-        return [sprintf('ALTER TABLE %s %s', $tableName, implode(', ', $clauses))];
+            yield sprintf('ALTER TABLE %s %s', $tableName, implode(', ', $clauses));
+        }
+
+        // Rename must be emitted as a separate statement (cannot be combined with other clauses)
+        if (null !== $renameOperation) {
+            yield sprintf(
+                'ALTER TABLE %s RENAME TO %s',
+                $tableName,
+                $this->quoteIdentifier($renameOperation->getNewName()),
+            );
+        }
     }
 
     /**
@@ -159,26 +219,33 @@ class MySQLCompiler extends AbstractCompiler
                 $this->compileColumnDefinition($operation),
                 $this->compileColumnPlacement($operation),
             ),
-            RenameColumn::class => sprintf(
-                'RENAME COLUMN %s TO %s',
-                $this->quoteIdentifier($operation->getName()),
-                $this->quoteIdentifier($operation->getNewName()),
-            ),
+            RenameColumn::class => $this->compileAlterRenameColumn($operation, $tableName, $schema),
             AddIndex::class => $this->compileAlterAddIndex($operation, $tableName, $schema),
             DropIndex::class => sprintf(
                 'DROP INDEX %s',
                 $this->quoteIdentifier($operation->getName()),
             ),
-            AddForeignKey::class => sprintf(
-                'ADD %s',
-                $this->compileForeignKeyDefinition($operation),
-            ),
-            DropForeignKey::class => sprintf(
-                'DROP FOREIGN KEY %s',
-                $this->quoteIdentifier($operation->getName()),
-            ),
+            ModifyCharset::class => $this->compileAlterModifyCharset($operation),
             default => null,
         };
+    }
+
+    /**
+     * Compile a ModifyCharset clause for ALTER TABLE.
+     *
+     * @param ModifyCharset $operation
+     *
+     * @return string
+     */
+    protected function compileAlterModifyCharset(ModifyCharset $operation): string
+    {
+        $sql = sprintf('DEFAULT CHARSET=%s', $operation->getCharset());
+
+        if (null !== $operation->getCollation()) {
+            $sql .= sprintf(' COLLATE=%s', $operation->getCollation());
+        }
+
+        return $sql;
     }
 
     /**
@@ -216,6 +283,117 @@ class MySQLCompiler extends AbstractCompiler
         }
 
         return sprintf('ADD %s', $this->compileIndexDefinition($operation));
+    }
+
+    /**
+     * Compile a RENAME COLUMN clause for ALTER TABLE.
+     *
+     * On servers that support RENAME COLUMN (MySQL >= 8.0, MariaDB >= 10.5.2),
+     * emits `RENAME COLUMN old TO new`. On older servers, falls back to
+     * `CHANGE COLUMN old new <full definition>` which requires a Schema to
+     * introspect the current column definition.
+     *
+     * @param RenameColumn $operation
+     * @param string $tableName
+     * @param Schema|null $schema
+     *
+     * @return string
+     * @throws PlanException
+     */
+    protected function compileAlterRenameColumn(
+        RenameColumn $operation,
+        string $tableName,
+        ?Schema $schema
+    ): string {
+        // Modern syntax: RENAME COLUMN (default when no capabilities or capable server)
+        if (null === $this->capabilities || true === $this->capabilities->hasRenameColumn()) {
+            return sprintf(
+                'RENAME COLUMN %s TO %s',
+                $this->quoteIdentifier($operation->getName()),
+                $this->quoteIdentifier($operation->getNewName()),
+            );
+        }
+
+        // Legacy syntax: CHANGE COLUMN old new <definition> (requires schema)
+        if (null === $schema || false === $schema->hasTable($tableName)) {
+            throw new PlanException(
+                sprintf(
+                    'Cannot rename column "%s" on table "%s": ' .
+                    'the server does not support RENAME COLUMN and no schema was provided ' .
+                    'to generate a CHANGE COLUMN statement',
+                    $operation->getName(),
+                    $tableName,
+                )
+            );
+        }
+
+        $table = $schema->getTable($tableName);
+        $column = $table->getColumn($operation->getName());
+
+        return sprintf(
+            'CHANGE COLUMN %s %s',
+            $this->quoteIdentifier($operation->getName()),
+            $this->compileSchemaColumnDefinition($column, $operation->getNewName()),
+        );
+    }
+
+    /**
+     * Compile a column definition from a Schema Column object.
+     *
+     * Used by CHANGE COLUMN to reproduce the current column definition
+     * with a new name.
+     *
+     * @param Column $column
+     * @param string $newName
+     *
+     * @return string
+     */
+    protected function compileSchemaColumnDefinition(Column $column, string $newName): string
+    {
+        $type = $column->getType();
+
+        if (null !== $column->getMaxlength()) {
+            $type .= '(' . $column->getMaxlength() . ')';
+        } elseif (null !== $column->getNumericPrecision()) {
+            $type .= '(' . $column->getNumericPrecision();
+
+            if (null !== $column->getNumericScale()) {
+                $type .= ',' . $column->getNumericScale();
+            }
+
+            $type .= ')';
+        }
+
+        if (true === $column->isUnsigned()) {
+            $type .= ' unsigned';
+        }
+
+        $parts = [
+            $this->quoteIdentifier($newName),
+            $type,
+        ];
+
+        $parts[] = $column->isNullable() ? 'NULL' : 'NOT NULL';
+
+        /** @var string|int|float|null $default */
+        $default = $column->getDefault();
+
+        $defaultClause = match (true) {
+            null !== $default && is_numeric($default) => sprintf('DEFAULT %s', $default),
+            null !== $default => sprintf('DEFAULT \'%s\'', str_replace("'", "''", (string)$default)),
+            $column->isNullable() => 'DEFAULT NULL',
+            default => null,
+        };
+
+        if (null !== $defaultClause) {
+            $parts[] = $defaultClause;
+        }
+
+        if (true === $column->isAutoIncrement()) {
+            $parts[] = 'AUTO_INCREMENT';
+        }
+
+        return implode(' ', $parts);
     }
 
     /**
@@ -283,20 +461,23 @@ class MySQLCompiler extends AbstractCompiler
     /**
      * @inheritDoc
      */
-    protected function compileCreateView(CreateView $operation): array
+    protected function compileCreateView(CreateView $createView): iterable
     {
         $sql = 'CREATE';
 
-        if (true === $operation->orReplace()) {
+        if (true === $createView->orReplace()) {
             $sql .= ' OR REPLACE';
         }
 
-        if (null !== $operation->getAlgorithm()) {
-            $sql .= sprintf(' ALGORITHM = %s', strtoupper($operation->getAlgorithm()));
+        if (null !== $createView->getAlgorithm()) {
+            $sql .= sprintf(' ALGORITHM = %s', strtoupper($createView->getAlgorithm()));
         }
 
-        $sql .= sprintf(' VIEW %s AS %s', $this->quoteIdentifier($operation->getObjectName()),
-            $operation->getStatement());
+        $sql .= sprintf(
+            ' VIEW %s AS %s',
+            $this->quoteIdentifier($createView->getObjectName()),
+            $createView->getStatement(),
+        );
 
         return [$sql];
     }
@@ -304,17 +485,35 @@ class MySQLCompiler extends AbstractCompiler
     /**
      * @inheritDoc
      */
-    protected function compileAlterView(AlterView $operation): array
+    protected function compileAlterView(AlterView $alterView): iterable
     {
         $sql = 'ALTER';
 
-        if (null !== $operation->getAlgorithm()) {
-            $sql .= sprintf(' ALGORITHM = %s', strtoupper($operation->getAlgorithm()));
+        if (null !== $alterView->getAlgorithm()) {
+            $sql .= sprintf(' ALGORITHM = %s', strtoupper($alterView->getAlgorithm()));
         }
 
-        $sql .= sprintf(' VIEW %s AS %s', $this->quoteIdentifier($operation->getObjectName()),
-            $operation->getStatement());
+        $sql .= sprintf(
+            ' VIEW %s AS %s',
+            $this->quoteIdentifier($alterView->getObjectName()),
+            $alterView->getStatement(),
+        );
 
         return [$sql];
+    }
+
+    /**
+     * @inheritDoc
+     */
+    protected function compileCreateTrigger(CreateTrigger $trigger): string
+    {
+        return sprintf(
+            'CREATE TRIGGER %s %s %s ON %s FOR EACH ROW %s',
+            $this->quoteIdentifier($trigger->getName()),
+            $trigger->getTiming(),
+            $trigger->getEvent(),
+            $this->quoteIdentifier($trigger->getObjectName()),
+            $trigger->getBody(),
+        );
     }
 }

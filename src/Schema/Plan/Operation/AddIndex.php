@@ -15,9 +15,16 @@ declare(strict_types=1);
 namespace Hector\Schema\Plan\Operation;
 
 use Hector\Schema\Index;
+use Hector\Schema\Plan\OperationInterface;
 
-class AddIndex implements IndexOperationInterface
+final class AddIndex implements OperationInterface
 {
+    /**
+     * @param string $table
+     * @param string $name
+     * @param string[] $columns
+     * @param string $type
+     */
     public function __construct(
         private string $table,
         private string $name,

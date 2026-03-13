@@ -12,26 +12,37 @@
 
 declare(strict_types=1);
 
-namespace Hector\Schema\Plan\Operation;
+namespace Hector\Schema\Plan;
 
-class CreateView extends AbstractViewOperation
+final class DropView implements OperationInterface
 {
+    /**
+     * DropView constructor.
+     *
+     * @param string $view
+     * @param bool $ifExists
+     */
     public function __construct(
-        string $view,
-        string $statement,
-        private bool $orReplace = false,
-        ?string $algorithm = null,
+        private string $view,
+        private bool $ifExists = false,
     ) {
-        parent::__construct($view, $statement, $algorithm);
     }
 
     /**
-     * OR REPLACE clause?
+     * @inheritDoc
+     */
+    public function getObjectName(): string
+    {
+        return $this->view;
+    }
+
+    /**
+     * If exists?
      *
      * @return bool
      */
-    public function orReplace(): bool
+    public function ifExists(): bool
     {
-        return $this->orReplace;
+        return $this->ifExists;
     }
 }

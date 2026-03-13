@@ -12,24 +12,25 @@
 
 declare(strict_types=1);
 
-namespace Hector\Schema\Plan\Operation;
+namespace Hector\Schema\Plan;
 
-class CreateTable implements TableOperationInterface
+final class CreateTable extends TableOperation
 {
+    /**
+     * CreateTable constructor.
+     *
+     * @param string $name
+     * @param string|null $charset
+     * @param string|null $collation
+     * @param bool $ifNotExists
+     */
     public function __construct(
-        private string $table,
+        string $name,
         private ?string $charset = null,
         private ?string $collation = null,
         private bool $ifNotExists = false,
     ) {
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function getObjectName(): string
-    {
-        return $this->table;
+        parent::__construct($name);
     }
 
     /**

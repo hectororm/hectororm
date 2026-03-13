@@ -14,6 +14,8 @@ declare(strict_types=1);
 
 namespace Hector\Schema\Plan\Operation;
 
+use Hector\Schema\Plan\OperationInterface;
+
 /**
  * Marker interface for operations that must be executed before the main structure pass.
  *

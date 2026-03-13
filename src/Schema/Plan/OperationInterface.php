@@ -12,11 +12,17 @@
 
 declare(strict_types=1);
 
-namespace Hector\Schema\Plan\Operation;
+namespace Hector\Schema\Plan;
 
-/**
- * Marker interface for column operations (ADD, DROP, MODIFY, RENAME).
- */
-interface ColumnOperationInterface extends OperationInterface
+interface OperationInterface
 {
+    /**
+     * Get the object name concerned by this operation.
+     *
+     * Returns null for operations not tied to a specific database object
+     * (e.g., raw SQL statements).
+     *
+     * @return string|null
+     */
+    public function getObjectName(): ?string;
 }

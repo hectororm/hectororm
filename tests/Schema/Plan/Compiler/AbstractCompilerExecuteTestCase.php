@@ -19,8 +19,9 @@ use Hector\Schema\Generator\GeneratorInterface;
 use Hector\Schema\Index;
 use Hector\Schema\Plan\Compiler\AutoCompiler;
 use Hector\Schema\Plan\Plan;
-use Hector\Schema\Plan\TablePlan;
+use Hector\Schema\Plan\TableOperation;
 use PHPUnit\Framework\TestCase;
+use Throwable;
 
 /**
  * Class AbstractCompilerExecuteTestCase.
@@ -95,7 +96,7 @@ abstract class AbstractCompilerExecuteTestCase extends TestCase
                 $plan = new Plan();
                 $plan->drop(static::getTestTableName(), ifExists: true);
                 static::executePlan($plan, static::$connection);
-            } catch (\Throwable) {
+            } catch (Throwable) {
             }
 
             static::$connection = null;
@@ -122,12 +123,12 @@ abstract class AbstractCompilerExecuteTestCase extends TestCase
 
         // CREATE TABLE
         $plan = new Plan();
-        $plan->create(static::getTestTableName(), function (TablePlan $t) {
+        $plan->create(static::getTestTableName(), function (TableOperation $t) {
             $t->addColumn('id', 'INTEGER', autoIncrement: true)
-              ->addColumn('name', 'VARCHAR(100)')
-              ->addColumn('email', 'VARCHAR(255)')
-              ->addIndex('PRIMARY', ['id'], Index::PRIMARY)
-              ->addIndex('idx_email', ['email'], Index::UNIQUE);
+                ->addColumn('name', 'VARCHAR(100)')
+                ->addColumn('email', 'VARCHAR(255)')
+                ->addIndex('PRIMARY', ['id'], Index::PRIMARY)
+                ->addIndex('idx_email', ['email'], Index::UNIQUE);
         });
 
         static::executePlan($plan, $connection);

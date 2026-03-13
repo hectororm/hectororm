@@ -18,10 +18,9 @@ use Hector\Connection\Connection;
 use Hector\Schema\Generator\GeneratorInterface;
 use Hector\Schema\Generator\Sqlite;
 use Hector\Schema\Index;
-use Hector\Schema\Plan\Compiler\AutoCompiler;
 use Hector\Schema\Plan\Compiler\SqliteCompiler;
 use Hector\Schema\Plan\Plan;
-use Hector\Schema\Plan\TablePlan;
+use Hector\Schema\Plan\TableOperation;
 
 /**
  * Class SqliteCompilerExecuteTest.
@@ -71,11 +70,11 @@ class SqliteCompilerExecuteTest extends AbstractCompilerExecuteTestCase
 
         // Create a table with a VARCHAR(100) column
         $plan = new Plan();
-        $plan->create('rebuild_test', function (TablePlan $t) {
+        $plan->create('rebuild_test', function (TableOperation $t) {
             $t->addColumn('id', 'INTEGER', autoIncrement: true)
-              ->addColumn('name', 'VARCHAR(100)')
-              ->addColumn('email', 'VARCHAR(255)')
-              ->addIndex('PRIMARY', ['id'], Index::PRIMARY);
+                ->addColumn('name', 'VARCHAR(100)')
+                ->addColumn('email', 'VARCHAR(255)')
+                ->addIndex('PRIMARY', ['id'], Index::PRIMARY);
         });
         static::executePlan($plan, $connection);
 
@@ -141,13 +140,13 @@ class SqliteCompilerExecuteTest extends AbstractCompilerExecuteTestCase
 
         // Create a table with several columns
         $plan = new Plan();
-        $plan->create('mixed_rebuild_test', function (TablePlan $t) {
+        $plan->create('mixed_rebuild_test', function (TableOperation $t) {
             $t->addColumn('id', 'INTEGER', autoIncrement: true)
-              ->addColumn('name', 'VARCHAR(100)')
-              ->addColumn('legacy', 'VARCHAR(50)')
-              ->addColumn('temp', 'VARCHAR(50)')
-              ->addColumn('email', 'VARCHAR(255)')
-              ->addIndex('PRIMARY', ['id'], Index::PRIMARY);
+                ->addColumn('name', 'VARCHAR(100)')
+                ->addColumn('legacy', 'VARCHAR(50)')
+                ->addColumn('temp', 'VARCHAR(50)')
+                ->addColumn('email', 'VARCHAR(255)')
+                ->addIndex('PRIMARY', ['id'], Index::PRIMARY);
         });
         static::executePlan($plan, $connection);
 

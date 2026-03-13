@@ -14,7 +14,9 @@ declare(strict_types=1);
 
 namespace Hector\Schema\Plan\Operation;
 
-class DropForeignKey implements ForeignKeyOperationInterface, PreOperationInterface
+use Hector\Schema\Plan\OperationInterface;
+
+final class DropForeignKey implements OperationInterface, PreOperationInterface
 {
     public function __construct(
         private string $table,

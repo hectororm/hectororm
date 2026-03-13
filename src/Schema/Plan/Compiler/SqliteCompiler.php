@@ -15,26 +15,37 @@ declare(strict_types=1);
 namespace Hector\Schema\Plan\Compiler;
 
 use Hector\Schema\Index;
-use Hector\Schema\Plan\ObjectPlan;
+use Hector\Schema\Plan\AlterTable;
+use Hector\Schema\Plan\AlterView;
+use Hector\Schema\Plan\CreateTable;
+use Hector\Schema\Plan\CreateTrigger;
+use Hector\Schema\Plan\CreateView;
 use Hector\Schema\Plan\Operation\AddColumn;
 use Hector\Schema\Plan\Operation\AddForeignKey;
 use Hector\Schema\Plan\Operation\AddIndex;
-use Hector\Schema\Plan\Operation\AlterView;
-use Hector\Schema\Plan\Operation\CreateTable;
-use Hector\Schema\Plan\Operation\CreateView;
 use Hector\Schema\Plan\Operation\DropColumn;
 use Hector\Schema\Plan\Operation\DropForeignKey;
 use Hector\Schema\Plan\Operation\DropIndex;
+use Hector\Schema\Plan\Operation\ModifyCharset;
 use Hector\Schema\Plan\Operation\ModifyColumn;
-use Hector\Schema\Plan\Operation\OperationInterface;
+use Hector\Schema\Plan\Operation\PostOperationInterface;
+use Hector\Schema\Plan\Operation\PreOperationInterface;
 use Hector\Schema\Plan\Operation\RenameColumn;
 use Hector\Schema\Plan\Operation\RenameTable;
+use Hector\Schema\Plan\OperationInterface;
 use Hector\Schema\Plan\Plan;
-use Hector\Schema\Plan\TablePlan;
 use Hector\Schema\Schema;
 
-class SqliteCompiler extends AbstractCompiler
+final class SqliteCompiler extends AbstractCompiler
 {
+    /**
+     * @inheritDoc
+     */
+    protected function getDriverNames(): array
+    {
+        return ['sqlite'];
+    }
+
     /**
      * @inheritDoc
      */
@@ -46,42 +57,64 @@ class SqliteCompiler extends AbstractCompiler
     /**
      * @inheritDoc
      */
-    protected function compileCreateTable(ObjectPlan $objectPlan): array
+    protected function compileStandaloneOperation(OperationInterface $operation): iterable
     {
-        $operations = $objectPlan->getArrayCopy();
-        $createTable = $operations[0];
-        assert($createTable instanceof CreateTable);
+        $tableName = $operation->getObjectName();
 
+        if (null === $tableName) {
+            return [];
+        }
+
+        return $this->compileAlterOperation($tableName, $operation);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    protected function compileDisableForeignKeyChecks(): string
+    {
+        return 'PRAGMA foreign_keys = OFF';
+    }
+
+    /**
+     * @inheritDoc
+     */
+    protected function compileEnableForeignKeyChecks(): string
+    {
+        return 'PRAGMA foreign_keys = ON';
+    }
+
+    /**
+     * @inheritDoc
+     */
+    protected function compileCreateTable(CreateTable $createTable): iterable
+    {
         $tableName = $this->quoteIdentifier($createTable->getObjectName());
-        $remaining = array_slice($operations, 1);
+        $operations = $createTable->getArrayCopy();
 
         // Column definitions
         $definitions = array_map(
             fn(AddColumn $op) => $this->compileColumnDefinition($op),
-            array_filter($remaining, fn($op) => $op instanceof AddColumn),
+            array_filter($operations, fn($op) => $op instanceof AddColumn),
         );
 
         // Check if any column has autoIncrement (already has inline PRIMARY KEY)
-        $addColumns = array_filter($remaining, fn($op) => $op instanceof AddColumn);
+        $addColumns = array_filter($operations, fn($op) => $op instanceof AddColumn);
         $hasAutoIncrement = (bool)array_filter($addColumns, fn(AddColumn $op) => true === $op->isAutoIncrement());
 
         // Primary key inline (skip if autoIncrement handles it)
         if (false === $hasAutoIncrement) {
             array_push($definitions, ...array_map(
                 fn(AddIndex $op) => sprintf('PRIMARY KEY (%s)', $this->quoteIdentifiers($op->getColumns())),
-                array_filter($remaining, fn($op) => $op instanceof AddIndex && Index::PRIMARY === $op->getType()),
+                array_filter($operations, fn($op) => $op instanceof AddIndex && Index::PRIMARY === $op->getType()),
             ));
         }
 
-        // Foreign keys inline
-        array_push($definitions, ...array_map(
-            fn(AddForeignKey $op) => $this->compileForeignKeyDefinition($op),
-            array_filter($remaining, fn($op) => $op instanceof AddForeignKey),
-        ));
+        // FK excluded from inline — handled by Post pass in AbstractCompiler::compile()
 
         $statements = [];
 
-        if (false === empty($definitions)) {
+        if ([] !== $definitions) {
             $statements[] = sprintf(
                 "CREATE TABLE %s%s (\n  %s\n)",
                 $createTable->ifNotExists() ? 'IF NOT EXISTS ' : '',
@@ -93,7 +126,7 @@ class SqliteCompiler extends AbstractCompiler
         // Non-primary indexes must be created separately in SQLite
         array_push($statements, ...array_map(
             fn(AddIndex $op) => $this->compileCreateIndex($createTable->getObjectName(), $op),
-            array_filter($remaining, fn($op) => $op instanceof AddIndex && Index::PRIMARY !== $op->getType()),
+            array_filter($operations, fn($op) => $op instanceof AddIndex && Index::PRIMARY !== $op->getType()),
         ));
 
         return $statements;
@@ -102,44 +135,65 @@ class SqliteCompiler extends AbstractCompiler
     /**
      * @inheritDoc
      */
-    protected function compileRenameTable(RenameTable $operation): string
+    protected function compileAlterTable(AlterTable $alterTable, ?Schema $schema = null): iterable
     {
-        return sprintf(
-            'ALTER TABLE %s RENAME TO %s',
-            $this->quoteIdentifier($operation->getObjectName()),
-            $this->quoteIdentifier($operation->getNewName()),
-        );
+        // Validate operations
+        $this->validateAlterOperations($alterTable);
+
+        if (null !== $schema && $this->needsRebuild($alterTable)) {
+            yield from $this->compileTableRebuild($alterTable, $schema);
+
+            // Emit rename after rebuild if present
+            foreach ($alterTable as $operation) {
+                if ($operation instanceof RenameTable) {
+                    yield sprintf(
+                        'ALTER TABLE %s RENAME TO %s',
+                        $this->quoteIdentifier($alterTable->getObjectName()),
+                        $this->quoteIdentifier($operation->getNewName()),
+                    );
+                }
+            }
+
+            return;
+        }
+
+        $renameOperation = null;
+
+        foreach ($alterTable as $operation) {
+            if ($operation instanceof PreOperationInterface ||
+                $operation instanceof PostOperationInterface) {
+                continue;
+            }
+
+            if ($operation instanceof RenameTable) {
+                $renameOperation = $operation;
+                continue;
+            }
+
+            $compiled = $this->compileAlterOperation($alterTable->getObjectName(), $operation, $schema);
+            yield from $compiled;
+        }
+
+        // Rename must be emitted as a separate statement after other operations
+        if (null !== $renameOperation) {
+            yield sprintf(
+                'ALTER TABLE %s RENAME TO %s',
+                $this->quoteIdentifier($alterTable->getObjectName()),
+                $this->quoteIdentifier($renameOperation->getNewName()),
+            );
+        }
     }
 
     /**
-     * @inheritDoc
-     */
-    protected function compileAlterTable(ObjectPlan $objectPlan, ?Schema $schema = null): array
-    {
-        if (null !== $schema && $this->needsRebuild($objectPlan)) {
-            return $this->compileTableRebuild($objectPlan, $schema);
-        }
-
-        $statements = [];
-
-        foreach ($objectPlan as $operation) {
-            $compiled = $this->compileAlterOperation($objectPlan->getName(), $operation, $schema);
-            array_push($statements, ...$compiled);
-        }
-
-        return $statements;
-    }
-
-    /**
-     * Check if a table plan requires a table rebuild.
+     * Check if an operation group requires a table rebuild.
      *
-     * @param ObjectPlan $objectPlan
+     * @param AlterTable $alterTable
      *
      * @return bool
      */
-    protected function needsRebuild(ObjectPlan $objectPlan): bool
+    protected function needsRebuild(AlterTable $alterTable): bool
     {
-        foreach ($objectPlan as $operation) {
+        foreach ($alterTable as $operation) {
             if (
                 $operation instanceof ModifyColumn ||
                 $operation instanceof DropColumn ||
@@ -158,30 +212,34 @@ class SqliteCompiler extends AbstractCompiler
      *
      * Uses the provided schema to introspect the current table, applies the operations
      * to produce a new schema, then generates the SQLite rebuild sequence:
-     * 1. PRAGMA foreign_keys = OFF
+     * 1. PRAGMA foreign_keys = OFF (skipped if FK checks are managed by the plan)
      * 2. CREATE TABLE temp (new schema)
      * 3. INSERT INTO temp (...) SELECT ... FROM original
      * 4. DROP TABLE original
      * 5. ALTER TABLE temp RENAME TO original
      * 6. Recreate non-primary indexes
-     * 7. PRAGMA foreign_keys = ON
+     * 7. PRAGMA foreign_keys = ON (skipped if FK checks are managed by the plan)
      *
-     * @param ObjectPlan $objectPlan
+     * @param AlterTable $alterTable
      * @param Schema $schema
      *
      * @return string[]
      */
-    protected function compileTableRebuild(ObjectPlan $objectPlan, Schema $schema): array
+    protected function compileTableRebuild(AlterTable $alterTable, Schema $schema): array
     {
-        $tableName = $objectPlan->getName();
+        $tableName = $alterTable->getObjectName();
         $tempName = sprintf('__htemp_%s_%s', substr(bin2hex(random_bytes(2)), 0, 3), $tableName);
 
         // Introspect current table from schema
         $table = $schema->getTable($tableName);
 
         // Build new column list, index list, FK list from current schema
+        $schemaColumns = iterator_to_array($table->getColumns());
+        $schemaIndexes = iterator_to_array($table->getIndexes());
+        $schemaForeignKeys = iterator_to_array($table->getForeignKeys());
+
         $columns = array_combine(
-            array_map(fn($col) => $col->getName(), iterator_to_array($table->getColumns())),
+            array_map(fn($col) => $col->getName(), $schemaColumns),
             array_map(fn($col) => [
                 'name' => $col->getName(),
                 'type' => $col->getType() . ($col->getMaxlength() ? '(' . $col->getMaxlength() . ')' : ''),
@@ -189,20 +247,20 @@ class SqliteCompiler extends AbstractCompiler
                 'default' => $col->getDefault(),
                 'hasDefault' => null !== $col->getDefault(),
                 'autoIncrement' => $col->isAutoIncrement(),
-            ], iterator_to_array($table->getColumns())),
+            ], $schemaColumns),
         );
 
         $indexes = array_combine(
-            array_map(fn($idx) => $idx->getName(), iterator_to_array($table->getIndexes())),
+            array_map(fn($idx) => $idx->getName(), $schemaIndexes),
             array_map(fn($idx) => [
                 'name' => $idx->getName(),
                 'columns' => $idx->getColumnsName(),
                 'type' => $idx->getType(),
-            ], iterator_to_array($table->getIndexes())),
+            ], $schemaIndexes),
         );
 
         $foreignKeys = array_combine(
-            array_map(fn($fk) => $fk->getName(), iterator_to_array($table->getForeignKeys())),
+            array_map(fn($fk) => $fk->getName(), $schemaForeignKeys),
             array_map(fn($fk) => [
                 'name' => $fk->getName(),
                 'columns' => $fk->getColumnsName(),
@@ -210,14 +268,14 @@ class SqliteCompiler extends AbstractCompiler
                 'referencedColumns' => $fk->getReferencedColumnsName(),
                 'onUpdate' => $fk->getUpdateRule(),
                 'onDelete' => $fk->getDeleteRule(),
-            ], iterator_to_array($table->getForeignKeys())),
+            ], $schemaForeignKeys),
         );
 
         // Column mapping: old name => new name (for renames)
         $columnMapping = [];
 
         // Apply operations
-        foreach ($objectPlan as $operation) {
+        foreach ($alterTable as $operation) {
             match ($operation::class) {
                 AddColumn::class => $columns[$operation->getName()] = [
                     'name' => $operation->getName(),
@@ -281,7 +339,7 @@ class SqliteCompiler extends AbstractCompiler
         $primaryIndexes = array_filter($indexes, fn(array $idx) => Index::PRIMARY === $idx['type']);
 
         $rebuildPlan = new Plan();
-        $rebuildPlan->create($tempName, function (TablePlan $t) use ($columns, $primaryIndexes, $foreignKeys) {
+        $rebuildPlan->create($tempName, function (CreateTable $t) use ($columns, $primaryIndexes, $foreignKeys) {
             array_walk($columns, fn(array $col) => $t->addColumn(
                 name: $col['name'],
                 type: $col['type'],
@@ -310,7 +368,7 @@ class SqliteCompiler extends AbstractCompiler
         // Build migrate mapping: source columns -> target columns
         // Only columns that exist in both old and new table (by original name or rename)
         $migrateMapping = [];
-        $originalColumnNames = array_map(fn($col) => $col->getName(), iterator_to_array($table->getColumns()));
+        $originalColumnNames = array_map(fn($col) => $col->getName(), $schemaColumns);
 
         foreach ($originalColumnNames as $oldName) {
             // Column was renamed
@@ -339,8 +397,17 @@ class SqliteCompiler extends AbstractCompiler
 
         // Compile the rebuild plan
         $statements = [];
-        $statements[] = 'PRAGMA foreign_keys = OFF';
-        array_push($statements, ...iterator_to_array($rebuildPlan->getStatements($this), false));
+
+        if (false === $this->foreignKeyChecksManaged) {
+            $statements[] = 'PRAGMA foreign_keys = OFF';
+        }
+
+        // Save and restore the flag around the recursive compile() call,
+        // because the inner plan has no DisableForeignKeyChecks entry and
+        // would reset the flag to false.
+        $savedFlag = $this->foreignKeyChecksManaged;
+        array_push($statements, ...iterator_to_array($rebuildPlan->getStatements($this, $schema), false));
+        $this->foreignKeyChecksManaged = $savedFlag;
 
         // Recreate non-primary indexes on the renamed table.
         // These must be created AFTER the DROP TABLE (which frees the index names)
@@ -359,7 +426,9 @@ class SqliteCompiler extends AbstractCompiler
             ));
         }
 
-        $statements[] = 'PRAGMA foreign_keys = ON';
+        if (false === $this->foreignKeyChecksManaged) {
+            $statements[] = 'PRAGMA foreign_keys = ON';
+        }
 
         return $statements;
     }
@@ -417,20 +486,8 @@ class SqliteCompiler extends AbstractCompiler
             DropIndex::class => [
                 sprintf('DROP INDEX IF EXISTS %s', $this->quoteIdentifier($operation->getName())),
             ],
-            AddForeignKey::class => [
-                sprintf(
-                    'ALTER TABLE %s ADD %s',
-                    $quotedTable,
-                    $this->compileForeignKeyDefinition($operation),
-                ),
-            ],
-            DropForeignKey::class => [
-                sprintf(
-                    'ALTER TABLE %s DROP FOREIGN KEY %s',
-                    $quotedTable,
-                    $this->quoteIdentifier($operation->getName()),
-                ),
-            ],
+            RenameTable::class => [], // Handled separately in compileAlterTable()
+            ModifyCharset::class => [], // Silently ignored on SQLite
             default => [],
         };
     }
@@ -522,18 +579,18 @@ class SqliteCompiler extends AbstractCompiler
     /**
      * @inheritDoc
      */
-    protected function compileCreateView(CreateView $operation): array
+    protected function compileCreateView(CreateView $createView): iterable
     {
-        $viewName = $this->quoteIdentifier($operation->getObjectName());
+        $viewName = $this->quoteIdentifier($createView->getObjectName());
         $statements = [];
 
         // SQLite does not support OR REPLACE for views, so DROP first
-        if (true === $operation->orReplace()) {
+        if (true === $createView->orReplace()) {
             $statements[] = sprintf('DROP VIEW IF EXISTS %s', $viewName);
         }
 
         // Algorithm is silently ignored on SQLite
-        $statements[] = sprintf('CREATE VIEW %s AS %s', $viewName, $operation->getStatement());
+        $statements[] = sprintf('CREATE VIEW %s AS %s', $viewName, $createView->getStatement());
 
         return $statements;
     }
@@ -541,14 +598,37 @@ class SqliteCompiler extends AbstractCompiler
     /**
      * @inheritDoc
      */
-    protected function compileAlterView(AlterView $operation): array
+    protected function compileAlterView(AlterView $alterView): iterable
     {
-        $viewName = $this->quoteIdentifier($operation->getObjectName());
+        $viewName = $this->quoteIdentifier($alterView->getObjectName());
 
         // SQLite does not support ALTER VIEW, so DROP + CREATE
         return [
             sprintf('DROP VIEW IF EXISTS %s', $viewName),
-            sprintf('CREATE VIEW %s AS %s', $viewName, $operation->getStatement()),
+            sprintf('CREATE VIEW %s AS %s', $viewName, $alterView->getStatement()),
         ];
+    }
+
+    /**
+     * @inheritDoc
+     */
+    protected function compileCreateTrigger(CreateTrigger $trigger): string
+    {
+        $sql = sprintf(
+            'CREATE TRIGGER IF NOT EXISTS %s %s %s ON %s FOR EACH ROW',
+            $this->quoteIdentifier($trigger->getName()),
+            $trigger->getTiming(),
+            $trigger->getEvent(),
+            $this->quoteIdentifier($trigger->getObjectName()),
+        );
+
+        if (null !== $trigger->getWhen()) {
+            $sql .= sprintf(' WHEN %s', $trigger->getWhen());
+        }
+
+        $body = rtrim($trigger->getBody(), "; \t\n\r\0\x0B");
+        $sql .= sprintf(' BEGIN %s; END', $body);
+
+        return $sql;
     }
 }

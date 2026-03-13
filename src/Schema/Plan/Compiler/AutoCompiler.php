@@ -16,24 +16,16 @@ namespace Hector\Schema\Plan\Compiler;
 
 use Hector\Connection\Connection;
 use Hector\Schema\Exception\PlanException;
-use Hector\Schema\Plan\ObjectPlan;
+use Hector\Schema\Plan\Plan;
 use Hector\Schema\Schema;
 
-class AutoCompiler implements CompilerInterface
+final class AutoCompiler implements CompilerInterface
 {
     private ?CompilerInterface $resolved = null;
 
     public function __construct(
         private Connection $connection,
     ) {
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function compile(ObjectPlan $objectPlan, ?Schema $schema = null): iterable
-    {
-        return $this->resolve()->compile($objectPlan, $schema);
     }
 
     /**
@@ -44,12 +36,24 @@ class AutoCompiler implements CompilerInterface
      */
     private function resolve(): CompilerInterface
     {
+        $capabilities = $this->connection->getDriverInfo()->getCapabilities();
+
         return $this->resolved ??= match ($this->connection->getDriverInfo()->getDriver()) {
-            'mysql', 'mariadb', 'vitess' => new MySQLCompiler(),
-            'sqlite' => new SqliteCompiler(),
-            default => throw new PlanException(
-                sprintf('Unsupported driver "%s" for plan compilation', $this->connection->getDriverInfo()->getDriver())
-            ),
+            'mysql', 'mariadb', 'vitess' => new MySQLCompiler($capabilities),
+            'sqlite' => new SqliteCompiler($capabilities),
+            default => throw new PlanException(sprintf(
+                'Unsupported driver "%s" for plan compilation',
+                $this->connection->getDriverInfo()->getDriver(),
+            )),
         };
+    }
+
+    /**
+     * @inheritDoc
+     * @throws PlanException
+     */
+    public function compile(Plan $plan, ?Schema $schema = null): iterable
+    {
+        return $this->resolve()->compile($plan, $schema);
     }
 }

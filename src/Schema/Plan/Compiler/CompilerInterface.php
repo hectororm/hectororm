@@ -14,22 +14,27 @@ declare(strict_types=1);
 
 namespace Hector\Schema\Plan\Compiler;
 
-use Hector\Schema\Plan\ObjectPlan;
+use Hector\Schema\Plan\Plan;
 use Hector\Schema\Schema;
 
 interface CompilerInterface
 {
     /**
-     * Compile an object plan into SQL statements.
+     * Compile a plan into SQL statements.
+     *
+     * Operations are automatically reordered into three passes:
+     * 1. Pre-operations: DisableForeignKeyChecks, DROP FOREIGN KEY, DROP TRIGGER
+     * 2. Structure operations + raw statements (in declaration order)
+     * 3. Post-operations: ADD FOREIGN KEY, CREATE TRIGGER, EnableForeignKeyChecks
      *
      * When a schema is provided, the compiler may use it to introspect the database
      * and adapt the compilation strategy (e.g., table rebuild for SQLite, index existence checks).
      * Without a schema, all operations are assumed to be natively supported.
      *
-     * @param ObjectPlan $objectPlan
+     * @param Plan $plan
      * @param Schema|null $schema
      *
      * @return iterable<string>
      */
-    public function compile(ObjectPlan $objectPlan, ?Schema $schema = null): iterable;
+    public function compile(Plan $plan, ?Schema $schema = null): iterable;
 }

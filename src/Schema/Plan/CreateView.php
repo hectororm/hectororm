@@ -12,13 +12,22 @@
 
 declare(strict_types=1);
 
-namespace Hector\Schema\Plan\Operation;
+namespace Hector\Schema\Plan;
 
-abstract class AbstractViewOperation implements ViewOperationInterface, PostOperationInterface
+final class CreateView implements OperationInterface
 {
+    /**
+     * CreateView constructor.
+     *
+     * @param string $view
+     * @param string $statement SQL SELECT statement
+     * @param bool $orReplace
+     * @param string|null $algorithm MySQL-specific algorithm (UNDEFINED, MERGE, TEMPTABLE)
+     */
     public function __construct(
         private string $view,
         private string $statement,
+        private bool $orReplace = false,
         private ?string $algorithm = null,
     ) {
     }
@@ -39,6 +48,16 @@ abstract class AbstractViewOperation implements ViewOperationInterface, PostOper
     public function getStatement(): string
     {
         return $this->statement;
+    }
+
+    /**
+     * OR REPLACE clause?
+     *
+     * @return bool
+     */
+    public function orReplace(): bool
+    {
+        return $this->orReplace;
     }
 
     /**

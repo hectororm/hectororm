@@ -15,9 +15,19 @@ declare(strict_types=1);
 namespace Hector\Schema\Plan\Operation;
 
 use Hector\Schema\ForeignKey;
+use Hector\Schema\Plan\OperationInterface;
 
-class AddForeignKey implements ForeignKeyOperationInterface, PostOperationInterface
+final class AddForeignKey implements OperationInterface, PostOperationInterface
 {
+    /**
+     * @param string $table
+     * @param string $name
+     * @param string[] $columns
+     * @param string $referencedTable
+     * @param string[] $referencedColumns
+     * @param string $onUpdate
+     * @param string $onDelete
+     */
     public function __construct(
         private string $table,
         private string $name,

@@ -14,8 +14,16 @@ declare(strict_types=1);
 
 namespace Hector\Schema\Plan\Operation;
 
-class RenameTable implements TableOperationInterface
+use Hector\Schema\Plan\OperationInterface;
+
+final class RenameTable implements OperationInterface
 {
+    /**
+     * RenameTable constructor.
+     *
+     * @param string $table
+     * @param string $newName
+     */
     public function __construct(
         private string $table,
         private string $newName,

@@ -12,16 +12,19 @@
 
 declare(strict_types=1);
 
-namespace Hector\Schema\Plan\Operation;
+namespace Hector\Schema\Plan;
 
-use Hector\Schema\Plan\OperationInterface;
-
-final class RenameColumn implements OperationInterface
+final class DropTable implements OperationInterface
 {
+    /**
+     * DropTable constructor.
+     *
+     * @param string $table
+     * @param bool $ifExists
+     */
     public function __construct(
         private string $table,
-        private string $name,
-        private string $newName,
+        private bool $ifExists = false,
     ) {
     }
 
@@ -34,22 +37,12 @@ final class RenameColumn implements OperationInterface
     }
 
     /**
-     * Get column name.
+     * If exists?
      *
-     * @return string
+     * @return bool
      */
-    public function getName(): string
+    public function ifExists(): bool
     {
-        return $this->name;
-    }
-
-    /**
-     * Get new column name.
-     *
-     * @return string
-     */
-    public function getNewName(): string
-    {
-        return $this->newName;
+        return $this->ifExists;
     }
 }

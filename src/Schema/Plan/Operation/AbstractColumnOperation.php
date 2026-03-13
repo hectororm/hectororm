@@ -14,7 +14,9 @@ declare(strict_types=1);
 
 namespace Hector\Schema\Plan\Operation;
 
-abstract class AbstractColumnOperation implements ColumnOperationInterface
+use Hector\Schema\Plan\OperationInterface;
+
+abstract class AbstractColumnOperation implements OperationInterface
 {
     public function __construct(
         private string $table,

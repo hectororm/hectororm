@@ -12,16 +12,16 @@
 
 declare(strict_types=1);
 
-namespace Hector\Schema\Plan\Operation;
+namespace Hector\Schema\Plan;
 
-class MigrateData implements DataOperationInterface
+final class MigrateData implements OperationInterface
 {
     /**
      * MigrateData constructor.
      *
      * @param string $table Source table name
      * @param string $targetTable Destination table name
-     * @param array $columnMapping Column mapping ['source_col' => 'target_col', ...], empty for SELECT *
+     * @param array<string, string> $columnMapping Column mapping ['source_col' => 'target_col', ...], empty for SELECT *
      */
     public function __construct(
         private string $table,
@@ -51,7 +51,7 @@ class MigrateData implements DataOperationInterface
     /**
      * Get the column mapping.
      *
-     * @return array
+     * @return array<string, string>
      */
     public function getColumnMapping(): array
     {

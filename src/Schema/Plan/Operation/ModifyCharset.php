@@ -14,11 +14,21 @@ declare(strict_types=1);
 
 namespace Hector\Schema\Plan\Operation;
 
-class DropTable implements TableOperationInterface
+use Hector\Schema\Plan\OperationInterface;
+
+final class ModifyCharset implements OperationInterface
 {
+    /**
+     * ModifyCharset constructor.
+     *
+     * @param string $table
+     * @param string $charset
+     * @param string|null $collation
+     */
     public function __construct(
         private string $table,
-        private bool $ifExists = false,
+        private string $charset,
+        private ?string $collation = null,
     ) {
     }
 
@@ -31,12 +41,22 @@ class DropTable implements TableOperationInterface
     }
 
     /**
-     * If exists?
+     * Get charset.
      *
-     * @return bool
+     * @return string
      */
-    public function ifExists(): bool
+    public function getCharset(): string
     {
-        return $this->ifExists;
+        return $this->charset;
+    }
+
+    /**
+     * Get collation.
+     *
+     * @return string|null
+     */
+    public function getCollation(): ?string
+    {
+        return $this->collation;
     }
 }

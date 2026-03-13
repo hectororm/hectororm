@@ -17,6 +17,7 @@ namespace Hector\Schema\Tests\Plan;
 use Hector\Schema\Column;
 use Hector\Schema\ForeignKey;
 use Hector\Schema\Index;
+use Hector\Schema\Plan\AlterTable;
 use Hector\Schema\Plan\Operation\AddColumn;
 use Hector\Schema\Plan\Operation\AddForeignKey;
 use Hector\Schema\Plan\Operation\AddIndex;
@@ -25,14 +26,13 @@ use Hector\Schema\Plan\Operation\DropForeignKey;
 use Hector\Schema\Plan\Operation\DropIndex;
 use Hector\Schema\Plan\Operation\ModifyColumn;
 use Hector\Schema\Plan\Operation\RenameColumn;
-use Hector\Schema\Plan\TablePlan;
 use Hector\Schema\Table;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Class TablePlanTest.
+ * Class TableOperationTest.
  */
-class TablePlanTest extends TestCase
+class TableOperationTest extends TestCase
 {
     // =========================================================================
     // addColumn
@@ -40,14 +40,14 @@ class TablePlanTest extends TestCase
 
     public function testAddColumn(): void
     {
-        $tablePlan = new TablePlan('users');
-        $result = $tablePlan->addColumn('email', 'varchar(255)');
+        $tableOp = new AlterTable('users');
+        $result = $tableOp->addColumn('email', 'varchar(255)');
 
-        $this->assertSame($tablePlan, $result);
-        $this->assertCount(1, $tablePlan);
-        $this->assertFalse($tablePlan->isEmpty());
+        $this->assertSame($tableOp, $result);
+        $this->assertCount(1, $tableOp);
+        $this->assertFalse($tableOp->isEmpty());
 
-        $op = $tablePlan->getArrayCopy()[0];
+        $op = $tableOp->getArrayCopy()[0];
         $this->assertInstanceOf(AddColumn::class, $op);
         $this->assertSame('users', $op->getObjectName());
         $this->assertSame('email', $op->getName());
@@ -61,8 +61,8 @@ class TablePlanTest extends TestCase
 
     public function testAddColumnWithAllOptions(): void
     {
-        $tablePlan = new TablePlan('users');
-        $tablePlan->addColumn(
+        $tableOp = new AlterTable('users');
+        $tableOp->addColumn(
             'status',
             'varchar(20)',
             nullable: true,
@@ -73,7 +73,7 @@ class TablePlanTest extends TestCase
             first: false,
         );
 
-        $op = $tablePlan->getArrayCopy()[0];
+        $op = $tableOp->getArrayCopy()[0];
         $this->assertInstanceOf(AddColumn::class, $op);
         $this->assertTrue($op->isNullable());
         $this->assertTrue($op->hasDefault());
@@ -83,10 +83,10 @@ class TablePlanTest extends TestCase
 
     public function testAddColumnFirst(): void
     {
-        $tablePlan = new TablePlan('users');
-        $tablePlan->addColumn('id', 'int', autoIncrement: true, first: true);
+        $tableOp = new AlterTable('users');
+        $tableOp->addColumn('id', 'int', autoIncrement: true, first: true);
 
-        $op = $tablePlan->getArrayCopy()[0];
+        $op = $tableOp->getArrayCopy()[0];
         $this->assertInstanceOf(AddColumn::class, $op);
         $this->assertTrue($op->isFirst());
         $this->assertTrue($op->isAutoIncrement());
@@ -98,13 +98,13 @@ class TablePlanTest extends TestCase
 
     public function testDropColumn(): void
     {
-        $tablePlan = new TablePlan('users');
-        $result = $tablePlan->dropColumn('old_field');
+        $tableOp = new AlterTable('users');
+        $result = $tableOp->dropColumn('old_field');
 
-        $this->assertSame($tablePlan, $result);
-        $this->assertCount(1, $tablePlan);
+        $this->assertSame($tableOp, $result);
+        $this->assertCount(1, $tableOp);
 
-        $op = $tablePlan->getArrayCopy()[0];
+        $op = $tableOp->getArrayCopy()[0];
         $this->assertInstanceOf(DropColumn::class, $op);
         $this->assertSame('old_field', $op->getName());
     }
@@ -112,10 +112,10 @@ class TablePlanTest extends TestCase
     public function testDropColumnAcceptsColumnObject(): void
     {
         $column = new Column('old_field', 1, null, false, 'varchar');
-        $tablePlan = new TablePlan('users');
-        $tablePlan->dropColumn($column);
+        $tableOp = new AlterTable('users');
+        $tableOp->dropColumn($column);
 
-        $op = $tablePlan->getArrayCopy()[0];
+        $op = $tableOp->getArrayCopy()[0];
         $this->assertInstanceOf(DropColumn::class, $op);
         $this->assertSame('old_field', $op->getName());
     }
@@ -126,12 +126,12 @@ class TablePlanTest extends TestCase
 
     public function testModifyColumn(): void
     {
-        $tablePlan = new TablePlan('users');
-        $result = $tablePlan->modifyColumn('name', 'varchar(500)');
+        $tableOp = new AlterTable('users');
+        $result = $tableOp->modifyColumn('name', 'varchar(500)');
 
-        $this->assertSame($tablePlan, $result);
+        $this->assertSame($tableOp, $result);
 
-        $op = $tablePlan->getArrayCopy()[0];
+        $op = $tableOp->getArrayCopy()[0];
         $this->assertInstanceOf(ModifyColumn::class, $op);
         $this->assertSame('name', $op->getName());
         $this->assertSame('varchar(500)', $op->getType());
@@ -140,10 +140,10 @@ class TablePlanTest extends TestCase
     public function testModifyColumnAcceptsColumnObject(): void
     {
         $column = new Column('name', 1, null, false, 'varchar');
-        $tablePlan = new TablePlan('users');
-        $tablePlan->modifyColumn($column, 'varchar(500)', nullable: true);
+        $tableOp = new AlterTable('users');
+        $tableOp->modifyColumn($column, 'varchar(500)', nullable: true);
 
-        $op = $tablePlan->getArrayCopy()[0];
+        $op = $tableOp->getArrayCopy()[0];
         $this->assertInstanceOf(ModifyColumn::class, $op);
         $this->assertSame('name', $op->getName());
         $this->assertTrue($op->isNullable());
@@ -155,12 +155,12 @@ class TablePlanTest extends TestCase
 
     public function testRenameColumn(): void
     {
-        $tablePlan = new TablePlan('users');
-        $result = $tablePlan->renameColumn('fullname', 'display_name');
+        $tableOp = new AlterTable('users');
+        $result = $tableOp->renameColumn('fullname', 'display_name');
 
-        $this->assertSame($tablePlan, $result);
+        $this->assertSame($tableOp, $result);
 
-        $op = $tablePlan->getArrayCopy()[0];
+        $op = $tableOp->getArrayCopy()[0];
         $this->assertInstanceOf(RenameColumn::class, $op);
         $this->assertSame('fullname', $op->getName());
         $this->assertSame('display_name', $op->getNewName());
@@ -169,10 +169,10 @@ class TablePlanTest extends TestCase
     public function testRenameColumnAcceptsColumnObject(): void
     {
         $column = new Column('fullname', 1, null, false, 'varchar');
-        $tablePlan = new TablePlan('users');
-        $tablePlan->renameColumn($column, 'display_name');
+        $tableOp = new AlterTable('users');
+        $tableOp->renameColumn($column, 'display_name');
 
-        $op = $tablePlan->getArrayCopy()[0];
+        $op = $tableOp->getArrayCopy()[0];
         $this->assertInstanceOf(RenameColumn::class, $op);
         $this->assertSame('fullname', $op->getName());
     }
@@ -183,12 +183,12 @@ class TablePlanTest extends TestCase
 
     public function testAddIndex(): void
     {
-        $tablePlan = new TablePlan('users');
-        $result = $tablePlan->addIndex('idx_name', ['name']);
+        $tableOp = new AlterTable('users');
+        $result = $tableOp->addIndex('idx_name', ['name']);
 
-        $this->assertSame($tablePlan, $result);
+        $this->assertSame($tableOp, $result);
 
-        $op = $tablePlan->getArrayCopy()[0];
+        $op = $tableOp->getArrayCopy()[0];
         $this->assertInstanceOf(AddIndex::class, $op);
         $this->assertSame('idx_name', $op->getName());
         $this->assertSame(['name'], $op->getColumns());
@@ -197,28 +197,28 @@ class TablePlanTest extends TestCase
 
     public function testAddUniqueIndex(): void
     {
-        $tablePlan = new TablePlan('users');
-        $tablePlan->addIndex('idx_email', ['email'], Index::UNIQUE);
+        $tableOp = new AlterTable('users');
+        $tableOp->addIndex('idx_email', ['email'], Index::UNIQUE);
 
-        $op = $tablePlan->getArrayCopy()[0];
+        $op = $tableOp->getArrayCopy()[0];
         $this->assertSame(Index::UNIQUE, $op->getType());
     }
 
     public function testAddPrimaryIndex(): void
     {
-        $tablePlan = new TablePlan('users');
-        $tablePlan->addIndex('PRIMARY', ['id'], Index::PRIMARY);
+        $tableOp = new AlterTable('users');
+        $tableOp->addIndex('PRIMARY', ['id'], Index::PRIMARY);
 
-        $op = $tablePlan->getArrayCopy()[0];
+        $op = $tableOp->getArrayCopy()[0];
         $this->assertSame(Index::PRIMARY, $op->getType());
     }
 
     public function testAddCompositeIndex(): void
     {
-        $tablePlan = new TablePlan('users');
-        $tablePlan->addIndex('idx_name_email', ['name', 'email']);
+        $tableOp = new AlterTable('users');
+        $tableOp->addIndex('idx_name_email', ['name', 'email']);
 
-        $op = $tablePlan->getArrayCopy()[0];
+        $op = $tableOp->getArrayCopy()[0];
         $this->assertSame(['name', 'email'], $op->getColumns());
     }
 
@@ -228,12 +228,12 @@ class TablePlanTest extends TestCase
 
     public function testDropIndex(): void
     {
-        $tablePlan = new TablePlan('users');
-        $result = $tablePlan->dropIndex('idx_old');
+        $tableOp = new AlterTable('users');
+        $result = $tableOp->dropIndex('idx_old');
 
-        $this->assertSame($tablePlan, $result);
+        $this->assertSame($tableOp, $result);
 
-        $op = $tablePlan->getArrayCopy()[0];
+        $op = $tableOp->getArrayCopy()[0];
         $this->assertInstanceOf(DropIndex::class, $op);
         $this->assertSame('idx_old', $op->getName());
     }
@@ -241,10 +241,10 @@ class TablePlanTest extends TestCase
     public function testDropIndexAcceptsIndexObject(): void
     {
         $index = new Index('idx_old', Index::INDEX, ['name']);
-        $tablePlan = new TablePlan('users');
-        $tablePlan->dropIndex($index);
+        $tableOp = new AlterTable('users');
+        $tableOp->dropIndex($index);
 
-        $op = $tablePlan->getArrayCopy()[0];
+        $op = $tableOp->getArrayCopy()[0];
         $this->assertInstanceOf(DropIndex::class, $op);
         $this->assertSame('idx_old', $op->getName());
     }
@@ -255,12 +255,12 @@ class TablePlanTest extends TestCase
 
     public function testAddForeignKey(): void
     {
-        $tablePlan = new TablePlan('posts');
-        $result = $tablePlan->addForeignKey('fk_user', ['user_id'], 'users', ['id']);
+        $tableOp = new AlterTable('posts');
+        $result = $tableOp->addForeignKey('fk_user', ['user_id'], 'users', ['id']);
 
-        $this->assertSame($tablePlan, $result);
+        $this->assertSame($tableOp, $result);
 
-        $op = $tablePlan->getArrayCopy()[0];
+        $op = $tableOp->getArrayCopy()[0];
         $this->assertInstanceOf(AddForeignKey::class, $op);
         $this->assertSame('fk_user', $op->getName());
         $this->assertSame(['user_id'], $op->getColumns());
@@ -272,8 +272,8 @@ class TablePlanTest extends TestCase
 
     public function testAddForeignKeyWithRules(): void
     {
-        $tablePlan = new TablePlan('posts');
-        $tablePlan->addForeignKey(
+        $tableOp = new AlterTable('posts');
+        $tableOp->addForeignKey(
             'fk_user',
             ['user_id'],
             'users',
@@ -282,7 +282,7 @@ class TablePlanTest extends TestCase
             onDelete: ForeignKey::RULE_SET_NULL,
         );
 
-        $op = $tablePlan->getArrayCopy()[0];
+        $op = $tableOp->getArrayCopy()[0];
         $this->assertSame(ForeignKey::RULE_CASCADE, $op->getOnUpdate());
         $this->assertSame(ForeignKey::RULE_SET_NULL, $op->getOnDelete());
     }
@@ -290,10 +290,10 @@ class TablePlanTest extends TestCase
     public function testAddForeignKeyAcceptsTableObject(): void
     {
         $refTable = new Table('mydb', Table::TYPE_TABLE, 'users');
-        $tablePlan = new TablePlan('posts');
-        $tablePlan->addForeignKey('fk_user', ['user_id'], $refTable, ['id']);
+        $tableOp = new AlterTable('posts');
+        $tableOp->addForeignKey('fk_user', ['user_id'], $refTable, ['id']);
 
-        $op = $tablePlan->getArrayCopy()[0];
+        $op = $tableOp->getArrayCopy()[0];
         $this->assertSame('users', $op->getReferencedTable());
     }
 
@@ -303,12 +303,12 @@ class TablePlanTest extends TestCase
 
     public function testDropForeignKey(): void
     {
-        $tablePlan = new TablePlan('posts');
-        $result = $tablePlan->dropForeignKey('fk_user');
+        $tableOp = new AlterTable('posts');
+        $result = $tableOp->dropForeignKey('fk_user');
 
-        $this->assertSame($tablePlan, $result);
+        $this->assertSame($tableOp, $result);
 
-        $op = $tablePlan->getArrayCopy()[0];
+        $op = $tableOp->getArrayCopy()[0];
         $this->assertInstanceOf(DropForeignKey::class, $op);
         $this->assertSame('fk_user', $op->getName());
     }
@@ -316,10 +316,10 @@ class TablePlanTest extends TestCase
     public function testDropForeignKeyAcceptsForeignKeyObject(): void
     {
         $fk = new ForeignKey('fk_user', ['user_id'], 'mydb', 'users', ['id']);
-        $tablePlan = new TablePlan('posts');
-        $tablePlan->dropForeignKey($fk);
+        $tableOp = new AlterTable('posts');
+        $tableOp->dropForeignKey($fk);
 
-        $op = $tablePlan->getArrayCopy()[0];
+        $op = $tableOp->getArrayCopy()[0];
         $this->assertInstanceOf(DropForeignKey::class, $op);
         $this->assertSame('fk_user', $op->getName());
     }
@@ -330,9 +330,9 @@ class TablePlanTest extends TestCase
 
     public function testFluentChaining(): void
     {
-        $tablePlan = new TablePlan('users');
+        $tableOp = new AlterTable('users');
 
-        $result = $tablePlan
+        $result = $tableOp
             ->addColumn('email', 'varchar(255)')
             ->addColumn('phone', 'varchar(20)', nullable: true)
             ->dropColumn('legacy')
@@ -343,8 +343,7 @@ class TablePlanTest extends TestCase
             ->addForeignKey('fk_role', ['role_id'], 'roles', ['id'])
             ->dropForeignKey('fk_old');
 
-        $this->assertSame($tablePlan, $result);
-        $this->assertCount(9, $tablePlan);
+        $this->assertSame($tableOp, $result);
+        $this->assertCount(9, $tableOp);
     }
-
 }

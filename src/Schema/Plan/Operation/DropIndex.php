@@ -14,7 +14,9 @@ declare(strict_types=1);
 
 namespace Hector\Schema\Plan\Operation;
 
-class DropIndex implements IndexOperationInterface
+use Hector\Schema\Plan\OperationInterface;
+
+final class DropIndex implements OperationInterface
 {
     public function __construct(
         private string $table,

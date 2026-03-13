@@ -12,13 +12,21 @@
 
 declare(strict_types=1);
 
-namespace Hector\Schema\Plan\Operation;
+namespace Hector\Schema\Plan;
 
-class DropView implements ViewOperationInterface, PreOperationInterface
+use Hector\Schema\Plan\Operation\PreOperationInterface;
+
+final class DropTrigger implements OperationInterface, PreOperationInterface
 {
+    /**
+     * DropTrigger constructor.
+     *
+     * @param string $table
+     * @param string $name
+     */
     public function __construct(
-        private string $view,
-        private bool $ifExists = false,
+        private string $table,
+        private string $name,
     ) {
     }
 
@@ -27,16 +35,16 @@ class DropView implements ViewOperationInterface, PreOperationInterface
      */
     public function getObjectName(): string
     {
-        return $this->view;
+        return $this->table;
     }
 
     /**
-     * If exists?
+     * Get trigger name.
      *
-     * @return bool
+     * @return string
      */
-    public function ifExists(): bool
+    public function getName(): string
     {
-        return $this->ifExists;
+        return $this->name;
     }
 }

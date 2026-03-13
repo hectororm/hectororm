@@ -14,6 +14,6 @@ declare(strict_types=1);
 
 namespace Hector\Schema\Plan\Operation;
 
-class AddColumn extends AbstractColumnOperation
+final class AddColumn extends AbstractColumnOperation
 {
 }

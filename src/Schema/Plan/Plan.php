@@ -17,23 +17,44 @@ namespace Hector\Schema\Plan;
 use ArrayIterator;
 use Countable;
 use Hector\Schema\Plan\Compiler\CompilerInterface;
-use Hector\Schema\Plan\Operation\AlterView;
-use Hector\Schema\Plan\Operation\CreateTable;
-use Hector\Schema\Plan\Operation\CreateView;
-use Hector\Schema\Plan\Operation\DropTable;
-use Hector\Schema\Plan\Operation\DropView;
-use Hector\Schema\Plan\Operation\MigrateData;
-use Hector\Schema\Plan\Operation\PostOperationInterface;
-use Hector\Schema\Plan\Operation\PreOperationInterface;
-use Hector\Schema\Plan\Operation\RenameTable;
 use Hector\Schema\Schema;
 use Hector\Schema\Table;
 use IteratorAggregate;
 
+
+/**
+ * @implements IteratorAggregate<int, OperationInterface>
+ */
 class Plan implements Countable, IteratorAggregate
 {
-    /** @var ObjectPlan[] */
-    private array $objectPlans = [];
+    /** @var OperationInterface[] */
+    private array $entries = [];
+
+    /**
+     * Resolve a table/view name from a string or Table object.
+     *
+     * @param string|Table $table
+     *
+     * @return string
+     */
+    private function resolveTableName(string|Table $table): string
+    {
+        return $table instanceof Table ? $table->getName() : $table;
+    }
+
+    /**
+     * Add an operation to the plan.
+     *
+     * @param OperationInterface $operation
+     *
+     * @return static
+     */
+    public function add(OperationInterface $operation): static
+    {
+        $this->entries[] = $operation;
+
+        return $this;
+    }
 
     /**
      * Create a new table.
@@ -44,7 +65,7 @@ class Plan implements Countable, IteratorAggregate
      * @param string|null $collation
      * @param bool $ifNotExists
      *
-     * @return static|TablePlan
+     * @return static|CreateTable
      */
     public function create(
         string $name,
@@ -52,26 +73,23 @@ class Plan implements Countable, IteratorAggregate
         ?string $charset = null,
         ?string $collation = null,
         bool $ifNotExists = false,
-    ): static|TablePlan {
-        $tablePlan = new TablePlan($name);
-
-        // Add CreateTable operation as the first operation
-        $tablePlan->addOperation(new CreateTable(
-            table: $name,
+    ): static|CreateTable {
+        $createTable = new CreateTable(
+            name: $name,
             charset: $charset,
             collation: $collation,
             ifNotExists: $ifNotExists,
-        ));
+        );
 
-        $this->objectPlans[] = $tablePlan;
+        $this->entries[] = $createTable;
 
         if (null !== $callback) {
-            $callback($tablePlan);
+            $callback($createTable);
 
             return $this;
         }
 
-        return $tablePlan;
+        return $createTable;
     }
 
     /**
@@ -80,21 +98,21 @@ class Plan implements Countable, IteratorAggregate
      * @param string|Table $table
      * @param callable|null $callback
      *
-     * @return static|TablePlan
+     * @return static|AlterTable
      */
-    public function alter(string|Table $table, ?callable $callback = null): static|TablePlan
+    public function alter(string|Table $table, ?callable $callback = null): static|AlterTable
     {
-        $tableName = $table instanceof Table ? $table->getName() : $table;
-        $tablePlan = new TablePlan($tableName);
-        $this->objectPlans[] = $tablePlan;
+        $tableName = $this->resolveTableName($table);
+        $alterTable = new AlterTable($tableName);
+        $this->entries[] = $alterTable;
 
         if (null !== $callback) {
-            $callback($tablePlan);
+            $callback($alterTable);
 
             return $this;
         }
 
-        return $tablePlan;
+        return $alterTable;
     }
 
     /**
@@ -107,15 +125,12 @@ class Plan implements Countable, IteratorAggregate
      */
     public function drop(string|Table $table, bool $ifExists = false): static
     {
-        $tableName = $table instanceof Table ? $table->getName() : $table;
-        $tablePlan = new TablePlan($tableName);
+        $tableName = $this->resolveTableName($table);
 
-        $tablePlan->addOperation(new DropTable(
+        $this->entries[] = new DropTable(
             table: $tableName,
             ifExists: $ifExists,
-        ));
-
-        $this->objectPlans[] = $tablePlan;
+        );
 
         return $this;
     }
@@ -130,15 +145,11 @@ class Plan implements Countable, IteratorAggregate
      */
     public function rename(string|Table $table, string $newName): static
     {
-        $tableName = $table instanceof Table ? $table->getName() : $table;
-        $tablePlan = new TablePlan($tableName);
+        $tableName = $this->resolveTableName($table);
 
-        $tablePlan->addOperation(new RenameTable(
-            table: $tableName,
-            newName: $newName,
-        ));
-
-        $this->objectPlans[] = $tablePlan;
+        $alterTable = new AlterTable($tableName);
+        $alterTable->renameTable($newName);
+        $this->entries[] = $alterTable;
 
         return $this;
     }
@@ -148,23 +159,44 @@ class Plan implements Countable, IteratorAggregate
      *
      * @param string|Table $source Source table
      * @param string|Table $target Destination table
-     * @param array $columnMapping Column mapping ['source_col' => 'target_col', ...], empty for SELECT *
+     * @param array<string, string> $columnMapping Column mapping ['source_col' => 'target_col', ...], empty for SELECT *
      *
      * @return static
      */
     public function migrate(string|Table $source, string|Table $target, array $columnMapping = []): static
     {
-        $sourceName = $source instanceof Table ? $source->getName() : $source;
-        $targetName = $target instanceof Table ? $target->getName() : $target;
+        $sourceName = $this->resolveTableName($source);
+        $targetName = $this->resolveTableName($target);
 
-        $tablePlan = new TablePlan($sourceName);
-        $tablePlan->addOperation(new MigrateData(
+        $this->entries[] = new MigrateData(
             table: $sourceName,
             targetTable: $targetName,
             columnMapping: $columnMapping,
-        ));
+        );
 
-        $this->objectPlans[] = $tablePlan;
+        return $this;
+    }
+
+    /**
+     * Add a raw SQL statement to be executed as-is.
+     *
+     * Raw statements bypass the compiler and are emitted verbatim
+     * during the structure pass of plan compilation. They are useful
+     * for SQL features not covered by the plan API (e.g., fulltext
+     * indexes, triggers, engine changes, etc.).
+     *
+     * An optional driver filter can restrict execution to specific
+     * database drivers (e.g., ['mysql', 'mariadb']). When null,
+     * the statement is emitted for all drivers.
+     *
+     * @param string $statement SQL statement
+     * @param string[]|null $drivers Driver filter (null = all drivers)
+     *
+     * @return static
+     */
+    public function raw(string $statement, ?array $drivers = null): static
+    {
+        $this->entries[] = new RawStatement($statement, $drivers);
 
         return $this;
     }
@@ -185,15 +217,12 @@ class Plan implements Countable, IteratorAggregate
         bool $orReplace = false,
         ?string $algorithm = null,
     ): static {
-        $viewPlan = new ViewPlan($name);
-        $viewPlan->addOperation(new CreateView(
+        $this->entries[] = new CreateView(
             view: $name,
             statement: $statement,
             orReplace: $orReplace,
             algorithm: $algorithm,
-        ));
-
-        $this->objectPlans[] = $viewPlan;
+        );
 
         return $this;
     }
@@ -208,14 +237,12 @@ class Plan implements Countable, IteratorAggregate
      */
     public function dropView(string|Table $view, bool $ifExists = false): static
     {
-        $viewName = $view instanceof Table ? $view->getName() : $view;
-        $viewPlan = new ViewPlan($viewName);
-        $viewPlan->addOperation(new DropView(
+        $viewName = $this->resolveTableName($view);
+
+        $this->entries[] = new DropView(
             view: $viewName,
             ifExists: $ifExists,
-        ));
-
-        $this->objectPlans[] = $viewPlan;
+        );
 
         return $this;
     }
@@ -231,35 +258,89 @@ class Plan implements Countable, IteratorAggregate
      */
     public function alterView(string|Table $view, string $statement, ?string $algorithm = null): static
     {
-        $viewName = $view instanceof Table ? $view->getName() : $view;
-        $viewPlan = new ViewPlan($viewName);
-        $viewPlan->addOperation(new AlterView(
+        $viewName = $this->resolveTableName($view);
+
+        $this->entries[] = new AlterView(
             view: $viewName,
             statement: $statement,
             algorithm: $algorithm,
-        ));
-
-        $this->objectPlans[] = $viewPlan;
+        );
 
         return $this;
     }
 
     /**
-     * Get a copy of all object plans.
+     * Create a trigger.
      *
-     * @return ObjectPlan[]
+     * @param string $name
+     * @param string|Table $table
+     * @param string $timing BEFORE, AFTER or INSTEAD OF
+     * @param string $event INSERT, UPDATE or DELETE
+     * @param string $body SQL body of the trigger
+     * @param string|null $when Optional WHEN condition (SQLite only)
+     *
+     * @return static
+     */
+    public function createTrigger(
+        string $name,
+        string|Table $table,
+        string $timing,
+        string $event,
+        string $body,
+        ?string $when = null,
+    ): static {
+        $tableName = $this->resolveTableName($table);
+
+        $this->entries[] = new CreateTrigger(
+            table: $tableName,
+            name: $name,
+            timing: $timing,
+            event: $event,
+            body: $body,
+            when: $when,
+        );
+
+        return $this;
+    }
+
+    /**
+     * Drop a trigger.
+     *
+     * @param string $name
+     * @param string|Table $table
+     *
+     * @return static
+     */
+    public function dropTrigger(string $name, string|Table $table): static
+    {
+        $tableName = $this->resolveTableName($table);
+
+        $this->entries[] = new DropTrigger(
+            table: $tableName,
+            name: $name,
+        );
+
+        return $this;
+    }
+
+    /**
+     * Get a copy of all entries.
+     *
+     * @return OperationInterface[]
      */
     public function getArrayCopy(): array
     {
-        return $this->objectPlans;
+        return $this->entries;
     }
 
     /**
      * @inheritDoc
+     *
+     * @return ArrayIterator<int, OperationInterface>
      */
     public function getIterator(): ArrayIterator
     {
-        return new ArrayIterator($this->objectPlans);
+        return new ArrayIterator($this->entries);
     }
 
     /**
@@ -269,7 +350,7 @@ class Plan implements Countable, IteratorAggregate
      */
     public function isEmpty(): bool
     {
-        return empty($this->objectPlans);
+        return [] === $this->entries;
     }
 
     /**
@@ -277,16 +358,16 @@ class Plan implements Countable, IteratorAggregate
      */
     public function count(): int
     {
-        return count($this->objectPlans);
+        return count($this->entries);
     }
 
     /**
      * Get all SQL statements for the plan.
      *
-     * Operations are automatically reordered:
-     * - PreOperationInterface first (e.g. DROP FOREIGN KEY, DROP VIEW)
-     * - Structure operations (everything else)
-     * - PostOperationInterface last (e.g. ADD FOREIGN KEY, CREATE/ALTER VIEW)
+     * Delegates to the compiler which automatically reorders operations:
+     * 1. Pre-operations: DisableForeignKeyChecks, DROP FOREIGN KEY, DROP TRIGGER
+     * 2. Structure operations + raw statements (in declaration order)
+     * 3. Post-operations: ADD FOREIGN KEY, CREATE TRIGGER, EnableForeignKeyChecks
      *
      * When a schema is provided, the compiler may use it to introspect the database
      * and adapt the compilation strategy (e.g., table rebuild for SQLite, index existence checks).
@@ -299,55 +380,6 @@ class Plan implements Countable, IteratorAggregate
      */
     public function getStatements(CompilerInterface $compiler, ?Schema $schema = null): iterable
     {
-        return $this->compileStatements($compiler, $schema);
-    }
-
-    /**
-     * Compile all statements with Pre/Post ordering.
-     *
-     * Separates operations by priority and orders them:
-     * 1. Pre-operations (e.g. DROP FOREIGN KEY, DROP VIEW)
-     * 2. Structure operations (CREATE/ALTER/DROP TABLE, columns, indexes, data)
-     * 3. Post-operations (e.g. ADD FOREIGN KEY, CREATE/ALTER VIEW)
-     *
-     * @param CompilerInterface $compiler
-     * @param Schema|null $schema
-     *
-     * @return iterable<string>
-     */
-    private function compileStatements(CompilerInterface $compiler, ?Schema $schema): iterable
-    {
-        // Pass 1: Pre-operations (DROP FK, DROP VIEW, etc.)
-        foreach ($this->objectPlans as $objectPlan) {
-            $plan = $objectPlan->filter(PreOperationInterface::class);
-
-            if (true === $plan->isEmpty()) {
-                continue;
-            }
-
-            yield from $plan->getStatements($compiler, $schema);
-        }
-
-        // Pass 2: Structure (everything except Pre and Post operations)
-        foreach ($this->objectPlans as $objectPlan) {
-            $plan = $objectPlan->without(PreOperationInterface::class)->without(PostOperationInterface::class);
-
-            if (true === $plan->isEmpty()) {
-                continue;
-            }
-
-            yield from $plan->getStatements($compiler, $schema);
-        }
-
-        // Pass 3: Post-operations (ADD FK, CREATE/ALTER VIEW, etc.)
-        foreach ($this->objectPlans as $objectPlan) {
-            $plan = $objectPlan->filter(PostOperationInterface::class);
-
-            if (true === $plan->isEmpty()) {
-                continue;
-            }
-
-            yield from $plan->getStatements($compiler, $schema);
-        }
+        return $compiler->compile($this, $schema);
     }
 }
