@@ -35,9 +35,6 @@ jobs:
 
     continue-on-error: ${{ matrix.stability != 'prefer-stable' }}
 
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
-
     steps:
       - name: 'Checkout code'
         uses: actions/checkout@v6
@@ -57,6 +54,9 @@ jobs:
 
       - name: 'Setup PHP'
         uses: shivammathur/setup-php@v2
+        env:
+          # Temporary workaround while setup-php@v2 is still Node 20.
+          ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: 'true'
         with:
           php-version: ${{ matrix.php-versions }}
           extensions: pdo, pdo-mysql
