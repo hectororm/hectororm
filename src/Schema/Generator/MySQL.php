@@ -58,7 +58,7 @@ class MySQL extends AbstractGenerator
                 'mariadb' => match (true) {
                     version_compare(
                         $this->connection->getDriverInfo()->getVersion(),
-                        '11.5',
+                        '11.4.5',
                         '>='
                     ) => 'full_collation_name',
                     default => 'collation_name',

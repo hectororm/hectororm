@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - PHPUnit deprecation warnings in tests (Generator passed as `$haystack`)
+- Table charset detection on MariaDB 11.4.5+ by joining `information_schema.collation_character_set_applicability` on `FULL_COLLATION_NAME`
 
 ## [1.2.2] - 2026-02-05
 
