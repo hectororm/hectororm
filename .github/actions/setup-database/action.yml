@@ -69,10 +69,6 @@ runs:
       run: |
         docker run -d \
           --name hector-database \
-          --health-cmd="mysqladmin ping -h127.0.0.1 -P${{ steps.config.outputs.port }} --silent" \
-          --health-interval=3s \
-          --health-timeout=3s \
-          --health-retries=30 \
           -p ${{ steps.config.outputs.port }}:${{ steps.config.outputs.port }} \
           ${{ steps.config.outputs.env }} \
           ${{ steps.config.outputs.image }}
@@ -92,8 +88,3 @@ runs:
         docker logs hector-database
         exit 1
 
-    - name: 'Create database'
-      if: inputs.database != '' && inputs.distribution != 'vitess'
-      shell: bash
-      run: |
-        docker exec hector-database mysql -uroot -e "CREATE DATABASE IF NOT EXISTS \`${{ inputs.database }}\`"
