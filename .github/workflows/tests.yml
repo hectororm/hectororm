@@ -18,7 +18,7 @@ jobs:
       matrix:
         php-versions: [ '8.0', '8.1', '8.2', '8.3', '8.4', '8.5' ]
         stability: [ 'prefer-lowest', 'prefer-stable' ]
-        mysql-versions: [
+        database: [
           { distribution: 'mysql', version: '9.6' },
           { distribution: 'mysql', version: '8.4' },
           { distribution: 'mysql', version: '8.0' },
@@ -31,27 +31,26 @@ jobs:
           { distribution: 'mariadb', version: '10.5' }
         ]
 
-    name: PHPUnit on PHP ${{ matrix.php-versions }} & ${{ matrix.mysql-versions.distribution }} ${{ matrix.mysql-versions.version }} - ${{ matrix.stability }}
+    name: PHP ${{ matrix.php-versions }} / ${{ matrix.database.distribution }} ${{ matrix.database.version }} / ${{ matrix.stability }}
 
     continue-on-error: ${{ matrix.stability != 'prefer-stable' }}
-
-    env:
-      MYSQL_DSN: "mysql:host=127.0.0.1;dbname=sakila;user=root"
 
     steps:
       - name: 'Checkout code'
         uses: actions/checkout@v4
 
-      - name: 'Setup MySQL/MariaDB'
-        uses: shogo82148/actions-setup-mysql@v1
+      - name: 'Setup database'
+        id: database
+        uses: ./.github/actions/setup-database
         with:
-          mysql-version: ${{ matrix.mysql-versions.version }}
-          distribution: ${{ matrix.mysql-versions.distribution }}
+          distribution: ${{ matrix.database.distribution }}
+          version: ${{ matrix.database.version }}
+          database: sakila
 
       - name: 'Install Sakila database'
         run: |
-          mysql -uroot -h127.0.0.1 < tests/Assets/Sakila/mysql-schema.sql
-          mysql -uroot -h127.0.0.1 < tests/Assets/Sakila/mysql-data.sql
+          mysql -uroot -h127.0.0.1 -P${{ steps.database.outputs.port }} < tests/Assets/Sakila/mysql-schema.sql
+          mysql -uroot -h127.0.0.1 -P${{ steps.database.outputs.port }} < tests/Assets/Sakila/mysql-data.sql
 
       - name: 'Setup PHP'
         uses: shivammathur/setup-php@v2
@@ -66,4 +65,6 @@ jobs:
         run: composer update --${{ matrix.stability }} --prefer-dist --no-interaction --no-progress
 
       - name: 'Execute tests'
+        env:
+          MYSQL_DSN: ${{ steps.database.outputs.dsn }}
         run: vendor/bin/phpunit --coverage-text --coverage-clover=coverage.clover

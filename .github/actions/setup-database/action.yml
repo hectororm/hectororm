@@ -1,0 +1,99 @@
+name: 'Setup Database'
+description: 'Start a MySQL, MariaDB, or Vitess database server using Docker'
+
+inputs:
+  distribution:
+    description: 'DBMS distribution: mysql, mariadb, or vitess'
+    required: true
+  version:
+    description: 'Version of the DBMS (e.g. 9.6, 12.2, 23.0)'
+    required: true
+  tag:
+    description: 'Docker image tag (defaults to version if not specified)'
+    required: false
+    default: ''
+  database:
+    description: 'Database name to create'
+    required: false
+    default: ''
+
+outputs:
+  port:
+    description: 'Port on which the database is accessible'
+    value: ${{ steps.config.outputs.port }}
+  dsn:
+    description: 'PDO DSN string ready to use'
+    value: ${{ steps.config.outputs.dsn }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: 'Resolve configuration'
+      id: config
+      shell: bash
+      run: |
+        TAG="${{ inputs.tag || inputs.version }}"
+
+        case "${{ inputs.distribution }}" in
+          mysql)
+            echo "image=mysql:${TAG}" >> $GITHUB_OUTPUT
+            echo "port=3306" >> $GITHUB_OUTPUT
+            echo "env=-e MYSQL_ALLOW_EMPTY_PASSWORD=yes" >> $GITHUB_OUTPUT
+            ;;
+          mariadb)
+            echo "image=mariadb:${TAG}" >> $GITHUB_OUTPUT
+            echo "port=3306" >> $GITHUB_OUTPUT
+            echo "env=-e MARIADB_ALLOW_EMPTY_ROOT_PASSWORD=yes" >> $GITHUB_OUTPUT
+            ;;
+          vitess)
+            echo "image=vitess/vttestserver:${TAG}" >> $GITHUB_OUTPUT
+            echo "port=33577" >> $GITHUB_OUTPUT
+            echo "env=-e PORT=33574 -e KEYSPACES=${{ inputs.database }} -e NUM_SHARDS=1 -e MYSQL_MAX_CONNECTIONS=70000 -e MYSQL_BIND_HOST=0.0.0.0 -e FOREIGN_KEY_MODE=allow -e ENABLE_ONLINE_DDL=false -e ENABLE_DIRECT_DDL=true" >> $GITHUB_OUTPUT
+            ;;
+          *)
+            echo "::error::Unknown distribution: ${{ inputs.distribution }}"
+            exit 1
+            ;;
+        esac
+
+        DB="${{ inputs.database }}"
+        PORT="${{ inputs.distribution == 'vitess' && '33577' || '3306' }}"
+        if [ -n "$DB" ]; then
+          echo "dsn=mysql:host=127.0.0.1;port=${PORT};dbname=${DB};user=root" >> $GITHUB_OUTPUT
+        else
+          echo "dsn=mysql:host=127.0.0.1;port=${PORT};user=root" >> $GITHUB_OUTPUT
+        fi
+
+    - name: 'Start database container'
+      shell: bash
+      run: |
+        docker run -d \
+          --name hector-database \
+          --health-cmd="mysqladmin ping -h127.0.0.1 -P${{ steps.config.outputs.port }} --silent" \
+          --health-interval=3s \
+          --health-timeout=3s \
+          --health-retries=30 \
+          -p ${{ steps.config.outputs.port }}:${{ steps.config.outputs.port }} \
+          ${{ steps.config.outputs.env }} \
+          ${{ steps.config.outputs.image }}
+
+    - name: 'Wait for database to be ready'
+      shell: bash
+      run: |
+        echo "Waiting for ${{ inputs.distribution }} ${{ inputs.version }} to be ready..."
+        for i in $(seq 1 60); do
+          if mysqladmin ping -h127.0.0.1 -P${{ steps.config.outputs.port }} --silent 2>/dev/null; then
+            echo "${{ inputs.distribution }} ${{ inputs.version }} is ready."
+            exit 0
+          fi
+          sleep 2
+        done
+        echo "::error::Timed out waiting for database"
+        docker logs hector-database
+        exit 1
+
+    - name: 'Create database'
+      if: inputs.database != '' && inputs.distribution != 'vitess'
+      shell: bash
+      run: |
+        docker exec hector-database mysql -uroot -e "CREATE DATABASE IF NOT EXISTS \`${{ inputs.database }}\`"
