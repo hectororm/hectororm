@@ -15,7 +15,7 @@ declare(strict_types=1);
 namespace Hector\Query\Tests;
 
 use Hector\Connection\Bind\BindParamList;
-use Hector\Connection\Driver\DriverCapabilities;
+use Hector\Connection\Driver\DriverInfo;
 use Hector\Query\Component\Columns;
 use Hector\Query\Component\Join;
 use Hector\Query\Component\Table;
@@ -28,12 +28,12 @@ use PHPUnit\Framework\TestCase;
 
 class DriverAwareQuotingTest extends TestCase
 {
-    private function createCapabilities(string $quote): DriverCapabilities
+    private function createDriverInfo(string $quote): DriverInfo
     {
-        $capabilities = $this->createMock(DriverCapabilities::class);
-        $capabilities->method('getIdentifierQuote')->willReturn($quote);
+        $driverInfo = $this->createMock(DriverInfo::class);
+        $driverInfo->method('getIdentifierQuote')->willReturn($quote);
 
-        return $capabilities;
+        return $driverInfo;
     }
 
     // -------------------------------------------------------------------------
@@ -104,7 +104,7 @@ class DriverAwareQuotingTest extends TestCase
 
         $this->assertSame(
             'foo AS "f"',
-            $columns->getStatement($binds, $this->createCapabilities('"'))
+            $columns->getStatement($binds, $this->createDriverInfo('"'))
         );
     }
 
@@ -117,7 +117,7 @@ class DriverAwareQuotingTest extends TestCase
 
         $this->assertSame(
             'foo AS "f", bar AS "b"',
-            $columns->getStatement($binds, $this->createCapabilities('"'))
+            $columns->getStatement($binds, $this->createDriverInfo('"'))
         );
     }
 
@@ -145,7 +145,7 @@ class DriverAwareQuotingTest extends TestCase
 
         $this->assertSame(
             'foo AS "f"',
-            $table->getStatement($binds, $this->createCapabilities('"'))
+            $table->getStatement($binds, $this->createDriverInfo('"'))
         );
     }
 
@@ -158,7 +158,7 @@ class DriverAwareQuotingTest extends TestCase
 
         $this->assertSame(
             'foo AS "f", bar AS "b"',
-            $table->getStatement($binds, $this->createCapabilities('"'))
+            $table->getStatement($binds, $this->createDriverInfo('"'))
         );
     }
 
@@ -174,7 +174,7 @@ class DriverAwareQuotingTest extends TestCase
 
         $this->assertSame(
             'LEFT JOIN bar AS "b" ON ( bar.bar_id = f.foo_id )',
-            $join->getStatement($binds, $this->createCapabilities('"'))
+            $join->getStatement($binds, $this->createDriverInfo('"'))
         );
     }
 
@@ -202,7 +202,7 @@ class DriverAwareQuotingTest extends TestCase
 
         $this->assertSame(
             'SELECT * FROM foo AS "f"',
-            $select->getStatement($binds, $this->createCapabilities('"'))
+            $select->getStatement($binds, $this->createDriverInfo('"'))
         );
     }
 
@@ -215,7 +215,7 @@ class DriverAwareQuotingTest extends TestCase
 
         $this->assertSame(
             'SELECT bar AS "b" FROM foo AS "f"',
-            $select->getStatement($binds, $this->createCapabilities('"'))
+            $select->getStatement($binds, $this->createDriverInfo('"'))
         );
     }
 
@@ -228,7 +228,7 @@ class DriverAwareQuotingTest extends TestCase
 
         $this->assertSame(
             'SELECT * FROM foo AS "f" LEFT JOIN bar ON ( bar.bar_id = f.foo_id )',
-            $select->getStatement($binds, $this->createCapabilities('"'))
+            $select->getStatement($binds, $this->createDriverInfo('"'))
         );
     }
 
@@ -255,7 +255,7 @@ class DriverAwareQuotingTest extends TestCase
 
         $this->assertSame(
             'SELECT * FROM ( SELECT * FROM bar AS "b" ) AS "subquery"',
-            $select->getStatement($binds, $this->createCapabilities('"'))
+            $select->getStatement($binds, $this->createDriverInfo('"'))
         );
     }
 
@@ -274,7 +274,7 @@ class DriverAwareQuotingTest extends TestCase
         // to sub-statements if any. Verify no regression.
         $this->assertSame(
             'INSERT INTO foo ( bar ) VALUES ( :_h_0 )',
-            $insert->getStatement($binds, $this->createCapabilities('"'))
+            $insert->getStatement($binds, $this->createDriverInfo('"'))
         );
     }
 
@@ -291,7 +291,7 @@ class DriverAwareQuotingTest extends TestCase
 
         $this->assertSame(
             'UPDATE foo AS "f" SET bar = :_h_0',
-            $update->getStatement($binds, $this->createCapabilities('"'))
+            $update->getStatement($binds, $this->createDriverInfo('"'))
         );
     }
 
@@ -308,7 +308,7 @@ class DriverAwareQuotingTest extends TestCase
 
         $this->assertSame(
             'DELETE FROM foo AS "f" WHERE bar = :_h_0',
-            $delete->getStatement($binds, $this->createCapabilities('"'))
+            $delete->getStatement($binds, $this->createDriverInfo('"'))
         );
     }
 
@@ -336,7 +336,7 @@ class DriverAwareQuotingTest extends TestCase
 
         $this->assertSame(
             'SELECT * FROM foo AS `f`',
-            $select->getStatement($binds, $this->createCapabilities('`'))
+            $select->getStatement($binds, $this->createDriverInfo('`'))
         );
     }
 }

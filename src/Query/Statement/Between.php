@@ -15,7 +15,7 @@ declare(strict_types=1);
 namespace Hector\Query\Statement;
 
 use Hector\Connection\Bind\BindParamList;
-use Hector\Connection\Driver\DriverCapabilities;
+use Hector\Connection\Driver\DriverInfo;
 use Hector\Query\StatementInterface;
 use Hector\Query\Statement\Encapsulated;
 
@@ -42,12 +42,12 @@ class Between implements StatementInterface
      */
     public function getStatement(
         BindParamList $bindParams,
-        ?DriverCapabilities $driverCapabilities = null,
+        ?DriverInfo $driverInfo = null,
     ): ?string {
         if ($this->column instanceof StatementInterface) {
             return sprintf(
                 '%s %s :%s AND :%s',
-                (new Encapsulated($this->column))->getStatement($bindParams, $driverCapabilities),
+                (new Encapsulated($this->column))->getStatement($bindParams, $driverInfo),
                 static::EXPRESSION,
                 $bindParams->add($this->value1)->getName(),
                 $bindParams->add($this->value2)->getName(),

@@ -15,7 +15,7 @@ declare(strict_types=1);
 namespace Hector\Query\Statement;
 
 use Hector\Connection\Bind\BindParamList;
-use Hector\Connection\Driver\DriverCapabilities;
+use Hector\Connection\Driver\DriverInfo;
 use Hector\Query\StatementInterface;
 
 class Expression implements StatementInterface
@@ -38,13 +38,13 @@ class Expression implements StatementInterface
      */
     public function getStatement(
         BindParamList $bindParams,
-        ?DriverCapabilities $driverCapabilities = null,
+        ?DriverInfo $driverInfo = null,
     ): ?string {
         $result = '';
 
         foreach ($this->parts as $part) {
             if ($part instanceof StatementInterface) {
-                $resolved = $part->getStatement($bindParams, $driverCapabilities);
+                $resolved = $part->getStatement($bindParams, $driverInfo);
 
                 if (null === $resolved) {
                     return null;

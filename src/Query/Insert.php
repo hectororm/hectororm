@@ -16,7 +16,7 @@ namespace Hector\Query;
 
 use Closure;
 use Hector\Connection\Bind\BindParamList;
-use Hector\Connection\Driver\DriverCapabilities;
+use Hector\Connection\Driver\DriverInfo;
 use Hector\Query\Clause\Assignments;
 use Hector\Query\Clause\BindParams;
 use Hector\Query\Clause\Columns;
@@ -101,12 +101,12 @@ class Insert implements CompoundStatementInterface
      */
     public function getStatement(
         BindParamList $bindParams,
-        ?DriverCapabilities $driverCapabilities = null,
+        ?DriverInfo $driverInfo = null,
     ): ?string {
         $this->mergeBindParamsTo($bindParams);
 
-        $fromStr = $this->from->getStatement($bindParams, $driverCapabilities);
-        $assignmentsStr = $this->assignments->getStatement($bindParams, $driverCapabilities);
+        $fromStr = $this->from->getStatement($bindParams, $driverInfo);
+        $assignmentsStr = $this->assignments->getStatement($bindParams, $driverInfo);
 
         if (null === $fromStr || null === $assignmentsStr) {
             return null;
@@ -118,7 +118,7 @@ class Insert implements CompoundStatementInterface
             $str .= ' IGNORE';
         }
 
-        $str .= ' INTO ' . ($this->from->getStatement($bindParams, $driverCapabilities) ?? '') . ' ' .
+        $str .= ' INTO ' . ($this->from->getStatement($bindParams, $driverInfo) ?? '') . ' ' .
             $assignmentsStr;
 
         return $str;

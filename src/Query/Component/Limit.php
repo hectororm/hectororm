@@ -15,7 +15,7 @@ declare(strict_types=1);
 namespace Hector\Query\Component;
 
 use Hector\Connection\Bind\BindParamList;
-use Hector\Connection\Driver\DriverCapabilities;
+use Hector\Connection\Driver\DriverInfo;
 
 class Limit extends AbstractComponent
 {
@@ -67,7 +67,7 @@ class Limit extends AbstractComponent
      */
     public function getStatement(
         BindParamList $bindParams,
-        ?DriverCapabilities $driverCapabilities = null,
+        ?DriverInfo $driverInfo = null,
     ): ?string {
         if (null === $this->limit) {
             return null;

@@ -15,7 +15,7 @@ declare(strict_types=1);
 namespace Hector\Query\Component;
 
 use Hector\Connection\Bind\BindParamList;
-use Hector\Connection\Driver\DriverCapabilities;
+use Hector\Connection\Driver\DriverInfo;
 use Hector\Query\StatementInterface;
 
 class UpdateAssignments extends Assignments
@@ -25,24 +25,24 @@ class UpdateAssignments extends Assignments
      */
     public function getStatement(
         BindParamList $bindParams,
-        ?DriverCapabilities $driverCapabilities = null,
+        ?DriverInfo $driverInfo = null,
     ): ?string {
         if ($this->assignments instanceof StatementInterface) {
-            return $this->assignments->getStatement($bindParams, $driverCapabilities);
+            return $this->assignments->getStatement($bindParams, $driverInfo);
         }
 
         $str = implode(
             ', ',
             array_map(
-                function ($assignment) use (&$bindParams, $driverCapabilities) {
+                function ($assignment) use (&$bindParams, $driverInfo) {
                     if (!array_key_exists('value', $assignment)) {
-                        return $this->getSubStatement($assignment['column'], $bindParams, $driverCapabilities);
+                        return $this->getSubStatement($assignment['column'], $bindParams, $driverInfo);
                     }
 
                     return sprintf(
                         '%s = %s',
-                        $this->getSubStatement($assignment['column'], $bindParams, $driverCapabilities),
-                        $this->getSubStatementValue($assignment['value'], $bindParams, $driverCapabilities)
+                        $this->getSubStatement($assignment['column'], $bindParams, $driverInfo),
+                        $this->getSubStatementValue($assignment['value'], $bindParams, $driverInfo)
                     );
                 },
                 $this->assignments

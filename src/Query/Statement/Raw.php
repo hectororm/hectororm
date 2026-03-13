@@ -16,7 +16,7 @@ namespace Hector\Query\Statement;
 
 use Hector\Connection\Bind\BindParam;
 use Hector\Connection\Bind\BindParamList;
-use Hector\Connection\Driver\DriverCapabilities;
+use Hector\Connection\Driver\DriverInfo;
 use Hector\Query\StatementInterface;
 
 class Raw implements StatementInterface
@@ -36,7 +36,7 @@ class Raw implements StatementInterface
      */
     public function getStatement(
         BindParamList $bindParams,
-        ?DriverCapabilities $driverCapabilities = null,
+        ?DriverInfo $driverInfo = null,
     ): ?string {
         array_map(
             fn($name, $value): BindParam => $bindParams->add($value, name: (string)$name),

@@ -15,7 +15,7 @@ declare(strict_types=1);
 namespace Hector\Query\Statement;
 
 use Hector\Connection\Bind\BindParamList;
-use Hector\Connection\Driver\DriverCapabilities;
+use Hector\Connection\Driver\DriverInfo;
 use Hector\Query\StatementInterface;
 
 class Encapsulated implements StatementInterface
@@ -35,9 +35,9 @@ class Encapsulated implements StatementInterface
      */
     public function getStatement(
         BindParamList $bindParams,
-        ?DriverCapabilities $driverCapabilities = null,
+        ?DriverInfo $driverInfo = null,
     ): ?string {
-        $str = $this->statement->getStatement($bindParams, $driverCapabilities);
+        $str = $this->statement->getStatement($bindParams, $driverInfo);
 
         if (null === $str || '' === $str) {
             return null;

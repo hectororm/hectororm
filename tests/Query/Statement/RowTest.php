@@ -13,7 +13,7 @@
 namespace Hector\Query\Tests\Statement;
 
 use Hector\Connection\Bind\BindParamList;
-use Hector\Connection\Driver\DriverCapabilities;
+use Hector\Connection\Driver\DriverInfo;
 use Hector\Query\Statement\Encapsulated;
 use Hector\Query\Statement\Quoted;
 use Hector\Query\Statement\Row;
@@ -49,13 +49,13 @@ class RowTest extends TestCase
 
     public function testGetStatementWithQuotedAndPostgreSQL(): void
     {
-        $capabilities = $this->createMock(DriverCapabilities::class);
-        $capabilities->method('getIdentifierQuote')->willReturn('"');
+        $driverInfo = $this->createMock(DriverInfo::class);
+        $driverInfo->method('getIdentifierQuote')->willReturn('"');
 
         $row = new Row(new Quoted('main.id'), new Quoted('main.name'));
         $binds = new BindParamList();
 
-        $this->assertSame('( "main"."id", "main"."name" )', $row->getStatement($binds, $capabilities));
+        $this->assertSame('( "main"."id", "main"."name" )', $row->getStatement($binds, $driverInfo));
     }
 
     public function testGetStatementMixedValues(): void

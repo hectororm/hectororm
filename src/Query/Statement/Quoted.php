@@ -15,7 +15,7 @@ declare(strict_types=1);
 namespace Hector\Query\Statement;
 
 use Hector\Connection\Bind\BindParamList;
-use Hector\Connection\Driver\DriverCapabilities;
+use Hector\Connection\Driver\DriverInfo;
 use Hector\Query\Helper;
 use Hector\Query\StatementInterface;
 
@@ -36,9 +36,9 @@ class Quoted implements StatementInterface
      */
     public function getStatement(
         BindParamList $bindParams,
-        ?DriverCapabilities $driverCapabilities = null,
+        ?DriverInfo $driverInfo = null,
     ): ?string {
-        $quote = $driverCapabilities?->getIdentifierQuote() ?? '`';
+        $quote = $driverInfo?->getIdentifierQuote() ?? '`';
 
         $parts = explode('.', $this->identifier);
 

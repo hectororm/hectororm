@@ -13,18 +13,18 @@
 namespace Hector\Query\Tests\Statement;
 
 use Hector\Connection\Bind\BindParamList;
-use Hector\Connection\Driver\DriverCapabilities;
+use Hector\Connection\Driver\DriverInfo;
 use Hector\Query\Statement\Quoted;
 use PHPUnit\Framework\TestCase;
 
 class QuotedTest extends TestCase
 {
-    private function createCapabilities(string $quote): DriverCapabilities
+    private function createDriverInfo(string $quote): DriverInfo
     {
-        $capabilities = $this->createMock(DriverCapabilities::class);
-        $capabilities->method('getIdentifierQuote')->willReturn($quote);
+        $driverInfo = $this->createMock(DriverInfo::class);
+        $driverInfo->method('getIdentifierQuote')->willReturn($quote);
 
-        return $capabilities;
+        return $driverInfo;
     }
 
     public function testSimpleIdentifier(): void
@@ -63,27 +63,27 @@ class QuotedTest extends TestCase
     {
         $quoted = new Quoted('foo');
         $binds = new BindParamList();
-        $capabilities = $this->createCapabilities('"');
+        $driverInfo = $this->createDriverInfo('"');
 
-        $this->assertSame('"foo"', $quoted->getStatement($binds, $capabilities));
+        $this->assertSame('"foo"', $quoted->getStatement($binds, $driverInfo));
     }
 
     public function testCompositeWithPostgreSQLDriver(): void
     {
         $quoted = new Quoted('schema.table.column');
         $binds = new BindParamList();
-        $capabilities = $this->createCapabilities('"');
+        $driverInfo = $this->createDriverInfo('"');
 
-        $this->assertSame('"schema"."table"."column"', $quoted->getStatement($binds, $capabilities));
+        $this->assertSame('"schema"."table"."column"', $quoted->getStatement($binds, $driverInfo));
     }
 
     public function testWildcardWithPostgreSQLDriver(): void
     {
         $quoted = new Quoted('table.*');
         $binds = new BindParamList();
-        $capabilities = $this->createCapabilities('"');
+        $driverInfo = $this->createDriverInfo('"');
 
-        $this->assertSame('"table".*', $quoted->getStatement($binds, $capabilities));
+        $this->assertSame('"table".*', $quoted->getStatement($binds, $driverInfo));
     }
 
     public function testAlreadyQuotedInput(): void
@@ -98,18 +98,18 @@ class QuotedTest extends TestCase
     {
         $quoted = new Quoted('`foo`.`bar`');
         $binds = new BindParamList();
-        $capabilities = $this->createCapabilities('"');
+        $driverInfo = $this->createDriverInfo('"');
 
-        $this->assertSame('"foo"."bar"', $quoted->getStatement($binds, $capabilities));
+        $this->assertSame('"foo"."bar"', $quoted->getStatement($binds, $driverInfo));
     }
 
     public function testEmbeddedQuoteEscaped(): void
     {
         $quoted = new Quoted('foo"bar');
         $binds = new BindParamList();
-        $capabilities = $this->createCapabilities('"');
+        $driverInfo = $this->createDriverInfo('"');
 
-        $this->assertSame('"foo""bar"', $quoted->getStatement($binds, $capabilities));
+        $this->assertSame('"foo""bar"', $quoted->getStatement($binds, $driverInfo));
     }
 
     public function testTwoPartIdentifier(): void

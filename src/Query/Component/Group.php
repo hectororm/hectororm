@@ -16,7 +16,7 @@ namespace Hector\Query\Component;
 
 use Countable;
 use Hector\Connection\Bind\BindParamList;
-use Hector\Connection\Driver\DriverCapabilities;
+use Hector\Connection\Driver\DriverInfo;
 use Hector\Query\StatementInterface;
 
 class Group extends AbstractComponent implements Countable
@@ -57,7 +57,7 @@ class Group extends AbstractComponent implements Countable
      */
     public function getStatement(
         BindParamList $bindParams,
-        ?DriverCapabilities $driverCapabilities = null,
+        ?DriverInfo $driverInfo = null,
     ): ?string {
         if (empty($this->group)) {
             return null;
@@ -67,8 +67,8 @@ class Group extends AbstractComponent implements Countable
             implode(
                 ', ',
                 array_map(
-                    function ($group) use (&$bindParams, $driverCapabilities) {
-                        return $this->getSubStatement($group, $bindParams, $driverCapabilities);
+                    function ($group) use (&$bindParams, $driverInfo) {
+                        return $this->getSubStatement($group, $bindParams, $driverInfo);
                     },
                     $this->group
                 )

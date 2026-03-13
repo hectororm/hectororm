@@ -15,7 +15,7 @@ declare(strict_types=1);
 namespace Hector\Query\Component;
 
 use Hector\Connection\Bind\BindParamList;
-use Hector\Connection\Driver\DriverCapabilities;
+use Hector\Connection\Driver\DriverInfo;
 use Hector\Query\Helper;
 use Hector\Query\StatementInterface;
 
@@ -92,22 +92,22 @@ class Join extends AbstractComponent
      */
     public function getStatement(
         BindParamList $bindParams,
-        ?DriverCapabilities $driverCapabilities = null,
+        ?DriverInfo $driverInfo = null,
     ): ?string {
-        $quote = $driverCapabilities?->getIdentifierQuote() ?? '`';
+        $quote = $driverInfo?->getIdentifierQuote() ?? '`';
 
         $str = implode(
             ' ',
             array_map(
-                function ($join) use (&$bindParams, $driverCapabilities, $quote) {
+                function ($join) use (&$bindParams, $driverInfo, $quote) {
                     $str = sprintf('%s JOIN %s', $join['join'],
-                        $this->getSubStatement($join['table'], $bindParams, $driverCapabilities));
+                        $this->getSubStatement($join['table'], $bindParams, $driverInfo));
 
                     if (null !== $join['alias']) {
                         $str .= sprintf(' AS %s', Helper::quote($join['alias'], $quote));
                     }
 
-                    $joinCondition = $this->getJoinCondition($join['condition'], $bindParams, $driverCapabilities);
+                    $joinCondition = $this->getJoinCondition($join['condition'], $bindParams, $driverInfo);
                     if (null !== $joinCondition) {
                         $str .= sprintf(' ON ( %s )', $joinCondition);
                     }
@@ -126,14 +126,14 @@ class Join extends AbstractComponent
      *
      * @param StatementInterface|string|iterable|null $condition
      * @param BindParamList $bindParams
-     * @param DriverCapabilities|null $driverCapabilities
+     * @param DriverInfo|null $driverInfo
      *
      * @return string|null
      */
     private function getJoinCondition(
         StatementInterface|string|iterable|null $condition,
         BindParamList $bindParams,
-        ?DriverCapabilities $driverCapabilities = null,
+        ?DriverInfo $driverInfo = null,
     ): ?string {
         if (null === $condition) {
             return null;
@@ -144,20 +144,20 @@ class Join extends AbstractComponent
 
             foreach ($condition as $key => $value) {
                 if (is_numeric($key)) {
-                    $conditions[] = $this->getSubStatement($value, $bindParams, $driverCapabilities);
+                    $conditions[] = $this->getSubStatement($value, $bindParams, $driverInfo);
                     continue;
                 }
 
                 $conditions[] = sprintf(
                     '%s = %s',
-                    $this->getSubStatement($key, $bindParams, $driverCapabilities),
-                    $this->getSubStatement($value, $bindParams, $driverCapabilities)
+                    $this->getSubStatement($key, $bindParams, $driverInfo),
+                    $this->getSubStatement($value, $bindParams, $driverInfo)
                 );
             }
 
             return implode(' AND ', $conditions);
         }
 
-        return $this->getSubStatement($condition, $bindParams, $driverCapabilities);
+        return $this->getSubStatement($condition, $bindParams, $driverInfo);
     }
 }

@@ -17,7 +17,7 @@ namespace Hector\Query\Component;
 use Closure;
 use Countable;
 use Hector\Connection\Bind\BindParamList;
-use Hector\Connection\Driver\DriverCapabilities;
+use Hector\Connection\Driver\DriverInfo;
 use Hector\Query\Select;
 use Hector\Query\CompoundStatementInterface;
 use Hector\Query\StatementInterface;
@@ -140,12 +140,12 @@ class Conditions extends AbstractComponent implements CompoundStatementInterface
      */
     public function getStatement(
         BindParamList $bindParams,
-        ?DriverCapabilities $driverCapabilities = null,
+        ?DriverInfo $driverInfo = null,
     ): ?string {
         $statement = '';
 
         foreach ($this->conditions as &$condition) {
-            if (null === ($subStatement = $this->getSubStatement($condition['column'], $bindParams, $driverCapabilities))) {
+            if (null === ($subStatement = $this->getSubStatement($condition['column'], $bindParams, $driverInfo))) {
                 continue;
             }
 
@@ -162,7 +162,7 @@ class Conditions extends AbstractComponent implements CompoundStatementInterface
             $statement .= ' ' . $condition['operator'];
 
             if (null !== $condition['value']) {
-                $statement .= ' ' . $this->getSubStatementValue($condition['value'], $bindParams, $driverCapabilities);
+                $statement .= ' ' . $this->getSubStatementValue($condition['value'], $bindParams, $driverInfo);
             }
         }
 

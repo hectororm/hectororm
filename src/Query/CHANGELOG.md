@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Statement\Encapsulated` wrapper class for explicit sub-expression parenthesization
 - `CompoundStatementInterface` marker interface for statements (queries, grouped conditions) that should be auto-encapsulated as sub-expressions
 - Tuple format `[column, value]` in `Assignments::assignments()` and `Conditions::equals()` to allow `StatementInterface` column names (e.g. `Quoted`)
-- Driver-aware identifier quoting via `DriverCapabilities` parameter on `StatementInterface::getStatement()`
+- Driver-aware identifier quoting via `DriverInfo` parameter on `StatementInterface::getStatement()`
 - `Helper::quote()` and `Helper::trim()` now accept a `$quote` parameter for driver-specific quote character
 - `Helper::quote()` now escapes embedded quote characters by doubling them
 - Method `Component\Order::getOrder()` to get defined order

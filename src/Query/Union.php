@@ -15,7 +15,7 @@ declare(strict_types=1);
 namespace Hector\Query;
 
 use Hector\Connection\Bind\BindParamList;
-use Hector\Connection\Driver\DriverCapabilities;
+use Hector\Connection\Driver\DriverInfo;
 use Hector\Query\Clause\Limit;
 use Hector\Query\Clause\Order;
 use Hector\Query\Statement\Encapsulated;
@@ -80,7 +80,7 @@ class Union implements CompoundStatementInterface
      */
     public function getStatement(
         BindParamList $bindParams,
-        ?DriverCapabilities $driverCapabilities = null,
+        ?DriverInfo $driverInfo = null,
     ): ?string {
         if (empty($this->selects)) {
             return null;
@@ -89,15 +89,15 @@ class Union implements CompoundStatementInterface
         $selectStatements = [];
         /** @var Select $select */
         foreach ($this->selects as $select) {
-            $selectStatements[] = (new Encapsulated($select))->getStatement($bindParams, $driverCapabilities);
+            $selectStatements[] = (new Encapsulated($select))->getStatement($bindParams, $driverInfo);
         }
 
         $str = implode(' UNION ' . ($this->all ? 'ALL ' : 'DISTINCT '), $selectStatements);
 
         if (null !== $this->limit->getLimit() || count($this->order) > 0) {
             $str = '( ' . $str . ' )';
-            $str .= rtrim(' ' . ($this->order->getStatement($bindParams, $driverCapabilities) ?? ''));
-            $str .= rtrim(' ' . ($this->limit->getStatement($bindParams, $driverCapabilities) ?? ''));
+            $str .= rtrim(' ' . ($this->order->getStatement($bindParams, $driverInfo) ?? ''));
+            $str .= rtrim(' ' . ($this->limit->getStatement($bindParams, $driverInfo) ?? ''));
 
             return $str;
         }

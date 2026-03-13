@@ -15,7 +15,7 @@ namespace Hector\Query\Tests\Component;
 use BackedEnum;
 use Hector\Connection\Bind\BindParam;
 use Hector\Connection\Bind\BindParamList;
-use Hector\Connection\Driver\DriverCapabilities;
+use Hector\Connection\Driver\DriverInfo;
 use Hector\Query\Component\Conditions;
 use Hector\Query\Select;
 use Hector\Query\Statement\Encapsulated;
@@ -367,10 +367,10 @@ class ConditionsTest extends TestCase
         );
     }
 
-    public function testEqualsTupleWithDriverCapabilities(): void
+    public function testEqualsTupleWithDriverInfo(): void
     {
-        $capabilities = $this->createMock(DriverCapabilities::class);
-        $capabilities->method('getIdentifierQuote')->willReturn('"');
+        $driverInfo = $this->createMock(DriverInfo::class);
+        $driverInfo->method('getIdentifierQuote')->willReturn('"');
 
         $condition = new Conditions();
         $binds = new BindParamList();
@@ -381,7 +381,7 @@ class ConditionsTest extends TestCase
 
         $this->assertSame(
             '"foo" = :_h_0',
-            $condition->getStatement($binds, $capabilities)
+            $condition->getStatement($binds, $driverInfo)
         );
     }
 

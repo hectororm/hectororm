@@ -16,7 +16,7 @@ namespace Hector\Query\Statement;
 
 use Closure;
 use Hector\Connection\Bind\BindParamList;
-use Hector\Connection\Driver\DriverCapabilities;
+use Hector\Connection\Driver\DriverInfo;
 use Hector\Query\StatementInterface;
 
 class SqlFunction implements StatementInterface
@@ -36,14 +36,14 @@ class SqlFunction implements StatementInterface
      */
     public function getStatement(
         BindParamList $bindParams,
-        ?DriverCapabilities $driverCapabilities = null,
+        ?DriverInfo $driverInfo = null,
     ): ?string {
         if ($this->expression instanceof StatementInterface) {
             return
                 sprintf(
                     '%s( %s )',
                     $this->function,
-                    $this->expression->getStatement($bindParams, $driverCapabilities)
+                    $this->expression->getStatement($bindParams, $driverInfo)
                 );
         }
 

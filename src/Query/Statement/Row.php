@@ -15,7 +15,7 @@ declare(strict_types=1);
 namespace Hector\Query\Statement;
 
 use Hector\Connection\Bind\BindParamList;
-use Hector\Connection\Driver\DriverCapabilities;
+use Hector\Connection\Driver\DriverInfo;
 use Hector\Query\StatementInterface;
 
 class Row implements StatementInterface
@@ -37,12 +37,12 @@ class Row implements StatementInterface
      */
     public function getStatement(
         BindParamList $bindParams,
-        ?DriverCapabilities $driverCapabilities = null,
+        ?DriverInfo $driverInfo = null,
     ): ?string {
         $parts = array_map(
-            function (StatementInterface|string $value) use ($bindParams, $driverCapabilities): string {
+            function (StatementInterface|string $value) use ($bindParams, $driverInfo): string {
                 if ($value instanceof StatementInterface) {
-                    return $value->getStatement($bindParams, $driverCapabilities) ?? '';
+                    return $value->getStatement($bindParams, $driverInfo) ?? '';
                 }
 
                 return $value;

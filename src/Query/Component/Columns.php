@@ -16,7 +16,7 @@ namespace Hector\Query\Component;
 
 use Countable;
 use Hector\Connection\Bind\BindParamList;
-use Hector\Connection\Driver\DriverCapabilities;
+use Hector\Connection\Driver\DriverInfo;
 use Hector\Query\Helper;
 use Hector\Query\StatementInterface;
 
@@ -70,23 +70,23 @@ class Columns extends AbstractComponent implements Countable
      */
     public function getStatement(
         BindParamList $bindParams,
-        ?DriverCapabilities $driverCapabilities = null,
+        ?DriverInfo $driverInfo = null,
     ): ?string {
-        $quote = $driverCapabilities?->getIdentifierQuote() ?? '`';
+        $quote = $driverInfo?->getIdentifierQuote() ?? '`';
 
         $str = implode(
             ', ',
             array_map(
-                function ($column) use ($bindParams, $driverCapabilities, $quote) {
+                function ($column) use ($bindParams, $driverInfo, $quote) {
                     if ($column['alias']) {
                         return sprintf(
                             '%s AS %s',
-                            rtrim($this->getSubStatement($column['column'], $bindParams, $driverCapabilities)),
+                            rtrim($this->getSubStatement($column['column'], $bindParams, $driverInfo)),
                             Helper::quote($column['alias'], $quote),
                         );
                     }
 
-                    return $this->getSubStatement($column['column'], $bindParams, $driverCapabilities);
+                    return $this->getSubStatement($column['column'], $bindParams, $driverInfo);
                 },
                 $this->columns
             )

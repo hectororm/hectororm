@@ -14,7 +14,7 @@ namespace Hector\Query\Tests\Clause;
 
 use Hector\Connection\Bind\BindParam;
 use Hector\Connection\Bind\BindParamList;
-use Hector\Connection\Driver\DriverCapabilities;
+use Hector\Connection\Driver\DriverInfo;
 use Hector\Query\Clause\Assignments;
 use Hector\Query\Component\InsertAssignments;
 use Hector\Query\Component\UpdateAssignments;
@@ -131,10 +131,10 @@ class AssignmentsTest extends TestCase
         );
     }
 
-    public function testAssignsTupleWithDriverCapabilities(): void
+    public function testAssignsTupleWithDriverInfo(): void
     {
-        $capabilities = $this->createMock(DriverCapabilities::class);
-        $capabilities->method('getIdentifierQuote')->willReturn('"');
+        $driverInfo = $this->createMock(DriverInfo::class);
+        $driverInfo->method('getIdentifierQuote')->willReturn('"');
 
         $clause = new class {
             use Assignments;
@@ -148,7 +148,7 @@ class AssignmentsTest extends TestCase
 
         $this->assertSame(
             '"foo" = :_h_0',
-            UpdateAssignments::createFromAssignments($clause->assignments)->getStatement($binds, $capabilities)
+            UpdateAssignments::createFromAssignments($clause->assignments)->getStatement($binds, $driverInfo)
         );
     }
 

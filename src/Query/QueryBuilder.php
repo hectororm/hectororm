@@ -17,7 +17,7 @@ namespace Hector\Query;
 use Generator;
 use Hector\Connection\Bind\BindParamList;
 use Hector\Connection\Connection;
-use Hector\Connection\Driver\DriverCapabilities;
+use Hector\Connection\Driver\DriverInfo;
 use Hector\Pagination\CursorPagination;
 use Hector\Pagination\OffsetPagination;
 use Hector\Pagination\PaginationInterface;
@@ -297,10 +297,10 @@ class QueryBuilder implements CompoundStatementInterface
     public function fetchOne(bool $lock = false): ?array
     {
         $select = $this->makeSelect();
-        $driverCapabilities = $this->connection->getDriverInfo()->getCapabilities();
+        $driverInfo = $this->connection->getDriverInfo();
 
         $binds = new BindParamList();
-        $statement = $select->getStatement($binds, $driverCapabilities);
+        $statement = $select->getStatement($binds, $driverInfo);
 
         true === $lock && $statement = $this->addLockForUpdate($statement);
 
@@ -317,10 +317,10 @@ class QueryBuilder implements CompoundStatementInterface
     public function fetchAll(bool $lock = false): Generator
     {
         $select = $this->makeSelect();
-        $driverCapabilities = $this->connection->getDriverInfo()->getCapabilities();
+        $driverInfo = $this->connection->getDriverInfo();
 
         $binds = new BindParamList();
-        $statement = $select->getStatement($binds, $driverCapabilities);
+        $statement = $select->getStatement($binds, $driverInfo);
 
         true === $lock && $statement = $this->addLockForUpdate($statement);
 
@@ -338,10 +338,10 @@ class QueryBuilder implements CompoundStatementInterface
     public function fetchColumn(int $column = 0, bool $lock = false): Generator
     {
         $select = $this->makeSelect();
-        $driverCapabilities = $this->connection->getDriverInfo()->getCapabilities();
+        $driverInfo = $this->connection->getDriverInfo();
 
         $binds = new BindParamList();
-        $statement = $select->getStatement($binds, $driverCapabilities);
+        $statement = $select->getStatement($binds, $driverInfo);
 
         true === $lock && $statement = $this->addLockForUpdate($statement);
 
@@ -373,10 +373,10 @@ class QueryBuilder implements CompoundStatementInterface
     public function count(): int
     {
         $select = $this->makeCount();
-        $driverCapabilities = $this->connection->getDriverInfo()->getCapabilities();
+        $driverInfo = $this->connection->getDriverInfo();
 
         $binds = new BindParamList();
-        $statement = $select->getStatement($binds, $driverCapabilities);
+        $statement = $select->getStatement($binds, $driverInfo);
         $result = $this->connection->fetchOne($statement, $binds->getArrayCopy());
 
         if (null === $result) {
@@ -393,9 +393,9 @@ class QueryBuilder implements CompoundStatementInterface
      */
     public function exists(): bool
     {
-        $driverCapabilities = $this->connection->getDriverInfo()->getCapabilities();
+        $driverInfo = $this->connection->getDriverInfo();
         $binds = new BindParamList();
-        $statement = $this->makeExists()->getStatement($binds, $driverCapabilities);
+        $statement = $this->makeExists()->getStatement($binds, $driverInfo);
 
         $result = $this->connection->fetchOne($statement, $binds->getArrayCopy());
 
@@ -430,10 +430,10 @@ class QueryBuilder implements CompoundStatementInterface
     {
         $insert = $this->makeInsert();
         $insert->assigns($values);
-        $driverCapabilities = $this->connection->getDriverInfo()->getCapabilities();
+        $driverInfo = $this->connection->getDriverInfo();
 
         $binds = new BindParamList();
-        $statement = $insert->getStatement($binds, $driverCapabilities);
+        $statement = $insert->getStatement($binds, $driverInfo);
 
         return $this->execute($statement, $binds->getArrayCopy());
     }
@@ -449,10 +449,10 @@ class QueryBuilder implements CompoundStatementInterface
     {
         $update = $this->makeUpdate();
         $update->assigns($values);
-        $driverCapabilities = $this->connection->getDriverInfo()->getCapabilities();
+        $driverInfo = $this->connection->getDriverInfo();
 
         $binds = new BindParamList();
-        $statement = $update->getStatement($binds, $driverCapabilities);
+        $statement = $update->getStatement($binds, $driverInfo);
 
         return $this->execute($statement, $binds->getArrayCopy());
     }
@@ -465,10 +465,10 @@ class QueryBuilder implements CompoundStatementInterface
     public function delete(): int
     {
         $delete = $this->makeDelete();
-        $driverCapabilities = $this->connection->getDriverInfo()->getCapabilities();
+        $driverInfo = $this->connection->getDriverInfo();
 
         $binds = new BindParamList();
-        $statement = $delete->getStatement($binds, $driverCapabilities);
+        $statement = $delete->getStatement($binds, $driverInfo);
 
         return $this->execute($statement, $binds->getArrayCopy());
     }
@@ -478,9 +478,9 @@ class QueryBuilder implements CompoundStatementInterface
      */
     public function getStatement(
         BindParamList $bindParams,
-        ?DriverCapabilities $driverCapabilities = null,
+        ?DriverInfo $driverInfo = null,
     ): ?string {
-        return $this->makeSelect()->getStatement($bindParams, $driverCapabilities);
+        return $this->makeSelect()->getStatement($bindParams, $driverInfo);
     }
 
     /**

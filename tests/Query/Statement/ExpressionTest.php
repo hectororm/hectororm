@@ -15,7 +15,7 @@ declare(strict_types=1);
 namespace Hector\Query\Tests\Statement;
 
 use Hector\Connection\Bind\BindParamList;
-use Hector\Connection\Driver\DriverCapabilities;
+use Hector\Connection\Driver\DriverInfo;
 use Hector\Query\Statement\Expression;
 use Hector\Query\Statement\Quoted;
 use Hector\Query\Statement\Raw;
@@ -23,12 +23,12 @@ use PHPUnit\Framework\TestCase;
 
 class ExpressionTest extends TestCase
 {
-    private function createCapabilities(string $quote): DriverCapabilities
+    private function createDriverInfo(string $quote): DriverInfo
     {
-        $capabilities = $this->createMock(DriverCapabilities::class);
-        $capabilities->method('getIdentifierQuote')->willReturn($quote);
+        $driverInfo = $this->createMock(DriverInfo::class);
+        $driverInfo->method('getIdentifierQuote')->willReturn($quote);
 
-        return $capabilities;
+        return $driverInfo;
     }
 
     public function testStringsOnly(): void
@@ -65,7 +65,7 @@ class ExpressionTest extends TestCase
 
         $this->assertSame(
             '"main"."id" = "orders"."user_id"',
-            $expression->getStatement($binds, $this->createCapabilities('"'))
+            $expression->getStatement($binds, $this->createDriverInfo('"'))
         );
     }
 

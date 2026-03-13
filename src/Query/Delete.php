@@ -15,7 +15,7 @@ declare(strict_types=1);
 namespace Hector\Query;
 
 use Hector\Connection\Bind\BindParamList;
-use Hector\Connection\Driver\DriverCapabilities;
+use Hector\Connection\Driver\DriverInfo;
 use Hector\Query\Clause\BindParams;
 use Hector\Query\Clause\From;
 use Hector\Query\Clause\Limit;
@@ -61,24 +61,24 @@ class Delete implements CompoundStatementInterface
      */
     public function getStatement(
         BindParamList $bindParams,
-        ?DriverCapabilities $driverCapabilities = null,
+        ?DriverInfo $driverInfo = null,
     ): ?string {
         $this->mergeBindParamsTo($bindParams);
 
-        $fromStr = $this->from->getStatement($bindParams, $driverCapabilities);
+        $fromStr = $this->from->getStatement($bindParams, $driverInfo);
 
         if (null === $fromStr) {
             return null;
         }
 
-        $str = 'DELETE FROM ' . ($this->from->getStatement($bindParams, $driverCapabilities) ?? '');
+        $str = 'DELETE FROM ' . ($this->from->getStatement($bindParams, $driverInfo) ?? '');
 
-        if (null !== ($whereStr = $this->where->getStatement($bindParams, $driverCapabilities))) {
+        if (null !== ($whereStr = $this->where->getStatement($bindParams, $driverInfo))) {
             $str .= ' WHERE ' . $whereStr;
         }
 
-        $str .= rtrim(' ' . ($this->order->getStatement($bindParams, $driverCapabilities) ?? ''));
-        $str .= rtrim(' ' . ($this->limit->getStatement($bindParams, $driverCapabilities) ?? ''));
+        $str .= rtrim(' ' . ($this->order->getStatement($bindParams, $driverInfo) ?? ''));
+        $str .= rtrim(' ' . ($this->limit->getStatement($bindParams, $driverInfo) ?? ''));
 
         return $str;
     }
