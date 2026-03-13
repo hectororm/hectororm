@@ -63,8 +63,8 @@ class MySQLCapabilities implements DriverCapabilities
     /**
      * @inheritDoc
      */
-    public function getIdentifierQuote(): string
+    public function hasRenameColumn(): bool
     {
-        return '`';
+        return version_compare($this->driverInfo->getVersion(), '8.0.0', '>=');
     }
 }

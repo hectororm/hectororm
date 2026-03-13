@@ -53,9 +53,12 @@ interface DriverCapabilities
     public function hasStrictMode(): bool;
 
     /**
-     * Get the character used to quote identifiers.
+     * Support of RENAME COLUMN syntax?
      *
-     * @return string
+     * When false, the compiler must use an alternative syntax
+     * (e.g., CHANGE COLUMN on MySQL < 8.0).
+     *
+     * @return bool
      */
-    public function getIdentifierQuote(): string;
+    public function hasRenameColumn(): bool;
 }

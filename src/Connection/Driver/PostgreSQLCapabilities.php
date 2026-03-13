@@ -63,8 +63,8 @@ class PostgreSQLCapabilities implements DriverCapabilities
     /**
      * @inheritDoc
      */
-    public function getIdentifierQuote(): string
+    public function hasRenameColumn(): bool
     {
-        return '"';
+        return true;
     }
 }

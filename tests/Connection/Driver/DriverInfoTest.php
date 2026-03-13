@@ -66,4 +66,30 @@ class DriverInfoTest extends TestCase
 
         $this->assertInstanceOf(DriverCapabilities::class, $capabilities);
     }
+
+    public function providerIdentifierQuote(): array
+    {
+        return [
+            ['mysql', '8.0.0', '`'],
+            ['mysql', '5.7.0', '`'],
+            ['mariadb', '10.6.0', '`'],
+            ['pgsql', '13.3', '"'],
+            ['sqlite', '3.35', '"'],
+            ['vitess', '8.0', '`'],
+            ['unknown', '1.0', '`'],
+        ];
+    }
+
+    /**
+     * @dataProvider providerIdentifierQuote
+     */
+    public function testGetIdentifierQuote(
+        string $driver,
+        string $version,
+        string $expectedQuote,
+    ): void {
+        $driverInfo = new DriverInfo($driver, $version);
+
+        $this->assertSame($expectedQuote, $driverInfo->getIdentifierQuote());
+    }
 }

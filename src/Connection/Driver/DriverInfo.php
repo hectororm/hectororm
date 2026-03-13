@@ -65,6 +65,19 @@ class DriverInfo
     }
 
     /**
+     * Get the character used to quote identifiers for this driver.
+     *
+     * @return string
+     */
+    public function getIdentifierQuote(): string
+    {
+        return match ($this->driver) {
+            'pgsql', 'sqlite' => '"',
+            default => '`',
+        };
+    }
+
+    /**
      * Get capabilities.
      *
      * @return DriverCapabilities

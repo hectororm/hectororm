@@ -211,7 +211,7 @@ class Connection
      */
     public function quoteIdentifier(string $name): string
     {
-        $quote = $this->getDriverInfo()->getCapabilities()->getIdentifierQuote();
+        $quote = $this->getDriverInfo()->getIdentifierQuote();
 
         return sprintf('%1$s%2$s%1$s', $quote, str_replace($quote, $quote . $quote, $name));
     }

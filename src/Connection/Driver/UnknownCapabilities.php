@@ -59,8 +59,8 @@ class UnknownCapabilities implements DriverCapabilities
     /**
      * @inheritDoc
      */
-    public function getIdentifierQuote(): string
+    public function hasRenameColumn(): bool
     {
-        return '`';
+        return false;
     }
 }

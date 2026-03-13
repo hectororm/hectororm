@@ -63,8 +63,8 @@ class SQLiteCapabilities implements DriverCapabilities
     /**
      * @inheritDoc
      */
-    public function getIdentifierQuote(): string
+    public function hasRenameColumn(): bool
     {
-        return '"';
+        return version_compare($this->driverInfo->getVersion(), '3.25.0', '>=');
     }
 }

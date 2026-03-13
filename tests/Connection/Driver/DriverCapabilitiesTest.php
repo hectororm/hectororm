@@ -25,14 +25,14 @@ class DriverCapabilitiesTest extends TestCase
     public function providerCapabilities(): array
     {
         return [
-            ['mysql', '8.0.0', MySQLCapabilities::class, true, true, true, true, true, '`'],
-            ['mysql', '5.7.0', MySQLCapabilities::class, true, false, false, true, true, '`'],
-            ['mariadb', '10.6.0', MariaDBCapabilities::class, true, true, true, true, true, '`'],
-            ['mariadb', '10.2.0', MariaDBCapabilities::class, true, false, true, true, true, '`'],
-            ['pgsql', '13.3', PostgreSQLCapabilities::class, true, true, true, true, true, '"'],
-            ['sqlite', '3.35', SQLiteCapabilities::class, false, false, true, true, false, '"'],
-            ['vitess', '8.0', UnknownCapabilities::class, false, false, false, false, false, '`'],
-            ['unknown', '1.0', UnknownCapabilities::class, false, false, false, false, false, '`'],
+            ['mysql', '8.0.0', MySQLCapabilities::class, true, true, true, true, true],
+            ['mysql', '5.7.0', MySQLCapabilities::class, true, false, false, true, true],
+            ['mariadb', '10.6.0', MariaDBCapabilities::class, true, true, true, true, true],
+            ['mariadb', '10.2.0', MariaDBCapabilities::class, true, false, true, true, true],
+            ['pgsql', '13.3', PostgreSQLCapabilities::class, true, true, true, true, true],
+            ['sqlite', '3.35', SQLiteCapabilities::class, false, false, true, true, false],
+            ['vitess', '8.0', UnknownCapabilities::class, false, false, false, false, false],
+            ['unknown', '1.0', UnknownCapabilities::class, false, false, false, false, false],
         ];
     }
 
@@ -48,7 +48,6 @@ class DriverCapabilitiesTest extends TestCase
         bool $windowFunctions,
         bool $jsonSupport,
         bool $strictMode,
-        string $identifierQuote
     ): void {
         $driverInfoMock = $this->createMock(DriverInfo::class);
         $driverInfoMock->method('getDriver')->willReturn($driver);
@@ -68,6 +67,5 @@ class DriverCapabilitiesTest extends TestCase
         $this->assertSame($windowFunctions, $capabilities->hasWindowFunctions());
         $this->assertSame($jsonSupport, $capabilities->hasJson());
         $this->assertSame($strictMode, $capabilities->hasStrictMode());
-        $this->assertSame($identifierQuote, $capabilities->getIdentifierQuote());
     }
 }
