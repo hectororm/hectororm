@@ -1,0 +1,42 @@
+{
+  "name": "hectororm/migration",
+  "description": "Hector Migration",
+  "license": "MIT",
+  "homepage": "https://gethectororm.com",
+  "support": {
+    "issues": "https://github.com/hectororm/hectororm/issues",
+    "source": "https://github.com/hectororm/hectororm"
+  },
+  "authors": [
+    {
+      "name": "Ronan Giron",
+      "email": "ronan@getberlioz.com"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "Hector\\Migration\\": ""
+    }
+  },
+  "require": {
+    "php": "^8.0",
+    "ext-pdo": "*",
+    "hectororm/connection": "^1.0",
+    "hectororm/schema": "^1.3"
+  },
+  "suggest": {
+    "hectororm/query": "Required for DbTracker (^1.0)",
+    "league/flysystem": "Required for FlysystemTracker (^3.0)",
+    "psr/container": "Required for container-based migration instantiation in DirectoryProvider (^1.0 || ^2.0)",
+    "psr/event-dispatcher": "For migration lifecycle events (^1.0)",
+    "psr/log": "For migration lifecycle logging (^1.0 || ^2.0 || ^3.0)"
+  },
+  "extra": {
+    "branch-alias": {
+      "dev-main": "1.x-dev"
+    }
+  },
+  "config": {
+    "sort-packages": true
+  }
+}

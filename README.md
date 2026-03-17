@@ -40,10 +40,11 @@ composer require hectororm/hectororm
 ### Individual components (example)
 
 ```bash
-composer require hectororm/orm
 composer require hectororm/collection
 composer require hectororm/connection
 composer require hectororm/data-types
+composer require hectororm/migration
+composer require hectororm/orm
 composer require hectororm/pagination
 composer require hectororm/query
 composer require hectororm/schema

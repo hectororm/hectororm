@@ -11,6 +11,7 @@ It is structured as a **monorepo** with independent, decoupled packages:
 | `hectororm/collection` | `Hector\Collection` | Typed collection and lazy collection classes |
 | `hectororm/connection` | `Hector\Connection` | PDO wrapper, connection set, drivers, logs   |
 | `hectororm/data-types` | `Hector\DataTypes`  | Type casting and expected type definitions   |
+| `hectororm/migration`  | `Hector\Migration`  | Database migration runner, providers, trackers|
 | `hectororm/orm`        | `Hector\Orm`        | Entity mapping, relationships, storage       |
 | `hectororm/pagination` | `Hector\Pagination` | Pagination utilities                         |
 | `hectororm/query`      | `Hector\Query`      | Query builder (Select, Insert, Update, etc.) |
@@ -38,6 +39,7 @@ src/
 ├── Collection/      # hectororm/collection
 ├── Connection/      # hectororm/connection
 ├── DataTypes/       # hectororm/data-types
+├── Migration/       # hectororm/migration
 ├── Orm/             # hectororm/orm (main ORM logic)
 ├── Pagination/      # hectororm/pagination
 ├── Query/           # hectororm/query
@@ -53,6 +55,7 @@ bin/                 # Release tooling
 
 | Component  | Main Class(es)                                     |
 |------------|----------------------------------------------------|
+| Migration  | `Hector\Migration\MigrationRunner`                  |
 | ORM        | `Hector\Orm\Orm`, `Hector\Orm\OrmFactory`          |
 | Query      | `Hector\Query\QueryBuilder`, `Select`, `Insert`…   |
 | Connection | `Hector\Connection\Connection`, `ConnectionSet`    |

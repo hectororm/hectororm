@@ -24,6 +24,9 @@
     <testsuite name="Hector DataTypes test suite">
       <directory suffix="Test.php">./tests/DataTypes</directory>
     </testsuite>
+    <testsuite name="Hector Migration test suite">
+      <directory suffix="Test.php">./tests/Migration</directory>
+    </testsuite>
     <testsuite name="Hector Orm test suite">
       <directory suffix="Test.php">./tests/Orm</directory>
     </testsuite>

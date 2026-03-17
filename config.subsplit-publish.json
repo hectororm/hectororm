@@ -16,6 +16,11 @@
       "target": "git@github.com:hectororm/data-types.git"
     },
     {
+      "name": "migration",
+      "directory": "src/Migration",
+      "target": "git@github.com:hectororm/migration.git"
+    },
+    {
       "name": "orm",
       "directory": "src/Orm",
       "target": "git@github.com:hectororm/orm.git"
