@@ -18,30 +18,34 @@ namespace Hector\Orm\Pagination;
 use Hector\Orm\Entity\ReflectionEntity;
 use Hector\Orm\Query\Builder;
 use Hector\Query\QueryBuilder;
+use Hector\Query\Statement\Expression;
 use Hector\Query\Statement\Quoted;
-use Hector\Query\Statement\Row;
 
 /**
- * Provides optimized 2-step pagination for ORM Builder paginators.
+ * Provides optimized pagination for ORM Builder paginators.
  *
- * When enabled, the paginator executes two queries:
+ * When enabled, the paginator uses a derived table INNER JOIN to select
+ * distinct primary keys with the original WHERE, JOINs, ORDER BY and LIMIT:
  *
- * 1. `SELECT DISTINCT pk FROM entity JOIN … WHERE … ORDER BY … LIMIT …`
- *    → fetches only the paginated primary key values (fast, no ORM mapping)
+ * ```sql
+ * SELECT main.*
+ * FROM entity AS main
+ * INNER JOIN (
+ *     SELECT DISTINCT main.pk FROM entity AS main
+ *     JOIN … WHERE … ORDER BY … LIMIT …
+ * ) AS pagination ON (main.pk = pagination.pk)
+ * ORDER BY …
+ * ```
  *
- * 2. `SELECT * FROM entity WHERE pk IN (…)`
- *    → loads full entities for those IDs only (no duplicate JOINs)
- *
- * Results are reordered in PHP to match the original ORDER BY from step 1.
- *
- * This prevents row duplication caused by JOINs from affecting the per-page count.
+ * This prevents row duplication caused by JOINs from affecting the per-page count,
+ * using a single SQL query.
  */
 trait OptimizedFetchTrait
 {
     private bool $optimized = false;
 
     /**
-     * Fetch items using optimized 2-step pagination.
+     * Fetch items using optimized derived-table pagination.
      *
      * @param QueryBuilder $builder The cloned builder with LIMIT/OFFSET/cursor already applied.
      *
@@ -60,76 +64,35 @@ trait OptimizedFetchTrait
 
         $pkColumnNames = $primaryIndex->getColumnsName();
 
-        // Step 1: SELECT DISTINCT pk FROM ... WHERE ... ORDER BY ... LIMIT ...
-        $idsBuilder = clone $builder;
-        $idsBuilder->resetColumns()->distinct();
+        // Build the subquery: SELECT DISTINCT pk FROM ... WHERE ... ORDER BY ... LIMIT ...
+        $idsSubQuery = clone $builder;
+        $idsSubQuery->resetColumns()->distinct();
         foreach ($pkColumnNames as $col) {
-            $idsBuilder->column(new Quoted(Builder::FROM_ALIAS . '.' . $col));
-        }
-        $rows = iterator_to_array($idsBuilder->fetchAll());
-
-        if (empty($rows)) {
-            return [];
+            $idsSubQuery->column(new Quoted(Builder::FROM_ALIAS . '.' . $col));
         }
 
-        // Extract PK values from rows
-        $pkValues = array_map(fn(array $row): array => array_values($row), $rows);
-
-        // Step 2: SELECT * FROM entity WHERE pk IN (...) — no JOINs needed
+        // Build the outer query: SELECT main.* FROM entity AS main
+        // INNER JOIN (subquery) AS pagination ON (main.pk = pagination.pk)
+        // ORDER BY ...
         $entityBuilder = new Builder($reflection->class);
         $entityBuilder->with = $builder->with;
 
-        $pkQuoted = array_map(
-            fn(string $name): Quoted => new Quoted(Builder::FROM_ALIAS . '.' . $name),
-            $pkColumnNames,
-        );
-
-        if (1 === count($pkQuoted)) {
-            $entityBuilder->whereIn(reset($pkQuoted), array_column($pkValues, 0));
-        } else {
-            $entityBuilder->whereIn(new Row(...$pkQuoted), $pkValues);
+        // Build ON condition: main.pk = pagination.pk (for each PK column)
+        $onConditions = [];
+        foreach ($pkColumnNames as $col) {
+            $onConditions[] = new Expression(
+                new Quoted(Builder::FROM_ALIAS . '.' . $col),
+                ' = ',
+                new Quoted('pagination.' . $col),
+            );
         }
 
-        $entities = $entityBuilder->all()->getArrayCopy();
+        $entityBuilder->innerJoin($idsSubQuery, $onConditions, 'pagination');
 
-        // Reorder entities to match the order from step 1
-        return $this->reorderByPrimaryKeys($entities, $pkValues, $pkColumnNames, $reflection);
-    }
+        // Copy ORDER BY from the original builder
+        $entityBuilder->order = clone $builder->order;
+        $entityBuilder->order->builder = $entityBuilder;
 
-    /**
-     * Reorder entities to match the primary key order from the ID query.
-     *
-     * @param array $entities Hydrated entities (unordered).
-     * @param array $pkValues Ordered PK values from step 1.
-     * @param array $pkColumnNames PK column names.
-     * @param ReflectionEntity $reflection
-     *
-     * @return array Entities in the same order as $pkValues.
-     */
-    private function reorderByPrimaryKeys(
-        array $entities,
-        array $pkValues,
-        array $pkColumnNames,
-        ReflectionEntity $reflection,
-    ): array {
-        // Index entities by their PK signature
-        $indexed = [];
-        foreach ($entities as $entity) {
-            $originalData = $reflection->getHectorData($entity)->get('original', []);
-            $key = implode("\0", array_map(fn(string $col) => (string)($originalData[$col] ?? ''), $pkColumnNames));
-            $indexed[$key] = $entity;
-        }
-
-        // Rebuild array in step 1 order
-        $ordered = [];
-        foreach ($pkValues as $pk) {
-            $key = implode("\0", array_map(fn($v) => (string)$v, $pk));
-
-            if (isset($indexed[$key])) {
-                $ordered[] = $indexed[$key];
-            }
-        }
-
-        return $ordered;
+        return $entityBuilder->all()->getArrayCopy();
     }
 }
