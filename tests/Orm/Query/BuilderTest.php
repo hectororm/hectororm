@@ -480,4 +480,76 @@ class BuilderTest extends AbstractTestCase
         $this->expectExceptionMessage('Unsupported pagination request type');
         $builder->paginate($request);
     }
+
+    public function testPaginateQueryWithOffsetRequest(): void
+    {
+        $builder = new Builder(Film::class);
+        $request = new OffsetPaginationRequest(page: 1, perPage: 5);
+
+        $result = $builder->paginateQuery($request);
+
+        $this->assertInstanceOf(OffsetPagination::class, $result);
+        $this->assertLessThanOrEqual(5, count($result));
+        $this->assertSame(5, $result->getPerPage());
+        $this->assertSame(1, $result->getCurrentPage());
+
+        // Must return raw arrays, not Entity instances
+        foreach ($result as $item) {
+            $this->assertIsArray($item);
+            $this->assertArrayHasKey('film_id', $item);
+        }
+    }
+
+    public function testPaginateQueryWithCursorRequest(): void
+    {
+        $builder = new Builder(Film::class);
+        $builder->orderBy('film_id', 'ASC');
+        $request = new CursorPaginationRequest(perPage: 5);
+
+        $result = $builder->paginateQuery($request);
+
+        $this->assertInstanceOf(CursorPagination::class, $result);
+        $this->assertSame(5, $result->getPerPage());
+
+        // Must return raw arrays, not Entity instances
+        foreach ($result as $item) {
+            $this->assertIsArray($item);
+        }
+    }
+
+    public function testPaginateQueryWithRangeRequest(): void
+    {
+        $builder = new Builder(Film::class);
+        $request = new RangePaginationRequest(start: 0, end: 4);
+
+        $result = $builder->paginateQuery($request);
+
+        $this->assertInstanceOf(RangePagination::class, $result);
+        $this->assertSame(0, $result->getStart());
+        $this->assertSame(4, $result->getEnd());
+
+        // Must return raw arrays, not Entity instances
+        foreach ($result as $item) {
+            $this->assertIsArray($item);
+        }
+    }
+
+    public function testPaginateQueryDoesNotReturnEntities(): void
+    {
+        $builder = new Builder(Film::class);
+        $request = new OffsetPaginationRequest(page: 1, perPage: 3);
+
+        $queryResult = $builder->paginateQuery($request);
+        $ormResult = (new Builder(Film::class))->paginate($request);
+
+        // ORM paginate returns entities
+        foreach ($ormResult as $item) {
+            $this->assertInstanceOf(Entity::class, $item);
+        }
+
+        // Query paginate returns arrays
+        foreach ($queryResult as $item) {
+            $this->assertIsArray($item);
+        }
+    }
 }

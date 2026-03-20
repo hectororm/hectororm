@@ -228,4 +228,63 @@ class CursorPaginationTest extends TestCase
 
         $this->assertArrayNotHasKey('total', $json);
     }
+
+    public function testWithItemsReplacesItems(): void
+    {
+        $pagination = new CursorPagination(['a', 'b', 'c'], 10);
+        $new = $pagination->withItems(['x', 'y']);
+
+        $this->assertSame(['x', 'y'], $new->getArrayCopy());
+    }
+
+    public function testWithItemsPreservesMetadata(): void
+    {
+        $pagination = new CursorPagination(
+            items: ['a', 'b'],
+            perPage: 15,
+            nextPosition: ['id' => 42],
+            previousPosition: ['id' => 10],
+            cursorName: 'my-cursor',
+            total: 100,
+        );
+
+        $new = $pagination->withItems(['x', 'y', 'z']);
+
+        $this->assertSame(15, $new->getPerPage());
+        $this->assertSame(['id' => 42], $new->getNextPosition());
+        $this->assertSame(['id' => 10], $new->getPreviousPosition());
+        $this->assertSame('my-cursor', $new->getCursorName());
+        $this->assertSame(100, $new->getTotal());
+        $this->assertTrue($new->hasMore());
+        $this->assertTrue($new->hasPrevious());
+    }
+
+    public function testWithItemsIsImmutable(): void
+    {
+        $original = new CursorPagination(['a', 'b'], 10);
+        $new = $original->withItems(['x', 'y', 'z']);
+
+        $this->assertNotSame($original, $new);
+        $this->assertSame(['a', 'b'], $original->getArrayCopy());
+        $this->assertSame(['x', 'y', 'z'], $new->getArrayCopy());
+    }
+
+    public function testWithItemsResetsCachedArrayCopy(): void
+    {
+        $pagination = new CursorPagination(['a', 'b'], 10);
+        // Trigger cache
+        $pagination->getArrayCopy();
+
+        $new = $pagination->withItems(['x']);
+
+        $this->assertSame(['x'], $new->getArrayCopy());
+    }
+
+    public function testWithItemsReturnsSameType(): void
+    {
+        $pagination = new CursorPagination(['a'], 10);
+        $new = $pagination->withItems(['x']);
+
+        $this->assertInstanceOf(CursorPagination::class, $new);
+    }
 }

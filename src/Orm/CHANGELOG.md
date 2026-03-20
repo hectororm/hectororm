@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Driver-aware identifier quoting in `AbstractMapper`, `Builder`, `Conditions`, and all Relationship classes using `Statement\Quoted` and `Statement\Expression`
 - `Builder::withPivotColumn()` now accepts `StatementInterface|string` (was `string` only)
 - Method `Builder::paginate()` for built-in pagination support (offset, cursor, range)
+- Method `Builder::paginateQuery()` for query-level pagination without ORM mapping (raw rows)
 - Namespace `Hector\Orm\Pagination` with `BuilderOffsetPaginator`, `BuilderCursorPaginator`, `BuilderRangePaginator`
 
 ### Changed

@@ -404,6 +404,22 @@ class Builder extends QueryBuilder
     }
 
     /**
+     * Paginate at the Query level (raw rows, no ORM mapping).
+     *
+     * Useful for optimized 2-step pagination: paginate IDs first,
+     * then load full entities separately.
+     *
+     * @param PaginationRequestInterface $request
+     * @param bool $withTotal
+     *
+     * @return PaginationInterface
+     */
+    public function paginateQuery(PaginationRequestInterface $request, bool $withTotal = false): PaginationInterface
+    {
+        return parent::paginate($request, $withTotal);
+    }
+
+    /**
      * Paginate results (auto-detection based on request type).
      *
      * @template P of PaginationInterface

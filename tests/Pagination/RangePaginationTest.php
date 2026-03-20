@@ -192,4 +192,60 @@ class RangePaginationTest extends TestCase
         $this->assertStringContainsString('"start":0', $json);
         $this->assertStringContainsString('"end":19', $json);
     }
+
+    public function testWithItemsReplacesItems(): void
+    {
+        $pagination = new RangePagination(['a', 'b', 'c'], 0, 19);
+        $new = $pagination->withItems(['x', 'y']);
+
+        $this->assertSame(['x', 'y'], $new->getArrayCopy());
+    }
+
+    public function testWithItemsPreservesMetadata(): void
+    {
+        $pagination = new RangePagination(
+            items: ['a', 'b'],
+            start: 20,
+            end: 39,
+            total: 100,
+        );
+
+        $new = $pagination->withItems(['x', 'y', 'z']);
+
+        $this->assertSame(20, $new->getStart());
+        $this->assertSame(39, $new->getEnd());
+        $this->assertSame(20, $new->getPerPage());
+        $this->assertSame(100, $new->getTotal());
+        $this->assertTrue($new->hasMore());
+        $this->assertTrue($new->hasPrevious());
+    }
+
+    public function testWithItemsIsImmutable(): void
+    {
+        $original = new RangePagination(['a', 'b'], 0, 19);
+        $new = $original->withItems(['x', 'y', 'z']);
+
+        $this->assertNotSame($original, $new);
+        $this->assertSame(['a', 'b'], $original->getArrayCopy());
+        $this->assertSame(['x', 'y', 'z'], $new->getArrayCopy());
+    }
+
+    public function testWithItemsResetsCachedArrayCopy(): void
+    {
+        $pagination = new RangePagination(['a', 'b'], 0, 19);
+        // Trigger cache
+        $pagination->getArrayCopy();
+
+        $new = $pagination->withItems(['x']);
+
+        $this->assertSame(['x'], $new->getArrayCopy());
+    }
+
+    public function testWithItemsReturnsSameType(): void
+    {
+        $pagination = new RangePagination(['a'], 0, 19);
+        $new = $pagination->withItems(['x']);
+
+        $this->assertInstanceOf(RangePagination::class, $new);
+    }
 }

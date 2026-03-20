@@ -49,6 +49,22 @@ abstract class AbstractPagination implements PaginationInterface
     }
 
     /**
+     * Create a new instance with different items, preserving all pagination metadata.
+     *
+     * @param iterable $items
+     *
+     * @return static
+     */
+    public function withItems(iterable $items): static
+    {
+        $clone = clone $this;
+        $clone->items = $items;
+        $clone->resolvedItems = null;
+
+        return $clone;
+    }
+
+    /**
      * @inheritDoc
      */
     public function getItems(): iterable
