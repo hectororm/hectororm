@@ -13,6 +13,7 @@
 namespace Hector\Orm\Tests\Query;
 
 use Hector\Connection\Bind\BindParamList;
+use Hector\Connection\Log\LogEntry;
 use Hector\Orm\Collection\Collection;
 use Hector\Orm\Collection\LazyCollection;
 use Hector\Orm\Entity\Entity;
@@ -614,5 +615,82 @@ class BuilderTest extends AbstractTestCase
         $this->assertEmpty(array_intersect($page1Ids, $page2Ids));
         // Page 2 IDs should be strictly after page 1 IDs
         $this->assertGreaterThan(max($page1Ids), min($page2Ids));
+    }
+
+    public function testPaginateOptimizedSqlQuery(): void
+    {
+        $logger = $this->getOrm()->getConnection()->getLogger();
+        $nbQueriesBefore = count($logger);
+
+        $builder = new Builder(Film::class);
+        $builder->orderBy('film_id', 'ASC');
+        $request = new OffsetPaginationRequest(page: 2, perPage: 5);
+        $builder->paginate($request, optimized: true);
+
+        $queryLogs = array_values(array_filter(
+            array_slice($logger->getLogs(), $nbQueriesBefore),
+            fn(LogEntry $l) => $l->getType() === LogEntry::TYPE_QUERY,
+        ));
+
+        // Single query with INNER JOIN derived table
+        $this->assertCount(1, $queryLogs);
+        $this->assertSame(
+            'SELECT `main`.`film_id`, `main`.`title`, `main`.`description`, `main`.`release_year`, '
+            . '`main`.`language_id`, `main`.`original_language_id`, `main`.`rental_duration`, '
+            . '`main`.`rental_rate`, `main`.`length`, `main`.`replacement_cost`, `main`.`rating`, '
+            . '`main`.`special_features`, `main`.`last_update` '
+            . 'FROM `sakila`.`film` AS `main` '
+            . 'INNER JOIN ( SELECT DISTINCT `main`.`film_id` '
+            . 'FROM `sakila`.`film` AS `main` '
+            . 'ORDER BY film_id ASC '
+            . 'LIMIT 6 OFFSET 5 ) AS `pagination` '
+            . 'ON ( `main`.`film_id` = `pagination`.`film_id` ) '
+            . 'ORDER BY film_id ASC',
+            $queryLogs[0]->getStatement(),
+        );
+    }
+
+    public function testPaginateNormalSqlQuery(): void
+    {
+        $logger = $this->getOrm()->getConnection()->getLogger();
+        $nbQueriesBefore = count($logger);
+
+        $builder = new Builder(Film::class);
+        $builder->orderBy('film_id', 'ASC');
+        $request = new OffsetPaginationRequest(page: 2, perPage: 5);
+        $builder->paginate($request);
+
+        $queryLogs = array_values(array_filter(
+            array_slice($logger->getLogs(), $nbQueriesBefore),
+            fn(LogEntry $l) => $l->getType() === LogEntry::TYPE_QUERY,
+        ));
+
+        // Single query without INNER JOIN
+        $this->assertCount(1, $queryLogs);
+        $this->assertSame(
+            'SELECT `main`.`film_id`, `main`.`title`, `main`.`description`, `main`.`release_year`, '
+            . '`main`.`language_id`, `main`.`original_language_id`, `main`.`rental_duration`, '
+            . '`main`.`rental_rate`, `main`.`length`, `main`.`replacement_cost`, `main`.`rating`, '
+            . '`main`.`special_features`, `main`.`last_update` '
+            . 'FROM `sakila`.`film` AS `main` '
+            . 'ORDER BY film_id ASC '
+            . 'LIMIT 6 OFFSET 5',
+            $queryLogs[0]->getStatement(),
+        );
+    }
+
+    public function testPaginateOptimizedAndNormalReturnSameData(): void
+    {
+        $request = new OffsetPaginationRequest(page: 1, perPage: 5);
+
+        $normal = (new Builder(Film::class))->orderBy('film_id', 'ASC')->paginate($request);
+        $optimized = (new Builder(Film::class))->orderBy('film_id', 'ASC')->paginate($request, optimized: true);
+
+        $normalIds = array_map(fn(Film $f) => $f->film_id, $normal->getArrayCopy());
+        $optimizedIds = array_map(fn(Film $f) => $f->film_id, $optimized->getArrayCopy());
+
+        // Same entities, same order
+        $this->assertSame($normalIds, $optimizedIds);
+        $this->assertCount(count($normal), $optimized);
     }
 }
