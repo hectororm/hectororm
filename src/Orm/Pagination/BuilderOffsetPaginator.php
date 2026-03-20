@@ -25,10 +25,14 @@ use Hector\Query\QueryBuilder;
  */
 class BuilderOffsetPaginator extends QueryOffsetPaginator
 {
+    use OptimizedFetchTrait;
+
     public function __construct(
         Builder $builder,
         bool $withTotal = true,
+        bool $optimized = false,
     ) {
+        $this->optimized = $optimized;
         parent::__construct($builder, $withTotal);
     }
 
@@ -37,6 +41,10 @@ class BuilderOffsetPaginator extends QueryOffsetPaginator
      */
     protected function fetchItems(QueryBuilder $builder): array
     {
+        if (true === $this->optimized) {
+            return $this->fetchItemsOptimized($builder);
+        }
+
         /** @var Builder $builder */
         return $builder->all()->getArrayCopy();
     }

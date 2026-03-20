@@ -481,75 +481,138 @@ class BuilderTest extends AbstractTestCase
         $builder->paginate($request);
     }
 
-    public function testPaginateQueryWithOffsetRequest(): void
+    public function testPaginateOptimizedWithOffsetRequest(): void
     {
         $builder = new Builder(Film::class);
-        $request = new OffsetPaginationRequest(page: 1, perPage: 5);
+        $request = new OffsetPaginationRequest(page: 2, perPage: 5);
 
-        $result = $builder->paginateQuery($request);
+        $result = $builder->paginate($request, optimized: true);
 
         $this->assertInstanceOf(OffsetPagination::class, $result);
         $this->assertLessThanOrEqual(5, count($result));
         $this->assertSame(5, $result->getPerPage());
-        $this->assertSame(1, $result->getCurrentPage());
+        $this->assertSame(2, $result->getCurrentPage());
 
-        // Must return raw arrays, not Entity instances
+        // Must return Entity instances, not raw arrays
         foreach ($result as $item) {
-            $this->assertIsArray($item);
-            $this->assertArrayHasKey('film_id', $item);
+            $this->assertInstanceOf(Film::class, $item);
         }
     }
 
-    public function testPaginateQueryWithCursorRequest(): void
+    public function testPaginateOptimizedWithCursorRequest(): void
     {
         $builder = new Builder(Film::class);
         $builder->orderBy('film_id', 'ASC');
         $request = new CursorPaginationRequest(perPage: 5);
 
-        $result = $builder->paginateQuery($request);
+        $result = $builder->paginate($request, optimized: true);
 
         $this->assertInstanceOf(CursorPagination::class, $result);
         $this->assertSame(5, $result->getPerPage());
+        $this->assertCount(5, $result);
 
-        // Must return raw arrays, not Entity instances
+        // Must return Entity instances
         foreach ($result as $item) {
-            $this->assertIsArray($item);
+            $this->assertInstanceOf(Film::class, $item);
         }
+
+        // Must have cursor positions
+        $this->assertNotNull($result->getNextPosition());
     }
 
-    public function testPaginateQueryWithRangeRequest(): void
+    public function testPaginateOptimizedWithRangeRequest(): void
     {
         $builder = new Builder(Film::class);
         $request = new RangePaginationRequest(start: 0, end: 4);
 
-        $result = $builder->paginateQuery($request);
+        $result = $builder->paginate($request, optimized: true);
 
         $this->assertInstanceOf(RangePagination::class, $result);
         $this->assertSame(0, $result->getStart());
         $this->assertSame(4, $result->getEnd());
 
-        // Must return raw arrays, not Entity instances
+        // Must return Entity instances
         foreach ($result as $item) {
-            $this->assertIsArray($item);
+            $this->assertInstanceOf(Film::class, $item);
         }
     }
 
-    public function testPaginateQueryDoesNotReturnEntities(): void
+    public function testPaginateOptimizedReturnsCorrectCount(): void
     {
         $builder = new Builder(Film::class);
-        $request = new OffsetPaginationRequest(page: 1, perPage: 3);
+        $request = new OffsetPaginationRequest(page: 1, perPage: 10);
 
-        $queryResult = $builder->paginateQuery($request);
-        $ormResult = (new Builder(Film::class))->paginate($request);
+        $normal = (new Builder(Film::class))->paginate($request);
+        $optimized = (new Builder(Film::class))->paginate($request, optimized: true);
 
-        // ORM paginate returns entities
-        foreach ($ormResult as $item) {
-            $this->assertInstanceOf(Entity::class, $item);
+        // Both should return the same count
+        $this->assertCount(count($normal), $optimized);
+    }
+
+    public function testPaginateOptimizedWithTotal(): void
+    {
+        $builder = new Builder(Film::class);
+        $request = new OffsetPaginationRequest(page: 1, perPage: 5);
+
+        $result = $builder->paginate($request, withTotal: true, optimized: true);
+
+        $this->assertNotNull($result->getTotal());
+        $this->assertGreaterThan(0, $result->getTotal());
+    }
+
+    public function testPaginateOptimizedPreservesOrder(): void
+    {
+        $request = new OffsetPaginationRequest(page: 1, perPage: 10);
+
+        $normal = (new Builder(Film::class))->orderBy('film_id', 'DESC')->paginate($request);
+        $optimized = (new Builder(Film::class))->orderBy('film_id', 'DESC')->paginate($request, optimized: true);
+
+        $normalIds = array_map(fn(Film $f) => $f->film_id, $normal->getArrayCopy());
+        $optimizedIds = array_map(fn(Film $f) => $f->film_id, $optimized->getArrayCopy());
+
+        $this->assertSame($normalIds, $optimizedIds);
+    }
+
+    public function testPaginateOptimizedWithJoin(): void
+    {
+        $builder = new Builder(Film::class);
+        $builder->where('language.name', 'English');
+        $request = new OffsetPaginationRequest(page: 1, perPage: 5);
+
+        $result = $builder->paginate($request, optimized: true);
+
+        $this->assertInstanceOf(OffsetPagination::class, $result);
+        $this->assertLessThanOrEqual(5, count($result));
+
+        foreach ($result as $item) {
+            $this->assertInstanceOf(Film::class, $item);
         }
+    }
 
-        // Query paginate returns arrays
-        foreach ($queryResult as $item) {
-            $this->assertIsArray($item);
-        }
+    public function testPaginateOptimizedCursorNavigation(): void
+    {
+        $builder = new Builder(Film::class);
+        $builder->orderBy('film_id', 'ASC');
+
+        // First page
+        $request1 = new CursorPaginationRequest(perPage: 3);
+        $page1 = $builder->paginate($request1, optimized: true);
+
+        $this->assertCount(3, $page1);
+        $this->assertNotNull($page1->getNextPosition());
+
+        // Second page using cursor from first page
+        $request2 = new CursorPaginationRequest(perPage: 3, position: $page1->getNextPosition());
+        $page2 = (new Builder(Film::class))->orderBy('film_id', 'ASC')->paginate($request2, optimized: true);
+
+        $this->assertCount(3, $page2);
+
+        // Pages must not overlap
+        $page1Ids = array_map(fn(Film $f) => $f->film_id, $page1->getArrayCopy());
+        $page2Ids = array_map(fn(Film $f) => $f->film_id, $page2->getArrayCopy());
+
+        $this->assertEmpty(array_intersect($page1Ids, $page2Ids));
+        // Page 2 IDs should be strictly after page 1 IDs
+        $this->assertGreaterThan(max($page1Ids), min($page2Ids));
     }
 }

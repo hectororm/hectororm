@@ -18,7 +18,6 @@ namespace Hector\Orm\Pagination;
 use Hector\Orm\Entity\Entity;
 use Hector\Orm\Entity\ReflectionEntity;
 use Hector\Orm\Query\Builder;
-use Hector\Pagination\Encoder\CursorEncoderInterface;
 use Hector\Query\Pagination\QueryCursorPaginator;
 use Hector\Query\QueryBuilder;
 
@@ -28,10 +27,14 @@ use Hector\Query\QueryBuilder;
  */
 class BuilderCursorPaginator extends QueryCursorPaginator
 {
+    use OptimizedFetchTrait;
+
     public function __construct(
         Builder $builder,
         bool $withTotal = true,
+        bool $optimized = false,
     ) {
+        $this->optimized = $optimized;
         parent::__construct($builder, $withTotal);
     }
 
@@ -40,6 +43,10 @@ class BuilderCursorPaginator extends QueryCursorPaginator
      */
     protected function fetchItems(QueryBuilder $builder): array
     {
+        if (true === $this->optimized) {
+            return $this->fetchItemsOptimized($builder);
+        }
+
         /** @var Builder $builder */
         return $builder->all()->getArrayCopy();
     }

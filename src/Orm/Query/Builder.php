@@ -55,6 +55,8 @@ class Builder extends QueryBuilder
 
     /** @var ReflectionEntity<T> Reflection of the target entity. */
     private ReflectionEntity $entityReflection;
+    /** @var class-string<T> Entity class name. */
+    private string $entityClass;
     /** @var array<string,mixed> Relations to eager‑load. */
     public array $with = [];
 
@@ -67,8 +69,19 @@ class Builder extends QueryBuilder
      */
     public function __construct(string $entity)
     {
+        $this->entityClass = $entity;
         $this->entityReflection = ReflectionEntity::get($entity);
         parent::__construct(Orm::get()->getConnection($this->entityReflection->connection));
+    }
+
+    /**
+     * Get the entity class name.
+     *
+     * @return class-string<T>
+     */
+    public function getEntityClass(): string
+    {
+        return $this->entityClass;
     }
 
     /**
@@ -404,37 +417,29 @@ class Builder extends QueryBuilder
     }
 
     /**
-     * Paginate at the Query level (raw rows, no ORM mapping).
-     *
-     * Useful for optimized 2-step pagination: paginate IDs first,
-     * then load full entities separately.
-     *
-     * @param PaginationRequestInterface $request
-     * @param bool $withTotal
-     *
-     * @return PaginationInterface
-     */
-    public function paginateQuery(PaginationRequestInterface $request, bool $withTotal = false): PaginationInterface
-    {
-        return parent::paginate($request, $withTotal);
-    }
-
-    /**
      * Paginate results (auto-detection based on request type).
+     *
+     * When `$optimized` is true, pagination uses a subquery to select distinct
+     * primary keys first, then loads full entities. This prevents row
+     * duplication caused by JOINs from affecting the per-page count.
      *
      * @template P of PaginationInterface
      *
      * @param PaginationRequestInterface $request
      * @param bool $withTotal
+     * @param bool $optimized
      *
      * @return P
      */
-    public function paginate(PaginationRequestInterface $request, bool $withTotal = false): PaginationInterface
-    {
+    public function paginate(
+        PaginationRequestInterface $request,
+        bool $withTotal = false,
+        bool $optimized = false,
+    ): PaginationInterface {
         $queryPaginator = match (true) {
-            $request instanceof CursorPaginationRequest => new BuilderCursorPaginator($this, $withTotal),
-            $request instanceof RangePaginationRequest => new BuilderRangePaginator($this, $withTotal),
-            $request instanceof OffsetPaginationRequest => new BuilderOffsetPaginator($this, $withTotal),
+            $request instanceof CursorPaginationRequest => new BuilderCursorPaginator($this, $withTotal, $optimized),
+            $request instanceof RangePaginationRequest => new BuilderRangePaginator($this, $withTotal, $optimized),
+            $request instanceof OffsetPaginationRequest => new BuilderOffsetPaginator($this, $withTotal, $optimized),
             default => throw new InvalidArgumentException(sprintf(
                 'Unsupported pagination request type: %s',
                 get_class($request)
