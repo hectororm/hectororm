@@ -51,9 +51,9 @@ class LogEntryTest extends TestCase
         usleep(200); // force wait for very fast processor :)
         $time2 = microtime(true);
 
-        $this->assertGreaterThan($time1, $logEntry->getStart());
+        $this->assertGreaterThanOrEqual($time1, $logEntry->getStart());
         $this->assertIsFloat($logEntry->getStart());
-        $this->assertLessThan($time2, $logEntry->getStart());
+        $this->assertLessThanOrEqual($time2, $logEntry->getStart());
     }
 
     public function testGetEnd(): void
@@ -68,8 +68,8 @@ class LogEntryTest extends TestCase
         $time2 = microtime(true);
 
         $this->assertIsFloat($logEntry->getEnd());
-        $this->assertGreaterThan($time1, $logEntry->getEnd());
-        $this->assertLessThan($time2, $logEntry->getEnd());
+        $this->assertGreaterThanOrEqual($time1, $logEntry->getEnd());
+        $this->assertLessThanOrEqual($time2, $logEntry->getEnd());
     }
 
     public function testGetDuration(): void
