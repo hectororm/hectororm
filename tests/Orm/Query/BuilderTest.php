@@ -401,6 +401,22 @@ class BuilderTest extends AbstractTestCase
             $statement);
     }
 
+    public function testWhereWithDeepNamedRelations(): void
+    {
+        Orm::$alias = 0;
+        $builder = new Builder(Staff::class);
+        $builder->where('address.city.city', 'Paris');
+        $builder->where('address.city.country_id', 1);
+
+        $this->assertEquals(
+            'SELECT DISTINCT `main`.`staff_id`, `main`.`first_name`, `main`.`last_name`, `main`.`address_id`, `main`.`picture`, `main`.`email`, `main`.`store_id`, `main`.`active`, `main`.`username`, `main`.`password`, `main`.`last_update` ' .
+            'FROM `sakila`.`staff` AS `main` ' .
+            'LEFT JOIN `sakila`.`address` AS `address` ON ( `main`.`address_id` = `address`.`address_id` ) ' .
+            'LEFT JOIN `sakila`.`city` AS `address#city` ON ( `address`.`city_id` = `address#city`.`city_id` ) ' .
+            'WHERE `address#city`.`city` = :_h_0 AND `address#city`.`country_id` = :_h_1',
+            $builder->getStatement(new BindParamList()));
+    }
+
     public function testPaginateWithOffsetRequest(): void
     {
         $builder = new Builder(Film::class);

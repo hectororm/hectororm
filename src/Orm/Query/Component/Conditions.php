@@ -45,7 +45,7 @@ class Conditions extends \Hector\Query\Component\Conditions
                 $columns
             );
             $depth = count($columns) - 1;
-            $alias = implode('.', array_slice($columns, 0, $depth));
+            $alias = implode('#', array_slice($columns, 0, $depth));
 
             // Relation already join
             if (true === $this->builder->join->hasAlias($alias)) {
@@ -72,7 +72,7 @@ class Conditions extends \Hector\Query\Component\Conditions
                 $relationship = $mapper->getRelationships()->get($columns[$i]);
                 $alias = $relationship->addJoinToBuilder(
                     $this->builder,
-                    implode('.', array_slice($columns, 0, $i + 1)),
+                    implode('#', array_slice($columns, 0, $i + 1)),
                     $alias
                 );
                 $entityClass = $relationship->getTargetEntity();
