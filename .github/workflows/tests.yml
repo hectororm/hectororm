@@ -19,7 +19,7 @@ jobs:
         php-versions: [ '8.0', '8.1', '8.2', '8.3', '8.4', '8.5' ]
         stability: [ 'prefer-lowest', 'prefer-stable' ]
         database: [
-          { distribution: 'mysql', version: '9.6' },
+          { distribution: 'mysql', version: '9.7' },
           { distribution: 'mysql', version: '8.4' },
           { distribution: 'mysql', version: '8.0' },
           { distribution: 'mysql', version: '5.7' },
