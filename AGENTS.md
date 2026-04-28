@@ -2,104 +2,80 @@
 
 ## Project Overview
 
-**Hector ORM** is a modern, modular, and lightweight Object-Relational Mapping (ORM) framework for PHP 8.0+.
+PHP 8.0+ modular ORM structured as a **Composer monorepo** with 8 decoupled packages under `src/`:
 
-It is structured as a **monorepo** with independent, decoupled packages:
+| Package | Namespace | Directory |
+|---|---|---|
+| `hectororm/collection` | `Hector\Collection` | `src/Collection/` |
+| `hectororm/connection` | `Hector\Connection` | `src/Connection/` |
+| `hectororm/data-types` | `Hector\DataTypes` | `src/DataTypes/` |
+| `hectororm/migration` | `Hector\Migration` | `src/Migration/` |
+| `hectororm/orm` | `Hector\Orm` | `src/Orm/` |
+| `hectororm/pagination` | `Hector\Pagination` | `src/Pagination/` |
+| `hectororm/query` | `Hector\Query` | `src/Query/` |
+| `hectororm/schema` | `Hector\Schema` | `src/Schema/` |
 
-| Package                | Namespace           | Description                                  |
-|------------------------|---------------------|----------------------------------------------|
-| `hectororm/collection` | `Hector\Collection` | Typed collection and lazy collection classes |
-| `hectororm/connection` | `Hector\Connection` | PDO wrapper, connection set, drivers, logs   |
-| `hectororm/data-types` | `Hector\DataTypes`  | Type casting and expected type definitions   |
-| `hectororm/migration`  | `Hector\Migration`  | Database migration runner, providers, trackers|
-| `hectororm/orm`        | `Hector\Orm`        | Entity mapping, relationships, storage       |
-| `hectororm/pagination` | `Hector\Pagination` | Pagination utilities                         |
-| `hectororm/query`      | `Hector\Query`      | Query builder (Select, Insert, Update, etc.) |
-| `hectororm/schema`     | `Hector\Schema`     | Schema introspection (tables, columns, FK)   |
+Root `composer.json` uses `"replace"` to satisfy all sub-package requirements. Sub-package repos on GitHub are **read-only mirrors** auto-published by CI (`config.subsplit-publish.json`). All PRs go to the monorepo.
 
-Sub-repositories are **read-only** and auto-synced via `config.subsplit-publish.json`.
+## Commands
 
----
-
-## Code Conventions
-
-- **PHP Version:** 8.0 minimum (`declare(strict_types=1);` everywhere)
-- **Coding Standard:** PSR-12 / PER
-- **Autoloading:** PSR-4 (see `composer.json`)
-- **Testing:** PHPUnit 9.6 (`tests/` mirrors `src/` structure)
-- **Static Analysis:** PHPStan (level max recommended)
-- **Refactoring:** Rector (`rector.php` at root)
-
----
-
-## Directory Layout
-
+```bash
+composer install                           # install deps
+vendor/bin/phpunit                         # run all tests
+vendor/bin/phpunit tests/Query             # run one package's tests
+vendor/bin/phpunit --filter ClassName      # run a single test class
+vendor/bin/rector                          # run Rector (src/ + tests/)
+vendor/bin/rector --dry-run                # preview Rector changes
 ```
-src/
-├── Collection/      # hectororm/collection
-├── Connection/      # hectororm/connection
-├── DataTypes/       # hectororm/data-types
-├── Migration/       # hectororm/migration
-├── Orm/             # hectororm/orm (main ORM logic)
-├── Pagination/      # hectororm/pagination
-├── Query/           # hectororm/query
-└── Schema/          # hectororm/schema
-
-tests/               # PHPUnit tests (same structure as src/)
-bin/                 # Release tooling
-```
-
----
-
-## Key Entry Points
-
-| Component  | Main Class(es)                                     |
-|------------|----------------------------------------------------|
-| Migration  | `Hector\Migration\MigrationRunner`                  |
-| ORM        | `Hector\Orm\Orm`, `Hector\Orm\OrmFactory`          |
-| Query      | `Hector\Query\QueryBuilder`, `Select`, `Insert`…   |
-| Connection | `Hector\Connection\Connection`, `ConnectionSet`    |
-| Schema     | `Hector\Schema\SchemaContainer`, `Table`, `Column` |
-| Collection | `Hector\Collection\Collection`, `LazyCollection`   |
-| DataTypes  | `Hector\DataTypes\TypeSet`, `ExpectedType`         |
-
----
 
 ## Testing
 
-```bash
-composer install
-vendor/bin/phpunit
-```
-
-Tests require `pdo_sqlite` and optionally `pdo_mysql`.
-
----
+- **PHPUnit 9.6** with config in `phpunit.xml.dist`; `tests/` mirrors `src/` structure
+- **SQLite tests** require `ext-pdo_sqlite` (always needed)
+- **MySQL/MariaDB tests** require `ext-pdo_mysql` and a running server with the **Sakila sample database** loaded:
+  ```bash
+  mysql -uroot < tests/Assets/Sakila/mysql-schema.sql
+  mysql -uroot < tests/Assets/Sakila/mysql-data.sql
+  ```
+- Default DSN: `mysql:host=localhost;dbname=sakila;user=root` — override with env `MYSQL_DSN`
+- CI matrix: PHP 8.0–8.5 × MySQL 5.7/8.0/8.4/9.6 + MariaDB 10.5–12.2 × `prefer-lowest`/`prefer-stable`
 
 ## Coding Style
 
-- **Conditions:** Use Yoda conditions for literal comparisons: `false === $var`, `true === $var`, `null === $var` instead of `!$var`, `$var === true`, etc.
-- **Guard clauses:** Prefer `continue`/`return` as early exits instead of wrapping blocks in `if (!condition) { ... }`.
-- **Collections/Plans:** Implement `IteratorAggregate` + `Countable`, provide `getArrayCopy(): array` for array access.
-
----
+- `declare(strict_types=1);` in every PHP file
+- PSR-12 / PER coding standard; PSR-4 autoloading
+- **4-space indent** for PHP, 2-space for other files (`.editorconfig`), LF line endings, 120 char max line length
+- **Yoda conditions required:** `false === $var`, `null === $var`, `true === $var` — not `$var === false`
+- **Guard clauses preferred:** early `return`/`continue` instead of nested `if` blocks
+- **Collections pattern:** implement `IteratorAggregate` + `Countable`, provide `getArrayCopy(): array`
+- No PHP-CS-Fixer or PHPCS config — style enforced via Rector and review
+- Rector config (`rector.php`): PHP upgrade sets, type coverage level 10, dead code level 10, code quality level 10, auto-imports with unused import removal
 
 ## Changelogs
 
-- **Root `CHANGELOG.md`**: auto-generated, **do NOT edit manually**. Only add new packages to it if needed.
-- **Sub-package `src/<Package>/CHANGELOG.md`**: maintained manually. Update the `[Unreleased]` section when adding features or fixes to that package.
+- **Root `CHANGELOG.md`:** auto-generated by `bin/prepare-release.php` — **do NOT edit manually**
+- **Sub-package `src/<Package>/CHANGELOG.md`:** maintained manually; update the `[Unreleased]` section when adding features or fixes
 
----
+## Release Process
 
-## Contributing
+```bash
+# 1. Dry-run to verify changelog merge
+php bin/prepare-release.php <version> <YYYY-MM-DD> [Package1 ...] --dry-run
+# 2. Run for real
+php bin/prepare-release.php <version> <YYYY-MM-DD> [Package1 ...]
+# 3. Commit and tag
+git add -A
+git commit -m "Release v<version>"
+git tag v<version>
+# 4. Push (triggers sub-split publishing via GitHub Actions)
+git push origin main --tags
+# 5. Create GitHub release with content from root CHANGELOG.md's version section
+gh release create v<version> --title "v<version>" --notes "<notes>"
+```
 
-- All issues and PRs must be opened in the **monorepo** (`hectororm/hectororm`).
-- Follow existing code style; run PHPStan and Rector before submitting.
-- Write or update tests for any new feature or bugfix.
+## Pre-Submit Checklist
 
----
-
-## Documentation
-
-Full docs: [https://gethectororm.com](https://gethectororm.com)  
-Source: see `HectorDocs` repository (Markdown files).
+- Run Rector (`vendor/bin/rector`) and commit any changes
+- Run PHPUnit and ensure tests pass
+- Update the relevant `src/<Package>/CHANGELOG.md` `[Unreleased]` section
+- Write or update tests for any new feature or bugfix
