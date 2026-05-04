@@ -74,8 +74,8 @@ class SetType extends AbstractType
             return true;
         }
 
-        $entityData = explode(',', $entityData ?? '');
-        $schemaData = explode(',', $schemaData ?? '');
+        $entityData = is_array($entityData) ? $entityData : explode(',', (string)($entityData ?? ''));
+        $schemaData = is_array($schemaData) ? $schemaData : explode(',', (string)($schemaData ?? ''));
 
         return empty(array_diff($entityData, $schemaData)) && empty(array_diff($schemaData, $entityData));
     }

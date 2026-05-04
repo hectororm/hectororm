@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix `DefaultType::toSchema()` return type from `string` to `mixed` to match interface and actual behavior
 - Fix `JsonType::equals()` comparing decoded entity data with JSON string, causing unnecessary UPDATE queries
 - Fix typo in `TypeSet`: `longblog` renamed to `longblob`
+- Fix `SetType::equals()` crashing with `TypeError` when entity data is an array
 
 ## [1.2.2] - 2026-02-05
 

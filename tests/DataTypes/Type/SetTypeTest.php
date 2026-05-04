@@ -114,4 +114,20 @@ class SetTypeTest extends TestCase
         $this->assertFalse($type->equals('foo,bar,baz', 'foo,bar'));
         $this->assertFalse($type->equals('foo,baz', 'foo,bar,baz'));
     }
+
+    public function testEqualsWithArrayEntityData(): void
+    {
+        $type = new SetType();
+
+        $this->assertTrue($type->equals(['foo', 'bar', 'baz'], 'baz,foo,bar'));
+        $this->assertFalse($type->equals(['foo', 'bar', 'baz'], 'foo,bar'));
+    }
+
+    public function testEqualsWithBothArrays(): void
+    {
+        $type = new SetType();
+
+        $this->assertTrue($type->equals(['foo', 'bar'], ['bar', 'foo']));
+        $this->assertFalse($type->equals(['foo', 'bar'], ['foo']));
+    }
 }
