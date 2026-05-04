@@ -288,7 +288,7 @@ trait Where
      */
     public function whereContains(Closure|StatementInterface|string $column, string $value): static
     {
-        return $this->andWhere($column, 'LIKE', sprintf('%%%s%%', $value));
+        return $this->andWhere($column, 'LIKE', sprintf('%%%s%%', $this->escapeLike($value)));
     }
 
     /**
@@ -301,7 +301,7 @@ trait Where
      */
     public function whereStartsWith(Closure|StatementInterface|string $column, string $value): static
     {
-        return $this->andWhere($column, 'LIKE', sprintf('%s%%', $value));
+        return $this->andWhere($column, 'LIKE', sprintf('%s%%', $this->escapeLike($value)));
     }
 
     /**
@@ -314,6 +314,18 @@ trait Where
      */
     public function whereEndsWith(Closure|StatementInterface|string $column, string $value): static
     {
-        return $this->andWhere($column, 'LIKE', sprintf('%%%s', $value));
+        return $this->andWhere($column, 'LIKE', sprintf('%%%s', $this->escapeLike($value)));
+    }
+
+    /**
+     * Escape LIKE wildcard characters.
+     *
+     * @param string $value
+     *
+     * @return string
+     */
+    private function escapeLike(string $value): string
+    {
+        return str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $value);
     }
 }

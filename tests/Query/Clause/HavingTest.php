@@ -494,4 +494,49 @@ class HavingTest extends TestCase
             array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
+
+    public function testHavingContainsEscapesWildcards(): void
+    {
+        /** @var Having $clause */
+        $clause = $this->getMockForTrait(Having::class);
+        $binds = new BindParamList();
+        $clause->resetHaving();
+        $clause->havingContains('foo', '100%');
+
+        $clause->having->getStatement($binds);
+        $this->assertEquals(
+            ['_h_0' => '%100\\%%'],
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
+        );
+    }
+
+    public function testHavingStartsWithEscapesWildcards(): void
+    {
+        /** @var Having $clause */
+        $clause = $this->getMockForTrait(Having::class);
+        $binds = new BindParamList();
+        $clause->resetHaving();
+        $clause->havingStartsWith('foo', 'user_name');
+
+        $clause->having->getStatement($binds);
+        $this->assertEquals(
+            ['_h_0' => 'user\\_name%'],
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
+        );
+    }
+
+    public function testHavingEndsWithEscapesWildcards(): void
+    {
+        /** @var Having $clause */
+        $clause = $this->getMockForTrait(Having::class);
+        $binds = new BindParamList();
+        $clause->resetHaving();
+        $clause->havingEndsWith('foo', 'path\\to');
+
+        $clause->having->getStatement($binds);
+        $this->assertEquals(
+            ['_h_0' => '%path\\\\to'],
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
+        );
+    }
 }

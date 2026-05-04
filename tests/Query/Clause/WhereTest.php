@@ -516,4 +516,49 @@ class WhereTest extends TestCase
             array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
     }
+
+    public function testWhereContainsEscapesWildcards(): void
+    {
+        /** @var Where $clause */
+        $clause = $this->getMockForTrait(Where::class);
+        $binds = new BindParamList();
+        $clause->resetWhere();
+        $clause->whereContains('foo', '100%');
+
+        $clause->where->getStatement($binds);
+        $this->assertEquals(
+            ['_h_0' => '%100\\%%'],
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
+        );
+    }
+
+    public function testWhereStartsWithEscapesWildcards(): void
+    {
+        /** @var Where $clause */
+        $clause = $this->getMockForTrait(Where::class);
+        $binds = new BindParamList();
+        $clause->resetWhere();
+        $clause->whereStartsWith('foo', 'user_name');
+
+        $clause->where->getStatement($binds);
+        $this->assertEquals(
+            ['_h_0' => 'user\\_name%'],
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
+        );
+    }
+
+    public function testWhereEndsWithEscapesWildcards(): void
+    {
+        /** @var Where $clause */
+        $clause = $this->getMockForTrait(Where::class);
+        $binds = new BindParamList();
+        $clause->resetWhere();
+        $clause->whereEndsWith('foo', 'path\\to');
+
+        $clause->where->getStatement($binds);
+        $this->assertEquals(
+            ['_h_0' => '%path\\\\to'],
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
+        );
+    }
 }

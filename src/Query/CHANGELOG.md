@@ -35,6 +35,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `Component\EncapsulateHelperTrait` — replaced by `Statement\Encapsulated` and `CompoundStatementInterface`
 
+### Fixed
+
+- Escape LIKE wildcard characters (`%`, `_`, `\`) in `whereContains`, `whereStartsWith`, `whereEndsWith` and their Having equivalents
+
 ## [1.2.2] - 2026-02-05
 
 ### Fixed
