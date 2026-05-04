@@ -13,6 +13,7 @@
 namespace Hector\DataTypes\Tests\Type;
 
 use BackedEnum;
+use Hector\DataTypes\Exception\ValueException;
 use Hector\DataTypes\ExpectedType;
 use Hector\DataTypes\Type\EnumType;
 use PHPUnit\Framework\TestCase;
@@ -94,6 +95,16 @@ class EnumTypeTest extends TestCase
 
         $type = new EnumType(FakeEnumString::class);
         $type->fromSchema('1', $expectedType);
+    }
+
+    public function testFromSchemaWithMismatchedEnumTypeThrows(): void
+    {
+        $this->expectException(ValueException::class);
+
+        $expectedType = ExpectedType::from(FakeEnumInt::class);
+
+        $type = new EnumType(FakeEnumString::class);
+        $type->fromSchema('foo', $expectedType);
     }
 
     public function testToSchema(): void

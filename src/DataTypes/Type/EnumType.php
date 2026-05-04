@@ -54,7 +54,7 @@ class EnumType extends AbstractType
             }
 
             if ($this->enum !== $expected->getName()) {
-                ValueException::castError($this);
+                throw ValueException::castError($this);
             }
         }
 
