@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - `Collection::first()` and `Collection::last()` now correctly return `false` and `0` values instead of `null`
+- `Collection::__construct()` now properly handles `Closure` arguments (invokes the closure to produce an iterable)
 
 ## [1.2.2] - 2026-02-05
 

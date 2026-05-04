@@ -61,12 +61,16 @@ class Collection implements CollectionInterface, ArrayAccess
     /**
      * Init list from iterable.
      *
-     * @param iterable $iterable
+     * @param iterable|Closure $iterable
      *
      * @return array
      */
-    protected function initList(iterable $iterable = []): array
+    protected function initList(iterable|Closure $iterable = []): array
     {
+        if ($iterable instanceof Closure) {
+            $iterable = $iterable();
+        }
+
         if ($iterable instanceof Traversable) {
             return iterator_to_array($iterable);
         }

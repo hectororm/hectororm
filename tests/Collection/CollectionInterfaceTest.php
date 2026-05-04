@@ -44,6 +44,18 @@ class CollectionInterfaceTest extends TestCase
     /**
      * @dataProvider collectionTypeProvider
      */
+    public function testNewWithClosure(string $class): void
+    {
+        /** @var class-string<CollectionInterface> $class */
+        $collection = $class::new(fn() => yield from ['foo', 'bar', 'baz']);
+
+        $this->assertInstanceOf($class, $collection);
+        $this->assertSame(['foo', 'bar', 'baz'], $collection->getArrayCopy());
+    }
+
+    /**
+     * @dataProvider collectionTypeProvider
+     */
     public function testGetArrayCopy(string $class): void
     {
         $collection = new $class($arr = ['foo', 'bar', 'baz', 'qux', 'quxx']);
