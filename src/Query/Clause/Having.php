@@ -16,6 +16,7 @@ namespace Hector\Query\Clause;
 
 use Closure;
 use Hector\Query\Component\Conditions;
+use Hector\Query\Helper;
 use Hector\Query\Statement\Between;
 use Hector\Query\Statement\NotBetween;
 use Hector\Query\Statement\SqlFunction;
@@ -288,7 +289,7 @@ trait Having
      */
     public function havingContains(Closure|StatementInterface|string $column, string $value): static
     {
-        return $this->andHaving($column, 'LIKE', sprintf('%%%s%%', $this->escapeLike($value)));
+        return $this->andHaving($column, 'LIKE', sprintf('%%%s%%', Helper::escapeLike($value)));
     }
 
     /**
@@ -301,7 +302,7 @@ trait Having
      */
     public function havingStartsWith(Closure|StatementInterface|string $column, string $value): static
     {
-        return $this->andHaving($column, 'LIKE', sprintf('%s%%', $this->escapeLike($value)));
+        return $this->andHaving($column, 'LIKE', sprintf('%s%%', Helper::escapeLike($value)));
     }
 
     /**
@@ -314,18 +315,6 @@ trait Having
      */
     public function havingEndsWith(Closure|StatementInterface|string $column, string $value): static
     {
-        return $this->andHaving($column, 'LIKE', sprintf('%%%s', $this->escapeLike($value)));
-    }
-
-    /**
-     * Escape LIKE wildcard characters.
-     *
-     * @param string $value
-     *
-     * @return string
-     */
-    private function escapeLike(string $value): string
-    {
-        return str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $value);
+        return $this->andHaving($column, 'LIKE', sprintf('%%%s', Helper::escapeLike($value)));
     }
 }

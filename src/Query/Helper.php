@@ -52,4 +52,16 @@ class Helper
 
         return sprintf('%1$s%2$s%1$s', $quote, str_replace($quote, $quote . $quote, $name));
     }
+
+    /**
+     * Escape LIKE wildcard characters.
+     *
+     * @param string $value
+     *
+     * @return string
+     */
+    public static function escapeLike(string $value): string
+    {
+        return str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $value);
+    }
 }
