@@ -1,4 +1,7 @@
 <?php
+
+use Hector\Migration\Tests\Fake\CreateUsersTableMigration;
+
 /*
  * This file is part of Hector ORM.
  *
@@ -9,5 +12,4 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code, to the root.
  */
-
-return Hector\Migration\Tests\Fake\CreateUsersTableMigration::class;
+return CreateUsersTableMigration::class;

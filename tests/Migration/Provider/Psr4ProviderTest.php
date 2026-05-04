@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace Hector\Migration\Tests\Provider;
 
+use Hector\Migration\Tests\Fake\Psr4\NotAMigration;
 use Hector\Migration\Exception\MigrationException;
 use Hector\Migration\MigrationInterface;
 use Hector\Migration\Provider\Psr4Provider;
@@ -60,10 +61,10 @@ class Psr4ProviderTest extends TestCase
 
         $ids = array_keys($provider->getArrayCopy());
 
-        $this->assertContains('Hector\\Migration\\Tests\\Fake\\Psr4\\CreateUsers', $ids);
-        $this->assertContains('Hector\\Migration\\Tests\\Fake\\Psr4\\AddPosts', $ids);
-        $this->assertContains('Hector\\Migration\\Tests\\Fake\\Psr4\\NoAttribute', $ids);
-        $this->assertContains('Hector\\Migration\\Tests\\Fake\\Psr4\\Sub\\CreateComments', $ids);
+        $this->assertContains(CreateUsers::class, $ids);
+        $this->assertContains(AddPosts::class, $ids);
+        $this->assertContains(NoAttribute::class, $ids);
+        $this->assertContains(CreateComments::class, $ids);
     }
 
     public function testSkipsNonMigrationClasses(): void
@@ -75,7 +76,7 @@ class Psr4ProviderTest extends TestCase
 
         $ids = array_keys($provider->getArrayCopy());
 
-        $this->assertNotContains('Hector\\Migration\\Tests\\Fake\\Psr4\\NotAMigration', $ids);
+        $this->assertNotContains(NotAMigration::class, $ids);
     }
 
     public function testSortedAlphabeticallyByFqcn(): void
@@ -89,10 +90,10 @@ class Psr4ProviderTest extends TestCase
 
         // Sorted alphabetically by file path (which maps to FQCN order)
         $this->assertSame([
-            'Hector\\Migration\\Tests\\Fake\\Psr4\\AddPosts',
-            'Hector\\Migration\\Tests\\Fake\\Psr4\\CreateUsers',
-            'Hector\\Migration\\Tests\\Fake\\Psr4\\NoAttribute',
-            'Hector\\Migration\\Tests\\Fake\\Psr4\\Sub\\CreateComments',
+            AddPosts::class,
+            CreateUsers::class,
+            NoAttribute::class,
+            CreateComments::class,
         ], $ids);
     }
 
@@ -109,7 +110,7 @@ class Psr4ProviderTest extends TestCase
 
         $ids = array_keys($provider->getArrayCopy());
 
-        $this->assertNotContains('Hector\\Migration\\Tests\\Fake\\Psr4\\Sub\\CreateComments', $ids);
+        $this->assertNotContains(CreateComments::class, $ids);
     }
 
     public function testCorrectInstances(): void
@@ -121,11 +122,11 @@ class Psr4ProviderTest extends TestCase
 
         $migrations = $provider->getArrayCopy();
 
-        $this->assertInstanceOf(CreateUsers::class, $migrations['Hector\\Migration\\Tests\\Fake\\Psr4\\CreateUsers']);
-        $this->assertInstanceOf(AddPosts::class, $migrations['Hector\\Migration\\Tests\\Fake\\Psr4\\AddPosts']);
-        $this->assertInstanceOf(NoAttribute::class, $migrations['Hector\\Migration\\Tests\\Fake\\Psr4\\NoAttribute']);
+        $this->assertInstanceOf(CreateUsers::class, $migrations[CreateUsers::class]);
+        $this->assertInstanceOf(AddPosts::class, $migrations[AddPosts::class]);
+        $this->assertInstanceOf(NoAttribute::class, $migrations[NoAttribute::class]);
         $this->assertInstanceOf(CreateComments::class,
-            $migrations['Hector\\Migration\\Tests\\Fake\\Psr4\\Sub\\CreateComments']);
+            $migrations[CreateComments::class]);
     }
 
     public function testNonExistentDirectoryThrows(): void
@@ -151,7 +152,7 @@ class Psr4ProviderTest extends TestCase
 
         $container = $this->createMock(ContainerInterface::class);
         $container->method('has')
-            ->willReturnCallback(fn(string $id) => $id === CreateUsers::class);
+            ->willReturnCallback(fn(string $id): bool => $id === CreateUsers::class);
         $container->method('get')
             ->with(CreateUsers::class)
             ->willReturn($expectedMigration);
@@ -164,7 +165,7 @@ class Psr4ProviderTest extends TestCase
 
         $migrations = $provider->getArrayCopy();
 
-        $this->assertSame($expectedMigration, $migrations['Hector\\Migration\\Tests\\Fake\\Psr4\\CreateUsers']);
+        $this->assertSame($expectedMigration, $migrations[CreateUsers::class]);
     }
 
     public function testIteratorAggregate(): void
@@ -207,9 +208,9 @@ class Psr4ProviderTest extends TestCase
 
         $ids = array_keys($provider->getArrayCopy());
 
-        $this->assertContains('Hector\\Migration\\Tests\\Fake\\Psr4\\CreateUsers', $ids);
-        $this->assertContains('Hector\\Migration\\Tests\\Fake\\Psr4\\Sub\\CreateComments', $ids);
-        $this->assertNotContains('Hector\\Migration\\Tests\\Fake\\Psr4\\AddPosts', $ids);
-        $this->assertNotContains('Hector\\Migration\\Tests\\Fake\\Psr4\\NoAttribute', $ids);
+        $this->assertContains(CreateUsers::class, $ids);
+        $this->assertContains(CreateComments::class, $ids);
+        $this->assertNotContains(AddPosts::class, $ids);
+        $this->assertNotContains(NoAttribute::class, $ids);
     }
 }

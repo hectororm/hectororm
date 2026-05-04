@@ -45,11 +45,11 @@ class ChainTracker implements MigrationTrackerInterface
             match ($this->strategy) {
                 ChainStrategy::FIRST => $this->trackers[0]->getArrayCopy(),
                 ChainStrategy::ANY => array_unique(array_merge(...array_map(
-                    fn(MigrationTrackerInterface $tracker) => $tracker->getArrayCopy(),
+                    fn(MigrationTrackerInterface $tracker): array => $tracker->getArrayCopy(),
                     $this->trackers,
                 ))),
                 ChainStrategy::ALL => array_intersect(...array_map(
-                    fn(MigrationTrackerInterface $tracker) => $tracker->getArrayCopy(),
+                    fn(MigrationTrackerInterface $tracker): array => $tracker->getArrayCopy(),
                     $this->trackers,
                 )),
                 default => throw new MigrationException(sprintf('Unexpected strategy "%s"', $this->strategy)),
@@ -84,11 +84,11 @@ class ChainTracker implements MigrationTrackerInterface
             ChainStrategy::FIRST => $this->trackers[0]->isApplied($migrationId),
             ChainStrategy::ANY => (bool)array_filter(
                 $this->trackers,
-                fn(MigrationTrackerInterface $tracker) => $tracker->isApplied($migrationId),
+                fn(MigrationTrackerInterface $tracker): bool => $tracker->isApplied($migrationId),
             ),
             ChainStrategy::ALL => empty(array_filter(
                 $this->trackers,
-                fn(MigrationTrackerInterface $tracker) => false === $tracker->isApplied($migrationId),
+                fn(MigrationTrackerInterface $tracker): bool => false === $tracker->isApplied($migrationId),
             )),
             default => throw new MigrationException(sprintf('Unexpected strategy "%s"', $this->strategy)),
         };

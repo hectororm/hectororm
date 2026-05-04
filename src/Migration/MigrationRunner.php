@@ -63,7 +63,7 @@ class MigrationRunner
     {
         return array_filter(
             $this->provider->getArrayCopy(),
-            fn(MigrationInterface $migration, string $id) => false === $this->tracker->isApplied($id),
+            fn(MigrationInterface $migration, string $id): bool => false === $this->tracker->isApplied($id),
             ARRAY_FILTER_USE_BOTH,
         );
     }
@@ -77,7 +77,7 @@ class MigrationRunner
     {
         return array_filter(
             $this->provider->getArrayCopy(),
-            fn(MigrationInterface $migration, string $id) => true === $this->tracker->isApplied($id),
+            fn(MigrationInterface $migration, string $id): bool => true === $this->tracker->isApplied($id),
             ARRAY_FILTER_USE_BOTH,
         );
     }
@@ -94,7 +94,7 @@ class MigrationRunner
         return array_combine(
             array_keys($migrations),
             array_map(
-                fn(string $id) => $this->tracker->isApplied($id),
+                fn(string $id): bool => $this->tracker->isApplied($id),
                 array_keys($migrations),
             ),
         );

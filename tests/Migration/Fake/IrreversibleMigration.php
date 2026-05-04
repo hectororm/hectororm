@@ -21,7 +21,7 @@ class IrreversibleMigration implements MigrationInterface
 {
     public function up(Plan $plan): void
     {
-        $plan->alter('users', function ($table) {
+        $plan->alter('users', function ($table): void {
             $table->addColumn('avatar', 'VARCHAR(255)', nullable: true);
         });
     }

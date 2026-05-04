@@ -23,7 +23,7 @@ class DescribedMigration implements MigrationInterface
 {
     public function up(Plan $plan): void
     {
-        $plan->create('described', function ($table) {
+        $plan->create('described', function ($table): void {
             $table->addColumn('id', 'INTEGER', autoIncrement: true);
         });
     }

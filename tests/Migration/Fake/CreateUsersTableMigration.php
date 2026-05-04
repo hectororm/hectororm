@@ -21,7 +21,7 @@ class CreateUsersTableMigration implements ReversibleMigrationInterface
 {
     public function up(Plan $plan): void
     {
-        $plan->create('users', function ($table) {
+        $plan->create('users', function ($table): void {
             $table->addColumn('id', 'INTEGER', autoIncrement: true);
             $table->addColumn('name', 'VARCHAR(100)');
             $table->addColumn('email', 'VARCHAR(255)');

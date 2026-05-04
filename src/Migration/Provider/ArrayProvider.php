@@ -20,17 +20,13 @@ use Hector\Migration\MigrationInterface;
 
 class ArrayProvider implements MigrationProviderInterface
 {
-    /** @var array<string, MigrationInterface> */
-    private array $migrations;
-
     /**
      * ArrayProvider constructor.
      *
      * @param array<string, MigrationInterface> $migrations Keyed by migration identifier
      */
-    public function __construct(array $migrations = [])
+    public function __construct(private array $migrations = [])
     {
-        $this->migrations = $migrations;
     }
 
     /**

@@ -27,7 +27,7 @@ class FailingMigration implements MigrationInterface
 {
     public function up(Plan $plan): void
     {
-        $plan->create('users', function ($table) {
+        $plan->create('users', function ($table): void {
             $table->addColumn('id', 'INTEGER', autoIncrement: true);
             $table->addIndex('primary', ['id'], type: 'primary');
         });

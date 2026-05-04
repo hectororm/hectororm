@@ -121,7 +121,7 @@ class DbTracker implements MigrationTrackerInterface
         $this->loadApplied();
         $this->applied = array_values(array_filter(
             $this->applied ?? [],
-            fn(string $id) => $id !== $migrationId,
+            fn(string $id): bool => $id !== $migrationId,
         ));
     }
 

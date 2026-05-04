@@ -21,7 +21,7 @@ class AddPostsTableMigration implements ReversibleMigrationInterface
 {
     public function up(Plan $plan): void
     {
-        $plan->create('posts', function ($table) {
+        $plan->create('posts', function ($table): void {
             $table->addColumn('id', 'INTEGER', autoIncrement: true);
             $table->addColumn('title', 'VARCHAR(255)');
             $table->addColumn('user_id', 'INTEGER');

@@ -299,7 +299,7 @@ class MigrationRunnerTest extends TestCase
 
         try {
             $runner->up();
-        } catch (MigrationException $e) {
+        } catch (MigrationException) {
             // Expected
         }
     }
@@ -323,7 +323,7 @@ class MigrationRunnerTest extends TestCase
         $dispatcher = $this->createMock(EventDispatcherInterface::class);
         $dispatcher->method('dispatch')
             ->willReturnCallback(function (object $event) use (&$dispatched) {
-                $dispatched[] = get_class($event);
+                $dispatched[] = $event::class;
 
                 return $event;
             });
@@ -401,7 +401,7 @@ class MigrationRunnerTest extends TestCase
         $this->assertNotContains(MigrationAfterEvent::class, $classes);
 
         // Verify the FailedEvent carries the exception
-        $failedEvents = array_filter($dispatched, fn($e) => $e instanceof MigrationFailedEvent);
+        $failedEvents = array_filter($dispatched, fn($e): bool => $e instanceof MigrationFailedEvent);
         $failedEvent = reset($failedEvents);
         $this->assertInstanceOf(Throwable::class, $failedEvent->getException());
     }
@@ -424,7 +424,7 @@ class MigrationRunnerTest extends TestCase
 
         $runner->up();
 
-        $afterEvents = array_filter($dispatched, fn($e) => $e instanceof MigrationAfterEvent);
+        $afterEvents = array_filter($dispatched, fn($e): bool => $e instanceof MigrationAfterEvent);
         $afterEvent = reset($afterEvents);
 
         $this->assertInstanceOf(MigrationAfterEvent::class, $afterEvent);
@@ -451,7 +451,7 @@ class MigrationRunnerTest extends TestCase
 
         $logger = $this->createMock(LoggerInterface::class);
         $logger->method('info')
-            ->willReturnCallback(function (string $message) use (&$messages) {
+            ->willReturnCallback(function (string $message) use (&$messages): void {
                 $messages[] = $message;
             });
 
@@ -481,7 +481,7 @@ class MigrationRunnerTest extends TestCase
 
         $logger = $this->createMock(LoggerInterface::class);
         $logger->method('info')
-            ->willReturnCallback(function (string $message) use (&$messages) {
+            ->willReturnCallback(function (string $message) use (&$messages): void {
                 $messages[] = $message;
             });
 
@@ -557,7 +557,7 @@ class MigrationRunnerTest extends TestCase
 
         $runner->up(dryRun: true);
 
-        $afterEvents = array_filter($dispatched, fn($e) => $e instanceof MigrationAfterEvent);
+        $afterEvents = array_filter($dispatched, fn($e): bool => $e instanceof MigrationAfterEvent);
         $afterEvent = reset($afterEvents);
 
         $this->assertInstanceOf(MigrationAfterEvent::class, $afterEvent);
@@ -571,7 +571,7 @@ class MigrationRunnerTest extends TestCase
 
         $logger = $this->createMock(LoggerInterface::class);
         $logger->method('info')
-            ->willReturnCallback(function (string $message) use (&$messages) {
+            ->willReturnCallback(function (string $message) use (&$messages): void {
                 $messages[] = $message;
             });
 
