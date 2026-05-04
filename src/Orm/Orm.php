@@ -87,39 +87,21 @@ class Orm
     /**
      * PHP serialize method.
      *
-     * @return array
+     * @throws OrmException
      */
     public function __serialize(): array
     {
-        return [
-            'connections' => $this->connections,
-            'types' => $this->types,
-            'schemaContainer' => $this->schemaContainer,
-            'reflections' => $this->reflections,
-        ];
+        throw new OrmException('Orm is not serializable');
     }
 
     /**
      * PHP unserialize method.
      *
-     * @param array $data
-     *
      * @throws OrmException
      */
     public function __unserialize(array $data): void
     {
-        $this->connections = $data['connections'];
-        $this->types = $data['types'];
-        $this->schemaContainer = $data['schemaContainer'];
-        $this->reflections = $data['reflections'];
-
-        $this->eventDispatcher = new NullEventDispatcher();
-        $this->storage = new EntityStorage();
-
-        if (null !== self::$instance) {
-            throw new OrmException('ORM already initialized');
-        }
-        static::$instance = $this;
+        throw new OrmException('Orm is not serializable');
     }
 
     /**
