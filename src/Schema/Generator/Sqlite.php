@@ -23,6 +23,23 @@ class Sqlite extends AbstractGenerator
     private ?string $encoding = null;
 
     /**
+     * Assert identifier is safe for use in PRAGMA statements.
+     *
+     * PRAGMA statements do not support PDO parameter binding,
+     * so identifiers must be validated before interpolation.
+     *
+     * @param string $identifier
+     *
+     * @throws SchemaException
+     */
+    private function assertSafeIdentifier(string $identifier): void
+    {
+        if (1 !== preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*$/', $identifier)) {
+            throw new SchemaException(sprintf('Unsafe identifier "%s"', $identifier));
+        }
+    }
+
+    /**
      * Get encoding.
      *
      * @return string
@@ -87,6 +104,8 @@ class Sqlite extends AbstractGenerator
      */
     protected function getColumnsInfo(string $schema, string $table): array
     {
+        $this->assertSafeIdentifier($table);
+
         $stm = 'PRAGMA table_info(\'' . $table . '\');';
         $results = $this->connection->fetchAll($stm);
 
@@ -95,9 +114,9 @@ class Sqlite extends AbstractGenerator
             'SELECT t.`sql` ' .
             'FROM `sqlite_master` AS t ' .
             'WHERE t.`type` IN ( \'table\', \'view\' ) ' .
-            '  AND t.`name` = \'' . $table . '\' ' .
+            '  AND t.`name` = :table ' .
             ';';
-        $tableStatement = $this->connection->fetchOne($stm);
+        $tableStatement = $this->connection->fetchOne($stm, ['table' => $table]);
         if (null === $tableStatement) {
             throw new SchemaException(sprintf('Table "%s" not found', $table));
         }
@@ -177,6 +196,8 @@ class Sqlite extends AbstractGenerator
      */
     protected function getIndexesInfo(string $schema, string $table): array
     {
+        $this->assertSafeIdentifier($table);
+
         $stm = 'PRAGMA index_list(\'' . $table . '\');';
         $results = $this->connection->fetchAll($stm);
 
@@ -191,6 +212,7 @@ class Sqlite extends AbstractGenerator
             }
 
             // Get columns
+            $this->assertSafeIdentifier($result['name']);
             $indexInfoStm = 'PRAGMA index_info(\'' . $result['name'] . '\');';
             $resultsIndexInfo = $this->connection->fetchAll($indexInfoStm);
 
@@ -210,6 +232,8 @@ class Sqlite extends AbstractGenerator
      */
     protected function getForeignKeysInfo(string $schema, string $table): array
     {
+        $this->assertSafeIdentifier($table);
+
         $stm = 'PRAGMA foreign_key_list(\'' . $table . '\');';
         $results = $this->connection->fetchAll($stm);
 

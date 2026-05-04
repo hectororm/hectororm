@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Sanitize identifiers in SQLite schema generator to prevent SQL injection via PRAGMA statements
 - PHPUnit deprecation warnings in tests (Generator passed as `$haystack`)
 - Table charset detection on MariaDB 11.4.5+ by joining `information_schema.collation_character_set_applicability` on `FULL_COLLATION_NAME`
 

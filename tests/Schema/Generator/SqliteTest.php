@@ -13,6 +13,7 @@
 namespace Hector\Schema\Tests\Generator;
 
 use Hector\Connection\Connection;
+use Hector\Schema\Exception\SchemaException;
 use Hector\Schema\Schema;
 use Hector\Schema\SchemaContainer;
 use Hector\Schema\Table;
@@ -374,5 +375,52 @@ class SqliteTest extends TestCase
         $this->assertInstanceOf(Schema::class, $schema = $schemaContainer->getSchema('main'));
         $this->assertEquals('main', $schema->getName());
         $this->assertCount(23, $schema);
+    }
+
+    /**
+     * @dataProvider unsafeIdentifiersProvider
+     */
+    public function testGetColumnsInfoRejectsUnsafeIdentifier(string $table): void
+    {
+        $this->expectException(SchemaException::class);
+        $this->expectExceptionMessage('Unsafe identifier');
+
+        $this->getGenerator()->getColumnsInfo('main', $table);
+    }
+
+    /**
+     * @dataProvider unsafeIdentifiersProvider
+     */
+    public function testGetIndexesInfoRejectsUnsafeIdentifier(string $table): void
+    {
+        $this->expectException(SchemaException::class);
+        $this->expectExceptionMessage('Unsafe identifier');
+
+        $this->getGenerator()->getIndexesInfo('main', $table);
+    }
+
+    /**
+     * @dataProvider unsafeIdentifiersProvider
+     */
+    public function testGetForeignKeysInfoRejectsUnsafeIdentifier(string $table): void
+    {
+        $this->expectException(SchemaException::class);
+        $this->expectExceptionMessage('Unsafe identifier');
+
+        $this->getGenerator()->getForeignKeysInfo('main', $table);
+    }
+
+    public static function unsafeIdentifiersProvider(): array
+    {
+        return [
+            'single quote' => ["table'; DROP TABLE users; --"],
+            'semicolon' => ['table; DROP TABLE users'],
+            'parenthesis' => ['table_info(x)'],
+            'space' => ['table name'],
+            'dash' => ['table-name'],
+            'dot' => ['schema.table'],
+            'empty string' => [''],
+            'starts with digit' => ['0table'],
+        ];
     }
 }
