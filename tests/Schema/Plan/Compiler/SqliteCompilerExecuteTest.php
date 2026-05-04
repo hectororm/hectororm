@@ -70,7 +70,7 @@ class SqliteCompilerExecuteTest extends AbstractCompilerExecuteTestCase
 
         // Create a table with a VARCHAR(100) column
         $plan = new Plan();
-        $plan->create('rebuild_test', function (TableOperation $t) {
+        $plan->create('rebuild_test', function (TableOperation $t): void {
             $t->addColumn('id', 'INTEGER', autoIncrement: true)
                 ->addColumn('name', 'VARCHAR(100)')
                 ->addColumn('email', 'VARCHAR(255)')
@@ -140,7 +140,7 @@ class SqliteCompilerExecuteTest extends AbstractCompilerExecuteTestCase
 
         // Create a table with several columns
         $plan = new Plan();
-        $plan->create('mixed_rebuild_test', function (TableOperation $t) {
+        $plan->create('mixed_rebuild_test', function (TableOperation $t): void {
             $t->addColumn('id', 'INTEGER', autoIncrement: true)
                 ->addColumn('name', 'VARCHAR(100)')
                 ->addColumn('legacy', 'VARCHAR(50)')

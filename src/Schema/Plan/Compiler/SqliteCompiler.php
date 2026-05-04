@@ -94,19 +94,19 @@ final class SqliteCompiler extends AbstractCompiler
 
         // Column definitions
         $definitions = array_map(
-            fn(AddColumn $op) => $this->compileColumnDefinition($op),
-            array_filter($operations, fn($op) => $op instanceof AddColumn),
+            fn(AddColumn $op): string => $this->compileColumnDefinition($op),
+            array_filter($operations, fn($op): bool => $op instanceof AddColumn),
         );
 
         // Check if any column has autoIncrement (already has inline PRIMARY KEY)
-        $addColumns = array_filter($operations, fn($op) => $op instanceof AddColumn);
-        $hasAutoIncrement = (bool)array_filter($addColumns, fn(AddColumn $op) => true === $op->isAutoIncrement());
+        $addColumns = array_filter($operations, fn($op): bool => $op instanceof AddColumn);
+        $hasAutoIncrement = (bool)array_filter($addColumns, fn(AddColumn $op): bool => true === $op->isAutoIncrement());
 
         // Primary key inline (skip if autoIncrement handles it)
         if (false === $hasAutoIncrement) {
             array_push($definitions, ...array_map(
-                fn(AddIndex $op) => sprintf('PRIMARY KEY (%s)', $this->quoteIdentifiers($op->getColumns())),
-                array_filter($operations, fn($op) => $op instanceof AddIndex && Index::PRIMARY === $op->getType()),
+                fn(AddIndex $op): string => sprintf('PRIMARY KEY (%s)', $this->quoteIdentifiers($op->getColumns())),
+                array_filter($operations, fn($op): bool => $op instanceof AddIndex && Index::PRIMARY === $op->getType()),
             ));
         }
 
@@ -125,8 +125,8 @@ final class SqliteCompiler extends AbstractCompiler
 
         // Non-primary indexes must be created separately in SQLite
         array_push($statements, ...array_map(
-            fn(AddIndex $op) => $this->compileCreateIndex($createTable->getObjectName(), $op),
-            array_filter($operations, fn($op) => $op instanceof AddIndex && Index::PRIMARY !== $op->getType()),
+            fn(AddIndex $op): string => $this->compileCreateIndex($createTable->getObjectName(), $op),
+            array_filter($operations, fn($op): bool => $op instanceof AddIndex && Index::PRIMARY !== $op->getType()),
         ));
 
         return $statements;
@@ -239,8 +239,8 @@ final class SqliteCompiler extends AbstractCompiler
         $schemaForeignKeys = iterator_to_array($table->getForeignKeys());
 
         $columns = array_combine(
-            array_map(fn($col) => $col->getName(), $schemaColumns),
-            array_map(fn($col) => [
+            array_map(fn($col): string => $col->getName(), $schemaColumns),
+            array_map(fn($col): array => [
                 'name' => $col->getName(),
                 'type' => $col->getType() . ($col->getMaxlength() ? '(' . $col->getMaxlength() . ')' : ''),
                 'nullable' => $col->isNullable(),
@@ -251,8 +251,8 @@ final class SqliteCompiler extends AbstractCompiler
         );
 
         $indexes = array_combine(
-            array_map(fn($idx) => $idx->getName(), $schemaIndexes),
-            array_map(fn($idx) => [
+            array_map(fn($idx): string => $idx->getName(), $schemaIndexes),
+            array_map(fn($idx): array => [
                 'name' => $idx->getName(),
                 'columns' => $idx->getColumnsName(),
                 'type' => $idx->getType(),
@@ -260,8 +260,8 @@ final class SqliteCompiler extends AbstractCompiler
         );
 
         $foreignKeys = array_combine(
-            array_map(fn($fk) => $fk->getName(), $schemaForeignKeys),
-            array_map(fn($fk) => [
+            array_map(fn($fk): string => $fk->getName(), $schemaForeignKeys),
+            array_map(fn($fk): array => [
                 'name' => $fk->getName(),
                 'columns' => $fk->getColumnsName(),
                 'referencedTable' => $fk->getReferencedTableName(),
@@ -285,7 +285,7 @@ final class SqliteCompiler extends AbstractCompiler
                     'hasDefault' => $operation->hasDefault(),
                     'autoIncrement' => $operation->isAutoIncrement(),
                 ],
-                DropColumn::class => (function () use (&$columns, $operation) {
+                DropColumn::class => (function () use (&$columns, $operation): void {
                     unset($columns[$operation->getName()]);
                 })(),
                 ModifyColumn::class => isset($columns[$operation->getName()])
@@ -298,7 +298,7 @@ final class SqliteCompiler extends AbstractCompiler
                         'autoIncrement' => $operation->isAutoIncrement(),
                     ]
                     : null,
-                RenameColumn::class => (function () use (&$columns, &$columnMapping, $operation) {
+                RenameColumn::class => (function () use (&$columns, &$columnMapping, $operation): void {
                     if (false === isset($columns[$operation->getName()])) {
                         return;
                     }
@@ -314,7 +314,7 @@ final class SqliteCompiler extends AbstractCompiler
                     'columns' => $operation->getColumns(),
                     'type' => $operation->getType(),
                 ],
-                DropIndex::class => (function () use (&$indexes, $operation) {
+                DropIndex::class => (function () use (&$indexes, $operation): void {
                     unset($indexes[$operation->getName()]);
                 })(),
                 AddForeignKey::class => $foreignKeys[$operation->getName()] = [
@@ -325,7 +325,7 @@ final class SqliteCompiler extends AbstractCompiler
                     'onUpdate' => $operation->getOnUpdate(),
                     'onDelete' => $operation->getOnDelete(),
                 ],
-                DropForeignKey::class => (function () use (&$foreignKeys, $operation) {
+                DropForeignKey::class => (function () use (&$foreignKeys, $operation): void {
                     unset($foreignKeys[$operation->getName()]);
                 })(),
                 default => null,
@@ -336,11 +336,11 @@ final class SqliteCompiler extends AbstractCompiler
         // Only include PRIMARY indexes inline — non-primary indexes must be created
         // AFTER the original table is dropped, because SQLite index names are global
         // and would conflict with existing indexes on the original table.
-        $primaryIndexes = array_filter($indexes, fn(array $idx) => Index::PRIMARY === $idx['type']);
+        $primaryIndexes = array_filter($indexes, fn(array $idx): bool => Index::PRIMARY === $idx['type']);
 
         $rebuildPlan = new Plan();
-        $rebuildPlan->create($tempName, function (CreateTable $t) use ($columns, $primaryIndexes, $foreignKeys) {
-            array_walk($columns, fn(array $col) => $t->addColumn(
+        $rebuildPlan->create($tempName, function (CreateTable $t) use ($columns, $primaryIndexes, $foreignKeys): void {
+            array_walk($columns, fn(array $col): CreateTable => $t->addColumn(
                 name: $col['name'],
                 type: $col['type'],
                 nullable: $col['nullable'],
@@ -349,13 +349,13 @@ final class SqliteCompiler extends AbstractCompiler
                 autoIncrement: $col['autoIncrement'],
             ));
 
-            array_walk($primaryIndexes, fn(array $idx) => $t->addIndex(
+            array_walk($primaryIndexes, fn(array $idx): CreateTable => $t->addIndex(
                 name: $idx['name'],
                 columns: $idx['columns'],
                 type: $idx['type'],
             ));
 
-            array_walk($foreignKeys, fn(array $fk) => $t->addForeignKey(
+            array_walk($foreignKeys, fn(array $fk): CreateTable => $t->addForeignKey(
                 name: $fk['name'],
                 columns: $fk['columns'],
                 referencedTable: $fk['referencedTable'],
@@ -368,7 +368,7 @@ final class SqliteCompiler extends AbstractCompiler
         // Build migrate mapping: source columns -> target columns
         // Only columns that exist in both old and new table (by original name or rename)
         $migrateMapping = [];
-        $originalColumnNames = array_map(fn($col) => $col->getName(), $schemaColumns);
+        $originalColumnNames = array_map(fn($col): string => $col->getName(), $schemaColumns);
 
         foreach ($originalColumnNames as $oldName) {
             // Column was renamed

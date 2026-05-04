@@ -65,8 +65,8 @@ abstract class AbstractCompilerTestCase extends TestCase
         // CREATE TABLE
         yield 'createTableSimple' => [
             'createTableSimple',
-            $this->buildPlan(function (Plan $plan) {
-                $plan->create('posts', function (TableOperation $t) {
+            $this->buildPlan(function (Plan $plan): void {
+                $plan->create('posts', function (TableOperation $t): void {
                     $t->addColumn('id', 'int', autoIncrement: true)
                         ->addColumn('title', 'varchar(255)')
                         ->addIndex('PRIMARY', ['id'], Index::PRIMARY);
@@ -76,8 +76,8 @@ abstract class AbstractCompilerTestCase extends TestCase
 
         yield 'createTableWithOptions' => [
             'createTableWithOptions',
-            $this->buildPlan(function (Plan $plan) {
-                $plan->create('posts', function (TableOperation $t) {
+            $this->buildPlan(function (Plan $plan): void {
+                $plan->create('posts', function (TableOperation $t): void {
                     $t->addColumn('id', 'int', autoIncrement: true)
                         ->addColumn('title', 'varchar(255)')
                         ->addIndex('PRIMARY', ['id'], Index::PRIMARY);
@@ -87,8 +87,8 @@ abstract class AbstractCompilerTestCase extends TestCase
 
         yield 'createTableWithForeignKey' => [
             'createTableWithForeignKey',
-            $this->buildPlan(function (Plan $plan) {
-                $plan->create('posts', function (TableOperation $t) {
+            $this->buildPlan(function (Plan $plan): void {
+                $plan->create('posts', function (TableOperation $t): void {
                     $t->addColumn('id', 'int', autoIncrement: true)
                         ->addColumn('user_id', 'int')
                         ->addIndex('PRIMARY', ['id'], Index::PRIMARY)
@@ -100,8 +100,8 @@ abstract class AbstractCompilerTestCase extends TestCase
 
         yield 'createTableMultipleIndexes' => [
             'createTableMultipleIndexes',
-            $this->buildPlan(function (Plan $plan) {
-                $plan->create('users', function (TableOperation $t) {
+            $this->buildPlan(function (Plan $plan): void {
+                $plan->create('users', function (TableOperation $t): void {
                     $t->addColumn('id', 'int', autoIncrement: true)
                         ->addColumn('email', 'varchar(255)')
                         ->addColumn('name', 'varchar(100)')
@@ -114,8 +114,8 @@ abstract class AbstractCompilerTestCase extends TestCase
 
         yield 'createTableWithoutAutoIncrement' => [
             'createTableWithoutAutoIncrement',
-            $this->buildPlan(function (Plan $plan) {
-                $plan->create('categories', function (TableOperation $t) {
+            $this->buildPlan(function (Plan $plan): void {
+                $plan->create('categories', function (TableOperation $t): void {
                     $t->addColumn('id', 'INTEGER')
                         ->addColumn('name', 'TEXT')
                         ->addIndex('PRIMARY', ['id'], Index::PRIMARY);
@@ -125,8 +125,8 @@ abstract class AbstractCompilerTestCase extends TestCase
 
         yield 'createTableIfNotExists' => [
             'createTableIfNotExists',
-            $this->buildPlan(function (Plan $plan) {
-                $plan->create('posts', function (TableOperation $t) {
+            $this->buildPlan(function (Plan $plan): void {
+                $plan->create('posts', function (TableOperation $t): void {
                     $t->addColumn('id', 'int', autoIncrement: true)
                         ->addColumn('title', 'varchar(255)')
                         ->addIndex('PRIMARY', ['id'], Index::PRIMARY);
@@ -137,21 +137,21 @@ abstract class AbstractCompilerTestCase extends TestCase
         // DROP / RENAME TABLE
         yield 'dropTable' => [
             'dropTable',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 $plan->drop('posts');
             })
         ];
 
         yield 'dropTableIfExists' => [
             'dropTableIfExists',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 $plan->drop('posts', ifExists: true);
             })
         ];
 
         yield 'renameTable' => [
             'renameTable',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 $plan->rename('old_table', 'new_table');
             })
         ];
@@ -159,7 +159,7 @@ abstract class AbstractCompilerTestCase extends TestCase
         // ALTER TABLE — columns
         yield 'alterAddColumns' => [
             'alterAddColumns',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 $plan->alter('users')
                     ->addColumn('email', 'varchar(255)', hasDefault: true, default: '')
                     ->addColumn('phone', 'varchar(20)', nullable: true);
@@ -168,28 +168,28 @@ abstract class AbstractCompilerTestCase extends TestCase
 
         yield 'alterDropColumn' => [
             'alterDropColumn',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 $plan->alter('users')->dropColumn('old_field');
             })
         ];
 
         yield 'alterModifyColumn' => [
             'alterModifyColumn',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 $plan->alter('users')->modifyColumn('name', 'varchar(500)');
             })
         ];
 
         yield 'alterModifyColumnWithAfter' => [
             'alterModifyColumnWithAfter',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 $plan->alter('users')->modifyColumn('email', 'varchar(500)', after: 'name');
             })
         ];
 
         yield 'alterRenameColumn' => [
             'alterRenameColumn',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 $plan->alter('users')->renameColumn('fullname', 'display_name');
             })
         ];
@@ -197,21 +197,21 @@ abstract class AbstractCompilerTestCase extends TestCase
         // ALTER TABLE — indexes
         yield 'alterAddIndex' => [
             'alterAddIndex',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 $plan->alter('users')->addIndex('idx_name', ['name']);
             })
         ];
 
         yield 'alterAddUniqueIndex' => [
             'alterAddUniqueIndex',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 $plan->alter('users')->addIndex('idx_email', ['email'], Index::UNIQUE);
             })
         ];
 
         yield 'alterDropIndex' => [
             'alterDropIndex',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 $plan->alter('users')->dropIndex('idx_old');
             })
         ];
@@ -219,7 +219,7 @@ abstract class AbstractCompilerTestCase extends TestCase
         // ALTER TABLE — foreign keys
         yield 'alterAddForeignKey' => [
             'alterAddForeignKey',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 $plan->alter('posts')
                     ->addForeignKey('fk_author', ['author_id'], 'users', ['id'], onDelete: ForeignKey::RULE_CASCADE);
             })
@@ -227,7 +227,7 @@ abstract class AbstractCompilerTestCase extends TestCase
 
         yield 'alterDropForeignKey' => [
             'alterDropForeignKey',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 $plan->alter('posts')->dropForeignKey('fk_author');
             })
         ];
@@ -235,7 +235,7 @@ abstract class AbstractCompilerTestCase extends TestCase
         // ALTER TABLE — mixed operations
         yield 'alterMixedOperations' => [
             'alterMixedOperations',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 $plan->alter('users')
                     ->addColumn('email', 'varchar(255)', hasDefault: true, default: '')
                     ->dropColumn('legacy')
@@ -247,56 +247,56 @@ abstract class AbstractCompilerTestCase extends TestCase
         // Column options
         yield 'columnWithDefault' => [
             'columnWithDefault',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 $plan->alter('users')->addColumn('status', 'varchar(20)', hasDefault: true, default: 'active');
             })
         ];
 
         yield 'columnDefaultBoolean' => [
             'columnDefaultBoolean',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 $plan->alter('users')->addColumn('active', 'tinyint(1)', hasDefault: true, default: true);
             })
         ];
 
         yield 'columnDefaultInteger' => [
             'columnDefaultInteger',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 $plan->alter('users')->addColumn('score', 'int', hasDefault: true, default: 0);
             })
         ];
 
         yield 'columnNullable' => [
             'columnNullable',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 $plan->alter('users')->addColumn('bio', 'text', nullable: true);
             })
         ];
 
         yield 'columnNullableWithNullDefault' => [
             'columnNullableWithNullDefault',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 $plan->alter('users')->addColumn('deleted_at', 'datetime', nullable: true);
             })
         ];
 
         yield 'columnAutoIncrement' => [
             'columnAutoIncrement',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 $plan->alter('users')->addColumn('id', 'int', autoIncrement: true);
             })
         ];
 
         yield 'columnAfter' => [
             'columnAfter',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 $plan->alter('users')->addColumn('email', 'varchar(255)', hasDefault: true, default: '', after: 'name');
             })
         ];
 
         yield 'columnFirst' => [
             'columnFirst',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 $plan->alter('users')->addColumn('id', 'int', autoIncrement: true, first: true);
             })
         ];
@@ -306,7 +306,7 @@ abstract class AbstractCompilerTestCase extends TestCase
 
         yield 'emptyTablePlan' => [
             'emptyTablePlan',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 // alter without operations — creates a TablePlan but adds nothing
                 $plan->alter('users');
             })
@@ -314,7 +314,7 @@ abstract class AbstractCompilerTestCase extends TestCase
 
         yield 'multipleTablePlans' => [
             'multipleTablePlans',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 $plan->alter('users')->addColumn('email', 'varchar(255)', hasDefault: true, default: '');
                 $plan->alter('posts')->dropColumn('legacy');
             })
@@ -323,7 +323,7 @@ abstract class AbstractCompilerTestCase extends TestCase
         // ALTER TABLE — mixed with rebuild-triggering operation
         yield 'alterMixedWithRebuild' => [
             'alterMixedWithRebuild',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 $plan->alter('users')
                     ->addColumn('avatar', 'varchar(255)', nullable: true)
                     ->dropColumn('legacy')
@@ -336,15 +336,15 @@ abstract class AbstractCompilerTestCase extends TestCase
         // FK ordering — FK should be emitted after structure
         yield 'fkOrderingCreateTables' => [
             'fkOrderingCreateTables',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 // posts references users, but users is created second — FK ordering makes it work
-                $plan->create('posts', function (TableOperation $t) {
+                $plan->create('posts', function (TableOperation $t): void {
                     $t->addColumn('id', 'int', autoIncrement: true)
                         ->addColumn('user_id', 'int')
                         ->addIndex('PRIMARY', ['id'], Index::PRIMARY)
                         ->addForeignKey('fk_user', ['user_id'], 'users', ['id']);
                 });
-                $plan->create('users', function (TableOperation $t) {
+                $plan->create('users', function (TableOperation $t): void {
                     $t->addColumn('id', 'int', autoIncrement: true)
                         ->addColumn('name', 'varchar(100)')
                         ->addIndex('PRIMARY', ['id'], Index::PRIMARY);
@@ -354,7 +354,7 @@ abstract class AbstractCompilerTestCase extends TestCase
 
         yield 'fkOrderingDropBeforeStructure' => [
             'fkOrderingDropBeforeStructure',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 // Drop FK then drop column in same alter — DropFK should come first
                 $plan->alter('posts')
                     ->dropForeignKey('fk_user')
@@ -365,7 +365,7 @@ abstract class AbstractCompilerTestCase extends TestCase
         // Validation — NOT NULL without default on ALTER
         yield 'alterAddColumnNotNullWithoutDefault' => [
             'alterAddColumnNotNullWithoutDefault',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 $plan->alter('users')->addColumn('avatar', 'varchar(255)');
             })
         ];
@@ -373,14 +373,14 @@ abstract class AbstractCompilerTestCase extends TestCase
         // MIGRATE DATA
         yield 'migrateAllColumns' => [
             'migrateAllColumns',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 $plan->migrate('users', 'users_v2');
             })
         ];
 
         yield 'migrateWithMapping' => [
             'migrateWithMapping',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 $plan->migrate('users', 'users_v2', ['id' => 'id', 'name' => 'full_name']);
             })
         ];
@@ -388,14 +388,14 @@ abstract class AbstractCompilerTestCase extends TestCase
         // RAW statements
         yield 'rawSimple' => [
             'rawSimple',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 $plan->raw('CREATE FULLTEXT INDEX ft_search ON articles (title, body)');
             })
         ];
 
         yield 'rawBetweenOperations' => [
             'rawBetweenOperations',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 $plan->alter('users')
                     ->addColumn('email', 'varchar(255)', hasDefault: true, default: '');
                 $plan->raw('CREATE FULLTEXT INDEX ft_email ON users (email)');
@@ -405,7 +405,7 @@ abstract class AbstractCompilerTestCase extends TestCase
 
         yield 'rawMultiple' => [
             'rawMultiple',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 $plan->raw('SET @OLD_SQL_MODE=@@SQL_MODE');
                 $plan->raw('SET SQL_MODE="NO_AUTO_VALUE_ON_ZERO"');
             })
@@ -413,13 +413,13 @@ abstract class AbstractCompilerTestCase extends TestCase
 
         yield 'rawWithFkOrdering' => [
             'rawWithFkOrdering',
-            $this->buildPlan(function (Plan $plan) {
-                $plan->create('users', function (TableOperation $t) {
+            $this->buildPlan(function (Plan $plan): void {
+                $plan->create('users', function (TableOperation $t): void {
                     $t->addColumn('id', 'int', autoIncrement: true)
                         ->addIndex('PRIMARY', ['id'], Index::PRIMARY);
                 });
                 $plan->raw('CREATE FULLTEXT INDEX ft_name ON users (name)');
-                $plan->create('posts', function (TableOperation $t) {
+                $plan->create('posts', function (TableOperation $t): void {
                     $t->addColumn('id', 'int', autoIncrement: true)
                         ->addColumn('user_id', 'int')
                         ->addIndex('PRIMARY', ['id'], Index::PRIMARY)
@@ -430,7 +430,7 @@ abstract class AbstractCompilerTestCase extends TestCase
 
         yield 'rawOnly' => [
             'rawOnly',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 $plan->raw('ALTER TABLE users ENGINE = InnoDB');
             })
         ];
@@ -438,49 +438,49 @@ abstract class AbstractCompilerTestCase extends TestCase
         // VIEW operations
         yield 'createView' => [
             'createView',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 $plan->createView('active_users', 'SELECT * FROM users WHERE active = 1');
             })
         ];
 
         yield 'createViewOrReplace' => [
             'createViewOrReplace',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 $plan->createView('active_users', 'SELECT * FROM users WHERE active = 1', orReplace: true);
             })
         ];
 
         yield 'createViewWithAlgorithm' => [
             'createViewWithAlgorithm',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 $plan->createView('active_users', 'SELECT * FROM users WHERE active = 1', algorithm: 'MERGE');
             })
         ];
 
         yield 'dropView' => [
             'dropView',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 $plan->dropView('old_view');
             })
         ];
 
         yield 'dropViewIfExists' => [
             'dropViewIfExists',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 $plan->dropView('old_view', ifExists: true);
             })
         ];
 
         yield 'alterView' => [
             'alterView',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 $plan->alterView('my_view', 'SELECT id, name FROM users');
             })
         ];
 
         yield 'alterViewWithAlgorithm' => [
             'alterViewWithAlgorithm',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 $plan->alterView('my_view', 'SELECT id, name FROM users', algorithm: 'TEMPTABLE');
             })
         ];
@@ -488,7 +488,7 @@ abstract class AbstractCompilerTestCase extends TestCase
         // TRIGGER operations
         yield 'createTrigger' => [
             'createTrigger',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 $plan->createTrigger(
                     'trg_users_insert',
                     'users',
@@ -501,7 +501,7 @@ abstract class AbstractCompilerTestCase extends TestCase
 
         yield 'createTriggerWithWhen' => [
             'createTriggerWithWhen',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 $plan->createTrigger(
                     'trg_users_update',
                     'users',
@@ -515,15 +515,15 @@ abstract class AbstractCompilerTestCase extends TestCase
 
         yield 'dropTrigger' => [
             'dropTrigger',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 $plan->dropTrigger('trg_users_insert', 'users');
             })
         ];
 
         yield 'createTableWithTrigger' => [
             'createTableWithTrigger',
-            $this->buildPlan(function (Plan $plan) {
-                $plan->create('users', function (TableOperation $t) {
+            $this->buildPlan(function (Plan $plan): void {
+                $plan->create('users', function (TableOperation $t): void {
                     $t->addColumn('id', 'int', autoIncrement: true)
                         ->addColumn('name', 'varchar(255)')
                         ->addIndex('PRIMARY', ['id'], Index::PRIMARY)
@@ -539,7 +539,7 @@ abstract class AbstractCompilerTestCase extends TestCase
 
         yield 'alterTableDropTrigger' => [
             'alterTableDropTrigger',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 $plan->alter('users')->dropTrigger('trg_users_insert');
             })
         ];
@@ -547,35 +547,35 @@ abstract class AbstractCompilerTestCase extends TestCase
         // RAW with driver filter
         yield 'rawDriverMatch' => [
             'rawDriverMatch',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 $plan->raw('ALTER TABLE users ENGINE = InnoDB', drivers: ['mysql']);
             })
         ];
 
         yield 'rawDriverMatchMultiple' => [
             'rawDriverMatchMultiple',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 $plan->raw('ALTER TABLE users ENGINE = InnoDB', drivers: ['mysql', 'mariadb']);
             })
         ];
 
         yield 'rawDriverMismatch' => [
             'rawDriverMismatch',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 $plan->raw('ALTER TABLE users ENGINE = InnoDB', drivers: ['pgsql']);
             })
         ];
 
         yield 'rawDriverNull' => [
             'rawDriverNull',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 $plan->raw('SELECT 1');
             })
         ];
 
         yield 'rawMixedDrivers' => [
             'rawMixedDrivers',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 $plan->raw('ALTER TABLE users ENGINE = InnoDB', drivers: ['mysql']);
                 $plan->raw('PRAGMA journal_mode = WAL', drivers: ['sqlite']);
                 $plan->raw('SELECT 1');
@@ -585,23 +585,23 @@ abstract class AbstractCompilerTestCase extends TestCase
         // FK CHECKS operations
         yield 'disableFkChecks' => [
             'disableFkChecks',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 $plan->add(new DisableForeignKeyChecks());
             })
         ];
 
         yield 'enableFkChecks' => [
             'enableFkChecks',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 $plan->add(new EnableForeignKeyChecks());
             })
         ];
 
         yield 'fkChecksWrapping' => [
             'fkChecksWrapping',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 $plan->add(new DisableForeignKeyChecks());
-                $plan->create('users', function (TableOperation $t) {
+                $plan->create('users', function (TableOperation $t): void {
                     $t->addColumn('id', 'int', autoIncrement: true)
                         ->addIndex('PRIMARY', ['id'], Index::PRIMARY);
                 });
@@ -611,9 +611,9 @@ abstract class AbstractCompilerTestCase extends TestCase
 
         yield 'fkChecksWithForeignKey' => [
             'fkChecksWithForeignKey',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 $plan->add(new DisableForeignKeyChecks());
-                $plan->create('posts', function (TableOperation $t) {
+                $plan->create('posts', function (TableOperation $t): void {
                     $t->addColumn('id', 'int', autoIncrement: true)
                         ->addColumn('user_id', 'int')
                         ->addIndex('PRIMARY', ['id'], Index::PRIMARY)
@@ -626,23 +626,23 @@ abstract class AbstractCompilerTestCase extends TestCase
         // ALTER TABLE — modify charset
         yield 'alterModifyCharset' => [
             'alterModifyCharset',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 $plan->alter('users')->modifyCharset('utf8mb4');
             })
         ];
 
         yield 'alterModifyCharsetWithCollation' => [
             'alterModifyCharsetWithCollation',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 $plan->alter('users')->modifyCharset('utf8mb4', 'utf8mb4_unicode_ci');
             })
         ];
 
         yield 'fkChecksWithTriggerAndFk' => [
             'fkChecksWithTriggerAndFk',
-            $this->buildPlan(function (Plan $plan) {
+            $this->buildPlan(function (Plan $plan): void {
                 $plan->add(new DisableForeignKeyChecks());
-                $plan->alter('posts', function ($table) {
+                $plan->alter('posts', function ($table): void {
                     $table->dropForeignKey('fk_old');
                     $table->addColumn('category_id', 'int', nullable: true);
                     $table->addForeignKey('fk_category', ['category_id'], 'categories', ['id']);

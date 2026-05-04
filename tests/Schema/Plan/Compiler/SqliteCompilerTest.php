@@ -462,7 +462,7 @@ class SqliteCompilerTest extends AbstractCompilerTestCase
         // Plan: disable FK checks, alter with a rebuild-triggering operation (drop FK), enable FK checks
         $plan = new Plan();
         $plan->add(new DisableForeignKeyChecks());
-        $plan->alter('posts', function ($t) {
+        $plan->alter('posts', function ($t): void {
             $t->dropForeignKey('fk_user');
             $t->addColumn('category_id', 'int', nullable: true);
         });
@@ -473,8 +473,8 @@ class SqliteCompilerTest extends AbstractCompilerTestCase
 
         // The PRAGMA foreign_keys = OFF/ON should appear exactly once each
         // (from the plan-level FK check operations, NOT from the rebuild)
-        $pragmaOff = array_filter($statements, fn(string $s) => 'PRAGMA foreign_keys = OFF' === $s);
-        $pragmaOn = array_filter($statements, fn(string $s) => 'PRAGMA foreign_keys = ON' === $s);
+        $pragmaOff = array_filter($statements, fn(string $s): bool => 'PRAGMA foreign_keys = OFF' === $s);
+        $pragmaOn = array_filter($statements, fn(string $s): bool => 'PRAGMA foreign_keys = ON' === $s);
 
         $this->assertCount(1, $pragmaOff, 'PRAGMA foreign_keys = OFF should appear exactly once');
         $this->assertCount(1, $pragmaOn, 'PRAGMA foreign_keys = ON should appear exactly once');
@@ -523,7 +523,7 @@ class SqliteCompilerTest extends AbstractCompilerTestCase
 
         // Plan: alter with a rebuild-triggering operation (drop FK), NO explicit FK check operations
         $plan = new Plan();
-        $plan->alter('posts', function ($t) {
+        $plan->alter('posts', function ($t): void {
             $t->dropForeignKey('fk_user');
             $t->addColumn('category_id', 'int', nullable: true);
         });
@@ -532,8 +532,8 @@ class SqliteCompilerTest extends AbstractCompilerTestCase
         $statements = iterator_to_array($plan->getStatements($compiler, $schema), false);
 
         // The rebuild PRAGMA should still be present
-        $pragmaOff = array_filter($statements, fn(string $s) => 'PRAGMA foreign_keys = OFF' === $s);
-        $pragmaOn = array_filter($statements, fn(string $s) => 'PRAGMA foreign_keys = ON' === $s);
+        $pragmaOff = array_filter($statements, fn(string $s): bool => 'PRAGMA foreign_keys = OFF' === $s);
+        $pragmaOn = array_filter($statements, fn(string $s): bool => 'PRAGMA foreign_keys = ON' === $s);
 
         $this->assertCount(1, $pragmaOff, 'Rebuild should emit PRAGMA foreign_keys = OFF');
         $this->assertCount(1, $pragmaOn, 'Rebuild should emit PRAGMA foreign_keys = ON');

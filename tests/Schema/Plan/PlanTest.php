@@ -64,7 +64,7 @@ class PlanTest extends TestCase
         $plan = new Plan();
         $called = false;
 
-        $result = $plan->create('users', function (CreateTable $t) use (&$called) {
+        $result = $plan->create('users', function (CreateTable $t) use (&$called): void {
             $called = true;
             $this->assertSame('users', $t->getObjectName());
             $t->addColumn('id', 'int', autoIncrement: true);
@@ -91,7 +91,7 @@ class PlanTest extends TestCase
         $plan = new Plan();
         $called = false;
 
-        $result = $plan->alter('users', function (AlterTable $t) use (&$called) {
+        $result = $plan->alter('users', function (AlterTable $t) use (&$called): void {
             $called = true;
             $t->addColumn('email', 'varchar(255)');
         });
@@ -225,7 +225,7 @@ class PlanTest extends TestCase
     {
         $plan = new Plan();
 
-        $plan->create('comments', function (CreateTable $t) {
+        $plan->create('comments', function (CreateTable $t): void {
             $t->addColumn('id', 'int', autoIncrement: true)
                 ->addColumn('body', 'text')
                 ->addIndex('PRIMARY', ['id'], Index::PRIMARY);
@@ -435,7 +435,7 @@ class PlanTest extends TestCase
     public function testViewAndTableMixedCount(): void
     {
         $plan = new Plan();
-        $plan->create('users', function (CreateTable $t) {
+        $plan->create('users', function (CreateTable $t): void {
             $t->addColumn('id', 'int', autoIncrement: true);
         });
         $plan->createView('active_users', 'SELECT * FROM users WHERE active = 1');
@@ -497,7 +497,7 @@ class PlanTest extends TestCase
     public function testRawChainingWithOtherMethods(): void
     {
         $plan = new Plan();
-        $plan->create('users', function (CreateTable $t) {
+        $plan->create('users', function (CreateTable $t): void {
             $t->addColumn('id', 'int', autoIncrement: true)
                 ->addColumn('name', 'varchar(255)')
                 ->addIndex('PRIMARY', ['id'], Index::PRIMARY);
@@ -640,7 +640,7 @@ class PlanTest extends TestCase
     public function testCreateTableWithTriggerCountsCorrectly(): void
     {
         $plan = new Plan();
-        $plan->create('users', function (CreateTable $t) {
+        $plan->create('users', function (CreateTable $t): void {
             $t->addColumn('id', 'int', autoIncrement: true)
                 ->addIndex('PRIMARY', ['id'], Index::PRIMARY)
                 ->createTrigger(
@@ -669,7 +669,7 @@ class PlanTest extends TestCase
     public function testTriggerAndTableMixedCount(): void
     {
         $plan = new Plan();
-        $plan->create('users', function (CreateTable $t) {
+        $plan->create('users', function (CreateTable $t): void {
             $t->addColumn('id', 'int', autoIncrement: true);
         });
         $plan->createTrigger(
@@ -766,7 +766,7 @@ class PlanTest extends TestCase
     {
         $plan = new Plan();
         $plan->add(new DisableForeignKeyChecks());
-        $plan->create('users', function (CreateTable $t) {
+        $plan->create('users', function (CreateTable $t): void {
             $t->addColumn('id', 'int', autoIncrement: true);
         });
         $plan->drop('old_table');

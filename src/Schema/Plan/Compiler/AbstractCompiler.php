@@ -398,7 +398,7 @@ abstract class AbstractCompiler implements CompilerInterface
      */
     protected function quoteIdentifiers(array $names): string
     {
-        return implode(', ', array_map(fn(string $name) => $this->quoteIdentifier($name), $names));
+        return implode(', ', array_map(fn(string $name): string => $this->quoteIdentifier($name), $names));
     }
 
     /**

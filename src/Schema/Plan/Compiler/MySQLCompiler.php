@@ -73,7 +73,7 @@ final class MySQLCompiler extends AbstractCompiler
         $quotedTable = $this->quoteIdentifier($tableName);
 
         return array_map(
-            fn(string $c) => sprintf('ALTER TABLE %s %s', $quotedTable, $c),
+            fn(string $c): string => sprintf('ALTER TABLE %s %s', $quotedTable, $c),
             (array)$clause,
         );
     }
@@ -104,14 +104,14 @@ final class MySQLCompiler extends AbstractCompiler
 
         // Column definitions first
         $definitions = array_map(
-            fn(AddColumn $op) => $this->compileColumnDefinition($op),
-            array_filter($operations, fn($op) => $op instanceof AddColumn),
+            fn(AddColumn $op): string => $this->compileColumnDefinition($op),
+            array_filter($operations, fn($op): bool => $op instanceof AddColumn),
         );
 
         // Indexes after columns (FK excluded — handled by Post pass)
         array_push($definitions, ...array_map(
-            fn(AddIndex $op) => $this->compileIndexDefinition($op),
-            array_filter($operations, fn($op) => $op instanceof AddIndex),
+            fn(AddIndex $op): string => $this->compileIndexDefinition($op),
+            array_filter($operations, fn($op): bool => $op instanceof AddIndex),
         ));
 
         if ([] === $definitions) {
@@ -175,7 +175,7 @@ final class MySQLCompiler extends AbstractCompiler
 
         if ([] !== $clauses) {
             // Flatten: each clause can be a string or string[]
-            $clauses = array_merge(...array_map(fn(string|array $clause) => (array)$clause, $clauses));
+            $clauses = array_merge(...array_map(fn(string|array $clause): array => (array)$clause, $clauses));
 
             yield sprintf('ALTER TABLE %s %s', $tableName, implode(', ', $clauses));
         }
@@ -380,7 +380,7 @@ final class MySQLCompiler extends AbstractCompiler
 
         $defaultClause = match (true) {
             null !== $default && is_numeric($default) => sprintf('DEFAULT %s', $default),
-            null !== $default => sprintf('DEFAULT \'%s\'', str_replace("'", "''", (string)$default)),
+            null !== $default => sprintf('DEFAULT \'%s\'', str_replace("'", "''", $default)),
             $column->isNullable() => 'DEFAULT NULL',
             default => null,
         };

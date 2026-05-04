@@ -123,7 +123,7 @@ abstract class AbstractCompilerExecuteTestCase extends TestCase
 
         // CREATE TABLE
         $plan = new Plan();
-        $plan->create(static::getTestTableName(), function (TableOperation $t) {
+        $plan->create(static::getTestTableName(), function (TableOperation $t): void {
             $t->addColumn('id', 'INTEGER', autoIncrement: true)
                 ->addColumn('name', 'VARCHAR(100)')
                 ->addColumn('email', 'VARCHAR(255)')
