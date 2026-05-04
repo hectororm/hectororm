@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace Hector\Query\Tests\Statement;
 
+use Hector\Query\StatementInterface;
 use Hector\Connection\Bind\BindParamList;
 use Hector\Connection\Driver\DriverInfo;
 use Hector\Query\Statement\Expression;
@@ -85,7 +86,7 @@ class ExpressionTest extends TestCase
 
     public function testNullPartReturnsNull(): void
     {
-        $raw = $this->createMock(\Hector\Query\StatementInterface::class);
+        $raw = $this->createMock(StatementInterface::class);
         $raw->method('getStatement')->willReturn(null);
 
         $expression = new Expression(

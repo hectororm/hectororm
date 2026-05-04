@@ -484,6 +484,40 @@ class QueryBuilder implements CompoundStatementInterface
     }
 
     /**
+     * Process paginated results in chunks.
+     *
+     * Iterates through all pages by calling `paginate()` repeatedly,
+     * advancing via `$pagination->createNavigator()->getNextRequest()`.
+     * The callback receives each `PaginationInterface` result; returning
+     * `false` from the callback stops iteration early.
+     *
+     * @param PaginationRequestInterface $request Initial pagination request.
+     * @param callable $callback Callback receiving each PaginationInterface page. Return false to stop.
+     * @param bool $withTotal Whether to include total count in each page.
+     *
+     * @return void
+     */
+    public function chunkPaginate(
+        PaginationRequestInterface $request,
+        callable $callback,
+        bool $withTotal = false,
+    ): void {
+        do {
+            $pagination = $this->paginate($request, $withTotal);
+
+            if ($pagination->isEmpty()) {
+                break;
+            }
+
+            if (false === $callback($pagination)) {
+                break;
+            }
+
+            $request = $pagination->createNavigator()->getNextRequest();
+        } while (null !== $request);
+    }
+
+    /**
      * Paginate results (auto-detection based on request type).
      *
      * @param PaginationRequestInterface $request
@@ -503,7 +537,7 @@ class QueryBuilder implements CompoundStatementInterface
             $request instanceof OffsetPaginationRequest => new QueryOffsetPaginator($this, $withTotal),
             default => throw new InvalidArgumentException(sprintf(
                 'Unsupported pagination request type: %s',
-                get_class($request)
+                $request::class
             )),
         };
 

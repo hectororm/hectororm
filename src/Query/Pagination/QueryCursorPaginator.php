@@ -157,8 +157,8 @@ class QueryCursorPaginator extends AbstractQueryPaginator
         array $position,
         bool $reverse = false,
     ): void {
-        $normalizeColumnKey = fn(string $column) => $this->normalizeColumnKey($column);
-        $builder->where(function ($where) use ($normalizeColumnKey, $orderColumns, $position, $reverse) {
+        $normalizeColumnKey = fn(string $column): string => $this->normalizeColumnKey($column);
+        $builder->where(function ($where) use ($normalizeColumnKey, $orderColumns, $position, $reverse): void {
             foreach ($orderColumns as $i => $orderItem) {
                 $column = $orderItem['column'];
                 $columnKey = $normalizeColumnKey($column);
@@ -174,7 +174,7 @@ class QueryCursorPaginator extends AbstractQueryPaginator
                     $column,
                     $operator,
                     $value
-                ) {
+                ): void {
                     for ($j = 0; $j < $i; $j++) {
                         $prevKey = $normalizeColumnKey($orderColumns[$j]['column']);
                         $w->where($orderColumns[$j]['column'], '=', $position[$prevKey]);

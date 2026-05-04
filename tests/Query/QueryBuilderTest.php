@@ -489,4 +489,91 @@ class QueryBuilderTest extends TestCase
         $this->expectExceptionMessage('Unsupported pagination request type');
         $queryBuilder->paginate($unsupportedRequest);
     }
+
+    public function testChunkPaginateWithOffsetRequest(): void
+    {
+        $queryBuilder = new QueryBuilder($this->getConnection());
+        $queryBuilder->from('`table`')->columns('*');
+
+        $pages = [];
+        $queryBuilder->chunkPaginate(
+            new OffsetPaginationRequest(page: 1, perPage: 1),
+            function (OffsetPagination $pagination) use (&$pages): void {
+                $pages[] = $pagination->getArrayCopy();
+            },
+        );
+
+        $this->assertCount(2, $pages);
+        $this->assertCount(1, $pages[0]);
+        $this->assertCount(1, $pages[1]);
+    }
+
+    public function testChunkPaginateWithRangeRequest(): void
+    {
+        $queryBuilder = new QueryBuilder($this->getConnection());
+        $queryBuilder->from('`table`')->columns('*');
+
+        $pages = [];
+        $queryBuilder->chunkPaginate(
+            new RangePaginationRequest(start: 0, end: 0),
+            function (RangePagination $pagination) use (&$pages): void {
+                $pages[] = $pagination->getArrayCopy();
+            },
+        );
+
+        $this->assertCount(2, $pages);
+        $this->assertCount(1, $pages[0]);
+        $this->assertCount(1, $pages[1]);
+    }
+
+    public function testChunkPaginateWithCursorRequest(): void
+    {
+        $queryBuilder = new QueryBuilder($this->getConnection());
+        $queryBuilder->from('`table`')->columns('*')->orderBy('table_id');
+
+        $pages = [];
+        $queryBuilder->chunkPaginate(
+            new CursorPaginationRequest(perPage: 1),
+            function (CursorPagination $pagination) use (&$pages): void {
+                $pages[] = $pagination->getArrayCopy();
+            },
+        );
+
+        $this->assertCount(2, $pages);
+        $this->assertCount(1, $pages[0]);
+        $this->assertCount(1, $pages[1]);
+    }
+
+    public function testChunkPaginateStopsOnFalseReturn(): void
+    {
+        $queryBuilder = new QueryBuilder($this->getConnection());
+        $queryBuilder->from('`table`')->columns('*');
+
+        $pages = [];
+        $queryBuilder->chunkPaginate(
+            new OffsetPaginationRequest(page: 1, perPage: 1),
+            function (OffsetPagination $pagination) use (&$pages): bool {
+                $pages[] = $pagination->getArrayCopy();
+                return false;
+            },
+        );
+
+        $this->assertCount(1, $pages);
+    }
+
+    public function testChunkPaginateEmptyResult(): void
+    {
+        $queryBuilder = new QueryBuilder($this->getConnection());
+        $queryBuilder->from('`table`')->columns('*')->where('table_id', '>', 9999);
+
+        $callbackCalled = false;
+        $queryBuilder->chunkPaginate(
+            new OffsetPaginationRequest(page: 1, perPage: 10),
+            function () use (&$callbackCalled): void {
+                $callbackCalled = true;
+            },
+        );
+
+        $this->assertFalse($callbackCalled);
+    }
 }
