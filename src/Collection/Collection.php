@@ -417,6 +417,10 @@ class Collection implements CollectionInterface, ArrayAccess
      */
     public function rand(int $length = 1): static
     {
+        if (empty($this->items)) {
+            return new static();
+        }
+
         $keys = (array)array_rand($this->items, $length);
 
         return new static(array_map(fn($key) => $this->items[$key], $keys));

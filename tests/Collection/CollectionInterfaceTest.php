@@ -591,6 +591,16 @@ class CollectionInterfaceTest extends TestCase
     /**
      * @dataProvider collectionTypeProvider
      */
+    public function testRandOnEmptyCollection(string $class): void
+    {
+        $result = (new $class())->rand();
+
+        $this->assertCount(0, $result);
+    }
+
+    /**
+     * @dataProvider collectionTypeProvider
+     */
     public function testSum(string $class): void
     {
         $collection = new $class($arr = [1, 2, 3, 4, 5]);
