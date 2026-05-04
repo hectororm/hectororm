@@ -23,6 +23,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Relationship join conditions use `Expression` arrays (numeric-keyed) instead of `array_combine` (string-keyed) for driver-aware quoting
 - ORM `Conditions::add()` regex accepts both backtick and double-quote styles for relationship detection
 
+### Fixed
+
+- Fix `Related::save()` crash when a related value is `null`
+
 ## [1.2.2] - 2026-02-05
 
 _No changes in this release._

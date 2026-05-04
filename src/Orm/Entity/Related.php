@@ -269,9 +269,9 @@ class Related implements Countable
      */
     public function save(bool $cascade = false): void
     {
-        /** @var Collection|Entity $value */
+        /** @var Collection|Entity|null $value */
         foreach ($this->related as $value) {
-            $value->save($cascade);
+            $value?->save($cascade);
         }
     }
 }
