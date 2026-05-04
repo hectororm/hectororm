@@ -38,7 +38,7 @@ class RamseyUuidType extends UuidType
         }
 
         if (null !== $expected) {
-            if (is_a($expected?->getName(), UuidInterface::class, true)) {
+            if (false === is_a($expected->getName(), UuidInterface::class, true)) {
                 throw ValueException::castError($this);
             }
         }

@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `RamseyUuidType`: throw `LogicException` with install hint when `ramsey/uuid` is not installed
 
+### Fixed
+
+- Fix inverted type check in `RamseyUuidType::fromSchema()` that rejected valid `UuidInterface` properties
+
 ## [1.2.2] - 2026-02-05
 
 _No changes in this release._

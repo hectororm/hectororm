@@ -12,6 +12,8 @@
 
 namespace Hector\DataTypes\Tests\Type;
 
+use Hector\DataTypes\Exception\ValueException;
+use Hector\DataTypes\ExpectedType;
 use Hector\DataTypes\Type\RamseyUuidType;
 use PHPUnit\Framework\TestCase;
 use Ramsey\Uuid\Uuid;
@@ -30,6 +32,49 @@ class RamseyUuidTypeTest extends TestCase
         $this->assertEquals(
             Uuid::fromString('a8184128-7427-48e0-b37d-f7d4891012c6'),
             $type->fromSchema(str_replace('-', '', 'a8184128-7427-48e0-b37d-f7d4891012c6'))
+        );
+    }
+
+    public function testFromSchemaWithUuidInterfaceExpected(): void
+    {
+        $type = new RamseyUuidType();
+        $expected = ExpectedType::from(UuidInterface::class);
+
+        $result = $type->fromSchema(
+            str_replace('-', '', 'a8184128-7427-48e0-b37d-f7d4891012c6'),
+            $expected,
+        );
+
+        $this->assertInstanceOf(UuidInterface::class, $result);
+        $this->assertEquals(
+            Uuid::fromString('a8184128-7427-48e0-b37d-f7d4891012c6'),
+            $result,
+        );
+    }
+
+    public function testFromSchemaWithBuiltinExpectedThrows(): void
+    {
+        $type = new RamseyUuidType();
+        $expected = ExpectedType::from('string');
+
+        $this->expectException(ValueException::class);
+
+        $type->fromSchema(
+            str_replace('-', '', 'a8184128-7427-48e0-b37d-f7d4891012c6'),
+            $expected,
+        );
+    }
+
+    public function testFromSchemaWithIncompatibleClassExpectedThrows(): void
+    {
+        $type = new RamseyUuidType();
+        $expected = ExpectedType::from(\stdClass::class);
+
+        $this->expectException(ValueException::class);
+
+        $type->fromSchema(
+            str_replace('-', '', 'a8184128-7427-48e0-b37d-f7d4891012c6'),
+            $expected,
         );
     }
 
