@@ -73,7 +73,7 @@ class Psr4Provider extends AbstractDirectoryProvider
      */
     private function resolveClassName(string $file): ?string
     {
-        $directory = rtrim($this->getDirectory(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+        $directory = rtrim(realpath($this->getDirectory()) ?: $this->getDirectory(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
         $namespace = rtrim($this->namespace, '\\') . '\\';
 
         $relativePath = substr($file, strlen($directory));

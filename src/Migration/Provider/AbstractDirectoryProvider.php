@@ -96,11 +96,13 @@ abstract class AbstractDirectoryProvider implements MigrationProviderInterface
 
         $iterator = new RecursiveDirectoryIterator(
             $this->directory,
-            FilesystemIterator::SKIP_DOTS | FilesystemIterator::FOLLOW_SYMLINKS,
+            FilesystemIterator::SKIP_DOTS,
         );
 
         $recursive = new RecursiveIteratorIterator($iterator);
         $recursive->setMaxDepth($this->depth);
+
+        $baseRealPath = realpath($this->directory);
 
         $files = [];
 
@@ -110,7 +112,14 @@ abstract class AbstractDirectoryProvider implements MigrationProviderInterface
                 continue;
             }
 
-            $files[] = $file->getPathname();
+            // Ensure the file is physically within the base directory
+            $fileRealPath = $file->getRealPath();
+
+            if (false === $fileRealPath || false === str_starts_with($fileRealPath, $baseRealPath . DIRECTORY_SEPARATOR)) {
+                continue;
+            }
+
+            $files[] = $fileRealPath;
         }
 
         sort($files);
@@ -154,7 +163,7 @@ abstract class AbstractDirectoryProvider implements MigrationProviderInterface
      */
     protected function resolveId(string $file, MigrationInterface $migration): string
     {
-        $directory = rtrim($this->directory, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+        $directory = rtrim(realpath($this->directory) ?: $this->directory, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
         $relativePath = substr($file, strlen($directory));
 
         // Remove extension
