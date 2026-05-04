@@ -29,7 +29,7 @@ class DefaultType extends AbstractType
     /**
      * @inheritDoc
      */
-    public function toSchema(mixed $value, ?ExpectedType $expected = null): string
+    public function toSchema(mixed $value, ?ExpectedType $expected = null): mixed
     {
         return $value;
     }
