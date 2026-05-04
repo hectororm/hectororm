@@ -15,6 +15,8 @@ declare(strict_types=1);
 
 namespace Hector\Pagination\Tests;
 
+use Hector\Pagination\UriBuilder\PaginationUriBuilderInterface;
+use Hector\Pagination\Navigator\RangePaginationNavigator;
 use Hector\Pagination\PaginationInterface;
 use Hector\Pagination\RangePagination;
 use Hector\Pagination\RangePaginationInterface;
@@ -191,5 +193,24 @@ class RangePaginationTest extends TestCase
         $this->assertJson($json);
         $this->assertStringContainsString('"start":0', $json);
         $this->assertStringContainsString('"end":19', $json);
+    }
+
+    public function testCreateNavigator(): void
+    {
+        $pagination = new RangePagination(['a', 'b'], 0, 19, total: 100);
+
+        $navigator = $pagination->createNavigator();
+
+        $this->assertInstanceOf(RangePaginationNavigator::class, $navigator);
+    }
+
+    public function testCreateNavigatorWithUriBuilder(): void
+    {
+        $pagination = new RangePagination(['a', 'b'], 0, 19);
+        $uriBuilder = $this->createMock(PaginationUriBuilderInterface::class);
+
+        $navigator = $pagination->createNavigator($uriBuilder);
+
+        $this->assertInstanceOf(RangePaginationNavigator::class, $navigator);
     }
 }

@@ -15,8 +15,10 @@ declare(strict_types=1);
 
 namespace Hector\Pagination\Tests;
 
+use Hector\Pagination\UriBuilder\PaginationUriBuilderInterface;
 use Hector\Pagination\CursorPagination;
 use Hector\Pagination\CursorPaginationInterface;
+use Hector\Pagination\Navigator\CursorPaginationNavigator;
 use Hector\Pagination\PaginationInterface;
 use PHPUnit\Framework\TestCase;
 
@@ -227,5 +229,24 @@ class CursorPaginationTest extends TestCase
         $json = $pagination->jsonSerialize();
 
         $this->assertArrayNotHasKey('total', $json);
+    }
+
+    public function testCreateNavigator(): void
+    {
+        $pagination = new CursorPagination(['a', 'b'], 10);
+
+        $navigator = $pagination->createNavigator();
+
+        $this->assertInstanceOf(CursorPaginationNavigator::class, $navigator);
+    }
+
+    public function testCreateNavigatorWithUriBuilder(): void
+    {
+        $pagination = new CursorPagination(['a', 'b'], 10);
+        $uriBuilder = $this->createMock(PaginationUriBuilderInterface::class);
+
+        $navigator = $pagination->createNavigator($uriBuilder);
+
+        $this->assertInstanceOf(CursorPaginationNavigator::class, $navigator);
     }
 }

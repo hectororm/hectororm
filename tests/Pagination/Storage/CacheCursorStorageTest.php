@@ -24,7 +24,7 @@ use Psr\SimpleCache\CacheInterface;
 
 class CacheCursorStorageTest extends TestCase
 {
-    private CacheInterface $cache;
+    private MockObject $cache;
     private CacheCursorStorage $storage;
 
     protected function setUp(): void

@@ -16,7 +16,6 @@ declare(strict_types=1);
 namespace Hector\Pagination\Tests\Navigator;
 
 use Berlioz\Http\Message\Uri;
-use Hector\Pagination\LengthAwarePagination;
 use Hector\Pagination\Navigator\OffsetPaginationNavigator;
 use Hector\Pagination\OffsetPagination;
 use Hector\Pagination\Request\OffsetPaginationRequest;

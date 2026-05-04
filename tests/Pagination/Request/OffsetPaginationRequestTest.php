@@ -16,7 +16,6 @@ declare(strict_types=1);
 namespace Hector\Pagination\Tests\Request;
 
 use Hector\Pagination\Request\OffsetPaginationRequest;
-use Hector\Pagination\Request\PaginationRequestInterface;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ServerRequestInterface;
 

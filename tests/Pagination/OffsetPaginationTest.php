@@ -15,6 +15,8 @@ declare(strict_types=1);
 
 namespace Hector\Pagination\Tests;
 
+use Hector\Pagination\UriBuilder\PaginationUriBuilderInterface;
+use Hector\Pagination\Navigator\OffsetPaginationNavigator;
 use Hector\Pagination\OffsetPagination;
 use Hector\Pagination\OffsetPaginationInterface;
 use Hector\Pagination\PaginationInterface;
@@ -281,5 +283,24 @@ class OffsetPaginationTest extends TestCase
             ],
             $pagination->jsonSerialize()
         );
+    }
+
+    public function testCreateNavigator(): void
+    {
+        $pagination = new OffsetPagination(['a', 'b'], 10, currentPage: 2);
+
+        $navigator = $pagination->createNavigator();
+
+        $this->assertInstanceOf(OffsetPaginationNavigator::class, $navigator);
+    }
+
+    public function testCreateNavigatorWithUriBuilder(): void
+    {
+        $pagination = new OffsetPagination(['a', 'b'], 10);
+        $uriBuilder = $this->createMock(PaginationUriBuilderInterface::class);
+
+        $navigator = $pagination->createNavigator($uriBuilder);
+
+        $this->assertInstanceOf(OffsetPaginationNavigator::class, $navigator);
     }
 }

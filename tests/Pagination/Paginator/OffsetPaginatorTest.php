@@ -18,7 +18,6 @@ namespace Hector\Pagination\Tests\Paginator;
 use Berlioz\Http\Message\Response;
 use Berlioz\Http\Message\ServerRequest;
 use Berlioz\Http\Message\Uri;
-use Hector\Pagination\LengthAwarePagination;
 use Hector\Pagination\Navigator\OffsetPaginationNavigator;
 use Hector\Pagination\OffsetPagination;
 use Hector\Pagination\Paginator\OffsetPaginator;

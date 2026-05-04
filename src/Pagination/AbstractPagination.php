@@ -26,8 +26,6 @@ use Traversable;
  */
 abstract class AbstractPagination implements PaginationInterface
 {
-    /** @var iterable<T> */
-    protected iterable $items;
     /** @var array<int, T>|null */
     private ?array $resolvedItems = null;
     private ?int $resolvedTotal = null;
@@ -37,15 +35,13 @@ abstract class AbstractPagination implements PaginationInterface
      * @param int|Closure(): int|null $total
      */
     public function __construct(
-        iterable $items,
+        protected iterable $items,
         protected int $perPage,
         protected int|Closure|null $total = null,
     ) {
         if ($perPage <= 0) {
             throw new InvalidArgumentException('perPage must be greater than 0');
         }
-
-        $this->items = $items;
     }
 
     /**
