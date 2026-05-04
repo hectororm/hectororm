@@ -16,6 +16,8 @@ declare(strict_types=1);
 namespace Hector\Pagination;
 
 use Closure;
+use Hector\Pagination\Navigator\CursorPaginationNavigator;
+use Hector\Pagination\UriBuilder\PaginationUriBuilderInterface;
 
 /**
  * @template T
@@ -83,6 +85,14 @@ class CursorPagination extends AbstractPagination implements CursorPaginationInt
     public function getCursorName(): ?string
     {
         return $this->cursorName;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function createNavigator(?PaginationUriBuilderInterface $uriBuilder = null): CursorPaginationNavigator
+    {
+        return new CursorPaginationNavigator($this, $uriBuilder);
     }
 
     /**

@@ -16,6 +16,8 @@ declare(strict_types=1);
 namespace Hector\Pagination;
 
 use Closure;
+use Hector\Pagination\Navigator\RangePaginationNavigator;
+use Hector\Pagination\UriBuilder\PaginationUriBuilderInterface;
 use InvalidArgumentException;
 
 /**
@@ -82,6 +84,14 @@ class RangePagination extends AbstractPagination implements RangePaginationInter
     public function hasPrevious(): bool
     {
         return $this->start > 0;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function createNavigator(?PaginationUriBuilderInterface $uriBuilder = null): RangePaginationNavigator
+    {
+        return new RangePaginationNavigator($this, $uriBuilder);
     }
 
     /**

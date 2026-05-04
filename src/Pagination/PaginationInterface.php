@@ -16,6 +16,8 @@ declare(strict_types=1);
 namespace Hector\Pagination;
 
 use Countable;
+use Hector\Pagination\Navigator\PaginationNavigatorInterface;
+use Hector\Pagination\UriBuilder\PaginationUriBuilderInterface;
 use IteratorAggregate;
 use JsonSerializable;
 use Traversable;
@@ -81,4 +83,13 @@ interface PaginationInterface extends IteratorAggregate, Countable, JsonSerializ
      * @return bool
      */
     public function hasPrevious(): bool;
+
+    /**
+     * Create navigator for this pagination.
+     *
+     * @param PaginationUriBuilderInterface|null $uriBuilder URI builder for generating navigation URIs.
+     *
+     * @return PaginationNavigatorInterface
+     */
+    public function createNavigator(?PaginationUriBuilderInterface $uriBuilder = null): PaginationNavigatorInterface;
 }

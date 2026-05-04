@@ -15,16 +15,11 @@ declare(strict_types=1);
 
 namespace Hector\Pagination\Paginator;
 
-use Hector\Pagination\CursorPaginationInterface;
 use Hector\Pagination\Encoder\Base64CursorEncoder;
 use Hector\Pagination\Encoder\CursorEncoderInterface;
-use Hector\Pagination\Navigator\CursorPaginationNavigator;
-use Hector\Pagination\Navigator\PaginationNavigatorInterface;
-use Hector\Pagination\PaginationInterface;
 use Hector\Pagination\Request\CursorPaginationRequest;
 use Hector\Pagination\UriBuilder\CursorPaginationUriBuilder;
 use Hector\Pagination\UriBuilder\PaginationUriBuilderInterface;
-use InvalidArgumentException;
 use Psr\Http\Message\ServerRequestInterface;
 
 final class CursorPaginator implements PaginatorInterface
@@ -77,17 +72,8 @@ final class CursorPaginator implements PaginatorInterface
     /**
      * @inheritDoc
      */
-    public function createNavigator(PaginationInterface $pagination): PaginationNavigatorInterface
+    protected function getUriBuilder(): PaginationUriBuilderInterface
     {
-        if (!$pagination instanceof CursorPaginationInterface) {
-            throw new InvalidArgumentException(
-                sprintf('Expected %s, got %s', CursorPaginationInterface::class, $pagination::class)
-            );
-        }
-
-        return new CursorPaginationNavigator(
-            pagination: $pagination,
-            uriBuilder: $this->uriBuilder,
-        );
+        return $this->uriBuilder;
     }
 }

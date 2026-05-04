@@ -106,12 +106,11 @@ class CursorPaginatorTest extends TestCase
         $this->assertInstanceOf(Base64CursorEncoder::class, $paginator->getEncoder());
     }
 
-    public function testCreateNavigator(): void
+    public function testCreateNavigatorFromPagination(): void
     {
-        $paginator = new CursorPaginator();
         $pagination = new CursorPagination(['a', 'b'], 15);
 
-        $navigator = $paginator->createNavigator($pagination);
+        $navigator = $pagination->createNavigator();
 
         $this->assertInstanceOf(CursorPaginationNavigator::class, $navigator);
     }

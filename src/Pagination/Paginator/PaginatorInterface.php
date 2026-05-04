@@ -15,7 +15,6 @@ declare(strict_types=1);
 
 namespace Hector\Pagination\Paginator;
 
-use Hector\Pagination\Navigator\PaginationNavigatorInterface;
 use Hector\Pagination\PaginationInterface;
 use Hector\Pagination\Request\PaginationRequestInterface;
 use Hector\Pagination\View\PaginationView;
@@ -29,11 +28,6 @@ interface PaginatorInterface
      * Create request from PSR-7 server request.
      */
     public function createRequest(ServerRequestInterface $request): PaginationRequestInterface;
-
-    /**
-     * Create navigator for given pagination.
-     */
-    public function createNavigator(PaginationInterface $pagination): PaginationNavigatorInterface;
 
     /**
      * Create view for template rendering.

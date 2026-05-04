@@ -15,14 +15,9 @@ declare(strict_types=1);
 
 namespace Hector\Pagination\Paginator;
 
-use Hector\Pagination\Navigator\OffsetPaginationNavigator;
-use Hector\Pagination\Navigator\PaginationNavigatorInterface;
-use Hector\Pagination\OffsetPaginationInterface;
-use Hector\Pagination\PaginationInterface;
 use Hector\Pagination\Request\OffsetPaginationRequest;
 use Hector\Pagination\UriBuilder\OffsetPaginationUriBuilder;
 use Hector\Pagination\UriBuilder\PaginationUriBuilderInterface;
-use InvalidArgumentException;
 use Psr\Http\Message\ServerRequestInterface;
 
 final class OffsetPaginator implements PaginatorInterface
@@ -62,14 +57,8 @@ final class OffsetPaginator implements PaginatorInterface
     /**
      * @inheritDoc
      */
-    public function createNavigator(PaginationInterface $pagination): PaginationNavigatorInterface
+    protected function getUriBuilder(): PaginationUriBuilderInterface
     {
-        if (!$pagination instanceof OffsetPaginationInterface) {
-            throw new InvalidArgumentException(
-                sprintf('Expected %s, got %s', OffsetPaginationInterface::class, $pagination::class)
-            );
-        }
-
-        return new OffsetPaginationNavigator($pagination, $this->uriBuilder);
+        return $this->uriBuilder;
     }
 }

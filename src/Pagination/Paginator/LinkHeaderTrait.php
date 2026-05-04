@@ -17,19 +17,20 @@ namespace Hector\Pagination\Paginator;
 
 use Hector\Pagination\Navigator\PaginationNavigatorInterface;
 use Hector\Pagination\PaginationInterface;
+use Hector\Pagination\UriBuilder\PaginationUriBuilderInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\UriInterface;
 
 trait LinkHeaderTrait
 {
-    abstract public function createNavigator(PaginationInterface $pagination): PaginationNavigatorInterface;
+    abstract protected function getUriBuilder(): PaginationUriBuilderInterface;
 
     public function prepareResponse(
         ResponseInterface $response,
         UriInterface $baseUri,
         PaginationInterface $pagination,
     ): ResponseInterface {
-        return $this->addLinkHeader($response, $baseUri, $this->createNavigator($pagination));
+        return $this->addLinkHeader($response, $baseUri, $pagination->createNavigator($this->getUriBuilder()));
     }
 
     protected function addLinkHeader(

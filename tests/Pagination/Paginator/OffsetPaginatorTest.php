@@ -93,12 +93,11 @@ class OffsetPaginatorTest extends TestCase
         $this->assertSame(30, $request->getLimit());
     }
 
-    public function testCreateNavigator(): void
+    public function testCreateNavigatorFromPagination(): void
     {
-        $paginator = new OffsetPaginator();
         $pagination = new OffsetPagination(['a', 'b'], 15, currentPage: 2);
 
-        $navigator = $paginator->createNavigator($pagination);
+        $navigator = $pagination->createNavigator();
 
         $this->assertInstanceOf(OffsetPaginationNavigator::class, $navigator);
     }

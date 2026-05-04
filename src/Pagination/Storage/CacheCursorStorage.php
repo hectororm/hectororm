@@ -16,10 +16,11 @@ declare(strict_types=1);
 namespace Hector\Pagination\Storage;
 
 use DateInterval;
+use LogicException;
 use Psr\SimpleCache\CacheInterface;
 
 if (false === interface_exists(CacheInterface::class)) {
-    throw new \LogicException(
+    throw new LogicException(
         'You cannot use "CacheCursorStorage" as the "psr/simple-cache" package is not installed. ' .
         'Try running "composer require psr/simple-cache".'
     );

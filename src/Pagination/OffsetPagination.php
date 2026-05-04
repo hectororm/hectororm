@@ -16,6 +16,8 @@ declare(strict_types=1);
 namespace Hector\Pagination;
 
 use Closure;
+use Hector\Pagination\Navigator\OffsetPaginationNavigator;
+use Hector\Pagination\UriBuilder\PaginationUriBuilderInterface;
 use InvalidArgumentException;
 
 /**
@@ -121,6 +123,14 @@ class OffsetPagination extends AbstractPagination implements OffsetPaginationInt
     public function hasPrevious(): bool
     {
         return $this->currentPage > 1;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function createNavigator(?PaginationUriBuilderInterface $uriBuilder = null): OffsetPaginationNavigator
+    {
+        return new OffsetPaginationNavigator($this, $uriBuilder);
     }
 
     /**

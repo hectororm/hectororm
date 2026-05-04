@@ -98,12 +98,11 @@ class RangePaginatorTest extends TestCase
         $this->assertSame(19, $request->getOffsetEnd());
     }
 
-    public function testCreateNavigator(): void
+    public function testCreateNavigatorFromPagination(): void
     {
-        $paginator = new RangePaginator();
         $pagination = new RangePagination(['a', 'b'], 0, 19, total: 100);
 
-        $navigator = $paginator->createNavigator($pagination);
+        $navigator = $pagination->createNavigator();
 
         $this->assertInstanceOf(RangePaginationNavigator::class, $navigator);
     }

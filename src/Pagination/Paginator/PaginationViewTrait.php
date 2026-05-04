@@ -15,8 +15,8 @@ declare(strict_types=1);
 
 namespace Hector\Pagination\Paginator;
 
-use Hector\Pagination\Navigator\PaginationNavigatorInterface;
 use Hector\Pagination\PaginationInterface;
+use Hector\Pagination\UriBuilder\PaginationUriBuilderInterface;
 use Hector\Pagination\View\PaginationView;
 use Psr\Http\Message\UriInterface;
 
@@ -25,7 +25,7 @@ trait PaginationViewTrait
     /**
      * @see PaginationView::createFromNavigator()
      */
-    abstract public function createNavigator(PaginationInterface $pagination): PaginationNavigatorInterface;
+    abstract protected function getUriBuilder(): PaginationUriBuilderInterface;
 
     /**
      * @inheritDoc
@@ -35,7 +35,7 @@ trait PaginationViewTrait
         UriInterface $baseUri,
     ): PaginationView {
         return PaginationView::createFromNavigator(
-            $this->createNavigator($pagination),
+            $pagination->createNavigator($this->getUriBuilder()),
             $pagination,
             $baseUri,
         );

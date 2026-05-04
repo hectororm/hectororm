@@ -15,8 +15,6 @@ declare(strict_types=1);
 
 namespace Hector\Pagination\Paginator;
 
-use Hector\Pagination\Navigator\PaginationNavigatorInterface;
-use Hector\Pagination\Navigator\RangePaginationNavigator;
 use Hector\Pagination\PaginationInterface;
 use Hector\Pagination\RangePaginationInterface;
 use Hector\Pagination\Request\RangePaginationRequest;
@@ -76,15 +74,9 @@ final class RangePaginator implements PaginatorInterface
     /**
      * @inheritDoc
      */
-    public function createNavigator(PaginationInterface $pagination): PaginationNavigatorInterface
+    protected function getUriBuilder(): PaginationUriBuilderInterface
     {
-        if (!$pagination instanceof RangePaginationInterface) {
-            throw new InvalidArgumentException(
-                sprintf('Expected %s, got %s', RangePaginationInterface::class, $pagination::class)
-            );
-        }
-
-        return new RangePaginationNavigator($pagination, $this->uriBuilder);
+        return $this->uriBuilder;
     }
 
     /**
@@ -101,7 +93,7 @@ final class RangePaginator implements PaginatorInterface
             );
         }
 
-        $navigator = $this->createNavigator($pagination);
+        $navigator = $pagination->createNavigator($this->uriBuilder);
         $response = $this->addLinkHeader($response, $baseUri, $navigator);
 
         $response = $response
