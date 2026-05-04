@@ -286,11 +286,11 @@ class Collection implements CollectionInterface, ArrayAccess
     public function first(?callable $callback = null): mixed
     {
         if (null === $callback) {
-            if (false !== ($result = reset($this->items))) {
-                return $result;
+            if (empty($this->items)) {
+                return null;
             }
 
-            return null;
+            return reset($this->items);
         }
 
         foreach ($this as $key => $value) {
@@ -308,11 +308,11 @@ class Collection implements CollectionInterface, ArrayAccess
     public function last(?callable $callback = null): mixed
     {
         if (null === $callback) {
-            if (false !== ($result = end($this->items))) {
-                return $result;
+            if (empty($this->items)) {
+                return null;
             }
 
-            return null;
+            return end($this->items);
         }
 
         $result = null;

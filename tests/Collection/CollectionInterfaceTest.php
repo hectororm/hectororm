@@ -342,6 +342,10 @@ class CollectionInterfaceTest extends TestCase
 
         $this->assertNull((new $class())->first($callback));
         $this->assertNull((new $class())->first());
+
+        // Ensure false values are returned correctly
+        $this->assertFalse((new $class([false, true]))->first());
+        $this->assertSame(0, (new $class([0, 1, 2]))->first());
     }
 
     /**
@@ -357,6 +361,10 @@ class CollectionInterfaceTest extends TestCase
 
         $this->assertNull((new $class())->last($callback));
         $this->assertNull((new $class())->last());
+
+        // Ensure false values are returned correctly
+        $this->assertFalse((new $class([true, false]))->last());
+        $this->assertSame(0, (new $class([1, 2, 0]))->last());
     }
 
     /**

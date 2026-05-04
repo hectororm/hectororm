@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `Collection::first()` and `Collection::last()` now correctly return `false` and `0` values instead of `null`
+
 ## [1.2.2] - 2026-02-05
 
 _No changes in this release._
