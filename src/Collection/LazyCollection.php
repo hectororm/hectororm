@@ -462,15 +462,13 @@ class LazyCollection implements CollectionInterface
     public function unique(): static
     {
         $generator = function (): Generator {
-            $hashes = [];
+            $seen = [];
 
             foreach ($this->items as $key => $item) {
-                $hash = md5((string)$item);
-
-                if (in_array($hash, $hashes)) {
+                if (in_array($item, $seen)) {
                     continue;
                 }
-                $hashes[] = $hash;
+                $seen[] = $item;
 
                 yield $key => $item;
             }
