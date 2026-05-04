@@ -26,11 +26,7 @@ use Hector\Orm\Pagination\BuilderCursorPaginator;
 use Hector\Orm\Pagination\BuilderOffsetPaginator;
 use Hector\Orm\Pagination\BuilderRangePaginator;
 use Hector\Orm\Query\Component\Conditions;
-use Hector\Pagination\CursorPagination;
-use Hector\Pagination\Encoder\CursorEncoderInterface;
-use Hector\Pagination\OffsetPagination;
 use Hector\Pagination\PaginationInterface;
-use Hector\Pagination\RangePagination;
 use Hector\Pagination\Request\CursorPaginationRequest;
 use Hector\Pagination\Request\OffsetPaginationRequest;
 use Hector\Pagination\Request\PaginationRequestInterface;
@@ -55,22 +51,19 @@ class Builder extends QueryBuilder
 
     /** @var ReflectionEntity<T> Reflection of the target entity. */
     private ReflectionEntity $entityReflection;
-    /** @var class-string<T> Entity class name. */
-    private string $entityClass;
     /** @var array<string,mixed> Relations to eager‑load. */
     public array $with = [];
 
     /**
      * EntityQuery constructor.
      *
-     * @param class-string<T> $entity Fully qualified entity class name.
+     * @param class-string<T> $entityClass Fully qualified entity class name.
      *
      * @throws OrmException
      */
-    public function __construct(string $entity)
+    public function __construct(private string $entityClass)
     {
-        $this->entityClass = $entity;
-        $this->entityReflection = ReflectionEntity::get($entity);
+        $this->entityReflection = ReflectionEntity::get($this->entityClass);
         parent::__construct(Orm::get()->getConnection($this->entityReflection->connection));
     }
 
@@ -417,6 +410,43 @@ class Builder extends QueryBuilder
     }
 
     /**
+     * Process paginated results in chunks.
+     *
+     * Iterates through all pages by calling `paginate()` repeatedly,
+     * advancing via `$pagination->createNavigator()->getNextRequest()`.
+     * The callback receives each `PaginationInterface` page (containing
+     * a `Collection<T>` of entities); returning `false` stops iteration.
+     *
+     * @param PaginationRequestInterface $request Initial pagination request.
+     * @param callable $callback Callback receiving each PaginationInterface page. Return false to stop.
+     * @param bool $withTotal Whether to include total count in each page.
+     * @param bool $optimized Use optimized subquery fetch to avoid JOIN row duplication.
+     *
+     * @return void
+     * @throws OrmException
+     */
+    public function chunkPaginate(
+        PaginationRequestInterface $request,
+        callable $callback,
+        bool $withTotal = false,
+        bool $optimized = false,
+    ): void {
+        do {
+            $pagination = $this->paginate($request, $withTotal, $optimized);
+
+            if ($pagination->isEmpty()) {
+                break;
+            }
+
+            if (false === $callback($pagination)) {
+                break;
+            }
+
+            $request = $pagination->createNavigator()->getNextRequest();
+        } while (null !== $request);
+    }
+
+    /**
      * Paginate results (auto-detection based on request type).
      *
      * When `$optimized` is true, pagination uses a subquery to select distinct
@@ -442,7 +472,7 @@ class Builder extends QueryBuilder
             $request instanceof OffsetPaginationRequest => new BuilderOffsetPaginator($this, $withTotal, $optimized),
             default => throw new InvalidArgumentException(sprintf(
                 'Unsupported pagination request type: %s',
-                get_class($request)
+                $request::class
             )),
         };
 

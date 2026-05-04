@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Parameter `optimized` on `Builder::paginate()` for 2-step primary key pagination (prevents JOIN row duplication)
 - Method `Builder::getEntityClass()` to access the entity class name
 - Namespace `Hector\Orm\Pagination` with `BuilderOffsetPaginator`, `BuilderCursorPaginator`, `BuilderRangePaginator`
+- Method `Builder::chunkPaginate()` to iterate through paginated results in chunks, with `$optimized` support
 
 ### Changed
 

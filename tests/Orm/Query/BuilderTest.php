@@ -27,6 +27,7 @@ use Hector\Orm\Tests\Fake\Entity\Language;
 use Hector\Orm\Tests\Fake\Entity\Staff;
 use Hector\Pagination\CursorPagination;
 use Hector\Pagination\OffsetPagination;
+use Hector\Pagination\PaginationInterface;
 use Hector\Pagination\RangePagination;
 use Hector\Pagination\Request\CursorPaginationRequest;
 use Hector\Pagination\Request\OffsetPaginationRequest;
@@ -331,6 +332,99 @@ class BuilderTest extends AbstractTestCase
         $this->assertEquals($builder->count(), $total);
     }
 
+    public function testChunkPaginateWithOffsetRequest(): void
+    {
+        $builder = new Builder(Film::class);
+        $total = 0;
+        $pages = 0;
+
+        $builder->chunkPaginate(
+            new OffsetPaginationRequest(page: 1, perPage: 100),
+            function (PaginationInterface $pagination) use (&$total, &$pages): void {
+                $this->assertInstanceOf(OffsetPagination::class, $pagination);
+                $this->assertContainsOnlyInstancesOf(Film::class, $pagination->getItems());
+                $total += count($pagination);
+                $pages++;
+            },
+        );
+
+        $this->assertEquals($builder->count(), $total);
+        $this->assertGreaterThan(1, $pages);
+    }
+
+    public function testChunkPaginateWithCursorRequest(): void
+    {
+        $builder = new Builder(Film::class);
+        $builder->orderBy('film_id', 'ASC');
+        $total = 0;
+        $pages = 0;
+
+        $builder->chunkPaginate(
+            new CursorPaginationRequest(perPage: 100),
+            function (PaginationInterface $pagination) use (&$total, &$pages): void {
+                $this->assertInstanceOf(CursorPagination::class, $pagination);
+                $this->assertContainsOnlyInstancesOf(Film::class, $pagination->getItems());
+                $total += count($pagination);
+                $pages++;
+            },
+        );
+
+        $this->assertEquals($builder->count(), $total);
+        $this->assertGreaterThan(1, $pages);
+    }
+
+    public function testChunkPaginateWithRangeRequest(): void
+    {
+        $builder = new Builder(Film::class);
+        $total = 0;
+        $pages = 0;
+
+        $builder->chunkPaginate(
+            new RangePaginationRequest(start: 0, end: 99),
+            function (PaginationInterface $pagination) use (&$total, &$pages): void {
+                $this->assertInstanceOf(RangePagination::class, $pagination);
+                $this->assertContainsOnlyInstancesOf(Film::class, $pagination->getItems());
+                $total += count($pagination);
+                $pages++;
+            },
+        );
+
+        $this->assertEquals($builder->count(), $total);
+        $this->assertGreaterThan(1, $pages);
+    }
+
+    public function testChunkPaginateStopsOnFalseReturn(): void
+    {
+        $builder = new Builder(Film::class);
+        $pages = 0;
+
+        $builder->chunkPaginate(
+            new OffsetPaginationRequest(page: 1, perPage: 100),
+            function () use (&$pages): bool {
+                $pages++;
+                return false;
+            },
+        );
+
+        $this->assertSame(1, $pages);
+    }
+
+    public function testChunkPaginateEmptyResult(): void
+    {
+        $builder = new Builder(Film::class);
+        $builder->where('film_id', '>', 999999);
+        $callbackCalled = false;
+
+        $builder->chunkPaginate(
+            new OffsetPaginationRequest(page: 1, perPage: 10),
+            function () use (&$callbackCalled): void {
+                $callbackCalled = true;
+            },
+        );
+
+        $this->assertFalse($callbackCalled);
+    }
+
     public function testYield(): void
     {
         $builder = new Builder(Film::class);
@@ -584,8 +678,8 @@ class BuilderTest extends AbstractTestCase
         $normal = (new Builder(Film::class))->orderBy('film_id', 'DESC')->paginate($request);
         $optimized = (new Builder(Film::class))->orderBy('film_id', 'DESC')->paginate($request, optimized: true);
 
-        $normalIds = array_map(fn(Film $f) => $f->film_id, $normal->getArrayCopy());
-        $optimizedIds = array_map(fn(Film $f) => $f->film_id, $optimized->getArrayCopy());
+        $normalIds = array_map(fn(Film $f): ?int => $f->film_id, $normal->getArrayCopy());
+        $optimizedIds = array_map(fn(Film $f): ?int => $f->film_id, $optimized->getArrayCopy());
 
         $this->assertSame($normalIds, $optimizedIds);
     }
@@ -625,8 +719,8 @@ class BuilderTest extends AbstractTestCase
         $this->assertCount(3, $page2);
 
         // Pages must not overlap
-        $page1Ids = array_map(fn(Film $f) => $f->film_id, $page1->getArrayCopy());
-        $page2Ids = array_map(fn(Film $f) => $f->film_id, $page2->getArrayCopy());
+        $page1Ids = array_map(fn(Film $f): ?int => $f->film_id, $page1->getArrayCopy());
+        $page2Ids = array_map(fn(Film $f): ?int => $f->film_id, $page2->getArrayCopy());
 
         $this->assertEmpty(array_intersect($page1Ids, $page2Ids));
         // Page 2 IDs should be strictly after page 1 IDs
@@ -645,7 +739,7 @@ class BuilderTest extends AbstractTestCase
 
         $queryLogs = array_values(array_filter(
             array_slice($logger->getLogs(), $nbQueriesBefore),
-            fn(LogEntry $l) => $l->getType() === LogEntry::TYPE_QUERY,
+            fn(LogEntry $l): bool => $l->getType() === LogEntry::TYPE_QUERY,
         ));
 
         // Single query with INNER JOIN derived table
@@ -678,7 +772,7 @@ class BuilderTest extends AbstractTestCase
 
         $queryLogs = array_values(array_filter(
             array_slice($logger->getLogs(), $nbQueriesBefore),
-            fn(LogEntry $l) => $l->getType() === LogEntry::TYPE_QUERY,
+            fn(LogEntry $l): bool => $l->getType() === LogEntry::TYPE_QUERY,
         ));
 
         // Single query without INNER JOIN
@@ -702,8 +796,8 @@ class BuilderTest extends AbstractTestCase
         $normal = (new Builder(Film::class))->orderBy('film_id', 'ASC')->paginate($request);
         $optimized = (new Builder(Film::class))->orderBy('film_id', 'ASC')->paginate($request, optimized: true);
 
-        $normalIds = array_map(fn(Film $f) => $f->film_id, $normal->getArrayCopy());
-        $optimizedIds = array_map(fn(Film $f) => $f->film_id, $optimized->getArrayCopy());
+        $normalIds = array_map(fn(Film $f): ?int => $f->film_id, $normal->getArrayCopy());
+        $optimizedIds = array_map(fn(Film $f): ?int => $f->film_id, $optimized->getArrayCopy());
 
         // Same entities, same order
         $this->assertSame($normalIds, $optimizedIds);
