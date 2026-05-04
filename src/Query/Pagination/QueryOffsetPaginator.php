@@ -29,25 +29,45 @@ class QueryOffsetPaginator extends AbstractQueryPaginator
      */
     public function paginate(PaginationRequestInterface $request): OffsetPagination
     {
+        $bounds = $this->getBuilderBounds();
+        $baseOffset = $bounds->getOffset() ?? 0;
+        $builderLimit = $bounds->getLimit();
+        $requestLimit = $request->getLimit();
+
         $countBuilder = $this->withTotal ? clone $this->builder : null;
+
+        // Compute effective SQL limit, bounded by user-defined limit.
+        // When remaining items in the window exceed requestLimit, add +1 for
+        // hasMore detection (N+1 trick). Otherwise, use remaining as-is since
+        // we already know we are at the end of the window.
+        if (null !== $builderLimit) {
+            $remaining = max(0, $builderLimit - $request->getOffset());
+            $effectiveLimit = min($requestLimit + 1, $remaining);
+        } else {
+            $effectiveLimit = $requestLimit + 1;
+        }
 
         $items = $this->fetchItems(
             (clone $this->builder)
-                ->limit($request->getLimit() + 1)
-                ->offset($request->getOffset())
+                ->limit($effectiveLimit, $baseOffset + $request->getOffset())
         );
 
-        $hasMore = count($items) > $request->getLimit();
+        $hasMore = count($items) > $requestLimit;
+        if (null !== $builderLimit && $request->getOffset() + $requestLimit >= $builderLimit) {
+            $hasMore = false;
+        }
         if ($hasMore) {
             array_pop($items);
         }
 
         return new OffsetPagination(
             items: $items,
-            perPage: $request->getLimit(),
-            currentPage: $this->calculateCurrentPage($request->getOffset(), $request->getLimit()),
+            perPage: $requestLimit,
+            currentPage: $this->calculateCurrentPage($request->getOffset(), $requestLimit),
             hasMore: $hasMore,
-            total: true === $this->withTotal ? fn(): int => $countBuilder->count() : null,
+            total: true === $this->withTotal
+                ? fn(): int => $this->boundTotal($countBuilder->count(), $bounds)
+                : null,
         );
     }
 }

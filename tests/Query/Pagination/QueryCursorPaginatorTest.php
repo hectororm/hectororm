@@ -184,4 +184,87 @@ class QueryCursorPaginatorTest extends TestCase
         $resultItems = $result->getItems();
         $this->assertEquals($firstItems[0]['table_id'], $resultItems[0]['table_id']);
     }
+
+    public function testPaginateWithBuilderOffset(): void
+    {
+        $builder = (new QueryBuilder($this->getConnection()))
+            ->from('`table`')
+            ->columns('*')
+            ->orderBy('table_id', 'ASC')
+            ->offset(2);
+
+        $paginator = new QueryCursorPaginator($builder, withTotal: false);
+        $request = new CursorPaginationRequest(perPage: 3);
+
+        $result = $paginator->paginate($request);
+        $items = $result->getItems();
+
+        // Offset 2 skips the first 2 rows on the first page
+        $this->assertCount(3, $items);
+        $this->assertEquals(3, $items[0]['table_id']);
+    }
+
+    public function testPaginateWithBuilderOffsetNotAppliedOnSubsequentPages(): void
+    {
+        $builder = (new QueryBuilder($this->getConnection()))
+            ->from('`table`')
+            ->columns('*')
+            ->orderBy('table_id', 'ASC')
+            ->offset(2);
+
+        $paginator = new QueryCursorPaginator($builder, withTotal: false);
+
+        // First page: offset 2, gets items starting at table_id=3
+        $firstPage = $paginator->paginate(new CursorPaginationRequest(perPage: 2));
+        $firstItems = $firstPage->getItems();
+        $this->assertEquals(3, $firstItems[0]['table_id']);
+
+        // Second page: cursor navigates, builder offset should NOT be re-applied
+        $nextPosition = $firstPage->getNextPosition();
+        $this->assertNotNull($nextPosition);
+
+        $secondPage = $paginator->paginate(new CursorPaginationRequest(
+            perPage: 2,
+            position: $nextPosition,
+        ));
+        $secondItems = $secondPage->getItems();
+        $this->assertNotEmpty($secondItems);
+        // Should continue right after first page, not skip 2 more rows
+        $this->assertEquals($firstItems[1]['table_id'] + 1, $secondItems[0]['table_id']);
+    }
+
+    public function testPaginateWithBuilderLimitBoundsTotal(): void
+    {
+        $builder = (new QueryBuilder($this->getConnection()))
+            ->from('`table`')
+            ->columns('*')
+            ->orderBy('table_id', 'ASC')
+            ->limit(5);
+
+        $paginator = new QueryCursorPaginator($builder, withTotal: true);
+        $request = new CursorPaginationRequest(perPage: 3);
+
+        $result = $paginator->paginate($request);
+
+        // Total should be bounded to 5, not the full table count
+        $this->assertEquals(5, $result->getTotal());
+    }
+
+    public function testPaginateWithBuilderOffsetAndLimitBoundsTotal(): void
+    {
+        $builder = (new QueryBuilder($this->getConnection()))
+            ->from('`table`')
+            ->columns('*')
+            ->orderBy('table_id', 'ASC')
+            ->offset(2)
+            ->limit(5);
+
+        $paginator = new QueryCursorPaginator($builder, withTotal: true);
+        $request = new CursorPaginationRequest(perPage: 3);
+
+        $result = $paginator->paginate($request);
+
+        // Total: min(10 - 2, 5) = 5
+        $this->assertEquals(5, $result->getTotal());
+    }
 }

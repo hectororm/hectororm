@@ -45,19 +45,32 @@ class QueryRangePaginator extends AbstractQueryPaginator
      */
     protected function rangePaginate(RangePaginationRequest $request): RangePagination
     {
+        $bounds = $this->getBuilderBounds();
+        $baseOffset = $bounds->getOffset() ?? 0;
+        $builderLimit = $bounds->getLimit();
+
         $countBuilder = $this->withTotal ? clone $this->builder : null;
+
+        // Compute effective SQL limit, bounded by user-defined limit
+        if (null !== $builderLimit) {
+            $remaining = max(0, $builderLimit - $request->getOffset());
+            $effectiveLimit = min($request->getLimit(), $remaining);
+        } else {
+            $effectiveLimit = $request->getLimit();
+        }
 
         $items = $this->fetchItems(
             (clone $this->builder)
-                ->limit($request->getLimit())
-                ->offset($request->getOffset())
+                ->limit($effectiveLimit, $baseOffset + $request->getOffset())
         );
 
         return new RangePagination(
             items: $items,
             start: $request->getOffset(),
             end: $request->getOffsetEnd(),
-            total: $this->withTotal ? $countBuilder->count() : null,
+            total: $this->withTotal
+                ? $this->boundTotal($countBuilder->count(), $bounds)
+                : null,
         );
     }
 }

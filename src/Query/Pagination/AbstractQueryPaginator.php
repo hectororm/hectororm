@@ -15,6 +15,7 @@ declare(strict_types=1);
 
 namespace Hector\Query\Pagination;
 
+use Hector\Query\Component\Limit;
 use Hector\Query\QueryBuilder;
 
 /**
@@ -27,6 +28,36 @@ abstract class AbstractQueryPaginator implements QueryPaginatorInterface
         protected QueryBuilder $builder,
         protected bool $withTotal = true,
     ) {
+    }
+
+    /**
+     * Get user-defined bounds from the builder.
+     *
+     * Returns a clone of the limit component that was set on the builder
+     * before pagination, allowing paginators to respect offset/limit as bounds.
+     */
+    protected function getBuilderBounds(): Limit
+    {
+        return clone $this->builder->limit;
+    }
+
+    /**
+     * Bound total count to user-defined limits.
+     *
+     * @param int $total Raw total count from the database.
+     * @param Limit $bounds User-defined bounds.
+     *
+     * @return int
+     */
+    protected function boundTotal(int $total, Limit $bounds): int
+    {
+        $total = max(0, $total - ($bounds->getOffset() ?? 0));
+
+        if (null !== $bounds->getLimit()) {
+            $total = min($total, $bounds->getLimit());
+        }
+
+        return $total;
     }
 
     /**

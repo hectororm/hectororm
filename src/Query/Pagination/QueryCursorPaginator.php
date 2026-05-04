@@ -54,6 +54,9 @@ class QueryCursorPaginator extends AbstractQueryPaginator
             );
         }
 
+        // Read user-defined bounds before cloning
+        $bounds = $this->getBuilderBounds();
+
         $countBuilder = $this->withTotal ? clone $this->builder : null;
         $builder = clone $this->builder;
         $position = $request->getPosition();
@@ -79,7 +82,17 @@ class QueryCursorPaginator extends AbstractQueryPaginator
             }
         }
 
-        $items = $this->fetchItems($builder->limit($request->getLimit() + 1));
+        // Apply user-defined offset only on the first page (no cursor position).
+        // Once a cursor position is set, WHERE conditions handle navigation
+        // and adding an SQL OFFSET would skip results incorrectly.
+        // When a position is set, explicitly reset offset to 0 to clear
+        // any inherited offset from the cloned builder.
+        $items = $this->fetchItems(
+            $builder->limit(
+                $request->getLimit() + 1,
+                null === $position ? $bounds->getOffset() : 0,
+            )
+        );
 
         $hasMore = count($items) > $request->getLimit();
         if ($hasMore) {
@@ -117,7 +130,9 @@ class QueryCursorPaginator extends AbstractQueryPaginator
             perPage: $request->getLimit(),
             nextPosition: $nextPosition,
             previousPosition: $previousPosition,
-            total: $this->withTotal ? fn(): int => $countBuilder->count() : null,
+            total: $this->withTotal
+                ? fn(): int => $this->boundTotal($countBuilder->count(), $bounds)
+                : null,
         );
     }
 
