@@ -45,6 +45,10 @@ class BindParam
      */
     public static function findDataType(mixed $variable): int
     {
+        if (null === $variable) {
+            return PDO::PARAM_NULL;
+        }
+
         if (is_resource($variable)) {
             return PDO::PARAM_LOB;
         }

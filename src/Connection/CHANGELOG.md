@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `DriverInfo::getIdentifierQuote()` method to expose the driver-specific identifier quoting character
 - Added `DriverCapabilities::hasRenameColumn()` to detect support for `RENAME COLUMN` syntax (false on MySQL < 8.0)
 
+### Fixed
+
+- Use `PDO::PARAM_NULL` for `null` values in `BindParam::findDataType()` instead of `PDO::PARAM_STR`
+
 ## [1.2.2] - 2026-02-05
 
 _No changes in this release._

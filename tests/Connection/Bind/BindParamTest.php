@@ -130,4 +130,11 @@ class BindParamTest extends TestCase
 
         $this->assertSame(PDO::PARAM_BOOL, $param->getDataType());
     }
+
+    public function testGetDataTypeNull(): void
+    {
+        $param = new BindParam('name', null);
+
+        $this->assertSame(PDO::PARAM_NULL, $param->getDataType());
+    }
 }
