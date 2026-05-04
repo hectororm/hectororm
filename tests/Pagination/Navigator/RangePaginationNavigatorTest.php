@@ -55,6 +55,14 @@ class RangePaginationNavigatorTest extends TestCase
         $this->assertNull($navigator->getLastRequest());
     }
 
+    public function testGetLastRequestWithZeroTotal(): void
+    {
+        $pagination = new RangePagination([], 0, 19, total: 0);
+        $navigator = new RangePaginationNavigator($pagination);
+
+        $this->assertNull($navigator->getLastRequest());
+    }
+
     public function testGetPreviousRequest(): void
     {
         $pagination = new RangePagination(['a', 'b'], 20, 39, total: 100);

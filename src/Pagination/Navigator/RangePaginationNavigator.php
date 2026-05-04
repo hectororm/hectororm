@@ -68,7 +68,7 @@ final class RangePaginationNavigator implements PaginationNavigatorInterface
      */
     public function getLastRequest(): ?RangePaginationRequest
     {
-        if (null === ($total = $this->pagination->getTotal())) {
+        if (null === ($total = $this->pagination->getTotal()) || 0 === $total) {
             return null;
         }
 
