@@ -67,7 +67,7 @@ class TypeSet implements Countable
         $this->add('tinyblob', $stringType);
         $this->add('blob', $stringType);
         $this->add('mediumblob', $stringType);
-        $this->add('longblog', $stringType);
+        $this->add('longblob', $stringType);
         // Integer
         $this->add('tinyint', $intType);
         $this->add('smallint', $intType);

@@ -63,7 +63,7 @@ class TypeSetTest extends TestCase
         $this->assertInstanceOf(StringType::class, $typeSet->get('tinyblob'));
         $this->assertInstanceOf(StringType::class, $typeSet->get('blob'));
         $this->assertInstanceOf(StringType::class, $typeSet->get('mediumblob'));
-        $this->assertInstanceOf(StringType::class, $typeSet->get('longblog'));
+        $this->assertInstanceOf(StringType::class, $typeSet->get('longblob'));
         $this->assertInstanceOf(NumericType::class, $typeSet->get('tinyint'));
         $this->assertInstanceOf(NumericType::class, $typeSet->get('smallint'));
         $this->assertInstanceOf(NumericType::class, $typeSet->get('mediumint'));
