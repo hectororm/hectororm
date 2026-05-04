@@ -12,6 +12,7 @@
 
 namespace Hector\DataTypes\Tests\Type;
 
+use stdClass;
 use Hector\DataTypes\Exception\ValueException;
 use Hector\DataTypes\ExpectedType;
 use Hector\DataTypes\Type\RamseyUuidType;
@@ -68,7 +69,7 @@ class RamseyUuidTypeTest extends TestCase
     public function testFromSchemaWithIncompatibleClassExpectedThrows(): void
     {
         $type = new RamseyUuidType();
-        $expected = ExpectedType::from(\stdClass::class);
+        $expected = ExpectedType::from(stdClass::class);
 
         $this->expectException(ValueException::class);
 
