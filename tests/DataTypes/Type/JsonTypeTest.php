@@ -160,4 +160,23 @@ class JsonTypeTest extends TestCase
         $this->assertFalse($type->equals('{"foo":"value","baz":2}', null));
         $this->assertFalse($type->equals('{"foo":"value","baz":2}', ''));
     }
+
+    public function testEqualsWithDecodedEntityData(): void
+    {
+        $type = new JsonType();
+
+        // Simulates real usage: entity side is decoded array, schema side is JSON string
+        $this->assertTrue($type->equals(
+            ['foo' => 'value', 'bar' => 'valueb', 'baz' => 2],
+            '{"foo":"value","bar":"valueb","baz":2}',
+        ));
+        $this->assertTrue($type->equals(
+            ['foo' => 'value', 'bar' => 'valueb', 'baz' => 2],
+            '{"foo":"value", "bar": "valueb", "baz": 2}',
+        ));
+        $this->assertFalse($type->equals(
+            ['foo' => 'value', 'baz' => 2],
+            '{"foo":"value","bar":"valueb","baz":2}',
+        ));
+    }
 }

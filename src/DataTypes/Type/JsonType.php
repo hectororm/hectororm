@@ -90,6 +90,11 @@ class JsonType extends AbstractType
             return empty($entityData);
         }
 
-        return $entityData == json_encode(json_decode($schemaData));
+        // Normalize both sides: decode strings, then re-encode for canonical comparison
+        if (is_string($entityData)) {
+            $entityData = json_decode($entityData);
+        }
+
+        return json_encode($entityData) === json_encode(json_decode($schemaData));
     }
 }
