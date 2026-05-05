@@ -27,7 +27,6 @@ use Hector\Orm\Tests\Fake\Entity\Language;
 use Hector\Orm\Tests\Fake\Entity\Staff;
 use Hector\Pagination\CursorPagination;
 use Hector\Pagination\OffsetPagination;
-use Hector\Pagination\PaginationInterface;
 use Hector\Pagination\RangePagination;
 use Hector\Pagination\Request\CursorPaginationRequest;
 use Hector\Pagination\Request\OffsetPaginationRequest;
@@ -340,10 +339,9 @@ class BuilderTest extends AbstractTestCase
 
         $builder->chunkPaginate(
             new OffsetPaginationRequest(page: 1, perPage: 100),
-            function (PaginationInterface $pagination) use (&$total, &$pages): void {
-                $this->assertInstanceOf(OffsetPagination::class, $pagination);
-                $this->assertContainsOnlyInstancesOf(Film::class, $pagination->getItems());
-                $total += count($pagination);
+            function (Collection $items, OffsetPagination $pagination) use (&$total, &$pages): void {
+                $this->assertContainsOnlyInstancesOf(Film::class, $items);
+                $total += $items->count();
                 $pages++;
             },
         );
@@ -361,10 +359,9 @@ class BuilderTest extends AbstractTestCase
 
         $builder->chunkPaginate(
             new CursorPaginationRequest(perPage: 100),
-            function (PaginationInterface $pagination) use (&$total, &$pages): void {
-                $this->assertInstanceOf(CursorPagination::class, $pagination);
-                $this->assertContainsOnlyInstancesOf(Film::class, $pagination->getItems());
-                $total += count($pagination);
+            function (Collection $items, CursorPagination $pagination) use (&$total, &$pages): void {
+                $this->assertContainsOnlyInstancesOf(Film::class, $items);
+                $total += $items->count();
                 $pages++;
             },
         );
@@ -381,10 +378,9 @@ class BuilderTest extends AbstractTestCase
 
         $builder->chunkPaginate(
             new RangePaginationRequest(start: 0, end: 99),
-            function (PaginationInterface $pagination) use (&$total, &$pages): void {
-                $this->assertInstanceOf(RangePagination::class, $pagination);
-                $this->assertContainsOnlyInstancesOf(Film::class, $pagination->getItems());
-                $total += count($pagination);
+            function (Collection $items, RangePagination $pagination) use (&$total, &$pages): void {
+                $this->assertContainsOnlyInstancesOf(Film::class, $items);
+                $total += $items->count();
                 $pages++;
             },
         );
@@ -423,6 +419,72 @@ class BuilderTest extends AbstractTestCase
         );
 
         $this->assertFalse($callbackCalled);
+    }
+
+    public function testChunkPaginateWithCursorRequestRespectsBuilderLimit(): void
+    {
+        $builder = new Builder(Film::class);
+        $builder->orderBy('film_id', 'ASC')->limit(250);
+        $total = 0;
+        $pages = 0;
+
+        $builder->chunkPaginate(
+            new CursorPaginationRequest(perPage: 100),
+            function (Collection $items, CursorPagination $pagination) use (&$total, &$pages): void {
+                $this->assertContainsOnlyInstancesOf(Film::class, $items);
+                $total += $items->count();
+                $pages++;
+            },
+        );
+
+        // limit(250) with perPage 100 → 100 + 100 + 50 = 250
+        $this->assertSame(250, $total);
+        $this->assertSame(3, $pages);
+    }
+
+    public function testChunkPaginateWithOffsetRequestRespectsBuilderLimit(): void
+    {
+        $builder = new Builder(Film::class);
+        $builder->limit(250);
+        $total = 0;
+        $pages = 0;
+
+        $builder->chunkPaginate(
+            new OffsetPaginationRequest(page: 1, perPage: 100),
+            function (Collection $items, OffsetPagination $pagination) use (&$total, &$pages): void {
+                $total += $items->count();
+                $pages++;
+            },
+        );
+
+        // Offset paginator handles the bound internally via getBuilderBounds()
+        $this->assertSame(250, $total);
+        $this->assertSame(3, $pages);
+    }
+
+    public function testChunkPaginateCallbackReceivesCollectionWithLoad(): void
+    {
+        $builder = new Builder(Film::class);
+        $builder->orderBy('film_id', 'ASC')->limit(50);
+
+        $loaded = 0;
+        $builder->chunkPaginate(
+            new CursorPaginationRequest(perPage: 25),
+            function (Collection $items, CursorPagination $pagination) use (&$loaded): void {
+                // The Collection should accept ORM eager-loading directly,
+                // confirming items are wrapped in an ORM Collection.
+                $items->load(['language']);
+                foreach ($items as $film) {
+                    /** @var Film $film */
+                    $this->assertInstanceOf(Film::class, $film);
+                    $this->assertTrue($film->getRelated()->isset('language'));
+                    $this->assertInstanceOf(Language::class, $film->getRelated()->language);
+                    $loaded++;
+                }
+            },
+        );
+
+        $this->assertSame(50, $loaded);
     }
 
     public function testYield(): void

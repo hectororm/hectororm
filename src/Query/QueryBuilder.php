@@ -488,11 +488,17 @@ class QueryBuilder implements CompoundStatementInterface
      *
      * Iterates through all pages by calling `paginate()` repeatedly,
      * advancing via `$pagination->createNavigator()->getNextRequest()`.
-     * The callback receives each `PaginationInterface` result; returning
-     * `false` from the callback stops iteration early.
+     * The callback receives the page items first, then the full
+     * `PaginationInterface` (for access to `getTotal()` and friends).
+     * Returning `false` from the callback stops iteration early.
+     *
+     * The builder's `limit()` is honored as a global bound across pages:
+     * the loop tracks the cumulative fetched count and adjusts the per-page
+     * size of the next request via `withPerPage()` so that no more rows
+     * than `limit()` are fetched.
      *
      * @param PaginationRequestInterface $request Initial pagination request.
-     * @param callable $callback Callback receiving each PaginationInterface page. Return false to stop.
+     * @param callable $callback Callback `function (mixed $items, PaginationInterface $pagination)`. Return false to stop.
      * @param bool $withTotal Whether to include total count in each page.
      *
      * @return void
@@ -502,19 +508,78 @@ class QueryBuilder implements CompoundStatementInterface
         callable $callback,
         bool $withTotal = false,
     ): void {
+        $this->doChunkPaginate(
+            $request,
+            $callback,
+            fn(PaginationRequestInterface $r): PaginationInterface => $this->paginate($r, $withTotal),
+        );
+    }
+
+    /**
+     * Generic chunk-paginate loop shared by all builder variants.
+     *
+     * Subclasses pass a `$paginateFn` closure that calls their specific
+     * `paginate()` method (with extra arguments such as `$optimized`)
+     * and may override `wrapPaginationItems()` to customize the type of
+     * `$items` passed to the callback (e.g. wrap in a Collection).
+     *
+     * @param PaginationRequestInterface $request
+     * @param callable $callback `function (mixed $items, PaginationInterface $pagination): mixed`
+     * @param callable $paginateFn `function (PaginationRequestInterface $request): PaginationInterface`
+     */
+    protected function doChunkPaginate(
+        PaginationRequestInterface $request,
+        callable $callback,
+        callable $paginateFn,
+    ): void {
+        $maxRows = $this->limit->getLimit();
+        $fetched = 0;
+
         do {
-            $pagination = $this->paginate($request, $withTotal);
+            if (null !== $maxRows) {
+                $remaining = $maxRows - $fetched;
+                if ($remaining <= 0) {
+                    break;
+                }
+                if ($remaining < $request->getLimit()) {
+                    $request = $request->withPerPage($remaining);
+                }
+            }
+
+            $pagination = $paginateFn($request);
 
             if ($pagination->isEmpty()) {
                 break;
             }
 
-            if (false === $callback($pagination)) {
+            $fetched += count($pagination);
+            $items = $this->wrapPaginationItems($pagination);
+
+            if (false === $callback($items, $pagination)) {
+                break;
+            }
+
+            if (null !== $maxRows && $fetched >= $maxRows) {
                 break;
             }
 
             $request = $pagination->createNavigator()->getNextRequest();
         } while (null !== $request);
+    }
+
+    /**
+     * Wrap pagination items before passing them to the chunk callback.
+     *
+     * Default: returns the items as a plain array (rows). ORM builders
+     * override this to return an entity Collection.
+     *
+     * @param PaginationInterface $pagination
+     *
+     * @return mixed
+     */
+    protected function wrapPaginationItems(PaginationInterface $pagination): mixed
+    {
+        return $pagination->getArrayCopy();
     }
 
     /**

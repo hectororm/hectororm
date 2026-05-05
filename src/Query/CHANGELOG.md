@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Namespace `Sort` with `SortInterface`, `Sort`, `MultiSort` and `SortConfig` for type-safe, composable sorting
 - Method `QueryBuilder::applySort(SortInterface)` to apply a sort object to the query builder
 - Cursor position validation in `QueryCursorPaginator` (columns match, scalar values only)
-- Method `QueryBuilder::chunkPaginate()` to iterate through all pages using the pagination/navigator system
+- Method `QueryBuilder::chunkPaginate()` to iterate through all pages, with callback `function (mixed $items, PaginationInterface $pagination)`. Honors the builder's `limit()` as a global bound across pages by adjusting the next request via `PaginationRequestInterface::withPerPage()`
 
 ### Changed
 

@@ -414,11 +414,15 @@ class Builder extends QueryBuilder
      *
      * Iterates through all pages by calling `paginate()` repeatedly,
      * advancing via `$pagination->createNavigator()->getNextRequest()`.
-     * The callback receives each `PaginationInterface` page (containing
-     * a `Collection<T>` of entities); returning `false` stops iteration.
+     * The callback receives a `Collection<T>` of entities first, then the
+     * full `PaginationInterface` (for access to `getTotal()` and friends).
+     * Returning `false` stops iteration early.
+     *
+     * The builder's `limit()` is honored as a global bound across pages
+     * (see `QueryBuilder::doChunkPaginate()`).
      *
      * @param PaginationRequestInterface $request Initial pagination request.
-     * @param callable $callback Callback receiving each PaginationInterface page. Return false to stop.
+     * @param callable $callback Callback `function (Collection<T> $items, PaginationInterface $pagination)`. Return false to stop.
      * @param bool $withTotal Whether to include total count in each page.
      * @param bool $optimized Use optimized subquery fetch to avoid JOIN row duplication.
      *
@@ -431,19 +435,24 @@ class Builder extends QueryBuilder
         bool $withTotal = false,
         bool $optimized = false,
     ): void {
-        do {
-            $pagination = $this->paginate($request, $withTotal, $optimized);
+        $this->doChunkPaginate(
+            $request,
+            $callback,
+            fn(PaginationRequestInterface $r): PaginationInterface => $this->paginate($r, $withTotal, $optimized),
+        );
+    }
 
-            if ($pagination->isEmpty()) {
-                break;
-            }
-
-            if (false === $callback($pagination)) {
-                break;
-            }
-
-            $request = $pagination->createNavigator()->getNextRequest();
-        } while (null !== $request);
+    /**
+     * @inheritDoc
+     *
+     * Wraps the page items in a `Hector\Orm\Collection\Collection`,
+     * giving the chunk callback access to ORM helpers such as `load()`.
+     *
+     * @return Collection<T>
+     */
+    protected function wrapPaginationItems(PaginationInterface $pagination): Collection
+    {
+        return new Collection($pagination->getArrayCopy());
     }
 
     /**

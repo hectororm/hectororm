@@ -503,8 +503,8 @@ class QueryBuilderTest extends TestCase
         $pages = [];
         $queryBuilder->chunkPaginate(
             new OffsetPaginationRequest(page: 1, perPage: 1),
-            function (OffsetPagination $pagination) use (&$pages): void {
-                $pages[] = $pagination->getArrayCopy();
+            function (array $items, OffsetPagination $pagination) use (&$pages): void {
+                $pages[] = $items;
             },
         );
 
@@ -521,8 +521,8 @@ class QueryBuilderTest extends TestCase
         $pages = [];
         $queryBuilder->chunkPaginate(
             new RangePaginationRequest(start: 0, end: 0),
-            function (RangePagination $pagination) use (&$pages): void {
-                $pages[] = $pagination->getArrayCopy();
+            function (array $items, RangePagination $pagination) use (&$pages): void {
+                $pages[] = $items;
             },
         );
 
@@ -539,8 +539,8 @@ class QueryBuilderTest extends TestCase
         $pages = [];
         $queryBuilder->chunkPaginate(
             new CursorPaginationRequest(perPage: 1),
-            function (CursorPagination $pagination) use (&$pages): void {
-                $pages[] = $pagination->getArrayCopy();
+            function (array $items, CursorPagination $pagination) use (&$pages): void {
+                $pages[] = $items;
             },
         );
 
@@ -557,8 +557,8 @@ class QueryBuilderTest extends TestCase
         $pages = [];
         $queryBuilder->chunkPaginate(
             new OffsetPaginationRequest(page: 1, perPage: 1),
-            function (OffsetPagination $pagination) use (&$pages): bool {
-                $pages[] = $pagination->getArrayCopy();
+            function (array $items, OffsetPagination $pagination) use (&$pages): bool {
+                $pages[] = $items;
                 return false;
             },
         );
@@ -580,5 +580,68 @@ class QueryBuilderTest extends TestCase
         );
 
         $this->assertFalse($callbackCalled);
+    }
+
+    public function testChunkPaginateWithCursorRequestRespectsBuilderLimit(): void
+    {
+        $queryBuilder = new QueryBuilder($this->getConnection());
+        $queryBuilder->from('`table`')->columns('*')->orderBy('table_id')->limit(3);
+
+        $total = 0;
+        $pages = 0;
+        $queryBuilder->chunkPaginate(
+            new CursorPaginationRequest(perPage: 2),
+            function (array $items, CursorPagination $pagination) use (&$total, &$pages): void {
+                $total += count($items);
+                $pages++;
+            },
+        );
+
+        // limit(3) with perPage 2 → page 1 = 2 items, page 2 = 1 item = 3 total
+        $this->assertSame(3, $total);
+        $this->assertSame(2, $pages);
+    }
+
+    public function testChunkPaginateWithOffsetRequestRespectsBuilderLimit(): void
+    {
+        $queryBuilder = new QueryBuilder($this->getConnection());
+        $queryBuilder->from('`table`')->columns('*')->limit(3);
+
+        $total = 0;
+        $pages = 0;
+        $queryBuilder->chunkPaginate(
+            new OffsetPaginationRequest(page: 1, perPage: 2),
+            function (array $items, OffsetPagination $pagination) use (&$total, &$pages): void {
+                $total += count($items);
+                $pages++;
+            },
+        );
+
+        // Offset paginator handles the bound internally via getBuilderBounds()
+        $this->assertSame(3, $total);
+        $this->assertSame(2, $pages);
+    }
+
+    public function testChunkPaginateCallbackReceivesArrayItems(): void
+    {
+        $queryBuilder = new QueryBuilder($this->getConnection());
+        $queryBuilder->from('`table`')->columns('*')->orderBy('table_id');
+
+        $itemsTypes = [];
+        $rowsCount = 0;
+        $queryBuilder->chunkPaginate(
+            new CursorPaginationRequest(perPage: 3),
+            function (mixed $items, CursorPagination $pagination) use (&$itemsTypes, &$rowsCount): void {
+                $itemsTypes[] = is_array($items);
+                $rowsCount += count($items);
+            },
+        );
+
+        $this->assertNotEmpty($itemsTypes);
+        $this->assertContainsOnly('bool', $itemsTypes);
+        foreach ($itemsTypes as $isArray) {
+            $this->assertTrue($isArray, 'Items must be a plain array');
+        }
+        $this->assertGreaterThan(0, $rowsCount);
     }
 }
