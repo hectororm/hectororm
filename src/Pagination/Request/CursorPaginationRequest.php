@@ -133,4 +133,12 @@ final class CursorPaginationRequest implements PaginationRequestInterface
     {
         return $this->perPage;
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function withPerPage(int $perPage): static
+    {
+        return new self($perPage, $this->position, $this->direction);
+    }
 }

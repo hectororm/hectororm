@@ -109,4 +109,14 @@ final class RangePaginationRequest implements PaginationRequestInterface
     {
         return $this->end;
     }
+
+    /**
+     * @inheritDoc
+     *
+     * Preserves the start offset and recomputes the end as `start + perPage - 1`.
+     */
+    public function withPerPage(int $perPage): static
+    {
+        return new self($this->start, $this->start + $perPage - 1);
+    }
 }

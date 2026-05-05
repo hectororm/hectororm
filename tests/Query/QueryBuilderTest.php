@@ -483,6 +483,11 @@ class QueryBuilderTest extends TestCase
             {
                 return 10;
             }
+
+            public function withPerPage(int $perPage): static
+            {
+                return $this;
+            }
         };
 
         $this->expectException(InvalidArgumentException::class);

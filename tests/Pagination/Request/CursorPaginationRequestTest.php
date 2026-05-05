@@ -201,6 +201,42 @@ class CursorPaginationRequestTest extends TestCase
         $this->assertSame(20, $request->getLimit());
     }
 
+    public function testWithPerPageReturnsNewInstance(): void
+    {
+        $request = new CursorPaginationRequest(perPage: 20);
+        $copy = $request->withPerPage(10);
+
+        $this->assertNotSame($request, $copy);
+        $this->assertSame(20, $request->getLimit());
+        $this->assertSame(10, $copy->getLimit());
+    }
+
+    public function testWithPerPagePreservesPositionAndDirection(): void
+    {
+        $position = ['id' => 42, 'created_at' => '2024-01-01'];
+        $request = new CursorPaginationRequest(
+            perPage: 20,
+            position: $position,
+            direction: CursorPaginationRequest::DIRECTION_BACKWARD,
+        );
+
+        $copy = $request->withPerPage(5);
+
+        $this->assertSame(5, $copy->getLimit());
+        $this->assertSame($position, $copy->getPosition());
+        $this->assertSame(CursorPaginationRequest::DIRECTION_BACKWARD, $copy->getDirection());
+        $this->assertTrue($copy->isBackward());
+    }
+
+    public function testWithPerPageWithNullPosition(): void
+    {
+        $request = new CursorPaginationRequest(perPage: 20);
+        $copy = $request->withPerPage(5);
+
+        $this->assertNull($copy->getPosition());
+        $this->assertSame(0, $copy->getOffset());
+    }
+
     private function createServerRequest(array $queryParams): ServerRequestInterface
     {
         $request = $this->createMock(ServerRequestInterface::class);

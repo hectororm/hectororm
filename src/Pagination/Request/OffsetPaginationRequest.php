@@ -76,4 +76,12 @@ final class OffsetPaginationRequest implements PaginationRequestInterface
     {
         return $this->perPage;
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function withPerPage(int $perPage): static
+    {
+        return new self($this->page, $perPage);
+    }
 }

@@ -585,6 +585,11 @@ class BuilderTest extends AbstractTestCase
             {
                 return 0;
             }
+
+            public function withPerPage(int $perPage): static
+            {
+                return $this;
+            }
         };
 
         $this->expectException(InvalidArgumentException::class);

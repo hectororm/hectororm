@@ -30,4 +30,16 @@ interface PaginationRequestInterface
      * @return int
      */
     public function getOffset(): int;
+
+    /**
+     * Return a copy of this request with the given per-page value.
+     *
+     * The new instance must preserve all other request parameters
+     * (page/position/start/direction). Implementations are immutable.
+     *
+     * @param int $perPage New per-page value (must be >= 1)
+     *
+     * @return static
+     */
+    public function withPerPage(int $perPage): static;
 }

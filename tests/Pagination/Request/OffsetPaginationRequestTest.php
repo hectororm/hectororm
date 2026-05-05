@@ -150,6 +150,27 @@ class OffsetPaginationRequestTest extends TestCase
         $this->assertSame(1, $request->getLimit());
     }
 
+    public function testWithPerPageReturnsNewInstance(): void
+    {
+        $request = new OffsetPaginationRequest(page: 3, perPage: 25);
+        $copy = $request->withPerPage(10);
+
+        $this->assertNotSame($request, $copy);
+        $this->assertSame(25, $request->getLimit());
+        $this->assertSame(10, $copy->getLimit());
+    }
+
+    public function testWithPerPagePreservesPage(): void
+    {
+        $request = new OffsetPaginationRequest(page: 5, perPage: 20);
+        $copy = $request->withPerPage(8);
+
+        $this->assertSame(5, $copy->getPage());
+        $this->assertSame(8, $copy->getLimit());
+        // Offset is recomputed from page * perPage
+        $this->assertSame(32, $copy->getOffset());
+    }
+
     private function createServerRequest(array $queryParams): ServerRequestInterface
     {
         $request = $this->createMock(ServerRequestInterface::class);

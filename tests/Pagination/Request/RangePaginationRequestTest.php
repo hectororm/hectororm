@@ -174,6 +174,36 @@ class RangePaginationRequestTest extends TestCase
         $this->assertSame(20, $request->getLimit());
     }
 
+    public function testWithPerPageReturnsNewInstance(): void
+    {
+        $request = new RangePaginationRequest(start: 0, end: 19);
+        $copy = $request->withPerPage(10);
+
+        $this->assertNotSame($request, $copy);
+        $this->assertSame(20, $request->getLimit());
+        $this->assertSame(10, $copy->getLimit());
+    }
+
+    public function testWithPerPagePreservesStartAndRecomputesEnd(): void
+    {
+        $request = new RangePaginationRequest(start: 20, end: 39);
+        $copy = $request->withPerPage(5);
+
+        $this->assertSame(20, $copy->getOffset());
+        $this->assertSame(24, $copy->getOffsetEnd());
+        $this->assertSame(5, $copy->getLimit());
+    }
+
+    public function testWithPerPageOne(): void
+    {
+        $request = new RangePaginationRequest(start: 10, end: 19);
+        $copy = $request->withPerPage(1);
+
+        $this->assertSame(10, $copy->getOffset());
+        $this->assertSame(10, $copy->getOffsetEnd());
+        $this->assertSame(1, $copy->getLimit());
+    }
+
     private function createServerRequest(array $queryParams): ServerRequestInterface
     {
         $request = $this->createMock(ServerRequestInterface::class);
