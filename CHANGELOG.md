@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- Bump minimum phpunit version to ^9.6.34
+
 ## [1.3.0] - 2026-05-12
 
 ### Added
