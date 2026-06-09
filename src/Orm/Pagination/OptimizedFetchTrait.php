@@ -71,6 +71,22 @@ trait OptimizedFetchTrait
             $idsSubQuery->column(new Quoted(Builder::FROM_ALIAS . '.' . $col));
         }
 
+        // Ensure ORDER BY columns appear in the DISTINCT SELECT list (SQL standard /
+        // MySQL ONLY_FULL_GROUP_BY, same constraint on PostgreSQL/Oracle). The PK
+        // already makes each row unique, so adding the (deterministic) sort columns
+        // does not change which rows DISTINCT keeps. Read the order from the passed
+        // builder (cursor backward navigation may have reversed it).
+        foreach ($this->extractColumnOrderItems($builder->order) as $item) {
+            $column = $item['column'];
+
+            // Skip primary key column(s): already selected as main.<pk>.
+            if (is_string($column) && in_array($this->normalizeColumnKey($column), $pkColumnNames, true)) {
+                continue;
+            }
+
+            $idsSubQuery->column($column);
+        }
+
         // Build the outer query: SELECT main.* FROM entity AS main
         // INNER JOIN (subquery) AS pagination ON (main.pk = pagination.pk)
         // ORDER BY ...

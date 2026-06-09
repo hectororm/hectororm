@@ -827,6 +827,60 @@ class BuilderTest extends AbstractTestCase
         );
     }
 
+    public function testPaginateOptimizedOrderByNonPkColumn(): void
+    {
+        $request = new OffsetPaginationRequest(page: 1, perPage: 10);
+
+        // Ordering by a non-primary-key column previously triggered
+        // SQLSTATE[HY000] 3065 in the DISTINCT id subquery.
+        $normal = (new Builder(Film::class))->orderBy('title', 'ASC')->paginate($request);
+        $optimized = (new Builder(Film::class))->orderBy('title', 'ASC')->paginate($request, optimized: true);
+
+        foreach ($optimized as $item) {
+            $this->assertInstanceOf(Film::class, $item);
+        }
+
+        $normalIds = array_map(fn(Film $f): ?int => $f->film_id, $normal->getArrayCopy());
+        $optimizedIds = array_map(fn(Film $f): ?int => $f->film_id, $optimized->getArrayCopy());
+
+        // Same entities, same order.
+        $this->assertSame($normalIds, $optimizedIds);
+        $this->assertCount(count($normal), $optimized);
+    }
+
+    public function testPaginateOptimizedOrderByNonPkColumnSqlQuery(): void
+    {
+        $logger = $this->getOrm()->getConnection()->getLogger();
+        $nbQueriesBefore = count($logger);
+
+        $builder = new Builder(Film::class);
+        $builder->orderBy('title', 'ASC');
+        $request = new OffsetPaginationRequest(page: 2, perPage: 5);
+        $builder->paginate($request, optimized: true);
+
+        $queryLogs = array_values(array_filter(
+            array_slice($logger->getLogs(), $nbQueriesBefore),
+            fn(LogEntry $l): bool => $l->getType() === LogEntry::TYPE_QUERY,
+        ));
+
+        // The non-PK sort column must be present in the DISTINCT SELECT list.
+        $this->assertCount(1, $queryLogs);
+        $this->assertSame(
+            'SELECT `main`.`film_id`, `main`.`title`, `main`.`description`, `main`.`release_year`, '
+            . '`main`.`language_id`, `main`.`original_language_id`, `main`.`rental_duration`, '
+            . '`main`.`rental_rate`, `main`.`length`, `main`.`replacement_cost`, `main`.`rating`, '
+            . '`main`.`special_features`, `main`.`last_update` '
+            . 'FROM `sakila`.`film` AS `main` '
+            . 'INNER JOIN ( SELECT DISTINCT `main`.`film_id`, title '
+            . 'FROM `sakila`.`film` AS `main` '
+            . 'ORDER BY title ASC '
+            . 'LIMIT 6 OFFSET 5 ) AS `pagination` '
+            . 'ON ( `main`.`film_id` = `pagination`.`film_id` ) '
+            . 'ORDER BY title ASC',
+            $queryLogs[0]->getStatement(),
+        );
+    }
+
     public function testPaginateNormalSqlQuery(): void
     {
         $logger = $this->getOrm()->getConnection()->getLogger();
