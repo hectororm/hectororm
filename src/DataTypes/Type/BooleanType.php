@@ -24,6 +24,12 @@ class BooleanType extends AbstractType
      */
     public function fromSchema(mixed $value, ?ExpectedType $expected = null): mixed
     {
+        if (null === $value) {
+            $this->assertNullable($expected);
+
+            return null;
+        }
+
         $this->assertScalar($value);
 
         if (null !== $expected) {
@@ -51,8 +57,12 @@ class BooleanType extends AbstractType
     /**
      * @inheritDoc
      */
-    public function toSchema(mixed $value, ?ExpectedType $expected = null): int
+    public function toSchema(mixed $value, ?ExpectedType $expected = null): ?int
     {
+        if (null === $value) {
+            return null;
+        }
+
         $this->assertScalar($value);
 
         if (is_string($value)) {

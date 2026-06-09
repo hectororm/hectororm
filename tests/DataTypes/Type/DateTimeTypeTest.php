@@ -148,4 +148,33 @@ class DateTimeTypeTest extends TestCase
         $type = new DateTimeType();
         $type->toSchema(['foo']);
     }
+
+    public function testFromSchemaNullWithoutExpected(): void
+    {
+        $type = new DateTimeType();
+
+        $this->assertNull($type->fromSchema(null));
+    }
+
+    public function testFromSchemaNullWithNullableExpected(): void
+    {
+        $type = new DateTimeType();
+
+        $this->assertNull($type->fromSchema(null, new ExpectedType('\DateTime', true, false)));
+    }
+
+    public function testFromSchemaNullWithNonNullableExpected(): void
+    {
+        $this->expectException(ValueException::class);
+
+        $type = new DateTimeType();
+        $type->fromSchema(null, new ExpectedType('\DateTime', false, false));
+    }
+
+    public function testToSchemaNull(): void
+    {
+        $type = new DateTimeType();
+
+        $this->assertNull($type->toSchema(null));
+    }
 }

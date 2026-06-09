@@ -12,6 +12,7 @@
 
 namespace Hector\DataTypes\Tests\Type;
 
+use Hector\DataTypes\Exception\ValueException;
 use Hector\DataTypes\ExpectedType;
 use Hector\DataTypes\Type\BooleanType;
 use PHPUnit\Framework\TestCase;
@@ -91,5 +92,34 @@ class BooleanTypeTest extends TestCase
 
         $type = new BooleanType();
         $type->toSchema(['foo']);
+    }
+
+    public function testFromSchemaNullWithoutExpected(): void
+    {
+        $type = new BooleanType();
+
+        $this->assertNull($type->fromSchema(null));
+    }
+
+    public function testFromSchemaNullWithNullableExpected(): void
+    {
+        $type = new BooleanType();
+
+        $this->assertNull($type->fromSchema(null, new ExpectedType('bool', true, true)));
+    }
+
+    public function testFromSchemaNullWithNonNullableExpected(): void
+    {
+        $this->expectException(ValueException::class);
+
+        $type = new BooleanType();
+        $type->fromSchema(null, new ExpectedType('bool', false, true));
+    }
+
+    public function testToSchemaNull(): void
+    {
+        $type = new BooleanType();
+
+        $this->assertNull($type->toSchema(null));
     }
 }

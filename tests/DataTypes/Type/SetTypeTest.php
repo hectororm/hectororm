@@ -130,4 +130,33 @@ class SetTypeTest extends TestCase
         $this->assertTrue($type->equals(['foo', 'bar'], ['bar', 'foo']));
         $this->assertFalse($type->equals(['foo', 'bar'], ['foo']));
     }
+
+    public function testFromSchemaNullWithoutExpected(): void
+    {
+        $type = new SetType();
+
+        $this->assertNull($type->fromSchema(null));
+    }
+
+    public function testFromSchemaNullWithNullableExpected(): void
+    {
+        $type = new SetType();
+
+        $this->assertNull($type->fromSchema(null, new ExpectedType('array', true, true)));
+    }
+
+    public function testFromSchemaNullWithNonNullableExpected(): void
+    {
+        $this->expectException(ValueException::class);
+
+        $type = new SetType();
+        $type->fromSchema(null, new ExpectedType('array', false, true));
+    }
+
+    public function testToSchemaNull(): void
+    {
+        $type = new SetType();
+
+        $this->assertNull($type->toSchema(null));
+    }
 }

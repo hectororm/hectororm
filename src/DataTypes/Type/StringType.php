@@ -32,6 +32,12 @@ class StringType extends AbstractType
      */
     public function fromSchema(mixed $value, ?ExpectedType $expected = null): mixed
     {
+        if (null === $value) {
+            $this->assertNullable($expected);
+
+            return null;
+        }
+
         $this->assertScalar($value);
 
         if (null !== $expected) {
@@ -54,8 +60,12 @@ class StringType extends AbstractType
     /**
      * @inheritDoc
      */
-    public function toSchema(mixed $value, ?ExpectedType $expected = null): string
+    public function toSchema(mixed $value, ?ExpectedType $expected = null): ?string
     {
+        if (null === $value) {
+            return null;
+        }
+
         if (!is_scalar($value)) {
             if ($value instanceof Stringable) {
                 return (string)$value;

@@ -88,4 +88,33 @@ class RamseyUuidTypeTest extends TestCase
             $type->toSchema(Uuid::fromString('a8184128-7427-48e0-b37d-f7d4891012c6')),
         );
     }
+
+    public function testFromSchemaNullWithoutExpected(): void
+    {
+        $type = new RamseyUuidType();
+
+        $this->assertNull($type->fromSchema(null));
+    }
+
+    public function testFromSchemaNullWithNullableExpected(): void
+    {
+        $type = new RamseyUuidType();
+
+        $this->assertNull($type->fromSchema(null, ExpectedType::from(UuidInterface::class, true)));
+    }
+
+    public function testFromSchemaNullWithNonNullableExpected(): void
+    {
+        $this->expectException(ValueException::class);
+
+        $type = new RamseyUuidType();
+        $type->fromSchema(null, ExpectedType::from(UuidInterface::class, false));
+    }
+
+    public function testToSchemaNull(): void
+    {
+        $type = new RamseyUuidType();
+
+        $this->assertNull($type->toSchema(null));
+    }
 }

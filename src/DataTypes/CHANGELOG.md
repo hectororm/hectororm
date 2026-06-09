@@ -7,9 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `AbstractType::assertNullable()` helper to validate that a `null` value is permitted by the expected type (always allowed when no `ExpectedType` is provided)
+
+### Changed
+
+- All concrete types now handle `null` consistently: `fromSchema(null)` returns `null` when the expected type allows it (or when no expected type is given) and throws `ValueException` otherwise; `toSchema(null)` returns `null` so nullable columns persist as SQL `NULL`. The return types of `BooleanType::toSchema()` (`?int`) and `StringType`/`DateTimeType`/`UuidType`/`RamseyUuidType`/`SetType` `toSchema()` (`?string`) were widened accordingly
+
 ### Fixed
 
 - `StringType::fromSchema()` now resolves backed-enum typed columns: the `is_a()` class-string check was missing its third `$allow_string` argument, so the `BackedEnum` branch was never reached and valid enum values were rejected with a "not builtin" error
+- `JsonType::fromSchema()` null handling is now reachable (the `assertScalar()` call previously rejected `null` before the null branch could run)
+- `UuidType::fromSchema()` no longer triggers a `strlen(null)` deprecation and casts the value to string before length checks
 
 ## [1.3.0] - 2026-05-12
 

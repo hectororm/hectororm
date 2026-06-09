@@ -12,6 +12,7 @@
 
 namespace Hector\DataTypes\Tests\Type;
 
+use Hector\DataTypes\Exception\ValueException;
 use Hector\DataTypes\ExpectedType;
 use Hector\DataTypes\Type\JsonType;
 use JsonSerializable;
@@ -159,6 +160,35 @@ class JsonTypeTest extends TestCase
         $this->assertFalse($type->equals('{"foo":"value","baz":2}', '{"foo":"value","bar": "valueb","baz": 2}'));
         $this->assertFalse($type->equals('{"foo":"value","baz":2}', null));
         $this->assertFalse($type->equals('{"foo":"value","baz":2}', ''));
+    }
+
+    public function testFromSchemaNullWithoutExpected(): void
+    {
+        $type = new JsonType();
+
+        $this->assertNull($type->fromSchema(null));
+    }
+
+    public function testFromSchemaNullWithNullableExpected(): void
+    {
+        $type = new JsonType();
+
+        $this->assertNull($type->fromSchema(null, new ExpectedType('array', true, true)));
+    }
+
+    public function testFromSchemaNullWithNonNullableExpected(): void
+    {
+        $this->expectException(ValueException::class);
+
+        $type = new JsonType();
+        $type->fromSchema(null, new ExpectedType('array', false, true));
+    }
+
+    public function testToSchemaNull(): void
+    {
+        $type = new JsonType();
+
+        $this->assertNull($type->toSchema(null));
     }
 
     public function testEqualsWithDecodedEntityData(): void

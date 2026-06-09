@@ -12,6 +12,7 @@
 
 namespace Hector\DataTypes\Tests\Type;
 
+use Hector\DataTypes\Exception\ValueException;
 use Hector\DataTypes\ExpectedType;
 use Hector\DataTypes\Type\StringType;
 use PHPUnit\Framework\TestCase;
@@ -119,5 +120,34 @@ class StringTypeTest extends TestCase
 
         $this->assertSame('foo ba', $type->toSchema('foo bar baz'));
         $this->assertSame('foo', $type->toSchema('foo'));
+    }
+
+    public function testFromSchemaNullWithoutExpected(): void
+    {
+        $type = new StringType();
+
+        $this->assertNull($type->fromSchema(null));
+    }
+
+    public function testFromSchemaNullWithNullableExpected(): void
+    {
+        $type = new StringType();
+
+        $this->assertNull($type->fromSchema(null, new ExpectedType('string', true, true)));
+    }
+
+    public function testFromSchemaNullWithNonNullableExpected(): void
+    {
+        $this->expectException(ValueException::class);
+
+        $type = new StringType();
+        $type->fromSchema(null, new ExpectedType('string', false, true));
+    }
+
+    public function testToSchemaNull(): void
+    {
+        $type = new StringType();
+
+        $this->assertNull($type->toSchema(null));
     }
 }

@@ -39,6 +39,14 @@ class UuidType extends AbstractType
      */
     public function fromSchema(mixed $value, ?ExpectedType $expected = null): mixed
     {
+        if (null === $value) {
+            $this->assertNullable($expected);
+
+            return null;
+        }
+
+        $value = (string)$value;
+
         if (strlen($value) === 16) {
             $value = bin2hex($value);
         }
@@ -50,14 +58,18 @@ class UuidType extends AbstractType
             );
         }
 
-        return (string)$value;
+        return $value;
     }
 
     /**
      * @inheritDoc
      */
-    public function toSchema(mixed $value, ?ExpectedType $expected = null): string
+    public function toSchema(mixed $value, ?ExpectedType $expected = null): ?string
     {
+        if (null === $value) {
+            return null;
+        }
+
         if (!is_scalar($value)) {
             if (!$value instanceof Stringable) {
                 throw ValueException::castError($this);

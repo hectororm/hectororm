@@ -30,18 +30,16 @@ class JsonType extends AbstractType
      */
     public function fromSchema(mixed $value, ?ExpectedType $expected = null): mixed
     {
+        if (null === $value) {
+            $this->assertNullable($expected);
+
+            return null;
+        }
+
         $this->assertScalar($value);
 
         try {
             if (null !== $expected) {
-                if (null === $value) {
-                    if (false === $expected->allowsNull()) {
-                        throw ValueException::castError($this);
-                    }
-
-                    return null;
-                }
-
                 if ($expected->isBuiltin()) {
                     if ($expected->getName() == 'array') {
                         return json_decode($value, true, 512, JSON_THROW_ON_ERROR);
@@ -70,6 +68,10 @@ class JsonType extends AbstractType
      */
     public function toSchema(mixed $value, ?ExpectedType $expected = null): string|bool|null
     {
+        if (null === $value) {
+            return null;
+        }
+
         try {
             return json_encode($value, JSON_THROW_ON_ERROR);
         } catch (Throwable $e) {

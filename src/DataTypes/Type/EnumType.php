@@ -33,6 +33,12 @@ class EnumType extends AbstractType
      */
     public function fromSchema(mixed $value, ?ExpectedType $expected = null): mixed
     {
+        if (null === $value) {
+            $this->assertNullable($expected);
+
+            return null;
+        }
+
         $this->assertScalar($value);
 
         if (null !== $expected) {
@@ -69,6 +75,10 @@ class EnumType extends AbstractType
      */
     public function toSchema(mixed $value, ?ExpectedType $expected = null): mixed
     {
+        if (null === $value) {
+            return null;
+        }
+
         if (false === is_a($value, $this->enum)) {
             if (is_scalar($value)) {
                 return $this->enum::{match ($this->try) {

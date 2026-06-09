@@ -12,6 +12,7 @@
 
 namespace Hector\DataTypes\Tests\Type;
 
+use Hector\DataTypes\Exception\ValueException;
 use Hector\DataTypes\ExpectedType;
 use Hector\DataTypes\Type\NumericType;
 use PHPUnit\Framework\TestCase;
@@ -112,5 +113,34 @@ class NumericTypeTest extends TestCase
 
         $type = new NumericType('float');
         $type->toSchema(['foo']);
+    }
+
+    public function testFromSchemaNullWithoutExpected(): void
+    {
+        $type = new NumericType('int');
+
+        $this->assertNull($type->fromSchema(null));
+    }
+
+    public function testFromSchemaNullWithNullableExpected(): void
+    {
+        $type = new NumericType('int');
+
+        $this->assertNull($type->fromSchema(null, new ExpectedType('int', true, true)));
+    }
+
+    public function testFromSchemaNullWithNonNullableExpected(): void
+    {
+        $this->expectException(ValueException::class);
+
+        $type = new NumericType('int');
+        $type->fromSchema(null, new ExpectedType('int', false, true));
+    }
+
+    public function testToSchemaNull(): void
+    {
+        $type = new NumericType('int');
+
+        $this->assertNull($type->toSchema(null));
     }
 }

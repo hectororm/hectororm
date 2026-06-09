@@ -12,6 +12,8 @@
 
 namespace Hector\DataTypes\Tests\Type;
 
+use Hector\DataTypes\Exception\ValueException;
+use Hector\DataTypes\ExpectedType;
 use Hector\DataTypes\Type\UuidType;
 use PHPUnit\Framework\TestCase;
 
@@ -87,5 +89,34 @@ class UuidTypeTest extends TestCase
             hex2bin('a8184128742748e0b37df7d4891012c6'),
             $type->toSchema(hex2bin(str_replace('-', '', 'a8184128-7427-48e0-b37d-f7d4891012c6')))
         );
+    }
+
+    public function testFromSchemaNullWithoutExpected(): void
+    {
+        $type = new UuidType();
+
+        $this->assertNull($type->fromSchema(null));
+    }
+
+    public function testFromSchemaNullWithNullableExpected(): void
+    {
+        $type = new UuidType();
+
+        $this->assertNull($type->fromSchema(null, new ExpectedType('string', true, true)));
+    }
+
+    public function testFromSchemaNullWithNonNullableExpected(): void
+    {
+        $this->expectException(ValueException::class);
+
+        $type = new UuidType();
+        $type->fromSchema(null, new ExpectedType('string', false, true));
+    }
+
+    public function testToSchemaNull(): void
+    {
+        $type = new UuidType();
+
+        $this->assertNull($type->toSchema(null));
     }
 }

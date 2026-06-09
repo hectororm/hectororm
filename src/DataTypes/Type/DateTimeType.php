@@ -43,6 +43,12 @@ class DateTimeType extends AbstractType
      */
     public function fromSchema(mixed $value, ?ExpectedType $expected = null): mixed
     {
+        if (null === $value) {
+            $this->assertNullable($expected);
+
+            return null;
+        }
+
         try {
             if (null === $expected) {
                 return new $this->class((string)$value);
@@ -71,8 +77,12 @@ class DateTimeType extends AbstractType
     /**
      * @inheritDoc
      */
-    public function toSchema(mixed $value, ?ExpectedType $expected = null): string
+    public function toSchema(mixed $value, ?ExpectedType $expected = null): ?string
     {
+        if (null === $value) {
+            return null;
+        }
+
         try {
             if (is_string($value)) {
                 $value = new DateTime($value);

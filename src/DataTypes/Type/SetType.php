@@ -24,6 +24,12 @@ class SetType extends AbstractType
      */
     public function fromSchema(mixed $value, ?ExpectedType $expected = null): mixed
     {
+        if (null === $value) {
+            $this->assertNullable($expected);
+
+            return null;
+        }
+
         if (!is_string($value)) {
             throw ValueException::castError($this);
         }
@@ -56,8 +62,12 @@ class SetType extends AbstractType
     /**
      * @inheritDoc
      */
-    public function toSchema(mixed $value, ?ExpectedType $expected = null): string
+    public function toSchema(mixed $value, ?ExpectedType $expected = null): ?string
     {
+        if (null === $value) {
+            return null;
+        }
+
         if (!is_array($value)) {
             throw ValueException::castError($this);
         }

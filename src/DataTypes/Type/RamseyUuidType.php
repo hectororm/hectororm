@@ -34,6 +34,12 @@ class RamseyUuidType extends UuidType
      */
     public function fromSchema(mixed $value, ?ExpectedType $expected = null): mixed
     {
+        if (null === $value) {
+            $this->assertNullable($expected);
+
+            return null;
+        }
+
         if ($expected?->isBuiltin()) {
             throw ValueException::castError($this);
         }
@@ -50,8 +56,12 @@ class RamseyUuidType extends UuidType
     /**
      * @inheritDoc
      */
-    public function toSchema(mixed $value, ?ExpectedType $expected = null): string
+    public function toSchema(mixed $value, ?ExpectedType $expected = null): ?string
     {
+        if (null === $value) {
+            return null;
+        }
+
         if (!$value instanceof UuidInterface) {
             throw ValueException::castError($this);
         }
