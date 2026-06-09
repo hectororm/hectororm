@@ -63,7 +63,9 @@ class TypeSet implements Countable
         $this->add('text', $stringType);
         $this->add('mediumtext', $stringType);
         $this->add('longtext', $stringType);
-        // Blob
+        // Binary / Blob
+        $this->add('binary', $stringType);
+        $this->add('varbinary', $stringType);
         $this->add('tinyblob', $stringType);
         $this->add('blob', $stringType);
         $this->add('mediumblob', $stringType);
@@ -74,6 +76,7 @@ class TypeSet implements Countable
         $this->add('mediumint', $intType);
         $this->add('int', $intType);
         $this->add('bigint', $intType);
+        $this->add('bit', $intType);
         // Decimal
         $this->add('decimal', $floatType);
         $this->add('numeric', $floatType);
@@ -83,6 +86,7 @@ class TypeSet implements Countable
         $this->add('date', new DateTimeType('Y-m-d'));
         $this->add('datetime', $dateTimeType);
         $this->add('timestamp', $dateTimeType);
+        $this->add('time', $stringType);
         $this->add('year', $intType);
         // List
         $this->add('enum', $stringType);

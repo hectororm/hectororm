@@ -131,6 +131,18 @@ class SetTypeTest extends TestCase
         $this->assertFalse($type->equals(['foo', 'bar'], ['foo']));
     }
 
+    public function testEqualsWithEmptySets(): void
+    {
+        $type = new SetType();
+
+        $this->assertTrue($type->equals([], ''));
+        $this->assertTrue($type->equals('', []));
+        $this->assertTrue($type->equals([], []));
+        $this->assertTrue($type->equals('', ''));
+        $this->assertFalse($type->equals(['foo'], ''));
+        $this->assertFalse($type->equals('', ['foo']));
+    }
+
     public function testFromSchemaNullWithoutExpected(): void
     {
         $type = new SetType();

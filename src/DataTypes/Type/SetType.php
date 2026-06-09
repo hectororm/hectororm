@@ -84,9 +84,29 @@ class SetType extends AbstractType
             return true;
         }
 
-        $entityData = is_array($entityData) ? $entityData : explode(',', (string)($entityData ?? ''));
-        $schemaData = is_array($schemaData) ? $schemaData : explode(',', (string)($schemaData ?? ''));
+        $entityData = $this->normalizeSet($entityData);
+        $schemaData = $this->normalizeSet($schemaData);
 
         return empty(array_diff($entityData, $schemaData)) && empty(array_diff($schemaData, $entityData));
+    }
+
+    /**
+     * Normalize a SET value to a list of members.
+     *
+     * Arrays are returned as-is; other values are cast to string and split on commas.
+     * Empty members (e.g. produced by `explode(',', '')`) are removed so that an empty
+     * string and an empty array are treated as the same empty set.
+     *
+     * @param mixed $value
+     *
+     * @return array
+     */
+    private function normalizeSet(mixed $value): array
+    {
+        if (!is_array($value)) {
+            $value = explode(',', (string)($value ?? ''));
+        }
+
+        return array_values(array_filter($value, static fn(mixed $item): bool => '' !== (string)$item));
     }
 }

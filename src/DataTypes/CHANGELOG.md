@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `AbstractType::assertNullable()` helper to validate that a `null` value is permitted by the expected type (always allowed when no `ExpectedType` is provided)
+- `TypeSet` now maps the `time`, `bit`, `binary` and `varbinary` MySQL column types (previously they threw `UnexpectedValueException`)
 
 ### Changed
 
@@ -21,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `JsonType::fromSchema()` null handling is now reachable (the `assertScalar()` call previously rejected `null` before the null branch could run)
 - `JsonType::equals()` now compares both sides canonically (recursive key sorting) so object/associative-array values with a different key order are considered equal, avoiding spurious `UPDATE` queries; it also no longer triggers a `TypeError` when the schema side is already a decoded array
 - `UuidType::fromSchema()` no longer triggers a `strlen(null)` deprecation and casts the value to string before length checks
+- `SetType::equals()` now treats an empty string and an empty array as the same empty set (empty members are stripped), avoiding a spurious "not equal" result that triggered unnecessary `UPDATE` queries
 
 ## [1.3.0] - 2026-05-12
 

@@ -80,5 +80,9 @@ class TypeSetTest extends TestCase
         $this->assertInstanceOf(StringType::class, $typeSet->get('enum'));
         $this->assertInstanceOf(SetType::class, $typeSet->get('set'));
         $this->assertInstanceOf(JsonType::class, $typeSet->get('json'));
+        $this->assertInstanceOf(StringType::class, $typeSet->get('time'));
+        $this->assertInstanceOf(NumericType::class, $typeSet->get('bit'));
+        $this->assertInstanceOf(StringType::class, $typeSet->get('binary'));
+        $this->assertInstanceOf(StringType::class, $typeSet->get('varbinary'));
     }
 }
