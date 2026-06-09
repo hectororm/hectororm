@@ -14,6 +14,8 @@ declare(strict_types=1);
 
 namespace Hector\Query;
 
+use Hector\Query\Statement\Quoted;
+
 /**
  * @internal Helper class
  */
@@ -63,5 +65,31 @@ class Helper
     public static function escapeLike(string $value): string
     {
         return str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $value);
+    }
+
+    /**
+     * Whether the value is a (possibly qualified, possibly quoted) column reference,
+     * as opposed to an SQL expression/function, closure or sub-query.
+     *
+     * A Quoted statement is, by construction, an identifier reference and always
+     * returns true. A string is accepted only if it matches a plain (optionally
+     * dotted) identifier; expressions/functions (e.g. RAND(), COUNT(*)) and any
+     * other type return false.
+     *
+     * @param mixed $column
+     *
+     * @return bool
+     */
+    public static function isColumnReference(mixed $column): bool
+    {
+        if ($column instanceof Quoted) {
+            return true;
+        }
+
+        if (false === is_string($column)) {
+            return false;
+        }
+
+        return 1 === preg_match('/^(?:(["`])\w+\1|\w+)(?:\.(?:(["`])\w+\2|\w+))*$/', $column);
     }
 }

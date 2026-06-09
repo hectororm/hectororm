@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `Helper::isColumnReference()` to detect whether a value is a plain (possibly qualified/quoted) column reference, as opposed to an SQL expression/function, closure or sub-query
+- `Pagination\AbstractQueryPaginator::extractColumnOrderItems()` returning the ORDER BY items that are plain column references (deterministic and materialisable)
+
+### Changed
+
+- Cursor pagination now ignores ORDER BY expressions that are not column references (e.g. `ORDER BY RAND()`) instead of producing an invalid cursor navigation; if no column-based ORDER BY remains, it throws as before
+
 ## [1.3.0] - 2026-05-12
 
 ### Added

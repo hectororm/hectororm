@@ -139,24 +139,18 @@ class QueryCursorPaginator extends AbstractQueryPaginator
     /**
      * Extract order columns from builder.
      *
+     * Only string column references are usable as cursor keys (they must be
+     * normalisable and materialised in the result set). Statement-based column
+     * references (e.g. Quoted) and expressions are filtered out.
+     *
      * @return array<array{column: string, order: string}>
      */
     protected function extractOrderColumns(): array
     {
-        $columns = [];
-
-        foreach ($this->builder->order->getOrder() as $orderItem) {
-            if (!is_string($orderItem['column'])) {
-                continue;
-            }
-
-            $columns[] = [
-                'column' => $orderItem['column'],
-                'order' => strtoupper($orderItem['order'] ?? 'ASC'),
-            ];
-        }
-
-        return $columns;
+        return array_values(array_filter(
+            $this->extractColumnOrderItems($this->builder->order),
+            fn(array $item): bool => is_string($item['column']),
+        ));
     }
 
     /**

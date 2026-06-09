@@ -67,6 +67,20 @@ class BuilderCursorPaginatorTest extends AbstractTestCase
         $paginator->paginate($request);
     }
 
+    public function testPaginateThrowsWhenOrderByIsExpressionOnly(): void
+    {
+        $builder = new Builder(Film::class);
+        $builder->resetOrder()->random(); // ORDER BY RAND()
+
+        $paginator = new BuilderCursorPaginator($builder, withTotal: false);
+        $request = new CursorPaginationRequest(perPage: 5);
+
+        // RAND() is not a column reference, so no usable cursor key remains.
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('ORDER BY');
+        $paginator->paginate($request);
+    }
+
     public function testPaginateWithTotal(): void
     {
         $builder = new Builder(Film::class);

@@ -16,7 +16,10 @@ declare(strict_types=1);
 namespace Hector\Query\Pagination;
 
 use Hector\Query\Component\Limit;
+use Hector\Query\Component\Order;
+use Hector\Query\Helper;
 use Hector\Query\QueryBuilder;
+use Hector\Query\Statement\Quoted;
 
 /**
  * @template T
@@ -82,6 +85,35 @@ abstract class AbstractQueryPaginator implements QueryPaginatorInterface
         }
 
         return (int)floor($offset / $limit) + 1;
+    }
+
+    /**
+     * Extract ORDER BY items that are plain column references (deterministic and
+     * materialisable), usable both as cursor keys and inside a SELECT DISTINCT.
+     *
+     * Expressions/functions (RAND(), COUNT(*), ...), sub-queries and closures are
+     * excluded. The order direction is normalised to upper-case.
+     *
+     * @param Order $order
+     *
+     * @return array<array{column: Quoted|string, order: string}>
+     */
+    protected function extractColumnOrderItems(Order $order): array
+    {
+        $items = [];
+
+        foreach ($order->getOrder() as $orderItem) {
+            if (false === Helper::isColumnReference($orderItem['column'])) {
+                continue;
+            }
+
+            $items[] = [
+                'column' => $orderItem['column'],
+                'order' => strtoupper($orderItem['order'] ?? 'ASC'),
+            ];
+        }
+
+        return $items;
     }
 
     /**
