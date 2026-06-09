@@ -38,8 +38,10 @@ class Conditions extends \Hector\Query\Component\Conditions
         mixed $value = null,
         string $link = \Hector\Query\Component\Conditions::LINK_AND
     ): void {
-        if (is_string($column) && $this->isConditionOnRelationship($column)) {
-            $columns = explode('.', $column);
+        $columns = is_string($column) && Helper::isColumnReference($column) ? Helper::explodePath($column) : [];
+
+        // Condition on a relationship: a qualified column reference (at least one relation segment)
+        if (count($columns) > 1) {
             $columns = array_map(
                 fn(string $name): string => Helper::trim($name) ?? $name,
                 $columns
@@ -94,22 +96,6 @@ class Conditions extends \Hector\Query\Component\Conditions
 
 
         parent::add($column, $operator, $value, $link);
-    }
-
-    /**
-     * Is condition on relationship?
-     *
-     * @param $condition
-     *
-     * @return bool
-     */
-    private function isConditionOnRelationship($condition): bool
-    {
-        if (!is_string($condition)) {
-            return false;
-        }
-
-        return preg_match('/^(\w+\.)+[\w`"]+$/i', $condition) === 1;
     }
 
     /**

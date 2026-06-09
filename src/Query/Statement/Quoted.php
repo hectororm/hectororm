@@ -40,7 +40,7 @@ class Quoted implements StatementInterface
     ): ?string {
         $quote = $driverInfo?->getIdentifierQuote() ?? '`';
 
-        $parts = explode('.', $this->identifier);
+        $parts = Helper::explodePath($this->identifier);
 
         // Preserve wildcard as last segment
         $last = array_pop($parts);

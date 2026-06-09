@@ -10,11 +10,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `Helper::isColumnReference()` to detect whether a value is a plain (possibly qualified/quoted) column reference, as opposed to an SQL expression/function, closure or sub-query
+- `Helper::explodePath()` to split a (possibly qualified/quoted) SQL identifier path on its dot separators, ignoring dots enclosed in a matching pair of identifier quotes, with an `explode()`-like `$limit` and a configurable `$quotes` parameter (defaults to backtick and double quote; pass `''` to split unconditionally)
 - `Pagination\AbstractQueryPaginator::extractColumnOrderItems()` returning the ORDER BY items that are plain column references (deterministic and materialisable)
 
 ### Changed
 
 - Cursor pagination now ignores ORDER BY expressions that are not column references (e.g. `ORDER BY RAND()`) instead of producing an invalid cursor navigation; if no column-based ORDER BY remains, it throws as before
+- `Statement\Quoted` now splits composite identifiers with `Helper::explodePath()`, so a dot enclosed in identifier quotes (e.g. `` `a.b`.`c` ``) is no longer mistaken for a segment separator
 
 ## [1.3.0] - 2026-05-12
 
