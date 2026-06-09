@@ -69,7 +69,7 @@ class QueryRangePaginator extends AbstractQueryPaginator
             start: $request->getOffset(),
             end: $request->getOffsetEnd(),
             total: $this->withTotal
-                ? $this->boundTotal($countBuilder->count(), $bounds)
+                ? $this->boundTotal($this->fetchTotal($countBuilder), $bounds)
                 : null,
         );
     }

@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Fix `SQLSTATE[HY000] 3065` in optimized pagination (`Builder::paginate(..., optimized: true)`) when ordering by a non-primary-key column: ORDER BY column references are now added to the `SELECT DISTINCT` id subquery (SQL-standard, portable across MySQL/MariaDB/PostgreSQL/SQLite). SQL expressions such as `RAND()` are intentionally not mirrored, to preserve de-duplication.
+- Fix inflated total in optimized pagination (`Builder::paginate(..., optimized: true, withTotal: true)`) when the query has a duplicating JOIN: the total now counts distinct primary keys (via the same `SELECT DISTINCT` subquery used to fetch items) instead of the JOIN-inflated row count
 
 ## [1.3.0] - 2026-05-12
 

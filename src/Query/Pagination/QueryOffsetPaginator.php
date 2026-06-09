@@ -66,7 +66,7 @@ class QueryOffsetPaginator extends AbstractQueryPaginator
             currentPage: $this->calculateCurrentPage($request->getOffset(), $requestLimit),
             hasMore: $hasMore,
             total: true === $this->withTotal
-                ? fn(): int => $this->boundTotal($countBuilder->count(), $bounds)
+                ? fn(): int => $this->boundTotal($this->fetchTotal($countBuilder), $bounds)
                 : null,
         );
     }

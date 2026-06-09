@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Helper::explodePath()` to split a (possibly qualified/quoted) SQL identifier path on its dot separators, ignoring dots enclosed in a matching pair of identifier quotes, with an `explode()`-like `$limit` and a configurable `$quotes` parameter (defaults to backtick and double quote; pass `''` to split unconditionally)
 - `Pagination\AbstractQueryPaginator::extractColumnOrderItems()` returning the ORDER BY items that are plain column references (deterministic and materialisable)
 - `Helper::unquote()` to de-quote an identifier: trims surrounding whitespace then strips a matching enclosing quote pair (undoubling the inner quote character), with a configurable set of quote characters
+- `Pagination\AbstractQueryPaginator::fetchTotal()` extension point so subclasses can customise how the total is counted (e.g. count distinct primary keys instead of JOIN-inflated rows)
 
 ### Changed
 

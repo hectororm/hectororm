@@ -106,4 +106,26 @@ class BuilderOffsetPaginatorTest extends AbstractTestCase
         $this->assertNotEmpty($secondItems);
         $this->assertNotEquals($firstItems[0]->film_id, $secondItems[0]->film_id);
     }
+
+    public function testOptimizedTotalIsNotInflatedByDuplicatingJoin(): void
+    {
+        // A one-to-many JOIN (film -> film_actor) duplicates film rows: a plain
+        // COUNT(*) over the joined rows would count actor links instead of films.
+        $makeJoined = static fn(): Builder => (new Builder(Film::class))
+            ->innerJoin('film_actor', 'main.film_id = film_actor.film_id');
+
+        // Real number of distinct films that have at least one actor.
+        $distinctFilms = $makeJoined()->distinct()->count();
+
+        // Sanity check: the raw (non-distinct) row count is inflated above it.
+        $rawRows = $makeJoined()->count();
+        $this->assertGreaterThan($distinctFilms, $rawRows);
+
+        // The optimized total must equal the number of distinct films, not joined rows.
+        $optimizedTotal = (new BuilderOffsetPaginator($makeJoined(), withTotal: true, optimized: true))
+            ->paginate(new OffsetPaginationRequest(page: 1, perPage: 5))
+            ->getTotal();
+
+        $this->assertSame($distinctFilms, $optimizedTotal);
+    }
 }

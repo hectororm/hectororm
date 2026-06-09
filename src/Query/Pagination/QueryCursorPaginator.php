@@ -131,7 +131,7 @@ class QueryCursorPaginator extends AbstractQueryPaginator
             nextPosition: $nextPosition,
             previousPosition: $previousPosition,
             total: $this->withTotal
-                ? fn(): int => $this->boundTotal($countBuilder->count(), $bounds)
+                ? fn(): int => $this->boundTotal($this->fetchTotal($countBuilder), $bounds)
                 : null,
         );
     }

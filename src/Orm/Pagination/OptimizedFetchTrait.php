@@ -64,28 +64,7 @@ trait OptimizedFetchTrait
 
         $pkColumnNames = $primaryIndex->getColumnsName();
 
-        // Build the subquery: SELECT DISTINCT pk FROM ... WHERE ... ORDER BY ... LIMIT ...
-        $idsSubQuery = clone $builder;
-        $idsSubQuery->resetColumns()->distinct();
-        foreach ($pkColumnNames as $col) {
-            $idsSubQuery->column(new Quoted(Builder::FROM_ALIAS . '.' . $col));
-        }
-
-        // Ensure ORDER BY columns appear in the DISTINCT SELECT list (SQL standard /
-        // MySQL ONLY_FULL_GROUP_BY, same constraint on PostgreSQL/Oracle). The PK
-        // already makes each row unique, so adding the (deterministic) sort columns
-        // does not change which rows DISTINCT keeps. Read the order from the passed
-        // builder (cursor backward navigation may have reversed it).
-        foreach ($this->extractColumnOrderItems($builder->order) as $item) {
-            $column = $item['column'];
-
-            // Skip primary key column(s): already selected as main.<pk>.
-            if (is_string($column) && in_array($this->normalizeColumnKey($column), $pkColumnNames, true)) {
-                continue;
-            }
-
-            $idsSubQuery->column($column);
-        }
+        $idsSubQuery = $this->buildDistinctIdsSubQuery($builder, $pkColumnNames);
 
         // Build the outer query: SELECT main.* FROM entity AS main
         // INNER JOIN (subquery) AS pagination ON (main.pk = pagination.pk)
@@ -110,5 +89,84 @@ trait OptimizedFetchTrait
         $entityBuilder->order->builder = $entityBuilder;
 
         return $entityBuilder->all()->getArrayCopy();
+    }
+
+    /**
+     * Count distinct primary keys for optimized pagination.
+     *
+     * JOINs (e.g. one-to-many) would otherwise inflate `COUNT(*)`. Counting the
+     * `SELECT DISTINCT pk` subquery yields the real number of matching entities.
+     * Falls back to the default row count when the entity has no primary key.
+     *
+     * @param QueryBuilder $builder
+     *
+     * @return int
+     */
+    protected function fetchTotal(QueryBuilder $builder): int
+    {
+        if (false === $this->optimized) {
+            return parent::fetchTotal($builder);
+        }
+
+        /** @var Builder $builder */
+        $primaryIndex = ReflectionEntity::get($builder->getEntityClass())->getPrimaryIndex();
+
+        // No primary key: nothing to deduplicate on, keep the default count.
+        if (null === $primaryIndex) {
+            return parent::fetchTotal($builder);
+        }
+
+        // Count only distinct primary keys: do NOT add ORDER BY columns to the SELECT
+        // list here, as they could make otherwise-identical PK rows distinct and
+        // re-inflate the count.
+        return $this->buildDistinctIdsSubQuery($builder, $primaryIndex->getColumnsName(), false)->count();
+    }
+
+    /**
+     * Build the `SELECT DISTINCT main.<pk>[, order columns]` subquery used both to
+     * fetch the page items and to count distinct matching entities.
+     *
+     * @param Builder $builder
+     * @param string[] $pkColumnNames
+     * @param bool $withOrderColumns Whether to add column ORDER BY items to the SELECT
+     *                               list (required for the items fetch under
+     *                               ONLY_FULL_GROUP_BY; must be false when counting).
+     *
+     * @return Builder
+     */
+    private function buildDistinctIdsSubQuery(
+        QueryBuilder $builder,
+        array $pkColumnNames,
+        bool $withOrderColumns = true,
+    ): Builder {
+        /** @var Builder $builder */
+        $idsSubQuery = clone $builder;
+        $idsSubQuery->resetColumns()->distinct();
+
+        foreach ($pkColumnNames as $col) {
+            $idsSubQuery->column(new Quoted(Builder::FROM_ALIAS . '.' . $col));
+        }
+
+        if (false === $withOrderColumns) {
+            return $idsSubQuery;
+        }
+
+        // Ensure ORDER BY columns appear in the DISTINCT SELECT list (SQL standard /
+        // MySQL ONLY_FULL_GROUP_BY, same constraint on PostgreSQL/Oracle). The PK
+        // already makes each row unique, so adding the (deterministic) sort columns
+        // does not change which rows DISTINCT keeps. Read the order from the passed
+        // builder (cursor backward navigation may have reversed it).
+        foreach ($this->extractColumnOrderItems($builder->order) as $item) {
+            $column = $item['column'];
+
+            // Skip primary key column(s): already selected as main.<pk>.
+            if (is_string($column) && in_array($this->normalizeColumnKey($column), $pkColumnNames, true)) {
+                continue;
+            }
+
+            $idsSubQuery->column($column);
+        }
+
+        return $idsSubQuery;
     }
 }

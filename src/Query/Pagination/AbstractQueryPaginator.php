@@ -76,6 +76,21 @@ abstract class AbstractQueryPaginator implements QueryPaginatorInterface
     }
 
     /**
+     * Fetch the raw total count from the (cloned) builder.
+     *
+     * Extension point: subclasses can override this to count differently (e.g. count
+     * distinct primary keys when JOINs would otherwise inflate the row count).
+     *
+     * @param QueryBuilder $builder
+     *
+     * @return int
+     */
+    protected function fetchTotal(QueryBuilder $builder): int
+    {
+        return $builder->count();
+    }
+
+    /**
      * Calculate current page from request.
      */
     protected function calculateCurrentPage(int $offset, int $limit): int
