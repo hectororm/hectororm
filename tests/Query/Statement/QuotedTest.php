@@ -119,4 +119,37 @@ class QuotedTest extends TestCase
 
         $this->assertSame('`table`.`column`', $quoted->getStatement($binds));
     }
+
+    public function testTrailingDotIsDropped(): void
+    {
+        $quoted = new Quoted('table.column.');
+        $binds = new BindParamList();
+
+        $this->assertSame('`table`.`column`', $quoted->getStatement($binds));
+    }
+
+    public function testLeadingDotIsDropped(): void
+    {
+        $quoted = new Quoted('.column');
+        $binds = new BindParamList();
+
+        $this->assertSame('`column`', $quoted->getStatement($binds));
+    }
+
+    public function testDoubleDotIsDropped(): void
+    {
+        $quoted = new Quoted('table..column');
+        $binds = new BindParamList();
+
+        $this->assertSame('`table`.`column`', $quoted->getStatement($binds));
+    }
+
+    public function testEmptyIdentifierReturnsNull(): void
+    {
+        $binds = new BindParamList();
+
+        $this->assertNull((new Quoted(''))->getStatement($binds));
+        $this->assertNull((new Quoted('``'))->getStatement($binds));
+        $this->assertNull((new Quoted('.'))->getStatement($binds));
+    }
 }

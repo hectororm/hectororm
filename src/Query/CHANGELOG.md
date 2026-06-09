@@ -20,6 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Statement\Quoted` now splits composite identifiers with `Helper::explodePath()`, so a dot enclosed in identifier quotes (e.g. `` `a.b`.`c` ``) is no longer mistaken for a segment separator
 - `Helper::trim()` second parameter is now the set of characters to strip (defaults to whitespace) instead of a single quote character; identifier de-quoting moved to the new `Helper::unquote()`. `Statement\Quoted`, the alias handling of `Component\Columns`/`Component\Join`/`Component\Table`, and `Pagination\AbstractQueryPaginator::normalizeColumnKey()` now rely on `Helper::unquote()`/`Helper::explodePath()`
 
+### Fixed
+
+- `Statement\Quoted` now drops empty segments (leading/trailing/double dots, empty identifier) instead of emitting invalid SQL like `` `a`.`b`. `` or an empty string; an all-empty identifier returns `null`
+
 ## [1.3.0] - 2026-05-12
 
 ### Added

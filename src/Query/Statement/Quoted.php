@@ -50,17 +50,26 @@ class Quoted implements StatementInterface
             $parts[] = $last;
         }
 
-        $quoted = array_map(
-            function (string $part) use ($quote): string {
-                $trimmed = Helper::unquote($part);
+        $quoted = [];
 
-                return Helper::quote($trimmed ?: null, $quote) ?? '';
-            },
-            $parts
-        );
+        foreach ($parts as $part) {
+            $trimmed = Helper::unquote($part);
+
+            // Skip empty segments (orphan/leading/trailing/double dots, empty identifier)
+            // so we never emit invalid SQL such as "`a`.`b`." or an empty string.
+            if (null === $trimmed || '' === $trimmed) {
+                continue;
+            }
+
+            $quoted[] = Helper::quote($trimmed, $quote);
+        }
 
         if (true === $hasWildcard) {
             $quoted[] = '*';
+        }
+
+        if ([] === $quoted) {
+            return null;
         }
 
         return implode('.', $quoted);
