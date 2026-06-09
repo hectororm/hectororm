@@ -19,6 +19,24 @@ use Exception;
 use Generator;
 use InvalidArgumentException;
 
+/**
+ * A lazy, single-pass collection backed by a {@see Generator}.
+ *
+ * Items are produced on demand and the underlying generator is consumed as it is
+ * iterated. As a consequence a {@see LazyCollection} is **single-use**: terminal
+ * operations that drain the generator (e.g. {@see LazyCollection::all()},
+ * {@see LazyCollection::getArrayCopy()}, {@see LazyCollection::first()},
+ * {@see LazyCollection::last()}, {@see LazyCollection::contains()},
+ * {@see LazyCollection::search()}, {@see LazyCollection::collect()} and the
+ * statistics/aggregation helpers) exhaust it, so calling another terminal operation
+ * afterwards will see no remaining items.
+ *
+ * Intermediate operations ({@see LazyCollection::map()}, {@see LazyCollection::filter()},
+ * etc.) return a new lazy collection wrapping a fresh generator and remain lazy.
+ *
+ * If you need to traverse the same data several times, materialise it first with
+ * {@see LazyCollection::collect()} (or use {@see Collection} directly).
+ */
 class LazyCollection implements CollectionInterface
 {
     protected Generator $items;
@@ -484,7 +502,12 @@ class LazyCollection implements CollectionInterface
     {
         $generator = function (): Generator {
             foreach ($this->items as $key => $item) {
-                yield $item => $key;
+                // A generator yield key must be int/string; non-scalar items would raise
+                // a fatal TypeError. array_flip() (used by Collection::flip()) skips such
+                // entries, so we mirror that and skip them here too.
+                if (is_int($item) || is_string($item)) {
+                    yield $item => $key;
+                }
             }
         };
 

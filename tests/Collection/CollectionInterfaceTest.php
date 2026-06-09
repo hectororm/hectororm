@@ -819,4 +819,5 @@ class CollectionInterfaceTest extends TestCase
         $result = (new $class([]))->groupBy('key')->collect();
         $this->assertTrue($result->isEmpty());
     }
+
 }

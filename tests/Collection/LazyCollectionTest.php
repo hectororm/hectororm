@@ -71,4 +71,13 @@ class LazyCollectionTest extends TestCase
         $this->assertInstanceOf(Generator::class, $collection->getIterator());
         $this->assertSame($arr, iterator_to_array($collection->getIterator()));
     }
+
+    public function testFlipSkipsNonScalarItems(): void
+    {
+        // Non-scalar items used to raise a fatal TypeError when yielded as keys;
+        // they are now skipped, mirroring array_flip()'s "entry skipped" behaviour.
+        $collection = new LazyCollection(['a' => 'x', 'b' => new stdClass(), 'c' => ['nested'], 'd' => 'z']);
+
+        $this->assertSame(['x' => 'a', 'z' => 'd'], $collection->flip()->getArrayCopy());
+    }
 }
