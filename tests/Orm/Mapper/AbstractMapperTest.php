@@ -241,4 +241,40 @@ class AbstractMapperTest extends AbstractTestCase
         $this->assertEquals(['language_id', 'name', 'last_update'], $mapper->getEntityAlteration($entity));
         $this->assertEquals(['name'], $mapper->getEntityAlteration($entity, ['name']));
     }
+
+    public function testGetEntityAlteration_partialOriginalDoesNotEmitWarning(): void
+    {
+        $mapper = new MagicMapper(Language::class, $this->getOrm()->getStorage());
+
+        // Fetch only the primary key column: the stored "original" data will not
+        // contain "name" nor "last_update", which must not trigger an
+        // "Undefined array key" warning when computing the alteration.
+        $builder = (new Builder(Language::class))->where('language_id', 2);
+        $builder->resetColumns()->column('language_id');
+
+        /** @var Language $entity */
+        $entity = $mapper->fetchOneWithBuilder($builder);
+        $this->assertInstanceOf(Entity::class, $entity);
+
+        $errors = [];
+        set_error_handler(static function (int $errno, string $errstr) use (&$errors): bool {
+            $errors[] = $errstr;
+
+            return true;
+        });
+
+        try {
+            $alteration = $mapper->getEntityAlteration($entity);
+        } finally {
+            restore_error_handler();
+        }
+
+        $this->assertSame([], $errors, 'getEntityAlteration must not emit PHP warnings on partial original data');
+
+        // Columns missing from the original data cannot be proven unchanged, so they
+        // are reported as altered; the loaded primary key is unchanged.
+        $this->assertNotContains('language_id', $alteration);
+        $this->assertContains('name', $alteration);
+        $this->assertContains('last_update', $alteration);
+    }
 }

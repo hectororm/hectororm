@@ -11,10 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `Query\Component\Conditions` relationship detection now relies on the shared `Helper::isColumnReference()` and `Helper::explodePath()` helpers instead of a local regex and `explode('.')`, keeping the same behaviour for relation conditions (e.g. `where('relation.column', ...)`)
 
+### Removed
+
+- Removed unused `AbstractMapper::getPrimaryHash()` and `AbstractMapper::getDataHash()` (dead code, not part of the `Mapper` interface and never called); `getPrimaryHash()` additionally crashed on entities without a primary key
+
 ### Fixed
 
 - Fix `SQLSTATE[HY000] 3065` in optimized pagination (`Builder::paginate(..., optimized: true)`) when ordering by a non-primary-key column: ORDER BY column references are now added to the `SELECT DISTINCT` id subquery (SQL-standard, portable across MySQL/MariaDB/PostgreSQL/SQLite). SQL expressions such as `RAND()` are intentionally not mirrored, to preserve de-duplication.
 - Fix inflated total in optimized pagination (`Builder::paginate(..., optimized: true, withTotal: true)`) when the query has a duplicating JOIN: the total now counts distinct primary keys (via the same `SELECT DISTINCT` subquery used to fetch items) instead of the JOIN-inflated row count
+- Fix `Undefined array key` warning in `AbstractMapper::getEntityAlteration()` when the entity's stored original data does not contain all checked columns (e.g. after a partial-column fetch): missing columns are now reported as altered instead of emitting a warning
 
 ## [1.3.0] - 2026-05-12
 

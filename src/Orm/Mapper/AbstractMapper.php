@@ -111,41 +111,6 @@ abstract class AbstractMapper implements Mapper
         return $collected ?: null;
     }
 
-    ////////////
-    /// HASH ///
-    ////////////
-
-    /**
-     * Get hash of primary values.
-     *
-     * @param Entity $entity
-     *
-     * @return string
-     * @throws OrmException
-     */
-    public function getPrimaryHash(Entity $entity): string
-    {
-        return md5(
-            implode(
-                "\0",
-                $this->collectEntity($entity, $this->reflection->getPrimaryIndex()->getColumnsName())
-            )
-        );
-    }
-
-    /**
-     * Get hash of entity data.
-     *
-     * @param Entity $entity
-     *
-     * @return string
-     * @throws OrmException
-     */
-    public function getDataHash(Entity $entity): string
-    {
-        return md5(implode("\0", $this->collectEntity($entity)));
-    }
-
     /////////////
     /// FETCH ///
     /////////////
@@ -359,6 +324,13 @@ abstract class AbstractMapper implements Mapper
 
         $diff = [];
         foreach ($columns as $column) {
+            // Column absent from the original data (e.g. partial fetch): it cannot be
+            // proven unchanged, so report it as altered.
+            if (!array_key_exists($column, $originalData)) {
+                $diff[] = $column;
+                continue;
+            }
+
             $columnDiff = $this->reflection->getType($column)?->equals($currentData[$column], $originalData[$column]);
 
             if (false === $columnDiff) {
