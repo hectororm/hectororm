@@ -42,7 +42,7 @@ class Columns extends AbstractComponent implements Countable
     {
         $this->columns[] = [
             'column' => $column,
-            'alias' => Helper::trim($alias),
+            'alias' => Helper::unquote($alias),
         ];
     }
 

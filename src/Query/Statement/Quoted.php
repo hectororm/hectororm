@@ -52,7 +52,7 @@ class Quoted implements StatementInterface
 
         $quoted = array_map(
             function (string $part) use ($quote): string {
-                $trimmed = trim($part, " \t\n\r\0\x0B`\"");
+                $trimmed = Helper::unquote($part);
 
                 return Helper::quote($trimmed ?: null, $quote) ?? '';
             },

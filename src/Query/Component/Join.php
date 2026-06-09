@@ -44,7 +44,7 @@ class Join extends AbstractComponent
         $this->joins[] = [
             'join' => $join,
             'table' => $table,
-            'alias' => Helper::trim($alias),
+            'alias' => Helper::unquote($alias),
             'condition' => $condition,
         ];
     }
@@ -58,7 +58,7 @@ class Join extends AbstractComponent
      */
     public function hasAlias(string $alias): bool
     {
-        $alias = Helper::trim($alias);
+        $alias = Helper::unquote($alias);
 
         foreach ($this->joins as $join) {
             if ($join['alias'] === $alias) {

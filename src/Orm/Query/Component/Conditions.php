@@ -43,7 +43,7 @@ class Conditions extends \Hector\Query\Component\Conditions
         // Condition on a relationship: a qualified column reference (at least one relation segment)
         if (count($columns) > 1) {
             $columns = array_map(
-                fn(string $name): string => Helper::trim($name) ?? $name,
+                fn(string $name): string => Helper::unquote($name) ?? $name,
                 $columns
             );
             $depth = count($columns) - 1;

@@ -145,4 +145,69 @@ class HelperTest extends TestCase
     {
         $this->assertSame($expected, Helper::explodePath($path, PHP_INT_MAX, $quotes));
     }
+
+    /**
+     * @return iterable<string, array{?string, ?string}>
+     */
+    public function provideTrimValues(): iterable
+    {
+        yield 'null' => [null, null];
+        yield 'plain' => ['foo', 'foo'];
+        yield 'surrounding spaces' => ['  foo  ', 'foo'];
+        yield 'tabs and newlines' => ["\tfoo\n", 'foo'];
+        yield 'only whitespace becomes null' => ['   ', null];
+        yield 'empty becomes null' => ['', null];
+
+        // No longer strips backtick/double quote by default
+        yield 'backtick kept' => ['`foo`', '`foo`'];
+        yield 'double quote kept' => ['"foo"', '"foo"'];
+    }
+
+    /**
+     * @dataProvider provideTrimValues
+     */
+    public function testTrim(?string $name, ?string $expected): void
+    {
+        $this->assertSame($expected, Helper::trim($name));
+    }
+
+    public function testTrimWithCustomCharacters(): void
+    {
+        $this->assertSame('foo', Helper::trim('xxfooxx', 'x'));
+        $this->assertSame('foo', Helper::trim('`foo`', '`'));
+        $this->assertSame('foo', Helper::trim('--foo--', '-'));
+    }
+
+    /**
+     * @return iterable<string, array{?string, ?string, string}>
+     */
+    public function provideUnquoteValues(): iterable
+    {
+        yield 'null' => [null, '`"', null];
+        yield 'empty becomes null' => ['', '`"', null];
+        yield 'only whitespace becomes null' => ['   ', '`"', null];
+        yield 'plain' => ['foo', '`"', 'foo'];
+        yield 'backtick pair' => ['`foo`', '`"', 'foo'];
+        yield 'double-quote pair' => ['"foo"', '`"', 'foo'];
+        yield 'surrounding spaces trimmed then unquoted' => ['  `foo`  ', '`"', 'foo'];
+        yield 'spaces inside quotes preserved' => ['` foo `', '`"', ' foo '];
+        yield 'plain with spaces trimmed' => ['  foo  ', '`"', 'foo'];
+        yield 'doubled backtick undoubled' => ['`a``b`', '`"', 'a`b'];
+        yield 'doubled double-quote undoubled' => ['"a""b"', '`"', 'a"b'];
+        yield 'mismatched quotes kept' => ['`foo"', '`"', '`foo"'];
+        yield 'unbalanced kept' => ['`foo', '`"', '`foo'];
+        yield 'single backtick kept' => ['`', '`"', '`'];
+        yield 'embedded quote not enclosing' => ['foo"bar', '`"', 'foo"bar'];
+        yield 'quotes restricted to backtick keeps double-quoted' => ['"foo"', '`', '"foo"'];
+        yield 'quotes restricted to double keeps backticked' => ['`foo`', '"', '`foo`'];
+        yield 'custom single quote char' => ["'foo'", "'", 'foo'];
+    }
+
+    /**
+     * @dataProvider provideUnquoteValues
+     */
+    public function testUnquote(?string $name, ?string $quotes, ?string $expected): void
+    {
+        $this->assertSame($expected, Helper::unquote($name, $quotes ?? '`"'));
+    }
 }

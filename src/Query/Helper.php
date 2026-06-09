@@ -25,18 +25,59 @@ class Helper
     /**
      * Trim name.
      *
+     * The second parameter is the set of characters to strip (like the native
+     * {@see trim()}), defaulting to whitespace. Identifier de-quoting is handled
+     * by {@see Helper::unquote()}.
+     *
      * @param string|null $name
-     * @param string $quote
+     * @param string $characters
      *
      * @return string|null
      */
-    public static function trim(?string $name, string $quote = '`'): ?string
+    public static function trim(?string $name, string $characters = " \t\n\r\0\x0B"): ?string
     {
         if (null === $name) {
             return null;
         }
 
-        return trim($name, " \t\n\r\0\x0B" . $quote) ?: null;
+        return trim($name, $characters) ?: null;
+    }
+
+    /**
+     * Unquote an identifier.
+     *
+     * Trims surrounding whitespace then strips a single enclosing quote pair when the
+     * first and last characters are the same quote character listed in $quotes, undoubling
+     * that character inside (strict inverse of {@see Helper::quote()} for its outputs).
+     * Whitespace enclosed within the quote pair is preserved. A value that is not enclosed
+     * in a matching pair is returned trimmed but otherwise unchanged.
+     *
+     * @param string|null $name
+     * @param string $quotes Identifier quote characters (default backtick and double quote)
+     *
+     * @return string|null
+     */
+    public static function unquote(?string $name, string $quotes = '`"'): ?string
+    {
+        $name = self::trim($name);
+
+        if (null === $name) {
+            return null;
+        }
+
+        if (strlen($name) < 2) {
+            return $name;
+        }
+
+        $first = $name[0];
+
+        if (false === str_contains($quotes, $first) || $name[strlen($name) - 1] !== $first) {
+            return $name;
+        }
+
+        $inner = substr($name, 1, -1);
+
+        return str_replace($first . $first, $first, $inner);
     }
 
     /**

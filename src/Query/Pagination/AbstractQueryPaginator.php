@@ -121,12 +121,8 @@ abstract class AbstractQueryPaginator implements QueryPaginatorInterface
      */
     protected function normalizeColumnKey(string $column): string
     {
-        $column = str_replace('`', '', $column);
+        $segments = Helper::explodePath($column);
 
-        if (str_contains($column, '.')) {
-            $column = substr($column, strrpos($column, '.') + 1);
-        }
-
-        return $column;
+        return Helper::unquote((string)end($segments)) ?? '';
     }
 }

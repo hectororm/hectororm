@@ -34,7 +34,7 @@ class Table extends AbstractComponent
     {
         $this->tables[] = [
             'table' => $table,
-            'alias' => Helper::trim($alias),
+            'alias' => Helper::unquote($alias),
         ];
     }
 

@@ -81,5 +81,7 @@ class AbstractQueryPaginatorTest extends TestCase
         $this->assertEquals('column', $paginator->exposeNormalizeColumnKey('table.column'));
         $this->assertEquals('column', $paginator->exposeNormalizeColumnKey('`table`.`column`'));
         $this->assertEquals('column', $paginator->exposeNormalizeColumnKey('schema.table.column'));
+        $this->assertEquals('column', $paginator->exposeNormalizeColumnKey('"table"."column"'));
+        $this->assertEquals('col', $paginator->exposeNormalizeColumnKey('`a.b`.col'));
     }
 }

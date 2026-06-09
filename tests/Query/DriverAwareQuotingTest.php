@@ -65,14 +65,26 @@ class DriverAwareQuotingTest extends TestCase
         $this->assertNull(Helper::quote(null));
     }
 
-    public function testHelperTrimDefaultBacktick(): void
+    public function testHelperTrimDefaultWhitespaceKeepsBacktick(): void
     {
-        $this->assertSame('foo', Helper::trim('`foo`'));
+        // trim() now only strips whitespace; de-quoting is handled by Helper::unquote()
+        $this->assertSame('`foo`', Helper::trim('`foo`'));
+        $this->assertSame('foo', Helper::trim('  foo  '));
     }
 
-    public function testHelperTrimDoubleQuote(): void
+    public function testHelperTrimCustomCharacters(): void
     {
         $this->assertSame('foo', Helper::trim('"foo"', '"'));
+    }
+
+    public function testHelperUnquoteBacktick(): void
+    {
+        $this->assertSame('foo', Helper::unquote('`foo`'));
+    }
+
+    public function testHelperUnquoteDoubleQuote(): void
+    {
+        $this->assertSame('foo', Helper::unquote('"foo"'));
     }
 
     public function testHelperTrimNull(): void

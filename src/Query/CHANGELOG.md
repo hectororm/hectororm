@@ -12,11 +12,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Helper::isColumnReference()` to detect whether a value is a plain (possibly qualified/quoted) column reference, as opposed to an SQL expression/function, closure or sub-query
 - `Helper::explodePath()` to split a (possibly qualified/quoted) SQL identifier path on its dot separators, ignoring dots enclosed in a matching pair of identifier quotes, with an `explode()`-like `$limit` and a configurable `$quotes` parameter (defaults to backtick and double quote; pass `''` to split unconditionally)
 - `Pagination\AbstractQueryPaginator::extractColumnOrderItems()` returning the ORDER BY items that are plain column references (deterministic and materialisable)
+- `Helper::unquote()` to de-quote an identifier: trims surrounding whitespace then strips a matching enclosing quote pair (undoubling the inner quote character), with a configurable set of quote characters
 
 ### Changed
 
 - Cursor pagination now ignores ORDER BY expressions that are not column references (e.g. `ORDER BY RAND()`) instead of producing an invalid cursor navigation; if no column-based ORDER BY remains, it throws as before
 - `Statement\Quoted` now splits composite identifiers with `Helper::explodePath()`, so a dot enclosed in identifier quotes (e.g. `` `a.b`.`c` ``) is no longer mistaken for a segment separator
+- `Helper::trim()` second parameter is now the set of characters to strip (defaults to whitespace) instead of a single quote character; identifier de-quoting moved to the new `Helper::unquote()`. `Statement\Quoted`, the alias handling of `Component\Columns`/`Component\Join`/`Component\Table`, and `Pagination\AbstractQueryPaginator::normalizeColumnKey()` now rely on `Helper::unquote()`/`Helper::explodePath()`
 
 ## [1.3.0] - 2026-05-12
 
