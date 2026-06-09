@@ -209,4 +209,45 @@ class JsonTypeTest extends TestCase
             '{"foo":"value","bar":"valueb","baz":2}',
         ));
     }
+
+    public function testEqualsIsKeyOrderInsensitive(): void
+    {
+        $type = new JsonType();
+
+        // Same content, different key order on both string sides
+        $this->assertTrue($type->equals(
+            '{"b":2,"a":1}',
+            '{"a":1,"b":2}',
+        ));
+
+        // Entity is an associative array with a different key order than the schema string
+        $this->assertTrue($type->equals(
+            ['b' => 2, 'a' => 1],
+            '{"a":1,"b":2}',
+        ));
+
+        // Nested objects with reordered keys
+        $this->assertTrue($type->equals(
+            ['outer' => ['y' => 2, 'x' => 1]],
+            '{"outer":{"x":1,"y":2}}',
+        ));
+    }
+
+    public function testEqualsWithArrayOnBothSides(): void
+    {
+        $type = new JsonType();
+
+        // Equal arrays are caught by the loose comparison (order-insensitive) in the parent.
+        $this->assertTrue($type->equals(
+            ['b' => 2, 'a' => 1],
+            ['a' => 1, 'b' => 2],
+        ));
+
+        // Differing arrays reach normalize(): the schema side being an array used to
+        // crash with "json_decode(): Argument #1 must be of type string, array given".
+        $this->assertFalse($type->equals(
+            ['a' => 1],
+            ['a' => 1, 'b' => 2],
+        ));
+    }
 }

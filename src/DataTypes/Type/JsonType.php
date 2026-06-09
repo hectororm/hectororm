@@ -92,11 +92,38 @@ class JsonType extends AbstractType
             return empty($entityData);
         }
 
-        // Normalize both sides: decode strings, then re-encode for canonical comparison
-        if (is_string($entityData)) {
-            $entityData = json_decode($entityData);
+        // Normalize both sides to a decoded, key-sorted structure so the comparison
+        // is insensitive to whitespace and to object/associative-array key ordering.
+        return $this->normalize($entityData) === $this->normalize($schemaData);
+    }
+
+    /**
+     * Normalize a value to a canonical, comparable representation.
+     *
+     * Strings are JSON-decoded (as associative arrays); already-decoded values are
+     * kept as-is. Array keys are sorted recursively so that semantically-equal
+     * structures with different key ordering compare as equal.
+     *
+     * @param mixed $value
+     *
+     * @return mixed
+     */
+    private function normalize(mixed $value): mixed
+    {
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            $value = (null === $decoded && JSON_ERROR_NONE !== json_last_error()) ? $value : $decoded;
         }
 
-        return json_encode($entityData) === json_encode(json_decode($schemaData));
+        if (is_object($value)) {
+            $value = (array)$value;
+        }
+
+        if (is_array($value)) {
+            $value = array_map(fn(mixed $item): mixed => $this->normalize($item), $value);
+            ksort($value);
+        }
+
+        return $value;
     }
 }
