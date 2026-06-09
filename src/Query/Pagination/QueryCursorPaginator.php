@@ -22,6 +22,27 @@ use Hector\Query\QueryBuilder;
 use InvalidArgumentException;
 
 /**
+ * Keyset (cursor) pagination.
+ *
+ * Pages are seeked with `WHERE` conditions built from the query's `ORDER BY`
+ * columns instead of an SQL `OFFSET`, which is efficient on large, indexed
+ * data sets.
+ *
+ * Requirements and limitations:
+ * - The query MUST have an `ORDER BY` clause, and it must define a TOTAL order:
+ *   the columns must be unique together (e.g. a unique column, or a non-unique
+ *   column followed by the primary key as a tie-breaker). Ordering by a
+ *   non-unique column alone silently skips or duplicates rows across pages.
+ * - Ordered columns must not contain NULL values.
+ * - Columns whose sort order differs from their bound-parameter comparison are
+ *   NOT supported. The most common case is a MySQL `ENUM`: `ORDER BY enum_col`
+ *   sorts by the ENUM's declaration index, while `WHERE enum_col > :value`
+ *   (bound as a string) compares lexicographically, so the two disagree and
+ *   rows are skipped. Order by a plain unique column (e.g. the primary key)
+ *   instead.
+ * - Ordering expressions are not supported as cursor keys; only plain column
+ *   references are usable (see {@see self::extractOrderColumns()}).
+ *
  * @template T of array
  * @extends AbstractQueryPaginator<T>
  */

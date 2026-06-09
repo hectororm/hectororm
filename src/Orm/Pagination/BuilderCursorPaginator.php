@@ -22,6 +22,12 @@ use Hector\Query\Pagination\QueryCursorPaginator;
 use Hector\Query\QueryBuilder;
 
 /**
+ * Entity keyset (cursor) pagination.
+ *
+ * See {@see QueryCursorPaginator} for the requirements and limitations of cursor
+ * pagination — in particular, the `ORDER BY` must define a total order (use the
+ * primary key as a tie-breaker) and must not order by a MySQL `ENUM` column.
+ *
  * @template T of Entity
  * @extends QueryCursorPaginator<T>
  */
