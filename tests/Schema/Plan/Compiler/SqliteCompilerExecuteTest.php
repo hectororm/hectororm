@@ -214,4 +214,55 @@ class SqliteCompilerExecuteTest extends AbstractCompilerExecuteTestCase
         $cleanPlan->drop('mixed_rebuild_test', ifExists: true);
         static::executePlan($cleanPlan, $connection);
     }
+
+    /**
+     * A rebuild must preserve the precision/scale of numeric columns
+     * (e.g. DECIMAL(10,2)) that are carried over unchanged.
+     */
+    public function testRebuildPreservesNumericPrecisionAndScale(): void
+    {
+        $connection = static::createConnection();
+        static::$connection = $connection;
+
+        // Create a table with a DECIMAL(10,2) column plus another column to modify.
+        $plan = new Plan();
+        $plan->create('decimal_rebuild_test', function (TableOperation $t): void {
+            $t->addColumn('id', 'INTEGER', autoIncrement: true)
+                ->addColumn('price', 'DECIMAL(10,2)')
+                ->addColumn('label', 'VARCHAR(50)')
+                ->addIndex('PRIMARY', ['id'], Index::PRIMARY);
+        });
+        static::executePlan($plan, $connection);
+
+        $connection->execute("INSERT INTO decimal_rebuild_test (price, label) VALUES (12.34, 'a')");
+
+        // Modify "label" — triggers a full rebuild; "price" is carried over unchanged.
+        $compiler = new SqliteCompiler();
+        $generator = new Sqlite($connection);
+        $schema = $generator->generateSchema('main');
+
+        $plan2 = new Plan();
+        $plan2->alter('decimal_rebuild_test')->modifyColumn('label', 'TEXT');
+
+        foreach ($plan2->getStatements($compiler, $schema) as $statement) {
+            $connection->execute($statement);
+        }
+
+        // Re-introspect and assert the DECIMAL precision/scale survived the rebuild.
+        $schema = $generator->generateSchema('main');
+        $priceColumn = $schema->getTable('decimal_rebuild_test')->getColumn('price');
+
+        $this->assertSame('decimal', strtolower($priceColumn->getType()));
+        $this->assertSame(10, $priceColumn->getNumericPrecision());
+        $this->assertSame(2, $priceColumn->getNumericScale());
+
+        // Data preserved.
+        $rows = $connection->fetchAll('SELECT price FROM decimal_rebuild_test');
+        $this->assertCount(1, $rows);
+
+        // Cleanup
+        $cleanPlan = new Plan();
+        $cleanPlan->drop('decimal_rebuild_test', ifExists: true);
+        static::executePlan($cleanPlan, $connection);
+    }
 }

@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace Hector\Schema\Plan\Compiler;
 
+use Hector\Schema\Column;
 use Hector\Schema\Index;
 use Hector\Schema\Plan\AlterTable;
 use Hector\Schema\Plan\AlterView;
@@ -242,7 +243,7 @@ final class SqliteCompiler extends AbstractCompiler
             array_map(fn($col): string => $col->getName(), $schemaColumns),
             array_map(fn($col): array => [
                 'name' => $col->getName(),
-                'type' => $col->getType() . ($col->getMaxlength() ? '(' . $col->getMaxlength() . ')' : ''),
+                'type' => $this->reconstructColumnType($col),
                 'nullable' => $col->isNullable(),
                 'default' => $col->getDefault(),
                 'hasDefault' => null !== $col->getDefault(),
@@ -431,6 +432,37 @@ final class SqliteCompiler extends AbstractCompiler
         }
 
         return $statements;
+    }
+
+    /**
+     * Reconstruct the SQL type of an introspected column for a table rebuild.
+     *
+     * Preserves the length parameters lost otherwise: string length
+     * (e.g. `VARCHAR(255)`) and numeric precision/scale (e.g. `DECIMAL(10,2)`).
+     *
+     * @param Column $column
+     *
+     * @return string
+     */
+    private function reconstructColumnType(Column $column): string
+    {
+        $type = $column->getType();
+
+        if (null !== $column->getMaxlength()) {
+            return $type . '(' . $column->getMaxlength() . ')';
+        }
+
+        $precision = $column->getNumericPrecision();
+
+        if (null !== $precision) {
+            $scale = $column->getNumericScale();
+
+            return null !== $scale
+                ? $type . '(' . $precision . ',' . $scale . ')'
+                : $type . '(' . $precision . ')';
+        }
+
+        return $type;
     }
 
     /**
