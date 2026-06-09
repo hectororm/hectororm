@@ -241,6 +241,51 @@ class MigrationRunnerTest extends TestCase
         $this->assertEmpty($runner->getApplied());
     }
 
+    public function testDownRevertsInActualApplicationOrder(): void
+    {
+        // Migrations applied OUT OF ORDER relative to the provider order:
+        // add_posts is applied first, then create_users (e.g. a migration
+        // authored earlier but applied later). The rollback must undo the
+        // LAST APPLIED first (create_users), not the provider-order last.
+        $users = new CreateUsersTableMigration();
+        $posts = new AddPostsTableMigration();
+        $compiler = new SqliteCompiler();
+        $tracker = new FileTracker($this->tempFile);
+
+        (new MigrationRunner(
+            new ArrayProvider(['add_posts' => $posts]),
+            $tracker,
+            $compiler,
+            $this->connection,
+        ))->up();
+
+        (new MigrationRunner(
+            new ArrayProvider(['create_users' => $users]),
+            $tracker,
+            $compiler,
+            $this->connection,
+        ))->up();
+
+        // Sanity check: the tracker records the real application order.
+        $this->assertSame(['add_posts', 'create_users'], $tracker->getArrayCopy());
+
+        // The runner is built with the provider in its own (different) order.
+        $runner = new MigrationRunner(
+            new ArrayProvider([
+                'create_users' => $users,
+                'add_posts' => $posts,
+            ]),
+            $tracker,
+            $compiler,
+            $this->connection,
+        );
+
+        $reverted = $runner->down(steps: 1);
+
+        // Last applied was create_users, so it must be the one reverted.
+        $this->assertSame(['create_users'], $reverted);
+    }
+
     public function testMigrationFailureRollsBack(): void
     {
         // First, create the users table so the FailingMigration will conflict

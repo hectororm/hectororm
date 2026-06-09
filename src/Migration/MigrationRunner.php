@@ -30,6 +30,16 @@ use Psr\Log\LoggerInterface;
 use ReflectionClass;
 use Throwable;
 
+/**
+ * Runs migrations up and down, tracking applied migrations.
+ *
+ * Atomicity: each migration runs inside its own transaction, so a failing
+ * migration is rolled back individually — already-applied migrations are not.
+ * Note that DDL is not transactional on every database: MySQL/MariaDB issue an
+ * implicit COMMIT on most DDL statements (CREATE/ALTER/DROP TABLE), so a partial
+ * failure within such a migration cannot be fully rolled back there. SQLite and
+ * PostgreSQL do support transactional DDL.
+ */
 class MigrationRunner
 {
     /**
@@ -140,16 +150,26 @@ class MigrationRunner
      */
     public function down(int $steps = 1, bool $dryRun = false): array
     {
-        $applied = array_reverse($this->getApplied(), true);
+        // Revert in reverse application order (last applied first), as recorded by
+        // the tracker — not in reverse provider order, which may differ when
+        // migrations were applied out of order.
+        $appliedIds = array_reverse($this->tracker->getArrayCopy());
+        $migrations = $this->provider->getArrayCopy();
         $reverted = [];
         $count = 0;
 
-        foreach ($applied as $id => $migration) {
+        foreach ($appliedIds as $id) {
             if ($count >= $steps) {
                 break;
             }
 
-            if (true === $this->executeMigration($id, $migration, Direction::DOWN, $dryRun)) {
+            // Skip applied migrations that the provider can no longer resolve:
+            // without their definition they cannot be reverted.
+            if (false === isset($migrations[$id])) {
+                continue;
+            }
+
+            if (true === $this->executeMigration($id, $migrations[$id], Direction::DOWN, $dryRun)) {
                 $reverted[] = $id;
                 $count++;
             }
