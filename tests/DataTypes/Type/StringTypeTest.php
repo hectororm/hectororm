@@ -12,6 +12,7 @@
 
 namespace Hector\DataTypes\Tests\Type;
 
+use BackedEnum;
 use Hector\DataTypes\Exception\ValueException;
 use Hector\DataTypes\ExpectedType;
 use Hector\DataTypes\Type\StringType;
@@ -72,6 +73,10 @@ class StringTypeTest extends TestCase
 
     public function testFromSchemaWithDeclaredTypeBackedEnum(): void
     {
+        if (!interface_exists(BackedEnum::class)) {
+            $this->markTestSkipped('Enum are not available on this PHP version.');
+        }
+
         $expectedType = new ExpectedType(FakeEnumString::class, false, false);
 
         $type = new StringType();
