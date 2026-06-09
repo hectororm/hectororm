@@ -221,6 +221,34 @@ class BuilderTest extends AbstractTestCase
         $builder->findOrFail(9999);
     }
 
+    public function testFindOrFailManyExistent(): void
+    {
+        $builder = new Builder(Staff::class);
+        $result = $builder->findOrFail(1, 2);
+
+        $this->assertInstanceOf(Collection::class, $result);
+        $this->assertCount(2, $result);
+    }
+
+    public function testFindOrFailManyAllMissingThrows(): void
+    {
+        $builder = new Builder(Staff::class);
+
+        // find() returns an empty Collection here; empty($collection) is always
+        // false on an object, so the exception must rely on the collection count.
+        $this->expectException(NotFoundException::class);
+        $builder->findOrFail(9998, 9999);
+    }
+
+    public function testFindOrFailManyPartialReturnsFound(): void
+    {
+        $builder = new Builder(Staff::class);
+        $result = $builder->findOrFail(1, 9999);
+
+        $this->assertInstanceOf(Collection::class, $result);
+        $this->assertCount(1, $result);
+    }
+
     public function testFindOrNewExistent(): void
     {
         $builder = new Builder(Staff::class);

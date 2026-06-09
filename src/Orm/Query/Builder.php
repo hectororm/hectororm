@@ -317,7 +317,16 @@ class Builder extends QueryBuilder
     {
         $result = $this->find(...$primaryValues);
 
-        if (empty($result)) {
+        // `find()` returns null (nothing found), an Entity, or a Collection.
+        // `empty()` cannot detect an empty Collection (always false on an object),
+        // so the count is checked explicitly.
+        $found = match (true) {
+            null === $result => false,
+            $result instanceof Collection => false === $result->isEmpty(),
+            default => true,
+        };
+
+        if (false === $found) {
             throw new NotFoundException();
         }
 
