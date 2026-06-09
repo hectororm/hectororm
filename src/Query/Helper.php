@@ -124,6 +124,11 @@ class Helper
      * of one of these characters is not treated as a separator. Pass an empty string to
      * disable quote awareness and split unconditionally on every dot.
      *
+     * An unterminated quote keeps the rest of the path (dots included) in the current
+     * segment, since the split cannot know where the quoted identifier was meant to end.
+     * This method is only fed validated/trusted identifiers, so malformed input is not
+     * specially handled.
+     *
      * Examples:
      *  - "schema.table.column"  => ["schema", "table", "column"]
      *  - "`a.b`.`c`"            => ["`a.b`", "`c`"]
@@ -187,9 +192,15 @@ class Helper
      * as opposed to an SQL expression/function, closure or sub-query.
      *
      * A Quoted statement is, by construction, an identifier reference and always
-     * returns true. A string is accepted only if it matches a plain (optionally
-     * dotted) identifier; expressions/functions (e.g. RAND(), COUNT(*)) and any
-     * other type return false.
+     * returns true. A string is accepted only if every dot-separated segment is
+     * either:
+     *  - a quoted identifier (backtick or double quote, with the quote character
+     *    doubled to escape it), which may contain anything including dots or spaces; or
+     *  - a bare identifier starting with a Unicode letter or underscore (so numeric
+     *    literals such as `123` or `1.2` are rejected).
+     *
+     * Expressions/functions (e.g. RAND(), COUNT(*)), arithmetic and any other type
+     * return false.
      *
      * @param mixed $column
      *
@@ -205,6 +216,8 @@ class Helper
             return false;
         }
 
-        return 1 === preg_match('/^(?:(["`])\w+\1|\w+)(?:\.(?:(["`])\w+\2|\w+))*$/', $column);
+        $segment = '(?:`(?:[^`]|``)*`|"(?:[^"]|"")*"|[\p{L}_][\p{L}\p{N}_]*)';
+
+        return 1 === preg_match('/^' . $segment . '(?:\.' . $segment . ')*$/u', $column);
     }
 }

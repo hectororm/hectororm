@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `Helper::isColumnReference()` to detect whether a value is a plain (possibly qualified/quoted) column reference, as opposed to an SQL expression/function, closure or sub-query
+- `Helper::isColumnReference()` to detect whether a value is a plain (possibly qualified/quoted) column reference, as opposed to an SQL expression/function, closure or sub-query. Quoted segments may contain dots/spaces, bare segments accept Unicode, and numeric literals are rejected
 - `Helper::explodePath()` to split a (possibly qualified/quoted) SQL identifier path on its dot separators, ignoring dots enclosed in a matching pair of identifier quotes, with an `explode()`-like `$limit` and a configurable `$quotes` parameter (defaults to backtick and double quote; pass `''` to split unconditionally)
 - `Pagination\AbstractQueryPaginator::extractColumnOrderItems()` returning the ORDER BY items that are plain column references (deterministic and materialisable)
 - `Helper::unquote()` to de-quote an identifier: trims surrounding whitespace then strips a matching enclosing quote pair (undoubling the inner quote character), with a configurable set of quote characters

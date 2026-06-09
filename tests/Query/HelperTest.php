@@ -36,6 +36,21 @@ class HelperTest extends TestCase
         yield 'double-quoted column' => ['"main"."create_time"', true];
         yield 'mixed quoted/bare segments' => ['`main`.create_time', true];
 
+        // Quoted identifiers may legitimately contain dots, spaces or doubled quotes
+        yield 'quoted segment containing a dot' => ['`a.b`.`c`', true];
+        yield 'quoted reserved word with space' => ['`order by`', true];
+        yield 'quoted with doubled backtick' => ['`a``b`', true];
+        yield 'double-quoted with doubled quote' => ['"a""b"', true];
+
+        // Unicode identifiers are valid
+        yield 'unicode bare column' => ['café', true];
+        yield 'unicode underscored column' => ['naïve_col', true];
+        yield 'unicode qualified' => ['naïve.café', true];
+
+        // Numeric literals are not column references
+        yield 'integer literal string' => ['123', false];
+        yield 'decimal literal string' => ['1.2', false];
+
         // Quoted statement is always a column reference
         yield 'Quoted statement' => [new Quoted('main.create_time'), true];
         yield 'Quoted bare' => [new Quoted('create_time'), true];
@@ -86,6 +101,12 @@ class HelperTest extends TestCase
 
         // Wildcard is treated as a plain segment (neutral)
         yield 'wildcard segment' => ['table.*', PHP_INT_MAX, ['table', '*']];
+
+        // Unterminated quote: the remainder (including dots) stays in a single segment.
+        // Callers only pass validated/trusted identifiers, so this malformed input is
+        // characterised here rather than special-cased.
+        yield 'unterminated backtick swallows rest' => ['`a.b', PHP_INT_MAX, ['`a.b']];
+        yield 'unterminated quote mid-path' => ['a.`b.c', PHP_INT_MAX, ['a', '`b.c']];
 
         // Limit behaves like explode()
         yield 'limit 1' => ['a.b.c', 1, ['a.b.c']];
