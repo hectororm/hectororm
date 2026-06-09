@@ -41,7 +41,7 @@ class StringType extends AbstractType
                 return $value;
             }
 
-            if (is_a($expected->getName(), BackedEnum::class)) {
+            if (is_a($expected->getName(), BackedEnum::class, true)) {
                 return $expected->getName()::from($value);
             }
 

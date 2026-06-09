@@ -69,6 +69,16 @@ class StringTypeTest extends TestCase
         $type->fromSchema('1', $expectedType);
     }
 
+    public function testFromSchemaWithDeclaredTypeBackedEnum(): void
+    {
+        $expectedType = new ExpectedType(FakeEnumString::class, false, false);
+
+        $type = new StringType();
+
+        $this->assertSame(FakeEnumString::FOO, $type->fromSchema('foo', $expectedType));
+        $this->assertSame(FakeEnumString::BAR, $type->fromSchema('bar', $expectedType));
+    }
+
     public function testToSchema(): void
     {
         $type = new StringType();

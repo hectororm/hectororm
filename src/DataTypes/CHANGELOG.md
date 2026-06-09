@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `StringType::fromSchema()` now resolves backed-enum typed columns: the `is_a()` class-string check was missing its third `$allow_string` argument, so the `BackedEnum` branch was never reached and valid enum values were rejected with a "not builtin" error
+
 ## [1.3.0] - 2026-05-12
 
 ### Added
