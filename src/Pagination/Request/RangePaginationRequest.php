@@ -15,6 +15,7 @@ declare(strict_types=1);
 
 namespace Hector\Pagination\Request;
 
+use InvalidArgumentException;
 use Psr\Http\Message\ServerRequestInterface;
 
 final class RangePaginationRequest implements PaginationRequestInterface
@@ -23,6 +24,12 @@ final class RangePaginationRequest implements PaginationRequestInterface
         private int $start = 0,
         private int $end = 19,
     ) {
+        if ($start < 0) {
+            throw new InvalidArgumentException('start must be >= 0');
+        }
+        if ($end < $start) {
+            throw new InvalidArgumentException('end must be >= start');
+        }
     }
 
     /**
@@ -41,7 +48,9 @@ final class RangePaginationRequest implements PaginationRequestInterface
         // Try "range=0-19" format
         if (isset($query[$rangeParam]) && preg_match('/^(\d+)-(\d+)$/', $query[$rangeParam], $matches)) {
             $start = (int)$matches[1];
-            $end = (int)$matches[2];
+
+            // Normalize: a reversed range (end < start) would yield a negative limit.
+            $end = max($start, (int)$matches[2]);
 
             // Enforce max limit
             if (($end - $start + 1) > $maxLimit) {
@@ -72,7 +81,9 @@ final class RangePaginationRequest implements PaginationRequestInterface
         $pattern = '/^' . preg_quote($unit, '/') . '=(\d+)-(\d+)$/';
         if (preg_match($pattern, $header, $matches)) {
             $start = (int)$matches[1];
-            $end = (int)$matches[2];
+
+            // Normalize: a reversed range (end < start) would yield a negative limit.
+            $end = max($start, (int)$matches[2]);
 
             if (($end - $start + 1) > $maxRange) {
                 $end = $start + $maxRange - 1;

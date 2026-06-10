@@ -17,6 +17,7 @@ namespace Hector\Pagination\Tests\Request;
 
 use Hector\Pagination\Request\PaginationRequestInterface;
 use Hector\Pagination\Request\RangePaginationRequest;
+use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -27,6 +28,42 @@ class RangePaginationRequestTest extends TestCase
         $request = new RangePaginationRequest();
 
         $this->assertInstanceOf(PaginationRequestInterface::class, $request);
+    }
+
+    public function testConstructorRejectsNegativeStart(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        new RangePaginationRequest(-1, 19);
+    }
+
+    public function testConstructorRejectsReversedRange(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        new RangePaginationRequest(20, 10);
+    }
+
+    public function testFromRequestNormalizesReversedRange(): void
+    {
+        $serverRequest = $this->createServerRequest(['range' => '20-10']);
+
+        $request = RangePaginationRequest::fromRequest($serverRequest);
+
+        // A reversed range must never yield a negative limit.
+        $this->assertGreaterThanOrEqual(1, $request->getLimit());
+        $this->assertSame(20, $request->getOffset());
+    }
+
+    public function testFromHeaderNormalizesReversedRange(): void
+    {
+        $serverRequest = $this->createMock(ServerRequestInterface::class);
+        $serverRequest->method('getHeaderLine')->with('Range')->willReturn('items=20-10');
+
+        $request = RangePaginationRequest::fromHeader($serverRequest);
+
+        $this->assertGreaterThanOrEqual(1, $request->getLimit());
+        $this->assertSame(20, $request->getOffset());
     }
 
     public function testDefaults(): void
