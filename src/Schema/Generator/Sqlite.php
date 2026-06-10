@@ -125,11 +125,7 @@ class Sqlite extends AbstractGenerator
         $columnsInfo = [];
         foreach ($results as $result) {
             $type = $this->getTypeInfo($result['type']);
-            $autoIncrement =
-                preg_match(
-                    sprintf('/[^,()]\s+%s\s+[^,()]*autoincrement/im', preg_quote($result['name'])),
-                    $tableStatement
-                ) === 1;
+            $autoIncrement = $this->isAutoIncrement($result['name'], $tableStatement);
 
             $columnsInfo[] = [
                 'name' => $result['name'],
@@ -212,6 +208,51 @@ class Sqlite extends AbstractGenerator
     }
 
     /**
+     * Whether a column is declared AUTOINCREMENT in the table statement.
+     *
+     * The column name may be written bare or quoted (`"id"`, backticks or
+     * brackets) in the CREATE TABLE statement, so the name match tolerates an
+     * optional surrounding quote pair.
+     *
+     * @param string $column
+     * @param string $tableStatement
+     *
+     * @return bool
+     */
+    private function isAutoIncrement(string $column, string $tableStatement): bool
+    {
+        $name = preg_quote($column, '/');
+        // Optional opening/closing identifier quote: " , ` or [ ]
+        $pattern = sprintf('/(?:^|[,(])\s*["`\[]?%s["`\]]?\s+[^,()]*autoincrement/im', $name);
+
+        return 1 === preg_match($pattern, $tableStatement);
+    }
+
+    /**
+     * Get the primary key column names, ordered, from PRAGMA table_info.
+     *
+     * `PRAGMA table_info` exposes the position of each column within the primary
+     * key in its `pk` field (0 = not part of the PK, 1..n = position). This is the
+     * only reliable source for a single-column `INTEGER PRIMARY KEY` (rowid alias),
+     * which never shows up in `PRAGMA index_list`.
+     *
+     * @param string $table
+     *
+     * @return list<string>
+     */
+    private function getPrimaryKeyColumns(string $table): array
+    {
+        $this->assertSafeIdentifier($table);
+
+        $results = $this->connection->fetchAll('PRAGMA table_info(\'' . $table . '\');');
+
+        $pkColumns = array_filter($results, static fn(array $row): bool => (int)$row['pk'] > 0);
+        usort($pkColumns, static fn(array $a, array $b): int => (int)$a['pk'] <=> (int)$b['pk']);
+
+        return array_column($pkColumns, 'name');
+    }
+
+    /**
      * @inheritDoc
      */
     protected function getIndexesInfo(string $schema, string $table): array
@@ -222,12 +263,14 @@ class Sqlite extends AbstractGenerator
         $results = $this->connection->fetchAll($stm);
 
         $indexesInfo = [];
+        $hasPrimary = false;
         foreach ($results as $result) {
             $indexType = Index::INDEX;
             if ($result['unique'] == '1') {
                 $indexType = Index::UNIQUE;
                 if ($result['origin'] === 'pk') {
                     $indexType = Index::PRIMARY;
+                    $hasPrimary = true;
                 }
             }
 
@@ -242,6 +285,21 @@ class Sqlite extends AbstractGenerator
                 'type' => $indexType,
                 'columns_name' => array_column($resultsIndexInfo, 'name'),
             ];
+        }
+
+        // A single-column INTEGER PRIMARY KEY (rowid alias) is not reported by
+        // PRAGMA index_list, so it must be recovered from PRAGMA table_info.
+        if (false === $hasPrimary) {
+            $pkColumns = $this->getPrimaryKeyColumns($table);
+
+            if ([] !== $pkColumns) {
+                array_unshift($indexesInfo, [
+                    'table_name' => $table,
+                    'name' => 'PRIMARY',
+                    'type' => Index::PRIMARY,
+                    'columns_name' => $pkColumns,
+                ]);
+            }
         }
 
         return $indexesInfo;

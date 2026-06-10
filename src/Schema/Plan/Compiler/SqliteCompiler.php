@@ -566,9 +566,14 @@ final class SqliteCompiler extends AbstractCompiler
      */
     protected function compileColumnDefinition(AddColumn|ModifyColumn $operation): string
     {
+        $autoIncrement = true === $operation->isAutoIncrement();
+
         $parts = [
             $this->quoteIdentifier($operation->getName()),
-            $operation->getType(),
+            // SQLite only allows AUTOINCREMENT on an "INTEGER PRIMARY KEY"; the
+            // introspected type may be a synonym (e.g. "int"), which SQLite
+            // rejects, so force the exact "INTEGER" keyword in that case.
+            $autoIncrement ? 'INTEGER' : $operation->getType(),
         ];
 
         if (false === $operation->isNullable()) {
@@ -580,7 +585,7 @@ final class SqliteCompiler extends AbstractCompiler
             $parts[] = trim($default);
         }
 
-        if (true === $operation->isAutoIncrement()) {
+        if (true === $autoIncrement) {
             $parts[] = 'PRIMARY KEY AUTOINCREMENT';
         }
 
