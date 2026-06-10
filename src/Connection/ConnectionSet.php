@@ -99,6 +99,42 @@ class ConnectionSet implements Countable, IteratorAggregate
     }
 
     /**
+     * Begin a transaction on every connection of the set.
+     *
+     * @return void
+     */
+    public function beginTransaction(): void
+    {
+        foreach ($this->connections as $connection) {
+            $connection->beginTransaction();
+        }
+    }
+
+    /**
+     * Commit the transaction on every connection of the set.
+     *
+     * @return void
+     */
+    public function commit(): void
+    {
+        foreach ($this->connections as $connection) {
+            $connection->commit();
+        }
+    }
+
+    /**
+     * Roll back the transaction on every connection of the set.
+     *
+     * @return void
+     */
+    public function rollBack(): void
+    {
+        foreach ($this->connections as $connection) {
+            $connection->rollBack();
+        }
+    }
+
+    /**
      * Get loggers.
      *
      * @return Generator<Logger>

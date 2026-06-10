@@ -118,6 +118,36 @@ class ConnectionSetTest extends TestCase
         $connectionSet->addConnection(new Connection('sqlite:memory:'));
     }
 
+    public function testTransactionSpansEveryConnection(): void
+    {
+        $connectionSet = new ConnectionSet(
+            $connection1 = new Connection('sqlite::memory:'),
+            $connection2 = new Connection('sqlite::memory:', name: 'connection'),
+        );
+
+        $connectionSet->beginTransaction();
+        $this->assertTrue($connection1->inTransaction());
+        $this->assertTrue($connection2->inTransaction());
+
+        $connectionSet->commit();
+        $this->assertFalse($connection1->inTransaction());
+        $this->assertFalse($connection2->inTransaction());
+    }
+
+    public function testRollBackSpansEveryConnection(): void
+    {
+        $connectionSet = new ConnectionSet(
+            $connection1 = new Connection('sqlite::memory:'),
+            $connection2 = new Connection('sqlite::memory:', name: 'connection'),
+        );
+
+        $connectionSet->beginTransaction();
+        $connectionSet->rollBack();
+
+        $this->assertFalse($connection1->inTransaction());
+        $this->assertFalse($connection2->inTransaction());
+    }
+
     public function testGetLoggers(): void
     {
         $connectionSet = new ConnectionSet();
