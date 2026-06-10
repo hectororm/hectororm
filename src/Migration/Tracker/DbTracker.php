@@ -18,6 +18,7 @@ use ArrayIterator;
 use Hector\Connection\Connection;
 use Hector\Migration\Exception\MigrationException;
 use Hector\Query\QueryBuilder;
+use Hector\Query\Statement\Quoted;
 use LogicException;
 use Throwable;
 
@@ -132,7 +133,7 @@ class DbTracker implements MigrationTrackerInterface
      */
     private function newQueryBuilder(): QueryBuilder
     {
-        return (new QueryBuilder($this->connection))->from($this->tableName);
+        return (new QueryBuilder($this->connection))->from(new Quoted($this->tableName));
     }
 
     /**

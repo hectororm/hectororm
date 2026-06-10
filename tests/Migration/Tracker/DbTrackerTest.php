@@ -72,6 +72,24 @@ class DbTrackerTest extends TestCase
         $this->assertNotNull($row);
     }
 
+    public function testTableNameRequiringQuotingWorksOnEveryOperation(): void
+    {
+        // "order" is a reserved word: createTable() quotes it, but the other
+        // operations must quote it too, otherwise they emit invalid SQL.
+        $tracker = new DbTracker($this->connection, 'order');
+
+        $tracker->markApplied('m1');
+        $tracker->markApplied('m2');
+
+        $this->assertTrue($tracker->isApplied('m1'));
+        $this->assertCount(2, $tracker);
+
+        $tracker->markReverted('m1');
+
+        $this->assertFalse($tracker->isApplied('m1'));
+        $this->assertSame(['m2'], $tracker->getArrayCopy());
+    }
+
     public function testIteratorAggregate(): void
     {
         $tracker = new DbTracker($this->connection);
