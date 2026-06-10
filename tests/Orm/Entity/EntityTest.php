@@ -17,6 +17,7 @@ use Hector\Orm\Collection\Collection;
 use Hector\Orm\Entity\ReflectionEntity;
 use Hector\Orm\Exception\NotFoundException;
 use Hector\Orm\Exception\OrmException;
+use Hector\Orm\Orm;
 use Hector\Orm\Query\Builder;
 use Hector\Orm\Tests\AbstractTestCase;
 use Hector\Orm\Tests\Fake\Entity\Actor;
@@ -271,6 +272,27 @@ class EntityTest extends AbstractTestCase
         $this->assertNull($film->last_update);
 
         $film->save();
+
+        $this->assertNotNull($film->film_id);
+        $this->assertNotNull($film->last_update);
+    }
+
+    public function testPersistDeferredEntities(): void
+    {
+        $orm = Orm::get();
+
+        $film = new Film();
+        $film->language_id = 1;
+        $film->title = 'Hector Persist';
+        $film->description = 'Hector Persist Description';
+
+        // Queue the entity without immediate persistence (status TO_INSERT in storage).
+        $orm->save($film);
+
+        $this->assertNull($film->film_id);
+
+        // Flush all queued entities through the transactional persist() path.
+        $orm->persist();
 
         $this->assertNotNull($film->film_id);
         $this->assertNotNull($film->last_update);

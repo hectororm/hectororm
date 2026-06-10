@@ -13,6 +13,7 @@
 namespace Hector\Orm\Tests\Storage;
 
 use Hector\Orm\Collection\Collection;
+use Hector\Orm\Entity\Entity;
 use Hector\Orm\Exception\OrmException;
 use Hector\Orm\Tests\Fake\Entity\Film;
 use PHPUnit\Framework\TestCase;
@@ -36,6 +37,23 @@ class EntityStorageTest extends TestCase
 
         $this->assertIsIterable($storage->getIterator());
         $this->assertCount(2, $storage->getIterator());
+    }
+
+    public function testIterationYieldsEntitiesAsValues(): void
+    {
+        $storage = new FakeEntityStorage();
+        $storage->attach($entity1 = new Film(), FakeEntityStorage::STATUS_TO_INSERT);
+        $storage->attach($entity2 = new Film(), FakeEntityStorage::STATUS_TO_UPDATE);
+
+        // Orm::persist() does `foreach ($this->storage as $entity)` and expects $entity
+        // to be the Entity instance, not the status integer.
+        $values = [];
+        foreach ($storage as $value) {
+            $values[] = $value;
+        }
+
+        $this->assertContainsOnlyInstancesOf(Entity::class, $values);
+        $this->assertSame([$entity1, $entity2], $values);
     }
 
     public function testDetach(): void

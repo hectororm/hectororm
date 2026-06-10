@@ -16,11 +16,11 @@ namespace Hector\Orm\Storage;
 
 use ArrayAccess;
 use Countable;
+use Generator;
 use Hector\Orm\Collection\Collection;
 use Hector\Orm\Entity\Entity;
 use Hector\Orm\Exception\OrmException;
 use IteratorAggregate;
-use IteratorIterator;
 use Traversable;
 use UnexpectedValueException;
 use WeakMap;
@@ -132,10 +132,21 @@ class EntityStorage implements Countable, IteratorAggregate, ArrayAccess
 
     /**
      * @inheritDoc
+     *
+     * Yields each attached entity as the iteration value (its status as the key),
+     * so consumers such as {@see \Hector\Orm\Orm::persist()} that do
+     * `foreach ($storage as $entity)` receive the {@see Entity} instances.
+     *
+     * Wrapping the underlying {@see WeakMap} in an IteratorIterator would instead
+     * expose the statuses (the map values) as the iteration value, not the entities.
+     *
+     * @return Generator<int, Entity>
      */
     public function getIterator(): Traversable
     {
-        return new IteratorIterator($this->map);
+        foreach ($this->map as $entity => $status) {
+            yield $status => $entity;
+        }
     }
 
     /////////////////////////////
