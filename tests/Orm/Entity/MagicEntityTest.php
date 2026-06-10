@@ -15,7 +15,9 @@ namespace Hector\Orm\Tests\Entity;
 use Hector\Orm\Exception\OrmException;
 use Hector\Orm\Tests\AbstractTestCase;
 use Hector\Orm\Tests\Fake\Entity\FilmMagic;
+use Hector\Orm\Tests\Fake\Entity\FilmMagicHidden;
 use Hector\Orm\Tests\Fake\Entity\Language;
+use ReflectionProperty;
 
 class MagicEntityTest extends AbstractTestCase
 {
@@ -95,6 +97,40 @@ class MagicEntityTest extends AbstractTestCase
 
         $this->assertTrue(isset($entity->film_id));
         $this->assertFalse(isset($entity->foo));
+    }
+
+    public function testJsonSerializeDoesNotExposeHiddenColumn(): void
+    {
+        $entity = FilmMagicHidden::get(1);
+
+        $this->assertNotEmpty($entity->title);
+
+        $json = json_encode($entity);
+
+        $this->assertIsString($json);
+        $decoded = json_decode($json, true);
+        $this->assertArrayHasKey('title', $decoded);
+        $this->assertArrayNotHasKey('description', $decoded);
+    }
+
+    public function testDebugInfoDoesNotExposeHiddenColumn(): void
+    {
+        $entity = FilmMagicHidden::get(1);
+
+        $this->assertArrayHasKey('title', $entity->__debugInfo());
+        $this->assertArrayNotHasKey('description', $entity->__debugInfo());
+    }
+
+    public function testHiddenColumnRemainsWritable(): void
+    {
+        $entity = FilmMagicHidden::get(1);
+        $entity->description = 'Hector secret synopsis';
+
+        $reflectionProperty = new ReflectionProperty(FilmMagicHidden::class, '_hectorAttributes');
+        $reflectionProperty->setAccessible(true);
+        $attributes = $reflectionProperty->getValue($entity);
+
+        $this->assertSame('Hector secret synopsis', $attributes['description']);
     }
 
     public function testRelation(): void

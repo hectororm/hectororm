@@ -22,6 +22,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix inflated total in optimized pagination (`Builder::paginate(..., optimized: true, withTotal: true)`) when the query has a duplicating JOIN: the total now counts distinct primary keys (via the same `SELECT DISTINCT` subquery used to fetch items) instead of the JOIN-inflated row count
 - Fix `Undefined array key` warning in `AbstractMapper::getEntityAlteration()` when the entity's stored original data does not contain all checked columns (e.g. after a partial-column fetch): missing columns are now reported as altered instead of emitting a warning
 - Fix `Builder::findOrFail()` not throwing `NotFoundException` when called with several primary keys that all match nothing: `find()` returns an empty `Collection` in that case, and `empty()` is always false on an object, so the emptiness is now checked explicitly
+- Fix `MagicEntity` magic accessors blocking `#[Hidden]` columns: `__isset()` no longer hides them, so reading, writing and `isset()` work again (hidden becomes an output filter only, aligned with Eloquent/Doctrine)
+
+### Security
+
+- `MagicEntity::jsonSerialize()` and `MagicEntity::__debugInfo()` no longer expose columns declared with `#[Hidden]`, preventing leakage of secrets (passwords, tokens) through `json_encode()` or dumps
 
 ## [1.3.0] - 2026-05-12
 
