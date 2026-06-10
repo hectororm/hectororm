@@ -22,7 +22,9 @@ use Hector\Connection\Exception\ConnectionException;
 use Hector\Connection\Log\LogEntry;
 use Hector\Connection\Log\Logger;
 use PDO;
+use PDOException;
 use PDOStatement;
+use SensitiveParameter;
 
 class Connection
 {
@@ -45,12 +47,33 @@ class Connection
      */
     public function __construct(
         protected string $dsn,
+        #[SensitiveParameter]
         private ?string $username = null,
+        #[SensitiveParameter]
         private ?string $password = null,
         protected ?string $readDsn = null,
         protected string $name = self::DEFAULT_NAME,
         protected ?Logger $logger = null
     ) {
+    }
+
+    /**
+     * Mask credentials embedded in a DSN before exposing it (e.g. in logs).
+     *
+     * A PDO DSN may carry `user=`, `password=` or `pwd=` parameters; their
+     * values are replaced with `***` so they never reach a logger.
+     *
+     * @param string $dsn
+     *
+     * @return string
+     */
+    private function sanitizeDsn(string $dsn): string
+    {
+        return preg_replace(
+            '/\b(password|pwd|user)=[^;]*/i',
+            '$1=***',
+            $dsn
+        );
     }
 
     /**
@@ -142,11 +165,25 @@ class Connection
             return $this->pdo;
         }
 
-        $logEntry = $this->logger?->newEntry($this->name, 'CONNECTION ' . $this->dsn, type: LogEntry::TYPE_CONNECTION);
+        $logEntry = $this->logger?->newEntry(
+            $this->name,
+            'CONNECTION ' . $this->sanitizeDsn($this->dsn),
+            type: LogEntry::TYPE_CONNECTION
+        );
 
-        $this->pdo = new PDO($this->dsn, $this->username, $this->password);
-
-        $logEntry?->end();
+        try {
+            $this->pdo = new PDO($this->dsn, $this->username, $this->password);
+        } catch (PDOException $exception) {
+            // Do not chain the PDOException: on PHP < 8.2 its stack trace holds
+            // the password passed to the PDO constructor. Re-use its message
+            // only (e.g. "SQLSTATE[HY000] [1045] Access denied..."), which is
+            // safe and useful, then drop the dangerous trace.
+            throw new ConnectionException(
+                sprintf('Unable to connect to "%s": %s', $this->name, $exception->getMessage())
+            );
+        } finally {
+            $logEntry?->end();
+        }
 
         return $this->pdo;
     }
@@ -171,11 +208,17 @@ class Connection
             return $this->getPdo();
         }
 
-        $logEntry = $this->logger?->newEntry($this->name, 'CONNECTION ' . $this->readDsn);
+        $logEntry = $this->logger?->newEntry($this->name, 'CONNECTION ' . $this->sanitizeDsn($this->readDsn));
 
-        $this->readPdo = new PDO($this->readDsn, $this->username, $this->password);
-
-        $logEntry?->end();
+        try {
+            $this->readPdo = new PDO($this->readDsn, $this->username, $this->password);
+        } catch (PDOException $exception) {
+            throw new ConnectionException(
+                sprintf('Unable to connect to "%s": %s', $this->name, $exception->getMessage())
+            );
+        } finally {
+            $logEntry?->end();
+        }
 
         return $this->readPdo;
     }
