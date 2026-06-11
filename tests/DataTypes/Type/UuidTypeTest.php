@@ -91,6 +91,40 @@ class UuidTypeTest extends TestCase
         );
     }
 
+    public function testFromSchemaWithMalformedValueThrows(): void
+    {
+        $this->expectException(ValueException::class);
+
+        $type = new UuidType();
+        $type->fromSchema('garbage');
+    }
+
+    public function testToSchemaBinaryWithNonHexValueThrows(): void
+    {
+        $this->expectException(ValueException::class);
+
+        $type = new UuidType('binary');
+        // Used to emit a hex2bin() warning and return false (silent corruption).
+        $type->toSchema('not-a-uuid');
+    }
+
+    public function testToSchemaStringWithTooShortValueThrows(): void
+    {
+        $this->expectException(ValueException::class);
+
+        $type = new UuidType('string');
+        // Used to raise a raw "must contain 8 items" ValueError from vsprintf().
+        $type->toSchema('short');
+    }
+
+    public function testToSchemaHexadecimalWithOddLengthThrows(): void
+    {
+        $this->expectException(ValueException::class);
+
+        $type = new UuidType('hexadecimal');
+        $type->toSchema('abc');
+    }
+
     public function testFromSchemaNullWithoutExpected(): void
     {
         $type = new UuidType();

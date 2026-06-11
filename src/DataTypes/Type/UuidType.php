@@ -45,20 +45,9 @@ class UuidType extends AbstractType
             return null;
         }
 
-        $value = (string)$value;
+        $hex = $this->normalizeToHex((string)$value);
 
-        if (strlen($value) === 16) {
-            $value = bin2hex($value);
-        }
-
-        if (strlen($value) === 32) {
-            $value = vsprintf(
-                '%s%s-%s-%s-%s-%s%s%s',
-                str_split($value, 4)
-            );
-        }
-
-        return $value;
+        return $this->formatHex($hex);
     }
 
     /**
@@ -78,26 +67,53 @@ class UuidType extends AbstractType
             $value = (string)$value;
         }
 
-        if (strlen($value) == 16) {
-            $value = bin2hex($value);
-        }
-
-        // Remove dash
-        $value = str_replace('-', '', $value);
+        $hex = $this->normalizeToHex((string)$value);
 
         // To hexadecimal
-        if ($this->storage == 'hexadecimal') {
-            return $value;
+        if ('hexadecimal' === $this->storage) {
+            return $hex;
         }
 
         // To binary
-        if ($this->storage == 'binary') {
-            return hex2bin($value);
+        if ('binary' === $this->storage) {
+            return hex2bin($hex);
         }
 
-        return vsprintf(
-            '%s%s-%s-%s-%s-%s%s%s',
-            str_split($value, 4)
-        );
+        return $this->formatHex($hex);
+    }
+
+    /**
+     * Normalize any accepted UUID representation to a canonical 32-character
+     * lowercase hexadecimal string.
+     *
+     * Accepts a 16-byte binary string, a 32-character hexadecimal string and a
+     * 36-character dashed UUID. Any other value is rejected so that malformed
+     * data never reaches `hex2bin()`/`vsprintf()` (which would otherwise corrupt
+     * the value or raise a raw warning/error).
+     *
+     * @throws ValueException
+     */
+    private function normalizeToHex(string $value): string
+    {
+        if (16 === strlen($value)) {
+            $value = bin2hex($value);
+        }
+
+        // Remove dashes from a formatted UUID.
+        $value = str_replace('-', '', $value);
+
+        if (1 !== preg_match('/^[0-9a-f]{32}$/i', $value)) {
+            throw ValueException::castError($this);
+        }
+
+        return strtolower($value);
+    }
+
+    /**
+     * Format a 32-character hexadecimal string as a dashed UUID.
+     */
+    private function formatHex(string $hex): string
+    {
+        return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split($hex, 4));
     }
 }
