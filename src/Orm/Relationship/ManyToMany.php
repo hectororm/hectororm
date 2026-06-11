@@ -353,14 +353,18 @@ class ManyToMany extends Relationship
         // Check if it has new relation
         /** @var Entity $foreignEntity */
         foreach ($foreign as $foreignEntity) {
-            // Pivot
+            // Pivot keys (foreign keys) and additional data are stored separately:
+            // getPivotData() resolves the FK columns, getPivot()->getData() the extras.
+            // Pivot keys (foreign keys) and additional data are stored separately:
+            // getPivotData() resolves the FK columns, getPivot()->getData() the extras.
+            $pivotKeys = $this->getPivotData($entity, $foreignEntity);
+            $pivotExtra = $foreignEntity->getPivot()?->getData() ?? [];
+
             $queryBuilder = $this->newQueryBuilder();
-            $queryBuilder->whereEquals($pivotData = $this->getPivotData($entity, $foreignEntity));
+            $queryBuilder->whereEquals($pivotKeys);
 
             if (!$queryBuilder->exists()) {
-                $pivotData = $foreignEntity->getPivot()?->getData() ?? $pivotData;
-
-                if (empty($pivotData) || $queryBuilder->insert($pivotData) !== 1) {
+                if ($queryBuilder->insert(array_merge($pivotKeys, $pivotExtra)) !== 1) {
                     throw new RelationException(
                         sprintf(
                             'Error during creation of link between entities "%s" and "%s"',
@@ -372,7 +376,12 @@ class ManyToMany extends Relationship
                 continue;
             }
 
-            $queryBuilder->update($pivotData);
+            // The keys already match the WHERE clause; only the additional data may change.
+            if ([] === $pivotExtra) {
+                continue;
+            }
+
+            $queryBuilder->update($pivotExtra);
         }
 
         // Detached

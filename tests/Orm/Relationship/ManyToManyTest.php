@@ -198,4 +198,45 @@ class ManyToManyTest extends AbstractTestCase
         $relationship->linkNative($film, $film->getActors());
         $this->assertCount($initialCount, $film->getActors());
     }
+
+    public function testLinkNativeReattachLoadedEntityKeepsPivotKeys(): void
+    {
+        // An actor loaded through a M2M relation carries a PivotData whose extra data
+        // is empty. Re-attaching it to another film must not raise and must insert the
+        // pivot row with the correct foreign keys.
+        $relationship = new ManyToMany('actors', Film::class, Actor::class);
+
+        $connection = $this->getOrm()->getConnection();
+
+        $film1 = Film::get(1);
+        $film2 = Film::get(2);
+
+        // Pick an actor loaded through film1's M2M relation (so it carries a PivotData
+        // whose extra data is empty) that is genuinely NOT yet linked to film2 in the
+        // database, to exercise the INSERT branch.
+        /** @var Actor|null $loadedActor */
+        $loadedActor = $film1->getActors()->first(
+            function (Actor $actor) use ($connection, $film2): bool {
+                $count = $connection->fetchColumn(
+                    'SELECT COUNT(*) FROM film_actor WHERE film_id = ? AND actor_id = ?',
+                    [$film2->film_id, $actor->actor_id]
+                );
+
+                return 0 === (int)($count[0] ?? 0);
+            }
+        );
+        $this->assertNotNull($loadedActor);
+        $this->assertNotNull($loadedActor->getPivot());
+        $this->assertSame([], $loadedActor->getPivot()->getData());
+
+        // Must not throw RelationException nor insert a FK-less pivot row.
+        $relationship->linkNative($film2, new Collection([$loadedActor]));
+
+        $count = $connection->fetchColumn(
+            'SELECT COUNT(*) FROM film_actor WHERE film_id = ? AND actor_id = ?',
+            [$film2->film_id, $loadedActor->actor_id]
+        );
+
+        $this->assertSame(1, (int)($count[0] ?? 0));
+    }
 }
