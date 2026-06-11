@@ -89,7 +89,10 @@ class JsonType extends AbstractType
         }
 
         if (null === $schemaData) {
-            return empty($entityData);
+            // A NULL column equals null (already handled by parent) or an empty JSON
+            // payload (empty string). Real JSON values such as 0, false, '0' or []
+            // are genuine changes and must not be treated as unchanged.
+            return '' === $entityData;
         }
 
         // Normalize both sides to a decoded, key-sorted structure so the comparison

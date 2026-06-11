@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `JsonType::equals()` now compares both sides canonically (recursive key sorting) so object/associative-array values with a different key order are considered equal, avoiding spurious `UPDATE` queries; it also no longer triggers a `TypeError` when the schema side is already a decoded array
 - `UuidType::fromSchema()` no longer triggers a `strlen(null)` deprecation and casts the value to string before length checks
 - `SetType::equals()` now treats an empty string and an empty array as the same empty set (empty members are stripped), avoiding a spurious "not equal" result that triggered unnecessary `UPDATE` queries
+- `JsonType::equals()` no longer uses `empty()` against a NULL column, which wrongly treated meaningful falsy JSON values (`0`, `0.0`, `false`, `[]`, `'0'`) as unchanged so they were never persisted; only an empty JSON payload (empty string) is now considered equal to a NULL column
 
 ## [1.3.0] - 2026-05-12
 
