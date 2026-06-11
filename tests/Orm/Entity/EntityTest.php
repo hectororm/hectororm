@@ -424,6 +424,24 @@ class EntityTest extends AbstractTestCase
     /**
      * @dataProvider classProvider
      */
+    public function testIsEqualToWithFalsyPrimaryKey($class): void
+    {
+        // A primary key value of 0 (or '0') must not be dropped by the equality check.
+        $zeroA = new $class();
+        $zeroA->film_id = 0;
+        $zeroB = new $class();
+        $zeroB->film_id = 0;
+        $other = new $class();
+        $other->film_id = 5;
+
+        $this->assertTrue($zeroA->isEqualTo($zeroB));
+        $this->assertFalse($zeroA->isEqualTo($other));
+        $this->assertFalse($other->isEqualTo($zeroA));
+    }
+
+    /**
+     * @dataProvider classProvider
+     */
     public function testIsAltered($class): void
     {
         /** @var Film $film */
