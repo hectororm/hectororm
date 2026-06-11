@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - `StringType::fromSchema()` now resolves backed-enum typed columns: the `is_a()` class-string check was missing its third `$allow_string` argument, so the `BackedEnum` branch was never reached and valid enum values were rejected with a "not builtin" error
+- `StringType::toSchema()` now serializes a `BackedEnum` to its backing value, making the round-trip symmetric with `fromSchema()`; previously an entity with a backed-enum property could be hydrated but not persisted (the enum was neither scalar nor `Stringable`, so it raised a "cast" error)
 - `JsonType::fromSchema()` null handling is now reachable (the `assertScalar()` call previously rejected `null` before the null branch could run)
 - `JsonType::equals()` now compares both sides canonically (recursive key sorting) so object/associative-array values with a different key order are considered equal, avoiding spurious `UPDATE` queries; it also no longer triggers a `TypeError` when the schema side is already a decoded array
 - `UuidType::fromSchema()` no longer triggers a `strlen(null)` deprecation and casts the value to string before length checks

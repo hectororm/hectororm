@@ -97,6 +97,32 @@ class StringTypeTest extends TestCase
         $this->assertSame('', $type->toSchema(false));
     }
 
+    public function testToSchemaWithBackedEnum(): void
+    {
+        if (!interface_exists(BackedEnum::class)) {
+            $this->markTestSkipped('Enum are not available on this PHP version.');
+        }
+
+        $type = new StringType();
+
+        // Symmetric to fromSchema(): a backed enum is persisted as its backing value.
+        $this->assertSame('foo', $type->toSchema(FakeEnumString::FOO));
+        $this->assertSame('bar', $type->toSchema(FakeEnumString::BAR));
+        $this->assertSame('0', $type->toSchema(FakeEnumInt::FOO));
+        $this->assertSame('1', $type->toSchema(FakeEnumInt::BAR));
+    }
+
+    public function testToSchemaWithBackedEnumAndMaxLength(): void
+    {
+        if (!interface_exists(BackedEnum::class)) {
+            $this->markTestSkipped('Enum are not available on this PHP version.');
+        }
+
+        $type = new StringType(maxlength: 2);
+
+        $this->assertSame('fo', $type->toSchema(FakeEnumString::FOO));
+    }
+
     public function testToSchemaWithNotScalar(): void
     {
         $this->expectException(ValueError::class);
