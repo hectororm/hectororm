@@ -196,6 +196,24 @@ class AbstractRegularRelationshipTest extends AbstractTestCase
         $this->assertNull($relationship->getBuilder()->where->getStatement($binds));
     }
 
+    public function testGetBuilderWithNullKeySetDoesNotEmitEmptyIn(): void
+    {
+        // Film::get(1) has original_language_id = NULL, so the source key-set is empty.
+        // getBuilder() must not emit an invalid "IN ( )" clause.
+        $relationship = new ManyToOne(
+            'original_language',
+            Film::class,
+            Language::class,
+            ['original_language_id' => 'language_id']
+        );
+        $binds = new BindParamList();
+
+        $builder = $relationship->getBuilder(Film::get(1));
+
+        $this->assertInstanceOf(Builder::class, $builder);
+        $this->assertNull($builder->where->getStatement($binds));
+    }
+
     public function testGetBuilderWithClauses(): void
     {
         $relationship = new ManyToOne(

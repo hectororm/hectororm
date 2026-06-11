@@ -258,9 +258,17 @@ class ManyToMany extends Relationship
             return $this->newBuilder();
         }
 
+        $entityValues = $this->getEntityValues($this->sourceEntity, $this->getSourceColumns(), ...$entities);
+
+        // No source key value to filter on: returning an unfiltered builder avoids
+        // generating an invalid "IN ( )" clause.
+        if (empty($entityValues)) {
+            return $this->newBuilder();
+        }
+
         return $this->newBuilder()->whereIn(
             new Row(...$this->getPivotTargetColumns()),
-            $this->getEntityValues($this->sourceEntity, $this->getSourceColumns(), ...$entities)
+            $entityValues
         );
     }
 
