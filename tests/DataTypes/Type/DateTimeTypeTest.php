@@ -74,6 +74,18 @@ class DateTimeTypeTest extends TestCase
         );
     }
 
+    public function testFromSchemaWithDeclaredTypeBuiltinIntAndInvalidDate(): void
+    {
+        $this->expectException(ValueException::class);
+
+        $expectedType = new ExpectedType('int', false, true);
+        $type = new DateTimeType();
+
+        // strtotime() returns false here; the cast to int must not silently
+        // produce 0 (1970-01-01).
+        $type->fromSchema('not a date', $expectedType);
+    }
+
     public function testFromSchemaWithDeclaredTypeBuiltinDateTime(): void
     {
         $expectedType = new ExpectedType('\DateTimeImmutable', false, false);
