@@ -52,6 +52,29 @@ class BooleanTypeTest extends TestCase
         $this->assertSame('1', $type->fromSchema('1', $expectedType));
     }
 
+    public function testFromSchemaTextualFalseWithBoolExpected(): void
+    {
+        $expectedType = new ExpectedType('bool', false, true);
+
+        $type = new BooleanType();
+
+        // The textual MySQL string "false" must not be cast to true by settype().
+        $this->assertSame(false, $type->fromSchema('false', $expectedType));
+        $this->assertSame(false, $type->fromSchema('FALSE', $expectedType));
+        $this->assertSame(true, $type->fromSchema('true', $expectedType));
+        $this->assertSame(true, $type->fromSchema('TRUE', $expectedType));
+    }
+
+    public function testFromSchemaTextualFalseWithIntExpected(): void
+    {
+        $expectedType = new ExpectedType('int', false, true);
+
+        $type = new BooleanType();
+
+        $this->assertSame(0, $type->fromSchema('false', $expectedType));
+        $this->assertSame(1, $type->fromSchema('true', $expectedType));
+    }
+
     public function testFromSchemaWithDeclaredTypeBuiltinAndBadValue(): void
     {
         $this->expectException(ValueError::class);
