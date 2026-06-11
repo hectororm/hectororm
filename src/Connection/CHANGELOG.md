@@ -21,6 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Fix `Connection::yieldColumn()` truncating the result set when a column value is boolean `false`: it now traverses the statement in `PDO::FETCH_COLUMN` mode instead of looping on `false !== fetchColumn()`, which conflated a `false` value with end-of-cursor (observable with PostgreSQL boolean columns)
+### Added
+
+- Added `DriverCapabilities::hasTransactionalDdl()` to detect whether DDL statements participate in the surrounding transaction (true on SQLite/PostgreSQL, false on MySQL/MariaDB). **Note:** this adds a method to the `DriverCapabilities` interface, so any third-party implementation must implement it
 
 ## [1.3.0] - 2026-05-12
 

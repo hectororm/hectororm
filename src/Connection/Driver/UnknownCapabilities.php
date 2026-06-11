@@ -63,4 +63,12 @@ class UnknownCapabilities implements DriverCapabilities
     {
         return false;
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function hasTransactionalDdl(): bool
+    {
+        return false;
+    }
 }

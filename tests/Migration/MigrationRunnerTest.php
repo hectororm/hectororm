@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace Hector\Migration\Tests;
 
+use ArrayIterator;
 use Hector\Connection\Connection;
 use Hector\Migration\Direction;
 use Hector\Migration\Event\MigrationAfterEvent;
@@ -30,12 +31,14 @@ use Hector\Migration\Tests\Fake\FailingMigration;
 use Hector\Migration\Tests\Fake\IrreversibleMigration;
 use Hector\Migration\Tests\Fake\ThrowingMigration;
 use Hector\Migration\Tracker\FileTracker;
+use Hector\Migration\Tracker\MigrationTrackerInterface;
 use Hector\Schema\Plan\Compiler\SqliteCompiler;
 use PHPUnit\Framework\TestCase;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Throwable;
+use Traversable;
 
 class MigrationRunnerTest extends TestCase
 {
@@ -309,6 +312,71 @@ class MigrationRunnerTest extends TestCase
         // Verify the migration was NOT tracked as applied
         $this->assertEmpty($runner->getApplied());
         $this->assertCount(1, $runner->getPending());
+    }
+
+    public function testTrackingFailureRollsBackMigrationOnTransactionalDdl(): void
+    {
+        // On transactional-DDL drivers (SQLite here) the tracking write happens
+        // inside the migration transaction. If it fails, the whole migration
+        // (including the CREATE TABLE) must be rolled back, so the database is
+        // never left in the "applied but untracked" state that would make the
+        // next run re-execute the migration and fail.
+        $tracker = new class implements MigrationTrackerInterface {
+            /** @var list<string> */
+            public array $applied = [];
+
+            public function getArrayCopy(): array
+            {
+                return $this->applied;
+            }
+
+            public function getIterator(): Traversable
+            {
+                return new ArrayIterator($this->applied);
+            }
+
+            public function count(): int
+            {
+                return count($this->applied);
+            }
+
+            public function isApplied(string $migrationId): bool
+            {
+                return in_array($migrationId, $this->applied, true);
+            }
+
+            public function markApplied(string $migrationId, ?float $durationMs = null): void
+            {
+                throw new RuntimeException('tracking write lost');
+            }
+
+            public function markReverted(string $migrationId): void
+            {
+                $this->applied = array_values(array_filter($this->applied, fn($id): bool => $id !== $migrationId));
+            }
+        };
+
+        $runner = new MigrationRunner(
+            new ArrayProvider(['create_users' => new CreateUsersTableMigration()]),
+            $tracker,
+            new SqliteCompiler(),
+            $this->connection,
+        );
+
+        try {
+            $runner->up();
+            $this->fail('Expected MigrationException was not thrown');
+        } catch (MigrationException $e) {
+            $this->assertStringContainsString('tracking write lost', $e->getMessage());
+        }
+
+        // The migration must have been rolled back: the table must not exist
+        // and nothing must be tracked.
+        $row = $this->connection->fetchOne(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='users'"
+        );
+        $this->assertNull($row);
+        $this->assertEmpty($tracker->getArrayCopy());
     }
 
     // --- Logger tests ---

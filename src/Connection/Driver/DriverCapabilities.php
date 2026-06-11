@@ -61,4 +61,16 @@ interface DriverCapabilities
      * @return bool
      */
     public function hasRenameColumn(): bool;
+
+    /**
+     * Support of transactional DDL?
+     *
+     * When true, DDL statements (CREATE/ALTER/DROP TABLE) participate in the
+     * surrounding transaction and are rolled back with it. When false, the
+     * database issues an implicit COMMIT on DDL (e.g. MySQL/MariaDB), so a
+     * failed migration cannot be fully rolled back.
+     *
+     * @return bool
+     */
+    public function hasTransactionalDdl(): bool;
 }
