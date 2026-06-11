@@ -657,6 +657,12 @@ class CollectionInterfaceTest extends TestCase
             3,
             (new $class([1, 1, 2, 3, 3, 5, 10, 10, 10]))->median()
         );
+
+        // Unsorted input: median must be position-based on the sorted values,
+        // not key-based (asort preserves keys).
+        $this->assertEquals(2, (new $class([3, 1, 2]))->median());
+        $this->assertEquals(2.5, (new $class([4, 1, 3, 2]))->median());
+        $this->assertEquals(3, (new $class([5, 3, 1, 2, 4]))->median());
     }
 
     /**

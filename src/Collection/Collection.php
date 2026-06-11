@@ -459,7 +459,9 @@ class Collection implements CollectionInterface, ArrayAccess
             return 0;
         }
 
-        $items = $this->values()->sort()->all();
+        // Re-index after sorting: sort() uses asort() and keeps the original
+        // keys, so the median must be read positionally on a fresh 0..n index.
+        $items = $this->sort()->values()->all();
         $middleIndex = $count / 2;
 
         if (is_float($middleIndex)) {
