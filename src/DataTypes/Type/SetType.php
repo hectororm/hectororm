@@ -34,9 +34,14 @@ class SetType extends AbstractType
             throw ValueException::castError($this);
         }
 
-        // Explode string
-        $value = explode(',', $value);
-        $value = array_map('trim', $value);
+        // Explode the comma-separated members. An empty SET yields an empty list
+        // (explode('', ...) would otherwise produce a single empty member).
+        $value = array_values(
+            array_filter(
+                array_map('trim', explode(',', $value)),
+                static fn(string $member): bool => '' !== $member,
+            )
+        );
 
         if (null !== $expected) {
             if ($expected->isBuiltin()) {
@@ -66,6 +71,13 @@ class SetType extends AbstractType
     {
         if (null === $value) {
             return null;
+        }
+
+        // A SET property may be typed as either an array of members or the raw
+        // comma-separated string; accept both so the round-trip is symmetric with
+        // fromSchema().
+        if (is_string($value)) {
+            return $value;
         }
 
         if (!is_array($value)) {

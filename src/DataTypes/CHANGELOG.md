@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `NumericType` now rejects non-numeric strings with a `ValueException` instead of silently coercing them to `0`/`0.0` through `settype()` (e.g. `fromSchema('abc')` previously returned `0`). Booleans and already-numeric values are unaffected, and the legitimate `float`-to-`int` truncation driven by the configured numeric type is preserved
 - `BooleanType` now resolves the textual values `"true"`/`"false"` before casting, so a column holding the string `"false"` is no longer interpreted as `true` when the entity property is typed `bool`/`int` (the textual normalization previously applied only when no expected type was set, and `settype((bool) "false")` yields `true`)
 - `EnumType` now hydrates int-backed enums from the numeric strings returned by PDO (the value is coerced to the enum backing type), so an int-backed enum is no longer impossible to read from MySQL (raw `TypeError`); it also wraps the native `TypeError`/`ValueError` raised by `from()`/`toSchema()` in a `ValueException`. In "try" mode a type mismatch now yields `null` instead of a `TypeError`
+- `SetType::fromSchema()` now hydrates an empty SET as an empty array instead of `['']` (a single empty member), and `SetType::toSchema()` now accepts the raw comma-separated string in addition to an array, so a SET property typed as `string` is persistable (round-trip symmetric with `fromSchema()`)
 
 ## [1.3.0] - 2026-05-12
 
