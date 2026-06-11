@@ -54,6 +54,30 @@ class NumericTypeTest extends TestCase
         $type->fromSchema(['foo']);
     }
 
+    public function testFromSchemaRejectsNonNumericStringInteger(): void
+    {
+        $this->expectException(ValueException::class);
+
+        $type = new NumericType('int');
+        $type->fromSchema('abc');
+    }
+
+    public function testFromSchemaRejectsNonNumericStringFloat(): void
+    {
+        $this->expectException(ValueException::class);
+
+        $type = new NumericType('float');
+        $type->fromSchema('not a number');
+    }
+
+    public function testToSchemaRejectsNonNumericString(): void
+    {
+        $this->expectException(ValueException::class);
+
+        $type = new NumericType('int');
+        $type->toSchema('abc');
+    }
+
     public function testFromSchemaWithDeclaredTypeBuiltin(): void
     {
         $expectedType = new ExpectedType('float', false, true);
