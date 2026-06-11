@@ -100,6 +100,39 @@ class JsonTypeTest extends TestCase
         );
     }
 
+    public function testFromSchemaWithDeclaredTypeStdClassAndInvalidJson(): void
+    {
+        $this->expectException(ValueException::class);
+
+        $expectedType = new ExpectedType(stdClass::class, false, false);
+        $type = new JsonType();
+
+        // Invalid JSON must raise a ValueException, not return null silently.
+        $type->fromSchema('{invalid', $expectedType);
+    }
+
+    public function testFromSchemaWithDeclaredTypeStdClassAndArrayJson(): void
+    {
+        $expectedType = new ExpectedType(stdClass::class, false, false);
+        $type = new JsonType();
+
+        // A JSON array must still yield a stdClass (cast), never a PHP array,
+        // when the declared type is stdClass.
+        $result = $type->fromSchema('[1, 2, 3]', $expectedType);
+
+        $this->assertInstanceOf(stdClass::class, $result);
+        $this->assertSame([1, 2, 3], array_values((array)$result));
+    }
+
+    public function testFromSchemaWithDeclaredTypeStdClassAndScalarJson(): void
+    {
+        $expectedType = new ExpectedType(stdClass::class, false, false);
+        $type = new JsonType();
+
+        // A scalar JSON value is cast to a stdClass too (never returned raw).
+        $this->assertInstanceOf(stdClass::class, $type->fromSchema('5', $expectedType));
+    }
+
     public function testFromSchemaWithDeclaredTypeNotBuiltin(): void
     {
         $this->expectException(ValueError::class);
