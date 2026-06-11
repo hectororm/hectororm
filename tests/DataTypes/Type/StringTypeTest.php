@@ -155,4 +155,35 @@ class StringTypeTest extends TestCase
 
         $this->assertNull($type->toSchema(null));
     }
+
+    /**
+     * Exercises AbstractType::equals() (inherited, no override in StringType):
+     * real changes hidden by the previous loose `==` must now be detected.
+     */
+    public function testEqualsDetectsRealChanges(): void
+    {
+        $type = new StringType();
+
+        $this->assertFalse($type->equals('1e3', '1000'));
+        $this->assertFalse($type->equals('1.0', '1'));
+        $this->assertFalse($type->equals('10', '1e1'));
+        $this->assertFalse($type->equals('0', false));
+        $this->assertFalse($type->equals(null, ''));
+        $this->assertFalse($type->equals(null, 0));
+    }
+
+    /**
+     * The legitimate int/float vs numeric-string juggling between the entity and
+     * the database value must still compare as equal (no spurious UPDATE).
+     */
+    public function testEqualsKeepsTypeJugglingEqual(): void
+    {
+        $type = new StringType();
+
+        $this->assertTrue($type->equals(1, '1'));
+        $this->assertTrue($type->equals(1.5, '1.5'));
+        $this->assertTrue($type->equals('1', '1'));
+        $this->assertTrue($type->equals(1, 1));
+        $this->assertTrue($type->equals(null, null));
+    }
 }
