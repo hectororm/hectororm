@@ -139,10 +139,8 @@ class Index
 
         usort(
             $columns,
-            fn(Column $column1, Column $column2): int => strcmp(
-                $columnsPosition[$column1->getName()],
-                $columnsPosition[$column2->getName()]
-            )
+            fn(Column $column1, Column $column2): int =>
+                $columnsPosition[$column1->getName()] <=> $columnsPosition[$column2->getName()]
         );
 
         return $columns;
