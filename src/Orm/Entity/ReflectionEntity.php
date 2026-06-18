@@ -168,6 +168,13 @@ class ReflectionEntity
 
             foreach ($attributes as $attribute) {
                 $typeAttribute = $attribute->newInstance();
+
+                // The hierarchy is walked child first: a #[Type] defined in a subclass
+                // takes precedence over the same column declared in a parent.
+                if (array_key_exists($typeAttribute->column, $types)) {
+                    continue;
+                }
+
                 $types[$typeAttribute->column] = new $typeAttribute->type(...$typeAttribute->arguments);
             }
         } while ($reflectionClass = $reflectionClass->getParentClass());
