@@ -134,9 +134,12 @@ interface CollectionInterface extends IteratorAggregate, JsonSerializable, Count
     public function each(callable $callback): static;
 
     /**
-     * Search key of item with callback or value.
+     * Search key of item with a predicate or a value.
      *
-     * @param callable|mixed $needle
+     * A Closure is used as a predicate; any other value (including a string or array
+     * that happens to be callable, such as 'trim') is searched as a value.
+     *
+     * @param Closure|mixed $needle
      * @param bool $strict
      *
      * @return int|string|false

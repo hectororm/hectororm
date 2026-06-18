@@ -304,7 +304,9 @@ class LazyCollection implements CollectionInterface
      */
     public function search(mixed $needle, bool $strict = false): int|string|false
     {
-        if (false === is_callable($needle)) {
+        // Only a Closure is treated as a predicate. A string/array that happens to be
+        // callable (e.g. 'trim', 'date') must be searched as a value, not invoked.
+        if (false === $needle instanceof Closure) {
             $needle = match ($strict) {
                 true => fn(mixed $value): bool => $value === $needle,
                 false => fn(mixed $value): bool => $value == $needle
