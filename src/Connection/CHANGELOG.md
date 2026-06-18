@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Mask `user`/`password`/`pwd` parameters embedded in the DSN before logging connection entries
 - Convert PDO connection failures into a `ConnectionException` without secrets, and mark the `username`/`password` constructor arguments with `#[\SensitiveParameter]` to keep them out of stack traces on PHP < 8.2
+### Fixed
+
+- Fix the transaction counter desyncing when `beginTransaction()` fails: the counter is now incremented only after `PDO::beginTransaction()` succeeds (previously a failure left the counter incremented with no real transaction, permanently routing reads to the write PDO and making the next `commit()` call `PDO::commit()` without an active transaction). Nesting semantics are preserved (only the outermost call touches the real PDO)
 
 ## [1.3.0] - 2026-05-12
 
