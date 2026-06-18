@@ -95,6 +95,7 @@ class OneToMany extends RegularRelationship
         foreach ($foreign->detached() as $detachedEntity) {
             $detachedEntity->delete();
         }
+        $foreign->clearDetached();
     }
 
     /**
