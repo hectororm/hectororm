@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- `LogEntry::__construct()` now requires a non-null `string $statement` (was `?string`): a log entry always represents a statement, and `getStatement(): string` previously threw a `TypeError` when the entry was built with `null`. The constructor now rejects `null` outright. No production caller is affected (`Logger::newEntry()` already typed `$statement` as non-null)
+
 ## [1.3.0] - 2026-05-12
 
 ### Added
