@@ -13,6 +13,7 @@
 namespace Hector\Query\Tests\Clause;
 
 use Hector\Connection\Bind\BindParamList;
+use Hector\Connection\Driver\DriverInfo;
 use Hector\Query\Clause\Order;
 use PHPUnit\Framework\TestCase;
 
@@ -68,5 +69,32 @@ class OrderTest extends TestCase
             $clause->order->getStatement($binds)
         );
         $this->assertEmpty($binds);
+    }
+
+    /**
+     * @dataProvider randomDriverProvider
+     */
+    public function testRandomIsDriverAware(?DriverInfo $driverInfo, string $expected): void
+    {
+        $clause = new class {
+            use Order;
+        };
+        $binds = new BindParamList();
+        $clause->resetOrder();
+        $clause->random();
+
+        $this->assertEquals($expected, $clause->order->getStatement($binds, $driverInfo));
+        $this->assertEmpty($binds);
+    }
+
+    public function randomDriverProvider(): array
+    {
+        return [
+            'mysql' => [new DriverInfo('mysql', '8.0.0'), 'ORDER BY RAND()'],
+            'mariadb' => [new DriverInfo('mariadb', '10.6.0'), 'ORDER BY RAND()'],
+            'sqlite' => [new DriverInfo('sqlite', '3.45.0'), 'ORDER BY RANDOM()'],
+            'pgsql' => [new DriverInfo('pgsql', '16.0'), 'ORDER BY RANDOM()'],
+            'no driver' => [null, 'ORDER BY RAND()'],
+        ];
     }
 }
