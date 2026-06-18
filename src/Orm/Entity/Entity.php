@@ -174,8 +174,10 @@ abstract class Entity
 
             $related = $this->getRelated()->get($relationName);
 
+            // A scalar relation (ManyToOne/HasOne) may resolve to null when there is
+            // no matching row; skip the nested load instead of fataling on null.
             if (is_array($value)) {
-                $related->load($value);
+                $related?->load($value);
             }
         }
     }
