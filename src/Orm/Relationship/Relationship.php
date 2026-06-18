@@ -337,6 +337,47 @@ abstract class Relationship
     }
 
     /**
+     * Compare two key tuples for an eager-loading association.
+     *
+     * Uses a normalized, strict per-key comparison instead of a loose `==` on the
+     * arrays: this keeps the cross-type tolerance between an int and its string
+     * representation (e.g. 5 and "5") while avoiding PHP's numeric coercion of
+     * numeric-looking strings (e.g. "01" == "1", "1e2" == "100") and the null/0
+     * conflation. A null key never matches a non-null one.
+     *
+     * @param array $left
+     * @param array $right
+     *
+     * @return bool
+     */
+    protected static function keysMatch(array $left, array $right): bool
+    {
+        if (count($left) !== count($right)) {
+            return false;
+        }
+
+        $left = array_values($left);
+        $right = array_values($right);
+
+        foreach ($left as $index => $value) {
+            $other = $right[$index];
+
+            if (null === $value || null === $other) {
+                if ($value !== $other) {
+                    return false;
+                }
+                continue;
+            }
+
+            if ((string)$value !== (string)$other) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * New builder.
      *
      * @return Builder
