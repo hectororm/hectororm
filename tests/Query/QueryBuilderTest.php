@@ -645,4 +645,24 @@ class QueryBuilderTest extends TestCase
         }
         $this->assertGreaterThan(0, $rowsCount);
     }
+
+    public function testWhereInEmptyExecutesWithoutError(): void
+    {
+        $queryBuilder = new QueryBuilder($this->getConnection());
+        $total = count(iterator_to_array($queryBuilder->from('`table`')->columns('*')->fetchAll()));
+
+        // IN [] is always false: no rows, and valid SQL (no "IN (  )" PDOException).
+        $inEmpty = new QueryBuilder($this->getConnection());
+        $inResult = iterator_to_array(
+            $inEmpty->from('`table`')->columns('*')->whereIn('table_id', [])->fetchAll()
+        );
+        $this->assertCount(0, $inResult);
+
+        // NOT IN [] is always true: all rows.
+        $notInEmpty = new QueryBuilder($this->getConnection());
+        $notInResult = iterator_to_array(
+            $notInEmpty->from('`table`')->columns('*')->whereNotIn('table_id', [])->fetchAll()
+        );
+        $this->assertCount($total, $notInResult);
+    }
 }
