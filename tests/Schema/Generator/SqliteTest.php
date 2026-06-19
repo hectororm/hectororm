@@ -437,6 +437,20 @@ class SqliteTest extends TestCase
         ];
     }
 
+    /**
+     * Every column of a composite primary key must be reported as not nullable. PRAGMA
+     * table_info exposes `pk` as the 1-based position in the primary key, so the 2nd, 3rd…
+     * columns (pk > 1) used to be marked nullable.
+     */
+    public function testGetColumnsInfoCompositePrimaryKeyNotNullable(): void
+    {
+        $columns = $this->getGenerator()->getColumnsInfo('main', 'film_actor');
+        $nullableByName = array_column($columns, 'nullable', 'name');
+
+        $this->assertFalse($nullableByName['actor_id']);
+        $this->assertFalse($nullableByName['film_id']);
+    }
+
     public function testGetIndexesInfo(): void
     {
         $this->assertEquals(
