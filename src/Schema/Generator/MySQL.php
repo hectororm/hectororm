@@ -204,15 +204,19 @@ class MySQL extends AbstractGenerator
      */
     protected function getForeignKeysInfo(string $schema, string $table): array
     {
+        // Constraint names are unique only per schema, so the join must also match the
+        // constraint schema; otherwise two databases with same-named foreign keys produce a
+        // cartesian product (duplicated columns and UPDATE/DELETE rules from the wrong base).
         $stm =
             'SELECT k.*, ' .
             '       c.`UPDATE_RULE`, ' .
             '       c.`DELETE_RULE` ' .
-            'FROM `information_schema`.`key_column_usage` k, ' .
-            '     `information_schema`.`referential_constraints` c ' .
+            'FROM `information_schema`.`key_column_usage` k ' .
+            'INNER JOIN `information_schema`.`referential_constraints` c ' .
+            '  ON c.`constraint_schema` = k.`constraint_schema` ' .
+            '  AND c.`constraint_name` = k.`constraint_name` ' .
             'WHERE k.`table_schema` = :schema ' .
             '  AND k.`table_name` = :table ' .
-            '  AND k.`constraint_name` = c.`constraint_name` ' .
             'ORDER BY k.`ordinal_position` ASC ' .
             ';';
 
