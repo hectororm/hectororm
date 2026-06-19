@@ -195,12 +195,15 @@ class Sqlite extends AbstractGenerator
 
         $isUnsigned = '' !== ($matches[2] ?? '') || '' !== ($matches[5] ?? '');
 
+        // For a string type the size is the maximum length; for a numeric type it is the
+        // precision (with an optional scale). Precision must be driven by the presence of a
+        // size, not of a scale (e.g. DECIMAL(10) / INT(11) have a precision but no scale).
         return [
             'name' => $typeName,
             'is_string' => $isString,
             'maxlength' => $isString && $hasSize ? (int)$size : null,
-            'numeric_precision' => $hasScale ? (int)$size : null,
-            'numeric_scale' => $hasScale ? (int)$scale : null,
+            'numeric_precision' => !$isString && $hasSize ? (int)$size : null,
+            'numeric_scale' => !$isString && $hasScale ? (int)$scale : null,
             'unsigned' => $isUnsigned,
         ];
     }
