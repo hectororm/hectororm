@@ -39,6 +39,14 @@ use Throwable;
  * implicit COMMIT on most DDL statements (CREATE/ALTER/DROP TABLE), so a partial
  * failure within such a migration cannot be fully rolled back there. SQLite and
  * PostgreSQL do support transactional DDL.
+ *
+ * Concurrency: the tracker records each migration atomically (the DbTracker relies
+ * on the primary key of its tracking table), so two concurrent runs cannot apply the
+ * same migration twice. The runner does NOT provide a global run lock, however: it
+ * does not prevent two processes from running *different* pending migrations at the
+ * same time. Guaranteeing that a single migration run executes at a time is the
+ * responsibility of the calling application or orchestrator (e.g. a CI/CD pipeline
+ * step, a deployment job, or an external/application-level lock).
  */
 class MigrationRunner
 {
