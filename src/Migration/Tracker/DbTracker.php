@@ -89,11 +89,28 @@ class DbTracker implements MigrationTrackerInterface
             return;
         }
 
-        $affectedRows = $this->newQueryBuilder()->insert([
-            'migration_id' => $migrationId,
-            'applied_at' => date('Y-m-d H:i:s'),
-            'duration_ms' => $durationMs,
-        ]);
+        // The migration_id column is the primary key, so a concurrent process inserting the
+        // same id makes this insert fail. Rather than racing on a non-atomic check-then-insert,
+        // rely on that constraint: on failure, re-read from the database and treat the row as
+        // applied if another process already inserted it (idempotent); otherwise rethrow.
+        try {
+            $affectedRows = $this->newQueryBuilder()->insert([
+                'migration_id' => $migrationId,
+                'applied_at' => date('Y-m-d H:i:s'),
+                'duration_ms' => $durationMs,
+            ]);
+        } catch (Throwable $e) {
+            if (true === in_array($migrationId, $applied = $this->fetchApplied(), true)) {
+                $this->applied = $applied;
+
+                return;
+            }
+
+            throw new MigrationException(
+                message: sprintf('Failed to mark migration "%s" as applied', $migrationId),
+                previous: $e,
+            );
+        }
 
         if (1 !== $affectedRows) {
             throw new MigrationException(sprintf('Failed to mark migration "%s" as applied', $migrationId));
