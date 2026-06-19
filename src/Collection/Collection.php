@@ -383,9 +383,27 @@ class Collection implements CollectionInterface, ArrayAccess
     /**
      * @inheritDoc
      */
-    public function unique(): static
+    public function unique(?Closure $callback = null): static
     {
-        return new static(array_unique($this->items));
+        if (null === $callback) {
+            return new static(array_unique($this->items));
+        }
+
+        $unique = [];
+        $seen = [];
+
+        foreach ($this->items as $key => $item) {
+            $comparison = $callback($item, $key);
+
+            if (in_array($comparison, $seen, true)) {
+                continue;
+            }
+
+            $seen[] = $comparison;
+            $unique[$key] = $item;
+        }
+
+        return new static($unique);
     }
 
     /**

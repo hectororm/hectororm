@@ -524,6 +524,26 @@ class CollectionInterfaceTest extends TestCase
     }
 
     /**
+     * unique() accepts a callback computing the comparison key of each item; items whose
+     * computed keys are strictly identical are de-duplicated (first occurrence kept).
+     *
+     * @dataProvider collectionTypeProvider
+     */
+    public function testUniqueWithCallback(string $class): void
+    {
+        $a = (object)['id' => 1, 'label' => 'a'];
+        $b = (object)['id' => 2, 'label' => 'b'];
+        $c = (object)['id' => 1, 'label' => 'c'];
+
+        $result = (new $class([$a, $b, $c]))
+            ->unique(fn(object $item): int => $item->id)
+            ->getArrayCopy();
+
+        // $c shares id 1 with $a, so it is dropped; $a and $b are kept.
+        $this->assertSame([0 => $a, 1 => $b], $result);
+    }
+
+    /**
      * @dataProvider collectionTypeProvider
      */
     public function testFlip(string $class): void
