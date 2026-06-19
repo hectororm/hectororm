@@ -18,6 +18,7 @@ use Hector\Collection\CollectionInterface;
 use Hector\Collection\LazyCollection;
 use PHPUnit\Framework\TestCase;
 use stdClass;
+use ValueError;
 
 class CollectionInterfaceTest extends TestCase
 {
@@ -479,6 +480,22 @@ class CollectionInterfaceTest extends TestCase
         $this->assertInstanceOf(CollectionInterface::class, $result[1]);
         $this->assertCount(2, $result[0]->getArrayCopy());
         $this->assertCount(1, $result[1]->getArrayCopy());
+    }
+
+    /**
+     * chunk() with a length <= 0 must throw a ValueError for both classes, consistently
+     * with array_chunk() (LazyCollection used to silently build chunks of one element).
+     *
+     * @dataProvider collectionTypeProvider
+     */
+    public function testChunkWithNonPositiveLengthThrows(string $class): void
+    {
+        $this->expectException(ValueError::class);
+
+        $collection = new $class(['a', 'b', 'c']);
+
+        // Force evaluation for the lazy variant (the guard is eager, but be explicit).
+        iterator_to_array($collection->chunk(0));
     }
 
     /**
