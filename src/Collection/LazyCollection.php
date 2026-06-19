@@ -377,7 +377,7 @@ class LazyCollection implements CollectionInterface
 
             // Length 0
             if (null !== $length && $offset < 0 && $length <= 0) {
-                return new static([]);
+                return;
             }
 
             $i = 0;
@@ -396,6 +396,11 @@ class LazyCollection implements CollectionInterface
                         continue;
                     }
                     array_pop($stack);
+
+                    // Positive offset and length: the window is full, stop consuming the
+                    // source instead of draining it (preserves the lazy contract and lets
+                    // get()/slice() work on infinite generators).
+                    break;
                 }
             }
 
