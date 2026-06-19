@@ -506,6 +506,24 @@ class CollectionInterfaceTest extends TestCase
     }
 
     /**
+     * Collection and LazyCollection must de-duplicate consistently, following
+     * array_unique()'s default SORT_STRING semantics: items are compared by their string
+     * cast, so '1e3' and '1000' are kept apart while 0 and '0' are merged; keys and the
+     * first occurrence are preserved.
+     *
+     * @dataProvider collectionTypeProvider
+     */
+    public function testUniqueIsConsistentWithArrayUnique(string $class): void
+    {
+        $arr = ['1e3', '1000', '1e3', 0, '0', 0];
+
+        $this->assertSame(
+            [0 => '1e3', 1 => '1000', 3 => 0],
+            (new $class($arr))->unique()->getArrayCopy()
+        );
+    }
+
+    /**
      * @dataProvider collectionTypeProvider
      */
     public function testFlip(string $class): void
