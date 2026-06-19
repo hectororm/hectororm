@@ -351,16 +351,12 @@ class Collection implements CollectionInterface, ArrayAccess
     /**
      * @inheritDoc
      */
-    public function chunk(int $length, ?callable $callback = null): static
+    public function chunk(int $length): static
     {
         $collection = new static();
 
         foreach (array_chunk($this->items, $length, true) as $chunk) {
             $collection->append(new static($chunk));
-        }
-
-        if (null !== $callback) {
-            return $collection->map($callback);
         }
 
         return $collection;

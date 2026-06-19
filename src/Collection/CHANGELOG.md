@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `Collection::chunk()` no longer accepts the undocumented `?callable $callback` second argument that `LazyCollection::chunk()` and `CollectionInterface::chunk(int $length)` did not have; it now matches the interface and `array_chunk()`. Use `->chunk($length)->map($callback)` for the previous behaviour
 - Documented `LazyCollection`'s single-use contract: terminal operations drain the underlying generator, so the data must be materialised with `collect()` (or a `Collection` used) to be traversed more than once
 
 ### Fixed
