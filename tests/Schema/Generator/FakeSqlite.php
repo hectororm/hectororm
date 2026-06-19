@@ -40,4 +40,9 @@ class FakeSqlite extends Sqlite
     {
         return parent::getForeignKeysInfo($schema, $table);
     }
+
+    public function getTypeInfo(string $type): ?array
+    {
+        return parent::getTypeInfo($type);
+    }
 }

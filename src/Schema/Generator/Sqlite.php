@@ -160,10 +160,14 @@ class Sqlite extends AbstractGenerator
      *
      * @return array|null
      */
-    private function getTypeInfo(string $type): ?array
+    protected function getTypeInfo(string $type): ?array
     {
         $matches = [];
-        if (preg_match('/(\w+)(\s+unsigned\s*)?(?:\((\d+)(?:,(\d+))?\))?$/i', $type, $matches) !== 1) {
+        // Tolerate the "unsigned" keyword on either side of the size declaration, so a
+        // MySQL-style type ported to SQLite (e.g. "int(10) unsigned") is parsed correctly
+        // instead of matching only the trailing "unsigned" word.
+        $pattern = '/^(\w+)\s*(unsigned)?\s*(?:\((\d+)(?:\s*,\s*(\d+))?\))?\s*(unsigned)?\s*$/i';
+        if (preg_match($pattern, $type, $matches) !== 1) {
             return [
                 'name' => 'text',
                 'is_string' => true,
@@ -181,13 +185,23 @@ class Sqlite extends AbstractGenerator
             default => strtolower($matches[1]),
         };
 
+        // Trailing optional groups (e.g. the "unsigned" keyword after the size) can leave
+        // earlier optional groups set to an empty string, so check for a non-empty capture
+        // rather than relying on isset().
+        $size = $matches[3] ?? '';
+        $scale = $matches[4] ?? '';
+        $hasSize = '' !== $size;
+        $hasScale = '' !== $scale;
+
+        $isUnsigned = '' !== ($matches[2] ?? '') || '' !== ($matches[5] ?? '');
+
         return [
             'name' => $typeName,
             'is_string' => $isString,
-            'maxlength' => $isString && isset($matches[3]) ? (int)$matches[3] : null,
-            'numeric_precision' => isset($matches[4]) ? (int)$matches[3] : null,
-            'numeric_scale' => isset($matches[4]) ? (int)$matches[4] : null,
-            'unsigned' => isset($matches[2]) && trim(strtolower($matches[2])) === 'unsigned',
+            'maxlength' => $isString && $hasSize ? (int)$size : null,
+            'numeric_precision' => $hasScale ? (int)$size : null,
+            'numeric_scale' => $hasScale ? (int)$scale : null,
+            'unsigned' => $isUnsigned,
         ];
     }
 

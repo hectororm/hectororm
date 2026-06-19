@@ -331,6 +331,99 @@ class SqliteTest extends TestCase
         );
     }
 
+    /**
+     * @dataProvider typeInfoProvider
+     */
+    public function testGetTypeInfo(string $type, array $expected): void
+    {
+        $this->assertSame($expected, $this->getGenerator()->getTypeInfo($type));
+    }
+
+    public function typeInfoProvider(): array
+    {
+        return [
+            // MySQL-style type ported to SQLite: the "unsigned" keyword follows the size.
+            // This used to be parsed as type "unsigned" with the size lost (the bug).
+            'int(10) unsigned' => [
+                'int(10) unsigned',
+                [
+                    'name' => 'int',
+                    'is_string' => false,
+                    'maxlength' => null,
+                    'numeric_precision' => null,
+                    'numeric_scale' => null,
+                    'unsigned' => true,
+                ],
+            ],
+            'uppercase INT(11) UNSIGNED' => [
+                'INT(11) UNSIGNED',
+                [
+                    'name' => 'int',
+                    'is_string' => false,
+                    'maxlength' => null,
+                    'numeric_precision' => null,
+                    'numeric_scale' => null,
+                    'unsigned' => true,
+                ],
+            ],
+            'smallint unsigned' => [
+                'smallint unsigned',
+                [
+                    'name' => 'smallint',
+                    'is_string' => false,
+                    'maxlength' => null,
+                    'numeric_precision' => null,
+                    'numeric_scale' => null,
+                    'unsigned' => true,
+                ],
+            ],
+            'integer normalised to int' => [
+                'integer',
+                [
+                    'name' => 'int',
+                    'is_string' => false,
+                    'maxlength' => null,
+                    'numeric_precision' => null,
+                    'numeric_scale' => null,
+                    'unsigned' => false,
+                ],
+            ],
+            'decimal(10,2)' => [
+                'decimal(10,2)',
+                [
+                    'name' => 'decimal',
+                    'is_string' => false,
+                    'maxlength' => null,
+                    'numeric_precision' => 10,
+                    'numeric_scale' => 2,
+                    'unsigned' => false,
+                ],
+            ],
+            'varchar(50)' => [
+                'varchar(50)',
+                [
+                    'name' => 'varchar',
+                    'is_string' => true,
+                    'maxlength' => 50,
+                    'numeric_precision' => null,
+                    'numeric_scale' => null,
+                    'unsigned' => false,
+                ],
+            ],
+            'text length kept' => [
+                'CHAR(20)',
+                [
+                    'name' => 'char',
+                    'is_string' => true,
+                    'maxlength' => 20,
+                    'numeric_precision' => null,
+                    'numeric_scale' => null,
+                    'unsigned' => false,
+                ],
+            ],
+        ];
+    }
+
     public function testGetIndexesInfo(): void
     {
         $this->assertEquals(

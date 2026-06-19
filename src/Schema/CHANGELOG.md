@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - `Index::getColumns()` no longer throws `TypeError` on multi-column indexes (e.g. composite primary keys): the ordering comparator used `strcmp()` on the integer column positions, which fails under `strict_types`; it now uses the `<=>` operator
+- Parse SQLite column types with a MySQL-style trailing `unsigned` keyword (e.g. `int(10) unsigned`): the type was matched right-anchored, which captured only the trailing `unsigned` word, yielding the bogus type name `unsigned`, a lost size and `unsigned = false`. The type, size and `unsigned` flag are now parsed regardless of the keyword's position
 - Preserve numeric precision/scale (e.g. `DECIMAL(10,2)`) on SQLite table rebuilds: columns carried over unchanged were reconstructed using only the string length, dropping precision/scale (`DECIMAL(10,2)` became `decimal`)
 
 ## [1.3.0] - 2026-05-12
