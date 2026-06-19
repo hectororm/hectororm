@@ -116,7 +116,13 @@ class MySQL extends AbstractGenerator
                 'auto_increment' => false !== stripos($result['EXTRA'], 'auto_increment'),
                 'maxlength' => $result['CHARACTER_MAXIMUM_LENGTH'] ? (int)$result['CHARACTER_MAXIMUM_LENGTH'] : null,
                 'numeric_precision' => $result['NUMERIC_PRECISION'] ? (int)$result['NUMERIC_PRECISION'] : null,
-                'numeric_scale' => $result['NUMERIC_SCALE'] ? (int)$result['NUMERIC_SCALE'] : null,
+                // NUMERIC_SCALE is "0" (falsy string) for integers and DECIMAL(x,0); only a
+                // null means "no scale", so distinguish it from a present zero scale.
+                // NUMERIC_SCALE is "0"/0 (falsy) for integers and DECIMAL(x,0); only a null
+                // means "no scale", so distinguish it from a present zero scale.
+                // NUMERIC_SCALE is "0"/0 (falsy) for integers and DECIMAL(x,0); only a null
+                // means "no scale", so distinguish it from a present zero scale.
+                'numeric_scale' => null !== $result['NUMERIC_SCALE'] ? (int)$result['NUMERIC_SCALE'] : null,
                 'unsigned' => false !== stripos($result['COLUMN_TYPE'], 'unsigned'),
                 'charset' => $result['CHARACTER_SET_NAME'] ? strtolower($result['CHARACTER_SET_NAME']) : null,
                 'collation' => $result['COLLATION_NAME'] ? strtolower($result['COLLATION_NAME']) : null,
