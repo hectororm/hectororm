@@ -87,11 +87,14 @@ interface CollectionInterface extends IteratorAggregate, JsonSerializable, Count
     /**
      * Multiple sort.
      *
-     * @param callable ...$callback
+     * At least one comparator is required (calling without any raises an ArgumentCountError).
+     *
+     * @param callable $callback
+     * @param callable ...$_callback
      *
      * @return static
      */
-    public function multiSort(callable ...$callback): static;
+    public function multiSort(callable $callback, callable ...$_callback): static;
 
     /**
      * Filter items with function.

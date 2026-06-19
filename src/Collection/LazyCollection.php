@@ -221,11 +221,11 @@ class LazyCollection implements CollectionInterface
     /**
      * @inheritDoc
      */
-    public function multiSort(callable ...$callback): static
+    public function multiSort(callable $callback, callable ...$_callback): static
     {
         $collection = $this->newDefault($this->items);
 
-        return new static($collection->multiSort(...$callback));
+        return new static($collection->multiSort($callback, ...$_callback));
     }
 
     /**

@@ -188,10 +188,10 @@ class Collection implements CollectionInterface, ArrayAccess
     /**
      * @inheritDoc
      */
-    public function multiSort(callable ...$callback): static
+    public function multiSort(callable $callback, callable ...$_callback): static
     {
         $items = $this->items;
-        uasort($items, fn($a, $b): int => $this->multiSortByCmp($a, $b, ...$callback));
+        uasort($items, fn($a, $b): int => $this->multiSortByCmp($a, $b, $callback, ...$_callback));
 
         return new static($items);
     }
