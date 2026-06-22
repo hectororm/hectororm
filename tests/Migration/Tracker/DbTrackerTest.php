@@ -140,4 +140,23 @@ class DbTrackerTest extends TestCase
 
         $this->assertSame(['m_c', 'm_a', 'm_b'], $tracker2->getArrayCopy());
     }
+
+    public function testMarkAppliedIsIdempotentAcrossConcurrentProcesses(): void
+    {
+        // Simulate two processes: tracker2 loads its cache (empty) before tracker1 inserts the
+        // same migration, so tracker2's stale check-then-insert races on the primary key. The
+        // ignore-insert affects 0 rows instead of raising, and markApplied() treats it as
+        // already applied.
+        $tracker2 = new DbTracker($this->connection);
+        $this->assertFalse($tracker2->isApplied('m1')); // primes the stale (empty) cache
+
+        $tracker1 = new DbTracker($this->connection);
+        $tracker1->markApplied('m1');
+
+        // tracker2 still believes m1 is not applied; the insert hits the primary key.
+        $tracker2->markApplied('m1');
+
+        $this->assertTrue($tracker2->isApplied('m1'));
+        $this->assertCount(1, $tracker2);
+    }
 }
