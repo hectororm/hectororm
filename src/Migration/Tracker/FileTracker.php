@@ -59,9 +59,32 @@ class FileTracker extends AbstractJsonTracker
      */
     protected function writeStorage(string $json): void
     {
-        $result = file_put_contents($this->filePath, $json, true === $this->lock ? LOCK_EX : 0);
+        // Write to a temporary file in the same directory, then rename() over the target.
+        // rename() is atomic on the same filesystem, so a crash mid-write cannot leave the
+        // tracking file (the source of truth) truncated or partially written.
+        $directory = dirname($this->filePath);
+        $temporary = @tempnam($directory, '.hector-migration-');
 
-        if (false === $result) {
+        if (false === $temporary) {
+            throw new MigrationException(
+                sprintf('Cannot create a temporary file in: %s', $directory)
+            );
+        }
+
+        $bytes = file_put_contents($temporary, $json, true === $this->lock ? LOCK_EX : 0);
+
+        // Detect both a hard failure (false) and a partial write (fewer bytes than expected).
+        if (false === $bytes || $bytes !== strlen($json)) {
+            @unlink($temporary);
+
+            throw new MigrationException(
+                sprintf('Cannot write migration tracking file: %s', $this->filePath)
+            );
+        }
+
+        if (false === @rename($temporary, $this->filePath)) {
+            @unlink($temporary);
+
             throw new MigrationException(
                 sprintf('Cannot write migration tracking file: %s', $this->filePath)
             );
