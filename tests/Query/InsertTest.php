@@ -14,6 +14,7 @@ namespace Hector\Query\Tests;
 
 use Hector\Connection\Bind\BindParam;
 use Hector\Connection\Bind\BindParamList;
+use Hector\Connection\Driver\DriverInfo;
 use Hector\Query\Insert;
 use Hector\Query\Select;
 use Hector\Query\Statement\Encapsulated;
@@ -74,6 +75,41 @@ class InsertTest extends TestCase
             ['_h_0' => 'value_bar'],
             array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
+    }
+
+    /**
+     * The "ignore duplicates" syntax is driver-specific. Without a driver (or on
+     * MySQL/MariaDB) it is the "INSERT IGNORE" prefix; SQLite uses "INSERT OR IGNORE";
+     * PostgreSQL uses the "ON CONFLICT DO NOTHING" suffix.
+     *
+     * @dataProvider ignoreDriverProvider
+     */
+    public function testGetStatementWithIgnoreIsDriverAware(?string $driver, string $expected): void
+    {
+        $insert = new Insert();
+        $binds = new BindParamList();
+        $insert->from('foo');
+        $insert->assign('bar', 'value_bar');
+        $insert->ignore(true);
+
+        $driverInfo = null;
+        if (null !== $driver) {
+            $driverInfo = $this->createMock(DriverInfo::class);
+            $driverInfo->method('getDriver')->willReturn($driver);
+        }
+
+        $this->assertEquals($expected, $insert->getStatement($binds, $driverInfo));
+    }
+
+    public function ignoreDriverProvider(): array
+    {
+        return [
+            'no driver (fallback)' => [null, 'INSERT IGNORE INTO foo ( bar ) VALUES ( :_h_0 )'],
+            'mysql' => ['mysql', 'INSERT IGNORE INTO foo ( bar ) VALUES ( :_h_0 )'],
+            'mariadb' => ['mariadb', 'INSERT IGNORE INTO foo ( bar ) VALUES ( :_h_0 )'],
+            'sqlite' => ['sqlite', 'INSERT OR IGNORE INTO foo ( bar ) VALUES ( :_h_0 )'],
+            'pgsql' => ['pgsql', 'INSERT INTO foo ( bar ) VALUES ( :_h_0 ) ON CONFLICT DO NOTHING'],
+        ];
     }
 
     public function testGetStatementWithSelect(): void

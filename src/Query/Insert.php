@@ -112,15 +112,23 @@ class Insert implements CompoundStatementInterface
             return null;
         }
 
-        $str = 'INSERT';
+        $ignore = true === $this->ignore
+            || ($this->ignore instanceof Closure && true === ($this->ignore)());
 
-        if ((true === $this->ignore || ($this->ignore instanceof Closure && true === ($this->ignore)()))) {
-            $str .= ' IGNORE';
+        // The "ignore duplicates" syntax is driver-specific: MySQL/MariaDB use the
+        // "INSERT IGNORE" prefix, SQLite "INSERT OR IGNORE", and PostgreSQL the
+        // "ON CONFLICT DO NOTHING" suffix. Emit the right form for the current driver.
+        $prefix = 'INSERT';
+        $suffix = '';
+
+        if (true === $ignore) {
+            [$prefix, $suffix] = match ($driverInfo?->getDriver()) {
+                'sqlite' => ['INSERT OR IGNORE', ''],
+                'pgsql' => ['INSERT', ' ON CONFLICT DO NOTHING'],
+                default => ['INSERT IGNORE', ''],
+            };
         }
 
-        $str .= ' INTO ' . ($this->from->getStatement($bindParams, $driverInfo) ?? '') . ' ' .
-            $assignmentsStr;
-
-        return $str;
+        return $prefix . ' INTO ' . ($fromStr) . ' ' . $assignmentsStr . $suffix;
     }
 }
