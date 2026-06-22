@@ -47,6 +47,18 @@ class Psr4Provider extends AbstractDirectoryProvider
     }
 
     /**
+     * Order PSR-4 migrations by their fully-qualified class name. PSR-4 migrations have no
+     * timestamp-in-filename convention, so the order is alphabetical by FQCN (a file name
+     * sort could place two same-named classes from different namespaces inconsistently).
+     *
+     * @inheritDoc
+     */
+    protected function sortKey(string $file): string
+    {
+        return $this->resolveClassName($file) ?? basename($file);
+    }
+
+    /**
      * @inheritDoc
      */
     protected function resolveFile(string $file): ?MigrationInterface

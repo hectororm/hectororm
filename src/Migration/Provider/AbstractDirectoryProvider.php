@@ -83,7 +83,7 @@ abstract class AbstractDirectoryProvider implements MigrationProviderInterface
     /**
      * Scan the directory for files matching the pattern, respecting depth.
      *
-     * @return list<string> Absolute paths, sorted alphabetically
+     * @return list<string> Absolute paths, sorted by file name (then full path as tiebreaker)
      * @throws MigrationException
      */
     protected function scanFiles(): array
@@ -122,9 +122,30 @@ abstract class AbstractDirectoryProvider implements MigrationProviderInterface
             $files[] = $fileRealPath;
         }
 
-        sort($files);
+        // Sort by the provider-defined sort key, falling back to the full path as a stable
+        // tiebreaker. The default key is the file name (not the absolute path): in a recursive
+        // scan, sorting full paths interleaves directories (e.g. "20260101_First.php" would
+        // sort before "sub/20250101_Earlier.php" because '2' < 's'), breaking the chronological
+        // order that timestamp-prefixed migration names are meant to convey.
+        usort(
+            $files,
+            fn(string $a, string $b): int => strcmp($this->sortKey($a), $this->sortKey($b)) ?: strcmp($a, $b),
+        );
 
         return $files;
+    }
+
+    /**
+     * The key used to order files. Defaults to the file name so timestamp-prefixed migrations
+     * are ordered chronologically regardless of their subdirectory.
+     *
+     * @param string $file Absolute file path
+     *
+     * @return string
+     */
+    protected function sortKey(string $file): string
+    {
+        return basename($file);
     }
 
     /**
