@@ -34,6 +34,12 @@ class ChainTracker implements MigrationTrackerInterface
         if ([] === $this->trackers) {
             throw new MigrationException('ChainTracker requires at least one tracker');
         }
+
+        // Validate the strategy up front rather than only on the first read operation.
+        if (false === in_array($this->strategy, [ChainStrategy::ANY, ChainStrategy::ALL, ChainStrategy::FIRST], true)) {
+            throw new MigrationException(sprintf('Unexpected strategy "%s"', $this->strategy));
+        }
+
     }
 
     /**
