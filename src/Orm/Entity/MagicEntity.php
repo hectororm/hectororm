@@ -46,7 +46,7 @@ abstract class MagicEntity extends Entity implements JsonSerializable
      */
     public function jsonSerialize(): mixed
     {
-        return $this->_hectorAttributes;
+        return $this->_hectorWithoutHiddenColumns($this->_hectorAttributes);
     }
 
     /**
@@ -57,10 +57,33 @@ abstract class MagicEntity extends Entity implements JsonSerializable
     public function __debugInfo(): array
     {
         try {
-            return $this->_hectorAttributes + $this->getRelated()->__debugInfo();
+            return $this->_hectorWithoutHiddenColumns($this->_hectorAttributes) + $this->getRelated()->__debugInfo();
         } catch (OrmException) {
-            return $this->_hectorAttributes;
+            return $this->_hectorWithoutHiddenColumns($this->_hectorAttributes);
         }
+    }
+
+    /**
+     * Remove columns declared with #[Hidden] from an attributes array.
+     *
+     * Hidden columns are an output filter only (serialization, dumps); they
+     * stay fully accessible through the magic accessors. The `_hector` prefix
+     * follows the convention used by the entities' internal members to avoid
+     * collisions with user-defined magic properties.
+     *
+     * @param array $attributes
+     *
+     * @return array
+     */
+    private function _hectorWithoutHiddenColumns(array $attributes): array
+    {
+        $hidden = ReflectionEntity::get(static::class)->hidden;
+
+        if ([] === $hidden) {
+            return $attributes;
+        }
+
+        return array_diff_key($attributes, array_flip($hidden));
     }
 
     /////////////////////////
@@ -78,10 +101,6 @@ abstract class MagicEntity extends Entity implements JsonSerializable
     public function __isset(string $name): bool
     {
         $entityReflection = ReflectionEntity::get(static::class);
-
-        if (in_array($name, $entityReflection->hidden)) {
-            return false;
-        }
 
         if (array_key_exists($name, $this->_hectorAttributes)) {
             return true;
