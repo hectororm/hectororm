@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `Insert::ignore()` / `QueryBuilder::ignore()` now emit driver-specific "ignore duplicates" syntax instead of always producing the MySQL-only `INSERT IGNORE`, which raised a syntax error on SQLite and PostgreSQL: SQLite gets `INSERT OR IGNORE`, PostgreSQL gets the `ON CONFLICT DO NOTHING` suffix, and MySQL/MariaDB (or an unknown/absent driver) keep `INSERT IGNORE`
 - `Statement\Quoted` now drops empty segments (leading/trailing/double dots, empty identifier) instead of emitting invalid SQL like `` `a`.`b`. `` or an empty string; an all-empty identifier returns `null`
 
 ## [1.3.0] - 2026-05-12

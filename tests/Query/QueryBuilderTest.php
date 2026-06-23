@@ -384,8 +384,9 @@ class QueryBuilderTest extends TestCase
         $queryBuilder->from('foo', 'f');
         $queryBuilder->insert((new Select())->from('baz')->where('bar', 'bar_value'));
 
+        // The connection is SQLite, so the driver-aware ignore syntax is "INSERT OR IGNORE".
         $this->assertEquals(
-            'INSERT IGNORE INTO foo SELECT * FROM baz WHERE bar = :_h_0',
+            'INSERT OR IGNORE INTO foo SELECT * FROM baz WHERE bar = :_h_0',
             $queryBuilder->statement
         );
         $this->assertEquals(
