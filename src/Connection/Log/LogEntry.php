@@ -28,14 +28,14 @@ class LogEntry
      * LogEntry constructor.
      *
      * @param string $connection
-     * @param string|null $statement
+     * @param string $statement
      * @param BindParamList|array $parameters
      * @param string|null $trace
      * @param string $type
      */
     public function __construct(
         private string $connection,
-        private ?string $statement,
+        private string $statement,
         private BindParamList|array $parameters = [],
         private ?string $trace = null,
         private string $type = self::TYPE_QUERY,
