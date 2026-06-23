@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `Hector\Schema\Plan\Raw` to express a column default as a raw SQL expression (e.g. `new Raw('CURRENT_TIMESTAMP()')`), emitted verbatim instead of being quoted as a string literal
+- `TableOperation::addColumn()` and `AlterTable::modifyColumn()` now auto-detect `hasDefault` when it is omitted (`null`): the `DEFAULT` clause is enabled when a `Raw` expression or a non-null value is provided
+
 ### Fixed
 
 - `Index::getColumns()` no longer throws `TypeError` on multi-column indexes (e.g. composite primary keys): the ordering comparator used `strcmp()` on the integer column positions, which fails under `strict_types`; it now uses the `<=>` operator
@@ -16,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Report every column of a composite primary key as not nullable on SQLite: `PRAGMA table_info` exposes `pk` as the 1-based position in the primary key, and the nullability check compared it to `1`, so the 2nd, 3rd… columns of a composite primary key were wrongly marked nullable
 - Scope MySQL foreign-key introspection to the constraint schema: the join between `key_column_usage` and `referential_constraints` matched on the constraint name only, which is unique per schema, so another database holding a same-named foreign key produced a cartesian product (duplicated columns and `UPDATE`/`DELETE` rules read from the wrong database). The join now also matches `constraint_schema`
 - Report a zero numeric scale as `0` instead of `null` on MySQL: `NUMERIC_SCALE` is falsy for integers and `DECIMAL(x,0)`, and a truthy check turned it into `null`, so `getNumericScale()` lost the distinction between "no scale" and "scale 0" (e.g. dropping the `,0` when re-compiling a column definition)
+- Column default values that are SQL expressions (e.g. `CURRENT_TIMESTAMP()`) were quoted as string literals, producing invalid DDL such as `DEFAULT 'CURRENT_TIMESTAMP()'`; wrap them in `Hector\Schema\Plan\Raw` to emit them verbatim
 - Preserve numeric precision/scale (e.g. `DECIMAL(10,2)`) on SQLite table rebuilds: columns carried over unchanged were reconstructed using only the string length, dropping precision/scale (`DECIMAL(10,2)` became `decimal`)
 - Preserve the `INTEGER PRIMARY KEY` and its `AUTOINCREMENT` on SQLite table rebuilds: the generator now introspects the rowid primary key from `PRAGMA table_info` (it never appears in `PRAGMA index_list`) and detects `AUTOINCREMENT` on quoted identifiers, and the compiler emits `INTEGER` (not the `int` synonym, which SQLite rejects) for autoincrement columns. Previously both were silently dropped, corrupting the table on `modifyColumn`/rebuild
 

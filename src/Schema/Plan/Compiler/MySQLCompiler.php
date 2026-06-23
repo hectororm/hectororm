@@ -33,6 +33,7 @@ use Hector\Schema\Plan\Operation\PreOperationInterface;
 use Hector\Schema\Plan\Operation\RenameColumn;
 use Hector\Schema\Plan\Operation\RenameTable;
 use Hector\Schema\Plan\OperationInterface;
+use Hector\Schema\Plan\Raw;
 use Hector\Schema\Schema;
 
 final class MySQLCompiler extends AbstractCompiler
@@ -375,10 +376,11 @@ final class MySQLCompiler extends AbstractCompiler
 
         $parts[] = $column->isNullable() ? 'NULL' : 'NOT NULL';
 
-        /** @var string|int|float|null $default */
+        /** @var Raw|string|int|float|null $default */
         $default = $column->getDefault();
 
         $defaultClause = match (true) {
+            $default instanceof Raw => sprintf('DEFAULT %s', $default->getExpression()),
             null !== $default && is_numeric($default) => sprintf('DEFAULT %s', $default),
             null !== $default => sprintf('DEFAULT \'%s\'', str_replace("'", "''", $default)),
             $column->isNullable() => 'DEFAULT NULL',

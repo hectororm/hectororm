@@ -51,7 +51,8 @@ final class AlterTable extends TableOperation
      * @param string $type
      * @param bool $nullable
      * @param mixed $default
-     * @param bool $hasDefault
+     * @param bool|null $hasDefault Null (default) auto-detects from $default: enabled when a Raw
+     *                              expression or a non-null value is provided. Pass true/false to force it.
      * @param bool $autoIncrement
      * @param string|null $after
      * @param bool $first
@@ -63,7 +64,7 @@ final class AlterTable extends TableOperation
         string $type,
         bool $nullable = false,
         mixed $default = null,
-        bool $hasDefault = false,
+        ?bool $hasDefault = null,
         bool $autoIncrement = false,
         ?string $after = null,
         bool $first = false,
@@ -74,7 +75,7 @@ final class AlterTable extends TableOperation
             type: $type,
             nullable: $nullable,
             default: $default,
-            hasDefault: $hasDefault,
+            hasDefault: $this->resolveHasDefault($default, $hasDefault),
             autoIncrement: $autoIncrement,
             after: $after,
             first: $first,
