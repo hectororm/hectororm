@@ -80,7 +80,7 @@ class OrmFactory
                 );
             }
 
-            $cache->set(static::CACHE_ORM_KEY, $schemaContainer);
+            $cache?->set(static::CACHE_ORM_KEY, $schemaContainer);
         }
 
         return new Orm($connection, $schemaContainer, $eventDispatcher);
