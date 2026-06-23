@@ -76,7 +76,11 @@ final class CursorPaginationRequest implements PaginationRequestInterface
         ?CursorEncoderInterface $encoder = null,
     ): self {
         $query = $request->getQueryParams();
-        $cursor = $query[$cursorParam] ?? null ?: null;
+
+        // A non-string cursor (e.g. ?cursor[]=x) must be treated as no cursor,
+        // otherwise it reaches fromCursor(?string) and triggers a TypeError.
+        $rawCursor = $query[$cursorParam] ?? null;
+        $cursor = is_string($rawCursor) && '' !== $rawCursor ? $rawCursor : null;
 
         // If perPage is locked (maxPerPage is false), use default
         if (false === $maxPerPage || null === $perPageParam) {

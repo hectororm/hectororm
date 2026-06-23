@@ -16,11 +16,38 @@ declare(strict_types=1);
 namespace Hector\Pagination\Tests\Request;
 
 use Hector\Pagination\Request\OffsetPaginationRequest;
+use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ServerRequestInterface;
 
 class OffsetPaginationRequestTest extends TestCase
 {
+    public function testConstructorRejectsPageBelowOne(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        new OffsetPaginationRequest(0, 15);
+    }
+
+    public function testConstructorRejectsPerPageBelowOne(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        new OffsetPaginationRequest(1, 0);
+    }
+
+    public function testFromRequestBoundsHugePageWithoutOverflow(): void
+    {
+        $serverRequest = $this->createServerRequest(['page' => (string)PHP_INT_MAX]);
+
+        $request = OffsetPaginationRequest::fromRequest($serverRequest, maxPerPage: 100);
+
+        // Must not throw a TypeError; offset stays a valid non-negative int.
+        $offset = $request->getOffset();
+        $this->assertIsInt($offset);
+        $this->assertGreaterThanOrEqual(0, $offset);
+    }
+
     public function testDefaults(): void
     {
         $request = new OffsetPaginationRequest();

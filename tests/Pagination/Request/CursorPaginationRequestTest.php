@@ -40,6 +40,17 @@ class CursorPaginationRequestTest extends TestCase
         $this->assertSame($position, $request->getPosition());
     }
 
+    public function testFromRequestTreatsNonStringCursorAsAbsent(): void
+    {
+        // ?cursor[]=x : an array must not reach fromCursor(?string) and crash.
+        $serverRequest = $this->createServerRequest(['cursor' => ['x']]);
+
+        $request = CursorPaginationRequest::fromRequest($serverRequest);
+
+        $this->assertNull($request->getPosition());
+        $this->assertSame(CursorPaginationRequest::DIRECTION_FORWARD, $request->getDirection());
+    }
+
     public function testGetLimit(): void
     {
         $request = new CursorPaginationRequest(perPage: 20);

@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- `OffsetPaginationRequest::fromRequest()` now bounds `page` from above so a hostile `?page=PHP_INT_MAX` no longer overflows `getOffset()` into a float and throws an uncaught `TypeError` (HTTP 500)
+- `RangePaginationRequest::fromRequest()` / `fromHeader()` now normalize a reversed range (e.g. `range=20-10`) so `getLimit()` can no longer become negative and be injected as an invalid SQL `LIMIT`
+- `CursorPaginationRequest::fromRequest()` now treats a non-string `cursor` parameter (e.g. `?cursor[]=x`) as no cursor instead of passing an array to `fromCursor(?string)` and throwing an uncaught `TypeError` (HTTP 500)
+
+### Changed
+
+- The `OffsetPaginationRequest` and `RangePaginationRequest` constructors now throw `InvalidArgumentException` on invalid values (`page`/`perPage` < 1, `start` < 0, `end` < `start`), consistent with the `OffsetPagination` and `RangePagination` model classes. The `fromRequest()`/`fromHeader()` factories keep clamping untrusted HTTP input silently and never throw.
+
 ## [1.3.0] - 2026-05-12
 
 Initial release.

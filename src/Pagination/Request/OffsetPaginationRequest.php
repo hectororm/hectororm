@@ -15,6 +15,7 @@ declare(strict_types=1);
 
 namespace Hector\Pagination\Request;
 
+use InvalidArgumentException;
 use Psr\Http\Message\ServerRequestInterface;
 
 final class OffsetPaginationRequest implements PaginationRequestInterface
@@ -25,6 +26,12 @@ final class OffsetPaginationRequest implements PaginationRequestInterface
         private int $page = 1,
         private int $perPage = self::DEFAULT_PER_PAGE,
     ) {
+        if ($page < 1) {
+            throw new InvalidArgumentException('page must be at least 1');
+        }
+        if ($perPage < 1) {
+            throw new InvalidArgumentException('perPage must be at least 1');
+        }
     }
 
     /**
@@ -43,12 +50,30 @@ final class OffsetPaginationRequest implements PaginationRequestInterface
 
         // If perPage is locked (maxPerPage is false), use default
         if (false === $maxPerPage || null === $perPageParam) {
-            return new self($page, $defaultPerPage);
+            $perPage = max(1, $defaultPerPage);
+
+            return new self(self::boundPage($page, $perPage), $perPage);
         }
 
         $perPage = min($maxPerPage, max(1, (int)($query[$perPageParam] ?? $defaultPerPage)));
 
-        return new self($page, $perPage);
+        return new self(self::boundPage($page, $perPage), $perPage);
+    }
+
+    /**
+     * Bound the page so that the resulting offset stays a valid (non-overflowing) int.
+     *
+     * Without this, a hostile `?page=PHP_INT_MAX` makes `getOffset()` overflow to a
+     * float and triggers a TypeError on the `int` return type.
+     *
+     * @param int $page
+     * @param int $perPage
+     *
+     * @return int
+     */
+    private static function boundPage(int $page, int $perPage): int
+    {
+        return min($page, intdiv(PHP_INT_MAX, $perPage) + 1);
     }
 
     /**
