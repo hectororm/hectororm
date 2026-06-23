@@ -90,15 +90,24 @@ class DbTracker implements MigrationTrackerInterface
             return;
         }
 
-        $affectedRows = $this->newQueryBuilder()->insert([
-            'seq' => $this->nextSequence(),
-            'migration_id' => $migrationId,
-            'applied_at' => gmdate('Y-m-d H:i:s'),
-            'duration_ms' => $durationMs,
-        ]);
+        // The migration_id column is the primary key. Using an "ignore duplicates" insert
+        // makes this atomic across concurrent processes: it affects 1 row when we win the
+        // race (lock acquired) and 0 rows when another process already inserted the same id
+        // (treated as already applied — idempotent), without raising on the conflict.
+        $affectedRows = $this->newQueryBuilder()
+            ->ignore()
+            ->insert([
+                'seq' => $this->nextSequence(),
+                'migration_id' => $migrationId,
+                'applied_at' => gmdate('Y-m-d H:i:s'),
+                'duration_ms' => $durationMs,
+            ]);
 
-        if (1 !== $affectedRows) {
-            throw new MigrationException(sprintf('Failed to mark migration "%s" as applied', $migrationId));
+        if (0 === $affectedRows) {
+            // Another process inserted it concurrently: refresh the cache from the database.
+            $this->applied = $this->fetchApplied();
+
+            return;
         }
 
         $this->loadApplied();

@@ -45,6 +45,14 @@ use Throwable;
  * the tracking write happens right after commit on a best-effort basis; a
  * failure is reported as a MigrationException + MigrationFailedEvent rather than
  * leaving the database in an "applied but untracked" state silently.
+ *
+ * Concurrency: the tracker records each migration atomically (the DbTracker relies
+ * on the primary key of its tracking table), so two concurrent runs cannot apply the
+ * same migration twice. The runner does NOT provide a global run lock, however: it
+ * does not prevent two processes from running *different* pending migrations at the
+ * same time. Guaranteeing that a single migration run executes at a time is the
+ * responsibility of the calling application or orchestrator (e.g. a CI/CD pipeline
+ * step, a deployment job, or an external/application-level lock).
  */
 class MigrationRunner
 {
