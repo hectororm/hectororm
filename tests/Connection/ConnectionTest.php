@@ -19,6 +19,7 @@ use Hector\Connection\Log\Logger;
 use PDO;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
+use Throwable;
 
 class ConnectionTest extends TestCase
 {
@@ -223,6 +224,30 @@ class ConnectionTest extends TestCase
 
         $this->assertTrue($connection->inTransaction());
         $this->assertEquals(1, $reflectionProperty->getValue($connection));
+    }
+
+    public function testBeginTransactionKeepsCounterConsistentOnFailure(): void
+    {
+        // Put the PDO already in a transaction so PDO::beginTransaction() throws.
+        $pdo = new PDO('sqlite::memory:');
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $pdo->beginTransaction();
+
+        $connection = Connection::fromPdo($pdo);
+
+        $reflectionProperty = new ReflectionProperty(Connection::class, 'transactions');
+        $reflectionProperty->setAccessible(true);
+
+        $threw = false;
+        try {
+            $connection->beginTransaction();
+        } catch (Throwable) {
+            $threw = true;
+        }
+
+        $this->assertTrue($threw);
+        // The counter must NOT have been incremented by a failed begin.
+        $this->assertSame(0, $reflectionProperty->getValue($connection));
     }
 
     public function testBeginTransactionAnother(): void

@@ -262,11 +262,14 @@ class Connection
      */
     public function beginTransaction(): void
     {
-        $this->transactions++;
-
-        if ($this->transactions === 1) {
+        // Only the outermost call hits the real PDO. Increment the counter *after* the
+        // PDO call succeeds, so a failure (incl. lazy connection) does not leave a
+        // phantom transaction level that would misroute reads and break later commits.
+        if ($this->transactions === 0) {
             $this->getPdo()->beginTransaction();
         }
+
+        $this->transactions++;
     }
 
     /**
@@ -278,6 +281,7 @@ class Connection
             return;
         }
 
+        // Decrement only after the PDO commit succeeds (outermost level only).
         if ($this->transactions === 1) {
             $this->getPdo()->commit();
         }
