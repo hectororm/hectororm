@@ -14,6 +14,7 @@ namespace Hector\DataTypes\Tests;
 
 use Hector\DataTypes\Type\NumericType;
 use Hector\DataTypes\Type\DateTimeType;
+use Hector\DataTypes\Type\DecimalType;
 use Hector\DataTypes\Type\SetType;
 use Hector\DataTypes\Type\JsonType;
 use Hector\DataTypes\Type\StringType;
@@ -69,8 +70,8 @@ class TypeSetTest extends TestCase
         $this->assertInstanceOf(NumericType::class, $typeSet->get('mediumint'));
         $this->assertInstanceOf(NumericType::class, $typeSet->get('int'));
         $this->assertInstanceOf(NumericType::class, $typeSet->get('bigint'));
-        $this->assertInstanceOf(NumericType::class, $typeSet->get('decimal'));
-        $this->assertInstanceOf(NumericType::class, $typeSet->get('numeric'));
+        $this->assertInstanceOf(DecimalType::class, $typeSet->get('decimal'));
+        $this->assertInstanceOf(DecimalType::class, $typeSet->get('numeric'));
         $this->assertInstanceOf(NumericType::class, $typeSet->get('float'));
         $this->assertInstanceOf(NumericType::class, $typeSet->get('double'));
         $this->assertInstanceOf(DateTimeType::class, $typeSet->get('date'));

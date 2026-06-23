@@ -18,6 +18,7 @@ use Hector\DataTypes\Type\TypeInterface;
 use Hector\DataTypes\Type\StringType;
 use Hector\DataTypes\Type\NumericType;
 use Hector\DataTypes\Type\DateTimeType;
+use Hector\DataTypes\Type\DecimalType;
 use Hector\DataTypes\Type\SetType;
 use Hector\DataTypes\Type\JsonType;
 use Countable;
@@ -54,6 +55,7 @@ class TypeSet implements Countable
         $stringType = new StringType();
         $intType = new NumericType('int');
         $floatType = new NumericType('float');
+        $decimalType = new DecimalType();
         $dateTimeType = new DateTimeType();
 
         // String
@@ -77,9 +79,10 @@ class TypeSet implements Countable
         $this->add('int', $intType);
         $this->add('bigint', $intType);
         $this->add('bit', $intType);
-        // Decimal
-        $this->add('decimal', $floatType);
-        $this->add('numeric', $floatType);
+        // Decimal (exact, kept as string to avoid float precision loss)
+        $this->add('decimal', $decimalType);
+        $this->add('numeric', $decimalType);
+        // Approximate floating-point types
         $this->add('float', $floatType);
         $this->add('double', $floatType);
         // Date
