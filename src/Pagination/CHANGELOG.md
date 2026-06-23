@@ -16,6 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The `OffsetPaginationRequest` and `RangePaginationRequest` constructors now throw `InvalidArgumentException` on invalid values (`page`/`perPage` < 1, `start` < 0, `end` < `start`), consistent with the `OffsetPagination` and `RangePagination` model classes. The `fromRequest()`/`fromHeader()` factories keep clamping untrusted HTTP input silently and never throw.
+### Fixed
+
+- A pagination built from a generator can now be iterated after `count()`, `isEmpty()`, `getArrayCopy()` or `jsonSerialize()` materialised it: `getIterator()` serves the cached items instead of returning the exhausted generator (which raised "Cannot rewind/traverse an already closed generator")
 
 ## [1.3.0] - 2026-05-12
 

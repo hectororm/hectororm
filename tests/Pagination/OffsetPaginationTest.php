@@ -64,6 +64,26 @@ class OffsetPaginationTest extends TestCase
         $this->assertSame(['a', 'b', 'c'], $pagination->getArrayCopy());
     }
 
+    public function testGeneratorCanStillBeIteratedAfterCount(): void
+    {
+        // count() consumes the generator; iterating afterwards must use the materialised copy
+        // instead of the exhausted generator (which would raise "Cannot rewind a generator
+        // that was already run").
+        $generator = (function () {
+            yield 'a';
+            yield 'b';
+            yield 'c';
+        })();
+
+        $pagination = new OffsetPagination($generator, 10);
+
+        $this->assertCount(3, $pagination);
+        $this->assertSame(['a', 'b', 'c'], iterator_to_array($pagination, false));
+
+        // A second iteration is also fine.
+        $this->assertSame(['a', 'b', 'c'], iterator_to_array($pagination, false));
+    }
+
     public function testGetPerPage(): void
     {
         $pagination = new OffsetPagination(['a', 'b'], 15);
