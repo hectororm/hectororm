@@ -17,6 +17,7 @@ namespace Hector\Connection;
 use ArrayIterator;
 use Countable;
 use Generator;
+use Hector\Connection\Exception\ConnectionException;
 use Hector\Connection\Exception\NotFoundException;
 use Hector\Connection\Log\Logger;
 use IteratorAggregate;
@@ -56,10 +57,20 @@ class ConnectionSet implements Countable, IteratorAggregate
      * Add connection.
      *
      * @param Connection $connection
+     *
+     * @throws ConnectionException If a connection with the same name is already registered
      */
     public function addConnection(Connection $connection): void
     {
-        $this->connections[$connection->getName()] = $connection;
+        $name = $connection->getName();
+
+        // Reject a duplicate name rather than silently overwriting (and losing) the previously
+        // registered connection, which is a configuration error.
+        if (true === isset($this->connections[$name])) {
+            throw new ConnectionException(sprintf('A connection named "%s" is already registered', $name));
+        }
+
+        $this->connections[$name] = $connection;
     }
 
     /**

@@ -14,6 +14,7 @@ namespace Hector\Connection\Tests;
 
 use Hector\Connection\Connection;
 use Hector\Connection\ConnectionSet;
+use Hector\Connection\Exception\ConnectionException;
 use Hector\Connection\Exception\NotFoundException;
 use Hector\Connection\Log\Logger;
 use PHPUnit\Framework\TestCase;
@@ -93,27 +94,28 @@ class ConnectionSetTest extends TestCase
         $this->assertSame($connection, $connectionSet->getConnection());
     }
 
-    public function testAddConnection_same(): void
+    public function testAddConnection_sameObjectThrows(): void
     {
         $connectionSet = new ConnectionSet();
-
         $connectionSet->addConnection($connection = new Connection('sqlite:memory:'));
-        $connectionSet->addConnection($connection);
 
-        $this->assertCount(1, $connectionSet);
-        $this->assertSame($connection, $connectionSet->getConnection());
+        $this->expectException(ConnectionException::class);
+        $this->expectExceptionMessage('already registered');
+
+        $connectionSet->addConnection($connection);
     }
 
-    public function testAddConnection_sameNameNotTheSameObject(): void
+    public function testAddConnection_sameNameNotTheSameObjectThrows(): void
     {
         $connectionSet = new ConnectionSet();
+        $connectionSet->addConnection(new Connection('sqlite:memory:'));
 
-        $connectionSet->addConnection($connection1 = new Connection('sqlite:memory:'));
-        $connectionSet->addConnection($connection2 = new Connection('sqlite:memory:'));
+        // A different connection reusing an already-registered name is a configuration error:
+        // it must throw rather than silently overwrite (and lose) the first one.
+        $this->expectException(ConnectionException::class);
+        $this->expectExceptionMessage('already registered');
 
-        $this->assertCount(1, $connectionSet);
-        $this->assertNotSame($connection1, $connectionSet->getConnection());
-        $this->assertSame($connection2, $connectionSet->getConnection());
+        $connectionSet->addConnection(new Connection('sqlite:memory:'));
     }
 
     public function testGetLoggers(): void
