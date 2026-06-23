@@ -85,6 +85,47 @@ class StringTypeTest extends TestCase
         $this->assertSame(FakeEnumString::BAR, $type->fromSchema('bar', $expectedType));
     }
 
+    public function testFromSchemaWithIntBackedEnum(): void
+    {
+        if (!interface_exists(BackedEnum::class)) {
+            $this->markTestSkipped('Enum are not available on this PHP version.');
+        }
+
+        $expectedType = new ExpectedType(FakeEnumInt::class, false, false);
+
+        $type = new StringType();
+
+        // PDO returns every column as a string, so an int-backed enum receives a
+        // numeric string; it must still be hydrated (no raw TypeError).
+        $this->assertSame(FakeEnumInt::FOO, $type->fromSchema('0', $expectedType));
+        $this->assertSame(FakeEnumInt::BAR, $type->fromSchema('1', $expectedType));
+        $this->assertSame(FakeEnumInt::FOO, $type->fromSchema(0, $expectedType));
+    }
+
+    public function testFromSchemaWithUnknownEnumValueWrapsException(): void
+    {
+        if (!interface_exists(BackedEnum::class)) {
+            $this->markTestSkipped('Enum are not available on this PHP version.');
+        }
+
+        $this->expectException(ValueException::class);
+
+        $type = new StringType();
+        $type->fromSchema('does-not-exist', new ExpectedType(FakeEnumString::class, false, false));
+    }
+
+    public function testFromSchemaWithUnknownIntBackedEnumValueWrapsException(): void
+    {
+        if (!interface_exists(BackedEnum::class)) {
+            $this->markTestSkipped('Enum are not available on this PHP version.');
+        }
+
+        $this->expectException(ValueException::class);
+
+        $type = new StringType();
+        $type->fromSchema('999', new ExpectedType(FakeEnumInt::class, false, false));
+    }
+
     public function testToSchema(): void
     {
         $type = new StringType();
