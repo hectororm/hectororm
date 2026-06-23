@@ -228,24 +228,29 @@ class MigrationRunner
             $label,
         ));
 
-        $plan = new Plan();
-
-        if (Direction::DOWN === $direction) {
-            assert($migration instanceof ReversibleMigrationInterface);
-            $migration->down($plan);
-        } else {
-            $migration->up($plan);
-        }
-
         $startTime = hrtime(true);
+        $inTransaction = false;
 
-        // Plan not empty?
-        if (false === $plan->isEmpty()) {
-            if (false === $dryRun) {
-                $this->connection->beginTransaction();
+        // The migration's own up()/down() (user code building the Plan) is part of the
+        // try/catch too, so an exception there is logged, dispatched as a MigrationFailedEvent
+        // and wrapped in a MigrationException like any execution failure.
+        try {
+            $plan = new Plan();
+
+            if (Direction::DOWN === $direction) {
+                assert($migration instanceof ReversibleMigrationInterface);
+                $migration->down($plan);
+            } else {
+                $migration->up($plan);
             }
 
-            try {
+            // Plan not empty?
+            if (false === $plan->isEmpty()) {
+                if (false === $dryRun) {
+                    $this->connection->beginTransaction();
+                    $inTransaction = true;
+                }
+
                 foreach ($plan->getStatements($this->compiler, $this->schema) as $sql) {
                     $this->logger?->debug(sprintf('%s[%s] %s', $prefix, $id, $sql));
 
@@ -256,32 +261,45 @@ class MigrationRunner
 
                 if (false === $dryRun) {
                     $this->connection->commit();
+                    $inTransaction = false;
                 }
-            } catch (Throwable $e) {
-                $durationMs = (hrtime(true) - $startTime) / 1e6;
-
-                if (false === $dryRun) {
-                    $this->connection->rollBack();
-                }
-
-                $this->logger?->error(sprintf(
-                    '%sMigration %s failed during %s: %s',
-                    $prefix,
-                    $label,
-                    $direction,
-                    $e->getMessage(),
-                ));
-
-                $this->eventDispatcher?->dispatch(
-                    new MigrationFailedEvent($id, $migration, $direction, $e, dryRun: $dryRun, durationMs: $durationMs)
-                );
-
-                throw new MigrationException(
-                    message: sprintf('Migration "%s" failed during %s: %s', $id, $direction, $e->getMessage()),
-                    code: (int)$e->getCode(),
-                    previous: $e,
-                );
             }
+        } catch (Throwable $e) {
+            $durationMs = (hrtime(true) - $startTime) / 1e6;
+
+            // Roll back only if a transaction was actually started, and never let a rollback
+            // failure mask the original exception.
+            if (true === $inTransaction) {
+                try {
+                    $this->connection->rollBack();
+                } catch (Throwable $rollbackError) {
+                    $this->logger?->error(sprintf(
+                        '%sMigration %s rollback failed during %s: %s',
+                        $prefix,
+                        $label,
+                        $direction,
+                        $rollbackError->getMessage(),
+                    ));
+                }
+            }
+
+            $this->logger?->error(sprintf(
+                '%sMigration %s failed during %s: %s',
+                $prefix,
+                $label,
+                $direction,
+                $e->getMessage(),
+            ));
+
+            $this->eventDispatcher?->dispatch(
+                new MigrationFailedEvent($id, $migration, $direction, $e, dryRun: $dryRun, durationMs: $durationMs)
+            );
+
+            throw new MigrationException(
+                message: sprintf('Migration "%s" failed during %s: %s', $id, $direction, $e->getMessage()),
+                code: (int)$e->getCode(),
+                previous: $e,
+            );
         }
 
         $durationMs = (hrtime(true) - $startTime) / 1e6;

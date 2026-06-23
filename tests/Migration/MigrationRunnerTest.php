@@ -28,11 +28,13 @@ use Hector\Migration\Tests\Fake\DescribedMigration;
 use Hector\Migration\Tests\Fake\EmptyMigration;
 use Hector\Migration\Tests\Fake\FailingMigration;
 use Hector\Migration\Tests\Fake\IrreversibleMigration;
+use Hector\Migration\Tests\Fake\ThrowingMigration;
 use Hector\Migration\Tracker\FileTracker;
 use Hector\Schema\Plan\Compiler\SqliteCompiler;
 use PHPUnit\Framework\TestCase;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 use Throwable;
 
 class MigrationRunnerTest extends TestCase
@@ -449,6 +451,37 @@ class MigrationRunnerTest extends TestCase
         $failedEvents = array_filter($dispatched, fn($e): bool => $e instanceof MigrationFailedEvent);
         $failedEvent = reset($failedEvents);
         $this->assertInstanceOf(Throwable::class, $failedEvent->getException());
+    }
+
+    public function testExceptionWhileBuildingThePlanIsWrappedAndDispatched(): void
+    {
+        // The migration's up() throws while building the Plan (user code), before any SQL.
+        // This must be handled like an execution failure: wrapped in a MigrationException
+        // (with the original as previous) and reported as a MigrationFailedEvent.
+        $dispatched = [];
+
+        $dispatcher = $this->createMock(EventDispatcherInterface::class);
+        $dispatcher->method('dispatch')
+            ->willReturnCallback(function (object $event) use (&$dispatched) {
+                $dispatched[] = $event;
+
+                return $event;
+            });
+
+        $runner = $this->createRunner([
+            'throwing' => new ThrowingMigration(),
+        ], eventDispatcher: $dispatcher);
+
+        try {
+            $runner->up();
+            $this->fail('Expected a MigrationException');
+        } catch (MigrationException $e) {
+            $this->assertInstanceOf(RuntimeException::class, $e->getPrevious());
+            $this->assertSame(ThrowingMigration::MESSAGE, $e->getPrevious()->getMessage());
+        }
+
+        $failedEvents = array_filter($dispatched, fn($e): bool => $e instanceof MigrationFailedEvent);
+        $this->assertCount(1, $failedEvents);
     }
 
     public function testAfterEventCarriesDuration(): void
