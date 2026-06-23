@@ -389,6 +389,55 @@ class MySQLTest extends TestCase
         );
     }
 
+    /**
+     * Foreign key introspection must match the constraint schema in the join: constraint
+     * names are unique only per schema, so another database holding a same-named foreign key
+     * must not leak into the result (cartesian product duplicating columns / wrong rules).
+     */
+    public function testGetForeignKeysInfoIsScopedToSchema(): void
+    {
+        $connection = new Connection(getenv('MYSQL_DSN'));
+        $database = 'hector_rob07_fk_scope';
+
+        // Second database with a foreign key named exactly like Sakila's `fk_address_city`,
+        // but with different referential rules.
+        $connection->execute(sprintf('DROP DATABASE IF EXISTS `%s`;', $database));
+        $connection->execute(sprintf('CREATE DATABASE `%s`;', $database));
+
+        try {
+            $connection->execute(sprintf('CREATE TABLE `%s`.`city` (`city_id` INT PRIMARY KEY);', $database));
+            $connection->execute(
+                sprintf(
+                    'CREATE TABLE `%s`.`address` ('
+                    . '`address_id` INT PRIMARY KEY, `city_id` INT, '
+                    . 'CONSTRAINT `fk_address_city` FOREIGN KEY (`city_id`) '
+                    . 'REFERENCES `%s`.`city` (`city_id`) ON UPDATE NO ACTION ON DELETE NO ACTION'
+                    . ');',
+                    $database,
+                    $database
+                )
+            );
+
+            $this->assertEquals(
+                [
+                    [
+                        'name' => 'fk_address_city',
+                        'table_name' => 'address',
+                        'columns_name' => ['city_id'],
+                        'referenced_schema_name' => 'sakila',
+                        'referenced_table_name' => 'city',
+                        'referenced_columns_name' => ['city_id'],
+                        'update_rule' => 'CASCADE',
+                        'delete_rule' => 'RESTRICT',
+                    ],
+                ],
+                (new FakeMySQL($connection))->getForeignKeysInfo('sakila', 'address')
+            );
+        } finally {
+            $connection->execute(sprintf('DROP DATABASE IF EXISTS `%s`;', $database));
+        }
+    }
+
     public function testGenerateSchema(): void
     {
         $generator = $this->getGenerator();
