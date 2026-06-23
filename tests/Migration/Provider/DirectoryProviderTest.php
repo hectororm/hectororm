@@ -180,6 +180,24 @@ class DirectoryProviderTest extends TestCase
         ], $keys);
     }
 
+    public function testRecursiveMigrationsAreSortedByFileNameNotPath(): void
+    {
+        // migrations_order has a root migration dated later (2026-03) than a nested one
+        // (2026-01). Sorting by absolute path would interleave directories and place the
+        // root file first ('2' < 's'); sorting by file name keeps the chronological order.
+        $provider = new DirectoryProvider(
+            directory: __DIR__ . '/../Fake/migrations_order',
+            depth: -1,
+        );
+
+        $keys = array_keys($provider->getArrayCopy());
+
+        $this->assertSame([
+            'sub/20260101000000_Nested',
+            '20260301000000_Root',
+        ], $keys);
+    }
+
     public function testCustomPattern(): void
     {
         $provider = new DirectoryProvider(
