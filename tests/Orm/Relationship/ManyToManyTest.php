@@ -177,4 +177,25 @@ class ManyToManyTest extends AbstractTestCase
         $this->assertCount(($initialCount + 1), $film->getActors());
         $this->assertTrue($film->getActors()->contains($actor));
     }
+
+    public function testLinkNativeDoesNotDuplicateLoadedCollection(): void
+    {
+        $relationship = new ManyToMany('actors', Film::class, Actor::class);
+        $film = Film::get(2);
+
+        // Force the relation to be loaded so getRelated()->get('actors') returns the
+        // same instance that we pass as $foreign (the aliasing that caused doubling).
+        $loaded = $film->getActors();
+        $initialCount = count($loaded);
+        $this->assertGreaterThan(0, $initialCount);
+
+        $relationship->linkNative($film, $loaded);
+
+        // The loaded collection must not have doubled.
+        $this->assertCount($initialCount, $film->getActors());
+
+        // Idempotent: a second pass must not grow it either.
+        $relationship->linkNative($film, $film->getActors());
+        $this->assertCount($initialCount, $film->getActors());
+    }
 }

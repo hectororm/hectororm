@@ -339,8 +339,14 @@ class ManyToMany extends Relationship
         if ($entity->getRelated()->isset($this->getName())) {
             $collection = $entity->getRelated()->get($this->getName());
 
-            foreach ($foreign as $foreignEntity) {
-                $collection[] = $foreignEntity;
+            // The loaded relation collection is the very same instance as $foreign:
+            // appending it onto itself would duplicate its content on every save.
+            if ($collection !== $foreign) {
+                foreach ($foreign as $foreignEntity) {
+                    if (false === $collection->contains($foreignEntity)) {
+                        $collection[] = $foreignEntity;
+                    }
+                }
             }
         }
 
