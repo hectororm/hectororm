@@ -314,12 +314,19 @@ abstract class AbstractMapper implements Mapper
     public function refreshEntity(Entity $entity): void
     {
         $values = $this->reflection->getHectorData($entity)->get('original') ?? $this->collectEntity($entity);
-        $conditions = $this->extractPrimaryValue($values) ?: $values;
+        $conditions = $this->extractPrimaryValue($values);
+
+        // Without a primary value the entity cannot be uniquely identified: refusing here
+        // avoids falling back to a condition built from all columns (or an empty, unconditioned
+        // SELECT), which would hydrate an arbitrary row.
+        if ([] === $conditions) {
+            throw new MapperException('Unable to refresh an entity without a primary value');
+        }
 
         $data = $entity::query()->whereEquals($this->quotedTuples($conditions))->fetchOne();
 
         if (null === $data) {
-            throw new MapperException('Unable to refresh an unexciting entity');
+            throw new MapperException('Unable to refresh a non-existing entity');
         }
 
         $this->hydrateEntity($entity, $data);

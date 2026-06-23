@@ -59,6 +59,23 @@ class ManyToOneTest extends AbstractTestCase
         $this->assertTrue($relationship->valid($value));
     }
 
+    public function testValidAcceptsSubclassOfTarget(): void
+    {
+        $relationship = new ManyToOne(
+            'address',
+            Staff::class,
+            Address::class,
+            ['address_id' => 'address_id']
+        );
+
+        // A subclass of the target entity is still a valid related entity (instanceof, not a
+        // strict class match).
+        $value = new class extends Address {
+        };
+
+        $this->assertTrue($relationship->valid($value));
+    }
+
     public function testValidWithBadEntity(): void
     {
         $relationship = new ManyToOne(

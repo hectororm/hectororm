@@ -427,8 +427,10 @@ class ReflectionEntity
     public function getTable(): Table
     {
         try {
-            return
-                $this->tableInstance ??
+            // Cache the resolved table: getTable() is called very frequently (every query
+            // build, hydration, persist and relationship resolution) and each resolution is a
+            // schema-container lookup. The `??` already intended this; the assignment was missing.
+            return $this->tableInstance ??=
                 Orm::get()->getSchemaContainer()->getTable($this->table, $this->schema, $this->connection);
         } catch (NotFoundException $e) {
             throw new OrmException(
