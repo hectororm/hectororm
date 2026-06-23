@@ -18,6 +18,7 @@ use Closure;
 use Exception;
 use Generator;
 use InvalidArgumentException;
+use ValueError;
 
 /**
  * A lazy, single-pass collection backed by a {@see Generator}.
@@ -221,11 +222,11 @@ class LazyCollection implements CollectionInterface
     /**
      * @inheritDoc
      */
-    public function multiSort(callable ...$callback): static
+    public function multiSort(callable $callback, callable ...$_callback): static
     {
         $collection = $this->newDefault($this->items);
 
-        return new static($collection->multiSort(...$callback));
+        return new static($collection->multiSort($callback, ...$_callback));
     }
 
     /**
@@ -435,6 +436,12 @@ class LazyCollection implements CollectionInterface
      */
     public function chunk(int $length): static
     {
+        // Match array_chunk() (and Collection::chunk()): a length <= 0 is invalid. Without
+        // this guard the do/while below would silently build chunks of one element.
+        if ($length < 1) {
+            throw new ValueError('chunk(): Argument #1 ($length) must be greater than 0');
+        }
+
         $generator = function ($length): Generator {
             while ($this->items->valid()) {
                 $arr = [];

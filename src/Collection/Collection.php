@@ -188,10 +188,10 @@ class Collection implements CollectionInterface, ArrayAccess
     /**
      * @inheritDoc
      */
-    public function multiSort(callable ...$callback): static
+    public function multiSort(callable $callback, callable ...$_callback): static
     {
         $items = $this->items;
-        uasort($items, fn($a, $b): int => $this->multiSortByCmp($a, $b, ...$callback));
+        uasort($items, fn($a, $b): int => $this->multiSortByCmp($a, $b, $callback, ...$_callback));
 
         return new static($items);
     }
@@ -351,16 +351,12 @@ class Collection implements CollectionInterface, ArrayAccess
     /**
      * @inheritDoc
      */
-    public function chunk(int $length, ?callable $callback = null): static
+    public function chunk(int $length): static
     {
         $collection = new static();
 
         foreach (array_chunk($this->items, $length, true) as $chunk) {
             $collection->append(new static($chunk));
-        }
-
-        if (null !== $callback) {
-            return $collection->map($callback);
         }
 
         return $collection;
