@@ -88,11 +88,31 @@ class SetTypeTest extends TestCase
         $type->fromSchema('foo, bar', $expectedType);
     }
 
+    public function testFromSchemaEmptySetYieldsEmptyArray(): void
+    {
+        $type = new SetType();
+
+        // An empty SET has no members; explode('', ...) used to yield [''].
+        $this->assertSame([], $type->fromSchema(''));
+        $this->assertSame([], $type->fromSchema('  '));
+        $this->assertSame([], $type->fromSchema('', new ExpectedType('array', false, true)));
+    }
+
     public function testToSchema(): void
     {
         $type = new SetType();
 
         $this->assertSame('foo,bar', $type->toSchema(['foo', 'bar']));
+    }
+
+    public function testToSchemaAcceptsString(): void
+    {
+        $type = new SetType();
+
+        // A SET property typed as string is the raw CSV; it must be persistable
+        // (round-trip symmetric with fromSchema()).
+        $this->assertSame('foo,bar', $type->toSchema('foo,bar'));
+        $this->assertSame('', $type->toSchema(''));
     }
 
     public function testToSchemaWithBadType(): void
