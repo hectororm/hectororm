@@ -36,7 +36,7 @@ class EntityStorageTest extends TestCase
         $storage->attach($entity2 = new Film());
 
         $this->assertIsIterable($storage->getIterator());
-        $this->assertCount(2, $storage->getIterator());
+        $this->assertCount(2, iterator_to_array($storage->getIterator(), false));
     }
 
     public function testIterationYieldsEntitiesAsValues(): void

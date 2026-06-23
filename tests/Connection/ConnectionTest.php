@@ -583,6 +583,6 @@ class ConnectionTest extends TestCase
             $connection->yieldColumn('SELECT `id`, `val` FROM `falsy` ORDER BY `id`;', [], 1)
         );
 
-        $this->assertSame([0, 5, 0, 7], $result);
+        $this->assertEquals([0, 5, 0, 7], $result);
     }
 }

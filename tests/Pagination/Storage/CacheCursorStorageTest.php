@@ -50,7 +50,8 @@ class CacheCursorStorageTest extends TestCase
                 $this->matchesRegularExpression('/^hector_cursor_[a-f0-9]{32}$/'),
                 $state,
                 null
-            );
+            )
+            ->willReturn(true);
 
         $name = $this->storage->store($state);
 
@@ -70,7 +71,8 @@ class CacheCursorStorageTest extends TestCase
                 $this->anything(),
                 $state,
                 $ttl
-            );
+            )
+            ->willReturn(true);
 
         $this->storage->store($state, $ttl);
     }
@@ -87,7 +89,8 @@ class CacheCursorStorageTest extends TestCase
                 $this->anything(),
                 $state,
                 $ttl
-            );
+            )
+            ->willReturn(true);
 
         $this->storage->store($state, $ttl);
     }
@@ -105,7 +108,8 @@ class CacheCursorStorageTest extends TestCase
                 $this->anything(),
                 $state,
                 $defaultTtl
-            );
+            )
+            ->willReturn(true);
 
         $storage->store($state);
     }
@@ -124,7 +128,8 @@ class CacheCursorStorageTest extends TestCase
                 $this->anything(),
                 $state,
                 $customTtl
-            );
+            )
+            ->willReturn(true);
 
         $storage->store($state, $customTtl);
     }
