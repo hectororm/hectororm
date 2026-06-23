@@ -41,7 +41,21 @@ abstract class AbstractType implements TypeInterface
      */
     public function equals(mixed $entityData, mixed $schemaData): bool
     {
-        return $entityData == $schemaData;
+        // null is only equal to null: loose `==` treated null as equal to '' or 0.
+        if (null === $entityData || null === $schemaData) {
+            return $entityData === $schemaData;
+        }
+
+        // Compare scalars by their string form: this keeps the legitimate
+        // int/float vs numeric-string juggling between the entity (e.g. int 1)
+        // and the schema value coming from the database (e.g. string "1") while
+        // still detecting real changes that loose `==` hid (e.g. "1e3" vs "1000",
+        // "1.0" vs "1").
+        if (is_scalar($entityData) && is_scalar($schemaData)) {
+            return (string)$entityData === (string)$schemaData;
+        }
+
+        return $entityData === $schemaData;
     }
 
     /**

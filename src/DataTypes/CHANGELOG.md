@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `AbstractType::equals()` (the dirty-checking base used by most types) no longer compares with loose `==`. `null` is equal only to `null`, and scalars are compared by their string form, so real changes previously hidden (e.g. `"1e3"` vs `"1000"`, `"1.0"` vs `"1"`, `null` vs `""`) are now detected and persisted, while the legitimate int/float vs numeric-string juggling between the entity and the database value (e.g. `1` vs `"1"`) still compares as equal
 - All concrete types now handle `null` consistently: `fromSchema(null)` returns `null` when the expected type allows it (or when no expected type is given) and throws `ValueException` otherwise; `toSchema(null)` returns `null` so nullable columns persist as SQL `NULL`. The return types of `BooleanType::toSchema()` (`?int`) and `StringType`/`DateTimeType`/`UuidType`/`RamseyUuidType`/`SetType` `toSchema()` (`?string`) were widened accordingly
 
 ### Fixed
