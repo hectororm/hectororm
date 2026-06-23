@@ -59,7 +59,15 @@ class DateTimeType extends AbstractType
             }
 
             if ($expected->getName() == 'int') {
-                return (int)strtotime((string)$value);
+                $timestamp = strtotime((string)$value);
+
+                // strtotime() returns false on an invalid date; (int)false would
+                // be 0 (1970-01-01), silently corrupting the value.
+                if (false === $timestamp) {
+                    throw ValueException::castError($this);
+                }
+
+                return $timestamp;
             }
 
             if (is_a($expected->getName(), DateTimeInterface::class, true)) {
