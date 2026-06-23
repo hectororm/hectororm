@@ -6,12 +6,6 @@ on:
       - main
     tags:
       - 'v1.*'
-  create:
-    tags:
-      - 'v1.*'
-  delete:
-    tags:
-      - 'v1.*'
 
 jobs:
   publish_subsplits:
