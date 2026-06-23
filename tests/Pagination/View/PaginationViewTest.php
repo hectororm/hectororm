@@ -216,8 +216,9 @@ class PaginationViewTest extends TestCase
 
         $view = PaginationView::createFromNavigator($navigator, $pagination, $baseUri);
 
-        $this->assertSame(0, $view->getStart());
-        $this->assertSame(-1, $view->getEnd()); // 0 + 0 - 1
+        // An empty page has no item range: start/end are null rather than 0/-1 (end < start).
+        $this->assertNull($view->getStart());
+        $this->assertNull($view->getEnd());
         $this->assertSame(0, $view->getCount());
     }
 }
