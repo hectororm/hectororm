@@ -6,12 +6,10 @@ on:
       - main
     tags:
       - 'v1.*'
-  create:
-    tags:
-      - 'v1.*'
-  delete:
-    tags:
-      - 'v1.*'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   publish_subsplits:
