@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 - Removed unused `AbstractMapper::getPrimaryHash()` and `AbstractMapper::getDataHash()` (dead code, not part of the `Mapper` interface and never called); `getPrimaryHash()` additionally crashed on entities without a primary key
+- Removed the unreachable loose `!=` fallback in `AbstractMapper::getEntityAlteration()`: `ReflectionEntity::getType()` always returns a `TypeInterface` (a mapped type, a `StringType` fallback, or it throws) and every `TypeInterface::equals()` returns a strict `bool`, so the column comparison now relies solely on the type's `equals()`
 
 ### Fixed
 

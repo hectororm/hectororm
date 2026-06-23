@@ -331,18 +331,9 @@ abstract class AbstractMapper implements Mapper
                 continue;
             }
 
-            $columnDiff = $this->reflection->getType($column)?->equals($currentData[$column], $originalData[$column]);
-
-            if (false === $columnDiff) {
-                $diff[] = $column;
-                continue;
-            }
-
-            if (true === $columnDiff) {
-                continue;
-            }
-
-            if ($currentData[$column] != $originalData[$column]) {
+            // getType() always returns a TypeInterface (a mapped type, a StringType
+            // fallback, or it throws), so equals() always returns a strict bool.
+            if (false === $this->reflection->getType($column)->equals($currentData[$column], $originalData[$column])) {
                 $diff[] = $column;
             }
         }

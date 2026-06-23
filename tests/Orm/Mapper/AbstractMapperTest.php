@@ -277,4 +277,45 @@ class AbstractMapperTest extends AbstractTestCase
         $this->assertContains('name', $alteration);
         $this->assertContains('last_update', $alteration);
     }
+
+    public function testGetEntityAlteration_unchangedAcrossColumnTypes(): void
+    {
+        // The "film" table exercises a wide range of column types (smallint, year,
+        // decimal, enum, set, timestamp...). A freshly loaded, untouched entity must
+        // report no alteration: the typed equals() comparison alone is enough, with
+        // no loose `!=` fallback needed.
+        $mapper = new GenericMapper(Film::class, $this->getOrm()->getStorage());
+        /** @var Film $entity */
+        $entity = $mapper->fetchOneWithBuilder((new Builder(Film::class))->where('film_id', 1));
+
+        $this->assertInstanceOf(Entity::class, $entity);
+        $this->assertSame([], $mapper->getEntityAlteration($entity));
+    }
+
+    public function testGetEntityAlteration_detectsChangesAcrossColumnTypes(): void
+    {
+        $mapper = new GenericMapper(Film::class, $this->getOrm()->getStorage());
+        /** @var Film $entity */
+        $entity = $mapper->fetchOneWithBuilder((new Builder(Film::class))->where('film_id', 1));
+
+        $this->assertInstanceOf(Entity::class, $entity);
+
+        // decimal column (?float)
+        $entity->rental_rate += 1.0;
+        // enum column (?string)
+        $entity->rating = 'R' === $entity->rating ? 'PG' : 'R';
+        // set column (?array)
+        $entity->special_features = ['Trailers'];
+
+        $alteration = $mapper->getEntityAlteration($entity);
+
+        $this->assertContains('rental_rate', $alteration);
+        $this->assertContains('rating', $alteration);
+        $this->assertContains('special_features', $alteration);
+        // Untouched columns of various types stay out of the diff.
+        $this->assertNotContains('film_id', $alteration);
+        $this->assertNotContains('title', $alteration);
+        $this->assertNotContains('release_year', $alteration);
+        $this->assertNotContains('last_update', $alteration);
+    }
 }
