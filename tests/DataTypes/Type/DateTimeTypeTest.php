@@ -14,6 +14,7 @@ namespace Hector\DataTypes\Tests\Type;
 
 use DateTime;
 use DateTimeImmutable;
+use DateTimeZone;
 use Hector\DataTypes\Exception\ValueException;
 use Hector\DataTypes\ExpectedType;
 use Hector\DataTypes\Type\DateTimeType;
@@ -129,10 +130,15 @@ class DateTimeTypeTest extends TestCase
     {
         $type = new DateTimeType();
 
+        // Use the timestamp of the wall-clock string in the ambient timezone so the
+        // assertion holds in any timezone (the previous hard-coded 1592143200 only
+        // matched under UTC and masked the path inconsistency).
+        $timestamp = (new DateTime('2020-06-14 14:00:00'))->getTimestamp();
+
         $this->assertSame('2020-06-14 14:00:00', $type->toSchema(new DateTime('2020-06-14 14:00:00')));
         $this->assertSame('2020-06-14 14:00:00', $type->toSchema('2020-06-14 14:00:00'));
-        $this->assertSame('2020-06-14 14:00:00', $type->toSchema(1592143200));
-        $this->assertSame('2020-06-14 14:00:00', $type->toSchema(1592143200.));
+        $this->assertSame('2020-06-14 14:00:00', $type->toSchema($timestamp));
+        $this->assertSame('2020-06-14 14:00:00', $type->toSchema((float)$timestamp));
     }
 
     public function testToSchemaWithBadFormat(): void
@@ -147,10 +153,12 @@ class DateTimeTypeTest extends TestCase
     {
         $type = new DateTimeType('Y-m-d');
 
+        $timestamp = (new DateTime('2020-06-14 14:00:00'))->getTimestamp();
+
         $this->assertSame('2020-06-14', $type->toSchema(new DateTime('2020-06-14 14:00:00')));
         $this->assertSame('2020-06-14', $type->toSchema('2020-06-14 14:00:00'));
-        $this->assertSame('2020-06-14', $type->toSchema(1592143200));
-        $this->assertSame('2020-06-14', $type->toSchema(1592143200.));
+        $this->assertSame('2020-06-14', $type->toSchema($timestamp));
+        $this->assertSame('2020-06-14', $type->toSchema((float)$timestamp));
     }
 
     public function testToSchemaWithNotScalar(): void
@@ -188,5 +196,58 @@ class DateTimeTypeTest extends TestCase
         $type = new DateTimeType();
 
         $this->assertNull($type->toSchema(null));
+    }
+
+    /**
+     * Under a non-UTC ambient timezone, the numeric/timestamp path used to render
+     * UTC wall-clock while the string path used local wall-clock, so the two paths
+     * disagreed. They must now produce the same instant in the resolved timezone.
+     */
+    public function testToSchemaPathsAreTimezoneConsistent(): void
+    {
+        $previous = date_default_timezone_get();
+        date_default_timezone_set('America/New_York');
+
+        try {
+            $type = new DateTimeType();
+
+            // Timestamp of the wall-clock string interpreted in the ambient zone.
+            $timestamp = (new DateTime('2020-06-14 14:00:00'))->getTimestamp();
+
+            $fromString = $type->toSchema('2020-06-14 14:00:00');
+            $fromObject = $type->toSchema(new DateTime('2020-06-14 14:00:00'));
+            $fromTimestamp = $type->toSchema($timestamp);
+            $fromFloat = $type->toSchema((float)$timestamp);
+
+            $this->assertSame('2020-06-14 14:00:00', $fromString);
+            $this->assertSame($fromString, $fromObject);
+            $this->assertSame($fromString, $fromTimestamp);
+            $this->assertSame($fromString, $fromFloat);
+        } finally {
+            date_default_timezone_set($previous);
+        }
+    }
+
+    /**
+     * An explicit timezone is honoured on every path and is independent of the
+     * ambient PHP default timezone.
+     */
+    public function testToSchemaWithExplicitTimezone(): void
+    {
+        $previous = date_default_timezone_get();
+        date_default_timezone_set('America/New_York');
+
+        try {
+            $type = new DateTimeType(timezone: new DateTimeZone('UTC'));
+
+            // 1592143200 == 2020-06-14 14:00:00 UTC.
+            $this->assertSame('2020-06-14 14:00:00', $type->toSchema(1592143200));
+            $this->assertSame(
+                '2020-06-14 14:00:00',
+                $type->toSchema(new DateTime('2020-06-14 14:00:00', new DateTimeZone('UTC'))),
+            );
+        } finally {
+            date_default_timezone_set($previous);
+        }
     }
 }

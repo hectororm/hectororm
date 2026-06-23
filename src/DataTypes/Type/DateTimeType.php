@@ -16,6 +16,7 @@ namespace Hector\DataTypes\Type;
 
 use DateTime;
 use DateTimeInterface;
+use DateTimeZone;
 use Hector\DataTypes\Exception\ValueException;
 use Hector\DataTypes\ExpectedType;
 use Throwable;
@@ -26,6 +27,7 @@ class DateTimeType extends AbstractType
     public function __construct(
         protected string $format = 'Y-m-d H:i:s',
         protected string $class = DateTime::class,
+        protected ?DateTimeZone $timezone = null,
     ) {
         if (false === is_a($this->class, DateTimeInterface::class, true)) {
             throw new ValueError(
@@ -36,6 +38,18 @@ class DateTimeType extends AbstractType
                 )
             );
         }
+    }
+
+    /**
+     * Resolve the timezone applied to every date/time path.
+     *
+     * When no timezone is configured, the ambient PHP default timezone is used,
+     * preserving the previous behaviour of the string path while still letting
+     * the numeric/timestamp path agree with it.
+     */
+    private function resolveTimezone(): DateTimeZone
+    {
+        return $this->timezone ?? new DateTimeZone(date_default_timezone_get());
     }
 
     /**
@@ -50,8 +64,10 @@ class DateTimeType extends AbstractType
         }
 
         try {
+            $timezone = $this->resolveTimezone();
+
             if (null === $expected) {
-                return new $this->class((string)$value);
+                return new $this->class((string)$value, $timezone);
             }
 
             if ($expected->getName() == 'string') {
@@ -73,7 +89,7 @@ class DateTimeType extends AbstractType
             if (is_a($expected->getName(), DateTimeInterface::class, true)) {
                 $class = $expected->getName();
 
-                return new $class((string)$value);
+                return new $class((string)$value, $timezone);
             }
         } catch (Throwable $e) {
             throw ValueException::castError($this, $e);
@@ -92,12 +108,15 @@ class DateTimeType extends AbstractType
         }
 
         try {
-            if (is_string($value)) {
-                $value = new DateTime($value);
-            }
+            $timezone = $this->resolveTimezone();
 
             if (is_numeric($value)) {
-                $value = new DateTime(sprintf('@%d', $value));
+                // The '@timestamp' syntax always yields a UTC DateTime; move it to
+                // the resolved timezone so it agrees with the string path instead of
+                // rendering UTC wall-clock.
+                $value = (new DateTime(sprintf('@%d', $value)))->setTimezone($timezone);
+            } elseif (is_string($value)) {
+                $value = new DateTime($value, $timezone);
             }
 
             if ($value instanceof DateTimeInterface) {
