@@ -54,13 +54,17 @@ abstract class RegularRelationship extends Relationship
      */
     public function getBuilder(Entity ...$entities): Builder
     {
-        if (empty($entities)) {
+        $entityValues = $this->getEntityValues($this->sourceEntity, $this->sourceColumns, ...$entities);
+
+        // No source key value to filter on: returning an unfiltered builder avoids
+        // generating an invalid "IN ( )" clause.
+        if (empty($entityValues)) {
             return $this->newBuilder();
         }
 
         return $this->newBuilder()->whereIn(
             new Row(...$this->targetColumns),
-            $this->getEntityValues($this->sourceEntity, $this->sourceColumns, ...$entities)
+            $entityValues
         );
     }
 
@@ -72,7 +76,7 @@ abstract class RegularRelationship extends Relationship
         $foreigners = new Collection();
 
         if (!empty($filteredEntities = $this->filterEntities(...$entities))) {
-            $entityValues = $this->getEntityValues($this->sourceEntity, $this->sourceColumns, ...$entities);
+            $entityValues = $this->getEntityValues($this->sourceEntity, $this->sourceColumns, ...$filteredEntities);
 
             if (!empty($entityValues)) {
                 $foreigners = $this->getBuilder(...$filteredEntities)->all();
