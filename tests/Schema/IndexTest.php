@@ -96,6 +96,21 @@ class IndexTest extends AbstractTestCase
         }
     }
 
+    public function testGetColumnsOnMultiColumnIndex(): void
+    {
+        // film_actor PRIMARY KEY is composite: (actor_id, film_id)
+        $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('film_actor');
+        $index = $table->getPrimaryIndex();
+
+        $columns = $index->getColumns();
+
+        $this->assertContainsOnlyInstancesOf(Column::class, $columns);
+        $this->assertSame(
+            ['actor_id', 'film_id'],
+            array_map(static fn(Column $column): string => $column->getName(), $columns),
+        );
+    }
+
     public function testHasColumn(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('store');
