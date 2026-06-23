@@ -174,4 +174,35 @@ class ManyToOneTest extends AbstractTestCase
         $this->assertSame(3, $staff->address_id);
         $this->assertSame(3, $staff->address->address_id);
     }
+
+    /**
+     * @dataProvider keysMatchProvider
+     */
+    public function testKeysMatch(array $left, array $right, bool $expected): void
+    {
+        $method = new ReflectionMethod(Relationship::class, 'keysMatch');
+        $method->setAccessible(true);
+
+        $this->assertSame($expected, $method->invoke(null, $left, $right));
+    }
+
+    public function keysMatchProvider(): array
+    {
+        return [
+            // int vs its string representation must still match (PDO string tolerance)
+            'int vs string' => [[5], ['5'], true],
+            'same int' => [[5], [5], true],
+            // numeric-looking strings must NOT be coerced
+            'zero-padded' => [['01'], ['1'], false],
+            'scientific' => [['1e2'], ['100'], false],
+            // null handling: null never matches 0/empty, only another null
+            'null vs zero' => [[null], [0], false],
+            'null vs empty' => [[null], [''], false],
+            'null vs null' => [[null], [null], true],
+            // composite keys
+            'composite match' => [[1, '2'], ['1', 2], true],
+            'composite mismatch' => [[1, '01'], [1, '1'], false],
+            'different arity' => [[1], [1, 2], false],
+        ];
+    }
 }

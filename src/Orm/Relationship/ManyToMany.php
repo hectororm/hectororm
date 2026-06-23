@@ -318,7 +318,7 @@ class ManyToMany extends Relationship
                 /** @var Related $entityRelated */
                 $entityRelated = $entity['entity']->getRelated();
 
-                if ($entity['columns'] != $pivotKeys) {
+                if (false === self::keysMatch($entity['columns'], $pivotKeys)) {
                     continue;
                 }
 
