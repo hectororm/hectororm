@@ -68,6 +68,44 @@ class EnumTypeTest extends TestCase
         $type->fromSchema('qux');
     }
 
+    public function testFromSchemaIntBackedFromPdoString(): void
+    {
+        $type = new EnumType(FakeEnumInt::class);
+
+        // PDO returns columns as strings; an int-backed enum must still hydrate.
+        $this->assertSame(FakeEnumInt::FOO, $type->fromSchema('0'));
+        $this->assertSame(FakeEnumInt::BAR, $type->fromSchema('1'));
+        $this->assertSame(FakeEnumInt::FOO, $type->fromSchema('0', new ExpectedType(FakeEnumInt::class, false, false)));
+        $this->assertSame(0, $type->fromSchema('0', new ExpectedType('int', false, true)));
+    }
+
+    public function testFromSchemaIntBackedTryFromPdoString(): void
+    {
+        $type = new EnumType(FakeEnumInt::class, true);
+
+        $this->assertSame(FakeEnumInt::BAR, $type->fromSchema('1'));
+        // A non-matching numeric string yields null in try mode (no error).
+        $this->assertNull($type->fromSchema('999'));
+        // A non-numeric string is treated as no matching case rather than a TypeError.
+        $this->assertNull($type->fromSchema('nope'));
+    }
+
+    public function testFromSchemaUnknownValueWrapsValueException(): void
+    {
+        $this->expectException(ValueException::class);
+
+        $type = new EnumType(FakeEnumString::class);
+        $type->fromSchema('nope');
+    }
+
+    public function testToSchemaUnknownScalarWrapsValueException(): void
+    {
+        $this->expectException(ValueException::class);
+
+        $type = new EnumType(FakeEnumString::class);
+        $type->toSchema('nope');
+    }
+
     public function testFromSchemaWithDeclaredTypeStringBuiltin(): void
     {
         $expectedType = new ExpectedType('string', false, true);
