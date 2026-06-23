@@ -350,7 +350,7 @@ class SqliteTest extends TestCase
                     'name' => 'int',
                     'is_string' => false,
                     'maxlength' => null,
-                    'numeric_precision' => null,
+                    'numeric_precision' => 10,
                     'numeric_scale' => null,
                     'unsigned' => true,
                 ],
@@ -361,7 +361,7 @@ class SqliteTest extends TestCase
                     'name' => 'int',
                     'is_string' => false,
                     'maxlength' => null,
-                    'numeric_precision' => null,
+                    'numeric_precision' => 11,
                     'numeric_scale' => null,
                     'unsigned' => true,
                 ],
@@ -396,6 +396,19 @@ class SqliteTest extends TestCase
                     'maxlength' => null,
                     'numeric_precision' => 10,
                     'numeric_scale' => 2,
+                    'unsigned' => false,
+                ],
+            ],
+            // Precision without scale must be kept (it used to be dropped because the
+            // precision was driven by the presence of a scale).
+            'decimal(10) precision only' => [
+                'decimal(10)',
+                [
+                    'name' => 'decimal',
+                    'is_string' => false,
+                    'maxlength' => null,
+                    'numeric_precision' => 10,
+                    'numeric_scale' => null,
                     'unsigned' => false,
                 ],
             ],
