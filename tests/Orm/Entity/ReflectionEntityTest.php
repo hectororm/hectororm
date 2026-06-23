@@ -17,9 +17,11 @@ use Hector\Orm\Entity\ReflectionEntity;
 use Hector\Orm\Mapper\GenericMapper;
 use Hector\Orm\Mapper\MagicMapper;
 use Hector\Orm\Tests\AbstractTestCase;
+use Hector\DataTypes\Type\StringType;
 use Hector\Orm\Tests\Fake\Entity\City;
 use Hector\Orm\Tests\Fake\Entity\Film;
 use Hector\Orm\Tests\Fake\Entity\FilmMagic;
+use Hector\Orm\Tests\Fake\Entity\TypePrecedenceChild;
 use Hector\Orm\Tests\Fake\Mapper\CityMapper;
 use stdClass;
 use TypeError;
@@ -89,5 +91,15 @@ class ReflectionEntityTest extends AbstractTestCase
         $reflectionEntity = new ReflectionEntity(City::class);
         $mapper = $reflectionEntity->newInstanceOfMapper($this->getOrm()->getStorage());
         $this->assertInstanceOf(CityMapper::class, $mapper);
+    }
+
+    public function testTypePrecedenceChildOverridesParent(): void
+    {
+        // TypePrecedenceParent declares #[Type('release_year', NumericType)],
+        // TypePrecedenceChild overrides it with #[Type('release_year', StringType)].
+        // The child (encountered first while walking the hierarchy) must win.
+        $reflectionEntity = new ReflectionEntity(TypePrecedenceChild::class);
+
+        $this->assertInstanceOf(StringType::class, $reflectionEntity->getType('release_year'));
     }
 }
