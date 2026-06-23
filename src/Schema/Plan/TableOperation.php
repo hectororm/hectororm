@@ -30,7 +30,8 @@ abstract class TableOperation extends OperationGroup
      * @param string $type
      * @param bool $nullable
      * @param mixed $default
-     * @param bool $hasDefault
+     * @param bool|null $hasDefault Null (default) auto-detects from $default: enabled when a Raw
+     *                              expression or a non-null value is provided. Pass true/false to force it.
      * @param bool $autoIncrement
      * @param string|null $after
      * @param bool $first
@@ -42,7 +43,7 @@ abstract class TableOperation extends OperationGroup
         string $type,
         bool $nullable = false,
         mixed $default = null,
-        bool $hasDefault = false,
+        ?bool $hasDefault = null,
         bool $autoIncrement = false,
         ?string $after = null,
         bool $first = false,
@@ -53,7 +54,7 @@ abstract class TableOperation extends OperationGroup
             type: $type,
             nullable: $nullable,
             default: $default,
-            hasDefault: $hasDefault,
+            hasDefault: $this->resolveHasDefault($default, $hasDefault),
             autoIncrement: $autoIncrement,
             after: $after,
             first: $first,
@@ -144,5 +145,25 @@ abstract class TableOperation extends OperationGroup
         ));
 
         return $this;
+    }
+
+    /**
+     * Resolve the effective hasDefault flag.
+     *
+     * When $hasDefault is null (auto), the DEFAULT clause is enabled if a Raw
+     * expression or a non-null value is provided. An explicit boolean is kept as-is.
+     *
+     * @param mixed $default
+     * @param bool|null $hasDefault
+     *
+     * @return bool
+     */
+    protected function resolveHasDefault(mixed $default, ?bool $hasDefault): bool
+    {
+        if (null !== $hasDefault) {
+            return $hasDefault;
+        }
+
+        return $default instanceof Raw || null !== $default;
     }
 }

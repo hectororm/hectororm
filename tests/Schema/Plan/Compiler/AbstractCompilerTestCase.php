@@ -21,6 +21,7 @@ use Hector\Schema\Plan\CreateTrigger;
 use Hector\Schema\Plan\DisableForeignKeyChecks;
 use Hector\Schema\Plan\EnableForeignKeyChecks;
 use Hector\Schema\Plan\Plan;
+use Hector\Schema\Plan\Raw;
 use Hector\Schema\Plan\TableOperation;
 use PHPUnit\Framework\TestCase;
 
@@ -263,6 +264,31 @@ abstract class AbstractCompilerTestCase extends TestCase
             'columnDefaultInteger',
             $this->buildPlan(function (Plan $plan): void {
                 $plan->alter('users')->addColumn('score', 'int', hasDefault: true, default: 0);
+            })
+        ];
+
+        yield 'columnDefaultRawExpression' => [
+            'columnDefaultRawExpression',
+            $this->buildPlan(function (Plan $plan): void {
+                $plan->alter('users')
+                    ->addColumn('created_at', 'timestamp', default: new Raw('CURRENT_TIMESTAMP()'));
+            })
+        ];
+
+        yield 'columnDefaultRawExpressionAutoHasDefault' => [
+            'columnDefaultRawExpressionAutoHasDefault',
+            $this->buildPlan(function (Plan $plan): void {
+                // No explicit hasDefault: a Raw default must enable the DEFAULT clause automatically.
+                $plan->alter('users')
+                    ->addColumn('updated_at', 'timestamp', default: new Raw('CURRENT_TIMESTAMP'));
+            })
+        ];
+
+        yield 'columnDefaultStringAutoHasDefault' => [
+            'columnDefaultStringAutoHasDefault',
+            $this->buildPlan(function (Plan $plan): void {
+                // No explicit hasDefault: a non-null scalar default must enable the DEFAULT clause.
+                $plan->alter('users')->addColumn('status', 'varchar(20)', default: 'active');
             })
         ];
 

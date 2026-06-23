@@ -36,6 +36,7 @@ use Hector\Schema\Plan\Operation\PreOperationInterface;
 use Hector\Schema\Plan\OperationGroupInterface;
 use Hector\Schema\Plan\OperationInterface;
 use Hector\Schema\Plan\Plan;
+use Hector\Schema\Plan\Raw;
 use Hector\Schema\Plan\RawStatement;
 use Hector\Schema\Schema;
 
@@ -446,6 +447,10 @@ abstract class AbstractCompiler implements CompilerInterface
         }
 
         $default = $operation->getDefault();
+
+        if ($default instanceof Raw) {
+            return sprintf(' DEFAULT %s', $default->getExpression());
+        }
 
         if (null === $default) {
             return ' DEFAULT NULL';

@@ -161,6 +161,15 @@ class MySQLCompilerTest extends AbstractCompilerTestCase
             case 'columnDefaultInteger':
                 return 'ALTER TABLE `users` ADD COLUMN `score` int NOT NULL DEFAULT 0';
 
+            case 'columnDefaultRawExpression':
+                return 'ALTER TABLE `users` ADD COLUMN `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP()';
+
+            case 'columnDefaultRawExpressionAutoHasDefault':
+                return 'ALTER TABLE `users` ADD COLUMN `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP';
+
+            case 'columnDefaultStringAutoHasDefault':
+                return "ALTER TABLE `users` ADD COLUMN `status` varchar(20) NOT NULL DEFAULT 'active'";
+
             case 'columnNullable':
                 return 'ALTER TABLE `users` ADD COLUMN `bio` text NULL DEFAULT NULL';
 

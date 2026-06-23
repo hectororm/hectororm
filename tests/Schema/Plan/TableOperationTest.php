@@ -26,6 +26,7 @@ use Hector\Schema\Plan\Operation\DropForeignKey;
 use Hector\Schema\Plan\Operation\DropIndex;
 use Hector\Schema\Plan\Operation\ModifyColumn;
 use Hector\Schema\Plan\Operation\RenameColumn;
+use Hector\Schema\Plan\Raw;
 use Hector\Schema\Table;
 use PHPUnit\Framework\TestCase;
 
@@ -79,6 +80,53 @@ class TableOperationTest extends TestCase
         $this->assertTrue($op->hasDefault());
         $this->assertSame('active', $op->getDefault());
         $this->assertSame('name', $op->getAfter());
+    }
+
+    public function testAddColumnAutoHasDefaultFromValue(): void
+    {
+        $tableOp = new AlterTable('users');
+        // No explicit hasDefault: a non-null value must enable the DEFAULT clause.
+        $tableOp->addColumn('status', 'varchar(20)', default: 'active');
+
+        $op = $tableOp->getArrayCopy()[0];
+        $this->assertInstanceOf(AddColumn::class, $op);
+        $this->assertTrue($op->hasDefault());
+        $this->assertSame('active', $op->getDefault());
+    }
+
+    public function testAddColumnAutoHasDefaultFromRaw(): void
+    {
+        $tableOp = new AlterTable('users');
+        // No explicit hasDefault: a Raw expression must enable the DEFAULT clause.
+        $tableOp->addColumn('created_at', 'timestamp', default: new Raw('CURRENT_TIMESTAMP()'));
+
+        $op = $tableOp->getArrayCopy()[0];
+        $this->assertInstanceOf(AddColumn::class, $op);
+        $this->assertTrue($op->hasDefault());
+        $this->assertInstanceOf(Raw::class, $op->getDefault());
+        $this->assertSame('CURRENT_TIMESTAMP()', (string)$op->getDefault());
+    }
+
+    public function testAddColumnNoDefaultByDefault(): void
+    {
+        $tableOp = new AlterTable('users');
+        // No value and no explicit hasDefault: the DEFAULT clause stays disabled.
+        $tableOp->addColumn('bio', 'text');
+
+        $op = $tableOp->getArrayCopy()[0];
+        $this->assertInstanceOf(AddColumn::class, $op);
+        $this->assertFalse($op->hasDefault());
+    }
+
+    public function testAddColumnExplicitHasDefaultIsRespected(): void
+    {
+        $tableOp = new AlterTable('users');
+        // Explicit false must win even when a value is provided.
+        $tableOp->addColumn('label', 'varchar(20)', default: 'x', hasDefault: false);
+
+        $op = $tableOp->getArrayCopy()[0];
+        $this->assertInstanceOf(AddColumn::class, $op);
+        $this->assertFalse($op->hasDefault());
     }
 
     public function testAddColumnFirst(): void

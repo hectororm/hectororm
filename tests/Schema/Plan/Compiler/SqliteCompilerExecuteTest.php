@@ -20,6 +20,7 @@ use Hector\Schema\Generator\Sqlite;
 use Hector\Schema\Index;
 use Hector\Schema\Plan\Compiler\SqliteCompiler;
 use Hector\Schema\Plan\Plan;
+use Hector\Schema\Plan\Raw;
 use Hector\Schema\Plan\TableOperation;
 
 /**
@@ -330,6 +331,44 @@ class SqliteCompilerExecuteTest extends AbstractCompilerExecuteTestCase
         // Cleanup
         $cleanPlan = new Plan();
         $cleanPlan->drop('pk_rebuild_test', ifExists: true);
+        static::executePlan($cleanPlan, $connection);
+    }
+
+    /**
+     * A raw expression default (e.g. CURRENT_TIMESTAMP) must be emitted verbatim
+     * and evaluated by the database, not stored as a quoted string literal.
+     */
+    public function testRawExpressionDefaultIsEvaluatedNotQuoted(): void
+    {
+        $connection = static::createConnection();
+        static::$connection = $connection;
+
+        $plan = new Plan();
+        $plan->create('raw_default_test', function (TableOperation $t): void {
+            $t->addColumn('id', 'INTEGER', autoIncrement: true)
+                ->addColumn('label', 'TEXT')
+                ->addColumn('created_at', 'TEXT', default: new Raw('CURRENT_TIMESTAMP'))
+                ->addIndex('PRIMARY', ['id'], Index::PRIMARY);
+        });
+        static::executePlan($plan, $connection);
+
+        // Insert without providing created_at: the default expression must apply.
+        $connection->execute("INSERT INTO raw_default_test (label) VALUES ('a')");
+
+        $rows = $connection->fetchAll('SELECT created_at FROM raw_default_test');
+        $this->assertCount(1, $rows);
+
+        // If the default had been quoted as a string literal, created_at would equal
+        // the literal 'CURRENT_TIMESTAMP'. Instead it must be an evaluated timestamp.
+        $this->assertNotSame('CURRENT_TIMESTAMP', $rows[0]['created_at']);
+        $this->assertMatchesRegularExpression(
+            '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/',
+            (string)$rows[0]['created_at'],
+        );
+
+        // Cleanup
+        $cleanPlan = new Plan();
+        $cleanPlan->drop('raw_default_test', ifExists: true);
         static::executePlan($cleanPlan, $connection);
     }
 }
