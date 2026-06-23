@@ -162,6 +162,25 @@ class JsonTypeTest extends TestCase
         $this->assertFalse($type->equals('{"foo":"value","baz":2}', ''));
     }
 
+    /**
+     * A NULL column must not be considered unchanged when the entity holds a
+     * falsy-but-meaningful JSON value: previously empty() absorbed 0/false/[]/'0'.
+     */
+    public function testEqualsFalsyEntityVsNullIsChanged(): void
+    {
+        $type = new JsonType();
+
+        $this->assertFalse($type->equals(0, null));
+        $this->assertFalse($type->equals(0.0, null));
+        $this->assertFalse($type->equals(false, null));
+        $this->assertFalse($type->equals([], null));
+        $this->assertFalse($type->equals('0', null));
+
+        // Genuine "no payload" cases stay equal to a NULL column.
+        $this->assertTrue($type->equals('', null));
+        $this->assertTrue($type->equals(null, null));
+    }
+
     public function testFromSchemaNullWithoutExpected(): void
     {
         $type = new JsonType();
