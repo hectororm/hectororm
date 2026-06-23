@@ -227,12 +227,20 @@ interface CollectionInterface extends IteratorAggregate, JsonSerializable, Count
     public function values(): static;
 
     /**
-     * Get uniques items of collection.
+     * Get unique items of the collection.
+     *
+     * Without a callback, items are de-duplicated by their string cast, following
+     * array_unique()'s default SORT_STRING semantics. A callback may be given to compute
+     * the comparison key of each item ($value, $key); two items are considered equal when
+     * their keys are strictly identical (===). The first occurrence is kept and keys are
+     * preserved.
+     *
+     * @param Closure|null $callback
      *
      * @return static
      * @see array_unique()
      */
-    public function unique(): static;
+    public function unique(?Closure $callback = null): static;
 
     /**
      * Flip keys and values.

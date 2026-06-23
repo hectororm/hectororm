@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `Collection::unique()` and `LazyCollection::unique()` now accept an optional `Closure` that computes the comparison key of each item (`$value`, `$key`); items whose computed keys are strictly identical (`===`) are de-duplicated. This allows de-duplicating objects or arrays (e.g. by an `id`) without relying on their string cast. Without a callback the behaviour is unchanged
+
 ### Changed
 
 - Documented `LazyCollection`'s single-use contract: terminal operations drain the underlying generator, so the data must be materialised with `collect()` (or a `Collection` used) to be traversed more than once

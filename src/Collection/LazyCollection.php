@@ -482,21 +482,35 @@ class LazyCollection implements CollectionInterface
     /**
      * @inheritDoc
      */
-    public function unique(): static
+    public function unique(?Closure $callback = null): static
     {
-        $generator = function (): Generator {
+        $generator = function () use ($callback): Generator {
             $seen = [];
 
-            // Mirror Collection::unique() / array_unique() default SORT_STRING semantics:
-            // de-duplicate on the string cast of each item (so '1e3' and '1000' are kept
-            // apart while 0 and '0' are merged), instead of the previous loose == compare.
             foreach ($this->items as $key => $item) {
-                $hash = (string)$item;
+                // Without a callback, de-duplicate on the string cast, mirroring
+                // Collection::unique() / array_unique()'s default SORT_STRING semantics
+                // (so '1e3' and '1000' are kept apart while 0 and '0' are merged). With a
+                // callback, compare the computed keys strictly (===).
+                if (null === $callback) {
+                    $comparison = (string)$item;
 
-                if (array_key_exists($hash, $seen)) {
+                    if (array_key_exists($comparison, $seen)) {
+                        continue;
+                    }
+                    $seen[$comparison] = true;
+
+                    yield $key => $item;
+
                     continue;
                 }
-                $seen[$hash] = true;
+
+                $comparison = $callback($item, $key);
+
+                if (in_array($comparison, $seen, true)) {
+                    continue;
+                }
+                $seen[] = $comparison;
 
                 yield $key => $item;
             }
