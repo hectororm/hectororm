@@ -282,7 +282,11 @@ class Connection
         }
 
         // Decrement only after the PDO commit succeeds (outermost level only).
-        if ($this->transactions === 1) {
+        // A DDL statement (CREATE/ALTER/DROP TABLE) issues an implicit COMMIT on
+        // MySQL/MariaDB, so PDO may no longer have an active transaction even though
+        // the counter still expects one: guard against it to avoid a spurious
+        // "There is no active transaction" error.
+        if ($this->transactions === 1 && $this->getPdo()->inTransaction()) {
             $this->getPdo()->commit();
         }
 
@@ -295,7 +299,13 @@ class Connection
     public function rollBack(): void
     {
         if ($this->transactions > 0) {
-            $this->getPdo()->rollBack();
+            // A DDL implicit COMMIT may have already closed the PDO transaction; only
+            // roll back when one is actually active to avoid a spurious
+            // "There is no active transaction" error.
+            if ($this->getPdo()->inTransaction()) {
+                $this->getPdo()->rollBack();
+            }
+
             $this->transactions = 0;
         }
     }
