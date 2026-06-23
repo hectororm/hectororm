@@ -263,7 +263,9 @@ class Collection implements CollectionInterface, ArrayAccess
      */
     public function search(mixed $needle, bool $strict = false): int|string|false
     {
-        if (is_callable($needle)) {
+        // Only a Closure is treated as a predicate. A string/array that happens to be
+        // callable (e.g. 'trim', 'date') must be searched as a value, not invoked.
+        if ($needle instanceof Closure) {
             foreach ($this as $key => $value) {
                 if ($needle($value, $key)) {
                     return $key;

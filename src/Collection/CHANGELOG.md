@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Collection::median()` (and `LazyCollection::median()`, which delegates to it) returned a wrong result on unsorted data: it read the middle element by key after an `asort()` that preserves keys, instead of by position. Values are now re-indexed after sorting
 - `LazyCollection::slice()` (and therefore `get()`) no longer drains the whole source for a positive offset/length window: once the window is filled it stops consuming the underlying generator, restoring the lazy contract and making `get()`/`slice()` usable on very large or infinite generators
 - `LazyCollection::unique()` now de-duplicates items consistently with `Collection::unique()` / `array_unique()`: items are compared by their string cast (default `SORT_STRING` semantics) instead of a loose `==`, so it no longer merges distinct values that share the same numeric value (e.g. `'1e3'`/`'1000'`)
+- `Collection::search()` and `LazyCollection::search()` no longer treat a string/array that happens to be callable (e.g. `'trim'`, `'date'`) as a predicate: only a `Closure` is now used as a predicate, any other value is searched as a value (previously `is_callable($needle)` invoked such strings as functions instead of comparing them)
 - `LazyCollection::flip()` no longer throws a fatal `TypeError` on non-scalar items; such values are now skipped, mirroring `array_flip()`'s "entry skipped" behaviour (`Collection::flip()` already delegated to `array_flip()` and is unchanged)
 
 ## [1.3.0] - 2026-05-12

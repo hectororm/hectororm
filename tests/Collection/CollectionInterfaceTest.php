@@ -327,6 +327,21 @@ class CollectionInterfaceTest extends TestCase
     }
 
     /**
+     * A string that happens to be callable (e.g. 'trim') must be searched as a value,
+     * not invoked as a predicate.
+     *
+     * @dataProvider collectionTypeProvider
+     */
+    public function testSearchStringCallableAsValue(string $class): void
+    {
+        $arr = ['foo', 'trim', 'bar'];
+
+        $this->assertSame(1, (new $class($arr))->search('trim'));
+        $this->assertSame(1, (new $class($arr))->search('trim', true));
+        $this->assertFalse((new $class($arr))->search('strlen'));
+    }
+
+    /**
      * @dataProvider collectionTypeProvider
      */
     public function testGet(string $class): void
