@@ -64,7 +64,9 @@ class ManyToOne extends RegularRelationship
             return false;
         }
 
-        return ($this->getTargetEntity() === $related::class);
+        // Accept the target entity and its subclasses (instanceof), not only the exact class:
+        // a subclass of the target is still a valid related entity.
+        return $related instanceof ($this->getTargetEntity());
     }
 
     /**
