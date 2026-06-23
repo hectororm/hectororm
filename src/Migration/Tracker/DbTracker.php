@@ -111,13 +111,12 @@ class DbTracker implements MigrationTrackerInterface
     {
         $this->loadApplied();
 
-        $affectedRows = $this->newQueryBuilder()
+        // Reverting is idempotent: deleting a migration that is not tracked here affects 0
+        // rows, which is fine (e.g. in a ChainTracker where the migration was only tracked by
+        // another tracker). Only a real failure would raise, via the query layer.
+        $this->newQueryBuilder()
             ->where('migration_id', $migrationId)
             ->delete();
-
-        if (1 !== $affectedRows) {
-            throw new MigrationException(sprintf('Failed to mark migration "%s" as reverted', $migrationId));
-        }
 
         $this->loadApplied();
         $this->applied = array_values(array_filter(

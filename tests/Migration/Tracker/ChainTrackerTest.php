@@ -14,9 +14,11 @@ declare(strict_types=1);
 
 namespace Hector\Migration\Tests\Tracker;
 
+use Hector\Connection\Connection;
 use Hector\Migration\Exception\MigrationException;
 use Hector\Migration\Tracker\ChainStrategy;
 use Hector\Migration\Tracker\ChainTracker;
+use Hector\Migration\Tracker\DbTracker;
 use Hector\Migration\Tracker\FileTracker;
 use PHPUnit\Framework\TestCase;
 
@@ -45,6 +47,34 @@ class ChainTrackerTest extends TestCase
         $this->expectException(MigrationException::class);
 
         new ChainTracker([]);
+    }
+
+    public function testInvalidStrategyThrowsAtConstruction(): void
+    {
+        $this->expectException(MigrationException::class);
+        $this->expectExceptionMessage('Unexpected strategy');
+
+        new ChainTracker([new FileTracker($this->tempFile1)], 'nope');
+    }
+
+    public function testRevertOfPartiallyTrackedMigrationDoesNotThrow(): void
+    {
+        // A DbTracker that throws on a 0-row delete used to break the chain mid-way when the
+        // migration was tracked only by another tracker. Reverting must be idempotent.
+        $db = new DbTracker(new Connection('sqlite::memory:'));
+        $file = new FileTracker($this->tempFile1);
+        $chain = new ChainTracker([$db, $file], ChainStrategy::ANY);
+
+        // The migration exists only in the file tracker.
+        $file->markApplied('m1');
+        $this->assertTrue($chain->isApplied('m1'));
+
+        // Reverting via the chain must not throw even though the DbTracker never had it.
+        $chain->markReverted('m1');
+
+        $this->assertFalse($db->isApplied('m1'));
+        $this->assertFalse($file->isApplied('m1'));
+        $this->assertFalse($chain->isApplied('m1'));
     }
 
     public function testMarkAppliedPropagatesToAll(): void
