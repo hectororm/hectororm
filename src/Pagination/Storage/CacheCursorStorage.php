@@ -18,6 +18,7 @@ namespace Hector\Pagination\Storage;
 use DateInterval;
 use LogicException;
 use Psr\SimpleCache\CacheInterface;
+use RuntimeException;
 
 if (false === interface_exists(CacheInterface::class)) {
     throw new LogicException(
@@ -43,11 +44,17 @@ class CacheCursorStorage implements CursorStorageInterface
     {
         $name = $this->generateName();
 
-        $this->cache->set(
+        // PSR-16 set() returns false on failure: a returned cursor name that was never stored
+        // would be unresolvable later, so surface the failure instead of silently losing it.
+        $stored = $this->cache->set(
             $this->buildKey($name),
             $state,
             $ttl ?? $this->defaultTtl,
         );
+
+        if (false === $stored) {
+            throw new RuntimeException('Failed to store the pagination cursor in the cache');
+        }
 
         return $name;
     }

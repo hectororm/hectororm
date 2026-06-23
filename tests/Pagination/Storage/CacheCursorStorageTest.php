@@ -21,6 +21,7 @@ use Hector\Pagination\Storage\CursorStorageInterface;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\SimpleCache\CacheInterface;
+use RuntimeException;
 
 class CacheCursorStorageTest extends TestCase
 {
@@ -126,6 +127,19 @@ class CacheCursorStorageTest extends TestCase
             );
 
         $storage->store($state, $customTtl);
+    }
+
+    public function testStoreThrowsWhenCacheSetFails(): void
+    {
+        $this->cache
+            ->expects($this->once())
+            ->method('set')
+            ->willReturn(false);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Failed to store the pagination cursor');
+
+        $this->storage->store(['id' => 42]);
     }
 
     public function testRetrieve(): void
