@@ -14,8 +14,8 @@ declare(strict_types=1);
 
 namespace Hector\Orm\Entity;
 
-use Hector\Orm\Attributes\Mapper;
 use Generator;
+use Hector\Orm\Attributes\Mapper;
 use Hector\Orm\Collection\Collection;
 use Hector\Orm\Exception\NotFoundException;
 use Hector\Orm\Exception\OrmException;
@@ -96,13 +96,21 @@ abstract class Entity
         }
 
         $mapper = Orm::get()->getMapper($this);
-        $myPrimaries = array_filter($mapper->getPrimaryValue($this) ?? []);
+        $myPrimaries = array_filter(
+            $mapper->getPrimaryValue($this) ?? [],
+            fn($value): bool => null !== $value,
+        );
 
         if (empty($myPrimaries)) {
             return false;
         }
 
-        if ($myPrimaries == $mapper->getPrimaryValue($entity)) {
+        $theirPrimaries = array_filter(
+            $mapper->getPrimaryValue($entity) ?? [],
+            fn($value): bool => null !== $value,
+        );
+
+        if ($myPrimaries == $theirPrimaries) {
             return $entity->getPivot()?->getKeys() === $this->getPivot()?->getKeys();
         }
 

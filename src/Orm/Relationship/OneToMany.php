@@ -77,7 +77,7 @@ class OneToMany extends RegularRelationship
             );
 
             // Already hydrated?
-            if ($targetColumns == array_filter($targetColumnsOrigin)) {
+            if ($targetColumns == array_filter($targetColumnsOrigin, fn($value): bool => null !== $value)) {
                 // Not altered?
                 if (false === $foreignEntity->isAltered(...$this->getTargetColumns())) {
                     continue;
