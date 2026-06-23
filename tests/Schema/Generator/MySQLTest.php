@@ -223,7 +223,7 @@ class MySQLTest extends TestCase
                     'auto_increment' => true,
                     'maxlength' => null,
                     'numeric_precision' => 5,
-                    'numeric_scale' => null,
+                    'numeric_scale' => 0,
                     'unsigned' => true,
                 ],
                 [
@@ -279,7 +279,7 @@ class MySQLTest extends TestCase
                     'auto_increment' => false,
                     'maxlength' => null,
                     'numeric_precision' => 5,
-                    'numeric_scale' => null,
+                    'numeric_scale' => 0,
                     'unsigned' => true,
                 ],
                 [
@@ -341,6 +341,23 @@ class MySQLTest extends TestCase
             ],
             $this->getGenerator()->getColumnsInfo('sakila', 'address')
         );
+    }
+
+    /**
+     * A zero numeric scale (integers, DECIMAL(x,0)) must be reported as 0, not null:
+     * NUMERIC_SCALE = 0 is falsy and used to be turned into null. Uses a strict comparison
+     * because assertEquals() treats 0 and null as equal.
+     */
+    public function testGetColumnsInfoKeepsZeroNumericScale(): void
+    {
+        $columns = $this->getGenerator()->getColumnsInfo('sakila', 'address');
+        $byName = array_column($columns, 'numeric_scale', 'name');
+
+        // smallint columns have a scale of 0...
+        $this->assertSame(0, $byName['address_id']);
+        $this->assertSame(0, $byName['city_id']);
+        // ...while a non-numeric column has no scale at all.
+        $this->assertNull($byName['address']);
     }
 
     public function testGetIndexesInfo(): void
