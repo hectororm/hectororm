@@ -214,6 +214,21 @@ class AbstractMapperTest extends AbstractTestCase
         $mapper->refreshEntity($entity);
     }
 
+    public function testRefreshEntityNonExisting(): void
+    {
+        $mapper = new GenericMapper(Film::class, $this->getOrm()->getStorage());
+
+        // A valid primary value that matches no row: the refresh SELECT returns null, so a
+        // MapperException is thrown (rather than hydrating an arbitrary row).
+        $entity = new Film();
+        $entity->film_id = 999999;
+
+        $this->expectException(MapperException::class);
+        $this->expectExceptionMessage('non-existing');
+
+        $mapper->refreshEntity($entity);
+    }
+
     public function testRefreshEntityDeleted(): void
     {
         $mapper = new GenericMapper(Film::class, $this->getOrm()->getStorage());
