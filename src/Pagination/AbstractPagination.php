@@ -57,6 +57,13 @@ abstract class AbstractPagination implements PaginationInterface
      */
     public function getIterator(): Traversable
     {
+        // If the items have already been materialised (e.g. count()/isEmpty() consumed a
+        // generator), iterate the cached copy: returning the original generator here would
+        // raise "Cannot rewind a generator that was already run".
+        if (null !== $this->resolvedItems) {
+            return new ArrayIterator($this->resolvedItems);
+        }
+
         if ($this->items instanceof Traversable) {
             /** @var Traversable<int, T> */
             return $this->items;
