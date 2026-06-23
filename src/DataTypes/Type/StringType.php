@@ -66,6 +66,12 @@ class StringType extends AbstractType
             return null;
         }
 
+        // A backed enum is the counterpart of the hydration done in fromSchema():
+        // persist its backing value so the round-trip is symmetric.
+        if ($value instanceof BackedEnum) {
+            $value = $value->value;
+        }
+
         if (!is_scalar($value)) {
             if ($value instanceof Stringable) {
                 return (string)$value;
