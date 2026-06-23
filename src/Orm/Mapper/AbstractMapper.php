@@ -248,6 +248,25 @@ abstract class AbstractMapper implements Mapper
             $noPrimary = true;
         }
 
+        // The primary key of a loaded entity must not be mutated: the UPDATE would
+        // target the new (non-existent) key and the change would be silently lost.
+        if (false === $noPrimary) {
+            $original = $this->reflection->getHectorData($entity)->get('original');
+
+            if (null !== $original) {
+                $originalPrimary = array_intersect_key($original, $primaryValue);
+
+                if ($primaryValue != $originalPrimary) {
+                    throw new MapperException(
+                        sprintf(
+                            'The primary key of a loaded "%s" entity cannot be modified',
+                            $this->reflection->class
+                        )
+                    );
+                }
+            }
+        }
+
         if (count($values) > 0) {
             // Separate values of primary value
             if (false === $noPrimary) {

@@ -109,6 +109,30 @@ class AbstractMapperTest extends AbstractTestCase
         $mapper->updateEntity($entity);
     }
 
+    public function testUpdateEntityWithMutatedPrimaryKey(): void
+    {
+        $mapper = new GenericMapper(Film::class, $this->getOrm()->getStorage());
+
+        $entity = Film::get(1);
+        $originalId = $entity->film_id;
+        $entity->title = 'Qux';
+        $entity->film_id = 999999;
+
+        $this->expectException(MapperException::class);
+
+        try {
+            $mapper->updateEntity($entity);
+        } finally {
+            // The mutated primary key must not have reached the database.
+            $count = $this->getOrm()->getConnection()->fetchColumn(
+                'SELECT COUNT(*) FROM film WHERE film_id = ?',
+                [999999]
+            );
+            $this->assertSame(0, (int)($count[0] ?? 0));
+            $this->assertNotSame(999999, $originalId);
+        }
+    }
+
     public function testDeleteEntity(): void
     {
         $mapper = new GenericMapper(Film::class, $this->getOrm()->getStorage());
