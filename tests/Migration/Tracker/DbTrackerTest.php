@@ -128,7 +128,8 @@ class DbTrackerTest extends TestCase
     {
         // Apply migrations whose real application order differs from their
         // alphabetical order, within the same second. The reloaded order must
-        // follow application order (seq), not applied_at + alphabetical id.
+        // follow application order (the "id" auto-increment), not
+        // applied_at + alphabetical id.
         $tracker1 = new DbTracker($this->connection);
         $tracker1->markApplied('m_c');
         $tracker1->markApplied('m_a');
@@ -141,11 +142,49 @@ class DbTrackerTest extends TestCase
         $this->assertSame(['m_c', 'm_a', 'm_b'], $tracker2->getArrayCopy());
     }
 
+    public function testCreatesTableWithAutoIncrementIdColumn(): void
+    {
+        $tracker = new DbTracker($this->connection);
+        $tracker->markApplied('m1');
+
+        // The "id" column exists and auto-increments (was not provided on insert).
+        $row = $this->connection->fetchOne('SELECT id, migration_id FROM hector_migrations');
+
+        $this->assertNotNull($row);
+        $this->assertArrayHasKey('id', $row);
+        $this->assertSame(1, (int)$row['id']);
+        $this->assertSame('m1', $row['migration_id']);
+    }
+
+    public function testFallsBackToAppliedAtOrderOnALegacyTableWithoutIdColumn(): void
+    {
+        // Simulate a tracking table created by a previous version (no "id" column).
+        $this->connection->execute(
+            'CREATE TABLE hector_migrations ('
+            . 'migration_id VARCHAR(255) NOT NULL PRIMARY KEY, '
+            . 'applied_at DATETIME NOT NULL, '
+            . 'duration_ms FLOAT NULL'
+            . ')'
+        );
+        $this->connection->execute(
+            "INSERT INTO hector_migrations (migration_id, applied_at) VALUES "
+            . "('m_a', '2026-01-01 00:00:01'), "
+            . "('m_b', '2026-01-01 00:00:02')"
+        );
+
+        $tracker = new DbTracker($this->connection);
+
+        // Deterministic fallback order: applied_at then migration_id (not the "id" column).
+        $this->assertSame(['m_a', 'm_b'], $tracker->getArrayCopy());
+        $this->assertTrue($tracker->isApplied('m_a'));
+        $this->assertCount(2, $tracker);
+    }
+
     public function testMarkAppliedIsIdempotentAcrossConcurrentProcesses(): void
     {
         // Simulate two processes: tracker2 loads its cache (empty) before tracker1 inserts the
-        // same migration, so tracker2's stale check-then-insert races on the primary key. The
-        // ignore-insert affects 0 rows instead of raising, and markApplied() treats it as
+        // same migration, so tracker2's stale check-then-insert races on the unique migration_id.
+        // The ignore-insert affects 0 rows instead of raising, and markApplied() treats it as
         // already applied.
         $tracker2 = new DbTracker($this->connection);
         $this->assertFalse($tracker2->isApplied('m1')); // primes the stale (empty) cache
@@ -153,7 +192,7 @@ class DbTrackerTest extends TestCase
         $tracker1 = new DbTracker($this->connection);
         $tracker1->markApplied('m1');
 
-        // tracker2 still believes m1 is not applied; the insert hits the primary key.
+        // tracker2 still believes m1 is not applied; the insert hits the unique migration_id.
         $tracker2->markApplied('m1');
 
         $this->assertTrue($tracker2->isApplied('m1'));
