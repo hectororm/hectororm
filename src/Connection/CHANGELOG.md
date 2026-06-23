@@ -24,6 +24,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Added `DriverCapabilities::hasTransactionalDdl()` to detect whether DDL statements participate in the surrounding transaction (true on SQLite/PostgreSQL, false on MySQL/MariaDB). **Note:** this adds a method to the `DriverCapabilities` interface, so any third-party implementation must implement it
+### Added
+
+- Added `ConnectionSet::beginTransaction()`, `ConnectionSet::commit()` and `ConnectionSet::rollBack()` to start/commit/roll back a transaction across every connection of the set
 
 ## [1.3.0] - 2026-05-12
 
