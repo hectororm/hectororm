@@ -43,6 +43,17 @@ class OffsetPaginationNavigatorTest extends TestCase
         $this->assertNull($navigator->getLastRequest());
     }
 
+    public function testGetLastRequestWithEmptyTotal(): void
+    {
+        // total = 0 means there are no pages: there must be no "last" request/link rather than
+        // one pointing at page 0 (which would be invalid and yield a negative offset).
+        $pagination = new OffsetPagination([], 10, total: 0, currentPage: 1);
+        $navigator = new OffsetPaginationNavigator($pagination);
+
+        $this->assertNull($navigator->getLastRequest());
+        $this->assertNull($navigator->getLastUri(Uri::create('https://gethectororm.com/api/items')));
+    }
+
     public function testGetPreviousRequest(): void
     {
         $pagination = new OffsetPagination(['a', 'b'], 15, currentPage: 3);
