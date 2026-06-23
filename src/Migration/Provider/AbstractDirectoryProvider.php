@@ -21,6 +21,7 @@ use Hector\Migration\MigrationInterface;
 use Psr\Container\ContainerInterface;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
+use ReflectionClass;
 use SplFileInfo;
 
 abstract class AbstractDirectoryProvider implements MigrationProviderInterface
@@ -158,6 +159,18 @@ abstract class AbstractDirectoryProvider implements MigrationProviderInterface
      */
     protected function instantiate(string $class): MigrationInterface
     {
+        // Guard direct construction: an abstract class (or interface) is a subclass of
+        // MigrationInterface but cannot be instantiated; `new $class()` would otherwise raise
+        // a raw Error. A container is trusted to build the instance itself.
+        if (
+            (null === $this->container || false === $this->container->has($class))
+            && false === (new ReflectionClass($class))->isInstantiable()
+        ) {
+            throw new MigrationException(
+                sprintf('Migration class "%s" is not instantiable', $class)
+            );
+        }
+
         $migration = match (true) {
             null !== $this->container && true === $this->container->has($class) => $this->container->get($class),
             default => new $class(),

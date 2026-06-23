@@ -79,6 +79,19 @@ class DirectoryProviderTest extends TestCase
         $provider->getArrayCopy();
     }
 
+    public function testAbstractMigrationClassThrowsInstantiableError(): void
+    {
+        // The fixture file returns the FQCN of an abstract migration class: it passes the
+        // instanceof/subclass checks but cannot be instantiated. The provider must reject it
+        // with a clear MigrationException instead of letting `new` raise a raw Error.
+        $provider = new DirectoryProvider(__DIR__ . '/../Fake/migrations_abstract');
+
+        $this->expectException(MigrationException::class);
+        $this->expectExceptionMessage('is not instantiable');
+
+        $provider->getArrayCopy();
+    }
+
     public function testIteratorAggregate(): void
     {
         $provider = new DirectoryProvider($this->fixturesDir);
