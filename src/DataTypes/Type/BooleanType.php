@@ -32,6 +32,10 @@ class BooleanType extends AbstractType
 
         $this->assertScalar($value);
 
+        // Resolve textual booleans (e.g. the MySQL strings "true"/"false") before
+        // any cast: a naive (bool) "false" would otherwise yield true.
+        $value = $this->normalizeBoolean($value);
+
         if (null !== $expected) {
             if ($expected->isBuiltin()) {
                 settype($value, $expected->getName());
@@ -42,16 +46,7 @@ class BooleanType extends AbstractType
             throw ValueException::castNotBuiltin($this);
         }
 
-        if (is_string($value)) {
-            switch (strtolower($value)) {
-                case 'true':
-                    return true;
-                case 'false':
-                    return false;
-            }
-        }
-
-        return $value == true;
+        return $value;
     }
 
     /**
@@ -65,15 +60,24 @@ class BooleanType extends AbstractType
 
         $this->assertScalar($value);
 
+        return (int)$this->normalizeBoolean($value);
+    }
+
+    /**
+     * Resolve a scalar to a boolean, honouring the textual values "true"/"false"
+     * (case-insensitive) so that the string "false" is not interpreted as true.
+     */
+    private function normalizeBoolean(mixed $value): bool
+    {
         if (is_string($value)) {
             switch (strtolower($value)) {
                 case 'true':
-                    return 1;
+                    return true;
                 case 'false':
-                    return 0;
+                    return false;
             }
         }
 
-        return (int)$value;
+        return (bool)$value;
     }
 }
