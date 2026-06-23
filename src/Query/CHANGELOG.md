@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Pagination\AbstractQueryPaginator::extractColumnOrderItems()` returning the ORDER BY items that are plain column references (deterministic and materialisable)
 - `Helper::unquote()` to de-quote an identifier: trims surrounding whitespace then strips a matching enclosing quote pair (undoubling the inner quote character), with a configurable set of quote characters
 - `Pagination\AbstractQueryPaginator::fetchTotal()` extension point so subclasses can customise how the total is counted (e.g. count distinct primary keys instead of JOIN-inflated rows)
+- `Statement\RandomFunction` rendering the driver-specific random function (`RAND()` on MySQL/MariaDB, `RANDOM()` on SQLite/PostgreSQL) via `DriverInfo`
 
 ### Changed
 
@@ -24,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - `Insert::ignore()` / `QueryBuilder::ignore()` now emit driver-specific "ignore duplicates" syntax instead of always producing the MySQL-only `INSERT IGNORE`, which raised a syntax error on SQLite and PostgreSQL: SQLite gets `INSERT OR IGNORE`, PostgreSQL gets the `ON CONFLICT DO NOTHING` suffix, and MySQL/MariaDB (or an unknown/absent driver) keep `INSERT IGNORE`
+- `Order::random()` now emits the driver-specific random function instead of a hardcoded `RAND()` (invalid on SQLite/PostgreSQL, which use `RANDOM()`); the function is resolved at render time from `DriverInfo`
 - `Statement\Quoted` now drops empty segments (leading/trailing/double dots, empty identifier) instead of emitting invalid SQL like `` `a`.`b`. `` or an empty string; an all-empty identifier returns `null`
 
 ## [1.3.0] - 2026-05-12

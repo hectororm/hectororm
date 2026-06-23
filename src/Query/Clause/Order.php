@@ -17,6 +17,7 @@ namespace Hector\Query\Clause;
 use Closure;
 use Hector\Query\Component;
 use Hector\Query\Sort\SortInterface;
+use Hector\Query\Statement\RandomFunction;
 use Hector\Query\StatementInterface;
 
 trait Order
@@ -69,7 +70,7 @@ trait Order
      */
     public function random(): static
     {
-        $this->orderBy('RAND()');
+        $this->orderBy(new RandomFunction());
 
         return $this;
     }
