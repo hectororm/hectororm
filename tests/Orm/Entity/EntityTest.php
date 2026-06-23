@@ -446,4 +446,20 @@ class EntityTest extends AbstractTestCase
         $this->assertFalse($film->isAltered('rating'));
         $this->assertFalse($film->isAltered('description'));
     }
+
+    /**
+     * @dataProvider classProvider
+     */
+    public function testLoadNestedOnNullRelation($class): void
+    {
+        // film.original_language_id is NULL in Sakila, so the original_language
+        // relation resolves to null. A nested load() must not fatal on null.
+        $film = $class::get(1);
+
+        $this->assertNull($film->getRelated()->original_language);
+
+        $film->load(['original_language' => ['films']]);
+
+        $this->assertNull($film->getRelated()->original_language);
+    }
 }
