@@ -18,6 +18,7 @@ use Hector\Orm\Relationship\OneToMany;
 use Hector\Orm\Relationship\Relationship;
 use Hector\Orm\Tests\AbstractTestCase;
 use Hector\Orm\Tests\Fake\Entity\Actor;
+use Hector\Orm\Tests\Fake\Entity\Customer;
 use Hector\Orm\Tests\Fake\Entity\Film;
 use Hector\Orm\Tests\Fake\Entity\Language;
 use Hector\Orm\Tests\Fake\Entity\Payment;
@@ -178,6 +179,31 @@ class OneToManyTest extends AbstractTestCase
 
         $this->assertNotNull($film->language_id);
         $this->assertEquals($film->language_id, $language->language_id);
+    }
+
+    public function testLinkNativeClearsDetachedSoSecondCallDoesNotThrow(): void
+    {
+        $relationship = new OneToMany('payments', Customer::class, Payment::class);
+
+        $customer = Customer::get(318);
+        /** @var Collection $payments */
+        $payments = $customer->payments;
+        $initialCount = count($payments);
+        $this->assertGreaterThan(0, $initialCount);
+
+        // Detach one child: it is recorded in the collection's "detached" list.
+        $detached = $payments->first();
+        $key = array_search($detached, $payments->getArrayCopy(), true);
+        unset($payments[$key]);
+
+        // First link: the detached payment is deleted from storage.
+        $relationship->linkNative($customer, $payments);
+
+        // Second link must NOT re-iterate the already-deleted entity
+        // (clearDetached() was called), so no OrmException is thrown.
+        $relationship->linkNative($customer, $payments);
+
+        $this->assertCount($initialCount - 1, $payments);
     }
 
     public function testReverse(): void
