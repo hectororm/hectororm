@@ -23,10 +23,27 @@ use Hector\Pagination\Encoder\Base64CursorEncoder;
 use Hector\Pagination\Navigator\CursorPaginationNavigator;
 use Hector\Pagination\Paginator\CursorPaginator;
 use Hector\Pagination\Request\CursorPaginationRequest;
+use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 
 class CursorPaginatorTest extends TestCase
 {
+    public function testThrowsOnNonPositiveDefaultPerPage(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('defaultPerPage must be greater than 0');
+
+        new CursorPaginator(defaultPerPage: 0);
+    }
+
+    public function testThrowsOnNonPositiveMaxPerPage(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('maxPerPage must be greater than 0 or false');
+
+        new CursorPaginator(maxPerPage: 0);
+    }
+
     public function testCreateRequest(): void
     {
         $paginator = new CursorPaginator();

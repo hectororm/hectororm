@@ -20,6 +20,7 @@ use Hector\Pagination\Encoder\CursorEncoderInterface;
 use Hector\Pagination\Request\CursorPaginationRequest;
 use Hector\Pagination\UriBuilder\CursorPaginationUriBuilder;
 use Hector\Pagination\UriBuilder\PaginationUriBuilderInterface;
+use InvalidArgumentException;
 use Psr\Http\Message\ServerRequestInterface;
 
 final class CursorPaginator implements PaginatorInterface
@@ -38,6 +39,14 @@ final class CursorPaginator implements PaginatorInterface
         ?CursorEncoderInterface $encoder = null,
         ?PaginationUriBuilderInterface $uriBuilder = null,
     ) {
+        if ($this->defaultPerPage < 1) {
+            throw new InvalidArgumentException('defaultPerPage must be greater than 0');
+        }
+
+        if (false !== $this->maxPerPage && $this->maxPerPage < 1) {
+            throw new InvalidArgumentException('maxPerPage must be greater than 0 or false');
+        }
+
         $this->encoder = $encoder ?? new Base64CursorEncoder();
         $this->uriBuilder = $uriBuilder ?? new CursorPaginationUriBuilder(
             cursorParam: $this->cursorParam,

@@ -22,10 +22,27 @@ use Hector\Pagination\Navigator\OffsetPaginationNavigator;
 use Hector\Pagination\OffsetPagination;
 use Hector\Pagination\Paginator\OffsetPaginator;
 use Hector\Pagination\Request\OffsetPaginationRequest;
+use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 
 class OffsetPaginatorTest extends TestCase
 {
+    public function testThrowsOnNonPositiveDefaultPerPage(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('defaultPerPage must be greater than 0');
+
+        new OffsetPaginator(defaultPerPage: 0);
+    }
+
+    public function testThrowsOnNonPositiveMaxPerPage(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('maxPerPage must be greater than 0 or false');
+
+        new OffsetPaginator(maxPerPage: 0);
+    }
+
     public function testCreateRequest(): void
     {
         $paginator = new OffsetPaginator();

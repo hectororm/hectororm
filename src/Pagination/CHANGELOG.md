@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `OffsetPaginationNavigator::getLastRequest()` no longer returns a request for page `0` when the total is `0` (an empty result set): it returns `null`, consistently with `RangePaginationNavigator`. This previously produced a `Link rel="last"` to `page=0` (an invalid page yielding a negative offset)
 ### Fixed
 
+- `OffsetPaginator`, `CursorPaginator` and `RangePaginator` now validate their per-page/limit configuration in the constructor (`defaultPerPage`/`defaultLimit` must be `>= 1`, and `maxPerPage`/`maxLimit` must be `>= 1` or `false`), throwing `InvalidArgumentException` instead of silently producing a `LIMIT 0`
 - `PaginationView` no longer reports `end < start` for an empty page: `start`/`end` are `null` when the page has no items, instead of `start = offset` and `end = offset - 1` (e.g. `0` / `-1`)
 - `CacheCursorStorage::store()` now throws a `RuntimeException` when the underlying PSR-16 cache `set()` returns `false`, instead of returning a cursor name that was never stored (and would be unresolvable later)
 
