@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Insert::ignore()` / `QueryBuilder::ignore()` now emit driver-specific "ignore duplicates" syntax instead of always producing the MySQL-only `INSERT IGNORE`, which raised a syntax error on SQLite and PostgreSQL: SQLite gets `INSERT OR IGNORE`, PostgreSQL gets the `ON CONFLICT DO NOTHING` suffix, and MySQL/MariaDB (or an unknown/absent driver) keep `INSERT IGNORE`
 - `Order::random()` now emits the driver-specific random function instead of a hardcoded `RAND()` (invalid on SQLite/PostgreSQL, which use `RANDOM()`); the function is resolved at render time from `DriverInfo`
 - `whereIn`/`whereNotIn`/`havingIn`/`havingNotIn` (and the `IN` auto-detected by `Conditions::equal()`) with an empty list no longer emit an invalid `IN (  )` clause: `IN []` now renders the always-false `1 = 0` and `NOT IN []` the always-true `1 = 1`, preserving the correct set semantics across drivers
+- `QueryBuilder` locking (`fetchOne`/`fetchAll`/`fetchColumn` with `lock: true`) now emits a plain `FOR UPDATE` on drivers that lock rows but do not support `SKIP LOCKED` (e.g. MySQL < 8.0), instead of silently emitting no lock clause at all
 - `Statement\Quoted` now drops empty segments (leading/trailing/double dots, empty identifier) instead of emitting invalid SQL like `` `a`.`b`. `` or an empty string; an all-empty identifier returns `null`
 
 ## [1.3.0] - 2026-05-12

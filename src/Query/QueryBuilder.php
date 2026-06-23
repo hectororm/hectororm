@@ -355,14 +355,20 @@ class QueryBuilder implements CompoundStatementInterface
      *
      * @return string
      */
-    private function addLockForUpdate(string $statement): string
+    protected function addLockForUpdate(string $statement): string
     {
-        return
-            $statement .
-            match ($this->connection->getDriverInfo()->getCapabilities()->hasLockAndSkip()) {
-                true => ' FOR UPDATE SKIP LOCKED',
-                false => '',
-            };
+        $capabilities = $this->connection->getDriverInfo()->getCapabilities();
+
+        // Prefer FOR UPDATE SKIP LOCKED, fall back to a plain FOR UPDATE when the driver locks
+        // rows but does not support SKIP LOCKED (e.g. MySQL < 8.0). Previously such drivers
+        // silently produced no lock at all.
+        $clause = match (true) {
+            $capabilities->hasLockAndSkip() => ' FOR UPDATE SKIP LOCKED',
+            $capabilities->hasLock() => ' FOR UPDATE',
+            default => '',
+        };
+
+        return $statement . $clause;
     }
 
     /**

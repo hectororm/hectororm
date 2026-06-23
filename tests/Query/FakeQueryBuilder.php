@@ -61,4 +61,9 @@ class FakeQueryBuilder extends QueryBuilder
     {
         return parent::makeDelete();
     }
+
+    public function addLockForUpdate(string $statement): string
+    {
+        return parent::addLockForUpdate($statement);
+    }
 }
