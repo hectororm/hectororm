@@ -14,6 +14,7 @@ namespace Hector\Connection\Tests;
 
 use Generator;
 use Hector\Connection\Connection;
+use Hector\Connection\Exception\ConnectionException;
 use Hector\Connection\Log\Logger;
 use PDO;
 use PHPUnit\Framework\TestCase;
@@ -44,6 +45,74 @@ class ConnectionTest extends TestCase
         $connection = new Connection('fake::memory:');
 
         $this->assertInstanceOf(Connection::class, $connection);
+    }
+
+    public function testLoggerDoesNotLeakDsnCredentials(): void
+    {
+        $secret = 'S3cr3t_P@ss';
+        $logger = new Logger();
+        $connection = new Connection(
+            'mysql:host=127.0.0.1;port=1;dbname=nope;user=admin;password=' . $secret,
+            'admin',
+            $secret,
+            logger: $logger,
+        );
+
+        try {
+            $connection->getPdo();
+        } catch (ConnectionException) {
+            // Connection failure is expected; the log entry is created beforehand.
+        }
+
+        $statement = $logger->getLogs()[0]->getStatement();
+
+        $this->assertStringNotContainsString($secret, $statement);
+        $this->assertStringNotContainsString('user=admin', $statement);
+        $this->assertStringContainsString('password=***', $statement);
+        $this->assertStringContainsString('user=***', $statement);
+    }
+
+    public function testReadDsnDoesNotLeakCredentialsInLog(): void
+    {
+        $secret = 'R3ad_Secr3t';
+        $logger = new Logger();
+        $connection = new Connection(
+            'sqlite::memory:',
+            readDsn: 'mysql:host=127.0.0.1;port=1;dbname=nope;user=reader;password=' . $secret,
+            logger: $logger,
+        );
+
+        try {
+            $connection->getReadPdo();
+        } catch (ConnectionException) {
+            // Connection failure is expected.
+        }
+
+        $statements = array_map(
+            static fn($entry): string => $entry->getStatement(),
+            $logger->getLogs(),
+        );
+
+        $this->assertStringNotContainsString($secret, implode("\n", $statements));
+    }
+
+    public function testConnectionFailureThrowsConnectionExceptionWithoutSecret(): void
+    {
+        $secret = 'S3cr3t_P@ss';
+        $connection = new Connection(
+            'sqlite:/nonexistent_dir_xyz/never/db.sqlite',
+            'admin',
+            $secret,
+        );
+
+        try {
+            $connection->getPdo();
+            $this->fail('Expected ConnectionException was not thrown.');
+        } catch (ConnectionException $exception) {
+            $this->assertStringNotContainsString($secret, $exception->getMessage());
+            $this->assertStringNotContainsString($secret, (string)$exception);
+            $this->assertNull($exception->getPrevious());
+        }
     }
 
     public function testGetDefaultName(): void
