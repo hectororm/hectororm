@@ -145,6 +145,17 @@ class Conditions extends AbstractComponent implements CompoundStatementInterface
         $statement = '';
 
         foreach ($this->conditions as &$condition) {
+            // An empty IN / NOT IN list would render an invalid "IN (  )"; emit a
+            // constant condition instead: IN [] is always false, NOT IN [] always true.
+            if (null !== ($emptyInStatement = $this->getEmptyInStatement($condition))) {
+                if (!empty($statement)) {
+                    $statement .= ' ' . $condition['link'] . ' ';
+                }
+
+                $statement .= $emptyInStatement;
+                continue;
+            }
+
             if (null === ($subStatement = $this->getSubStatement($condition['column'], $bindParams, $driverInfo))) {
                 continue;
             }
@@ -167,5 +178,38 @@ class Conditions extends AbstractComponent implements CompoundStatementInterface
         }
 
         return $statement ?: null;
+    }
+
+    /**
+     * Get the constant statement for an empty IN / NOT IN list, or null otherwise.
+     *
+     * An empty IN list matches nothing (always false: "1 = 0"); an empty NOT IN list
+     * matches everything (always true: "1 = 1"). This avoids emitting an invalid
+     * "IN (  )" clause. The operator comparison is case-insensitive since callers may
+     * pass it in any case through the generic where()/having().
+     *
+     * @param array $condition
+     *
+     * @return string|null
+     */
+    private function getEmptyInStatement(array $condition): ?string
+    {
+        $operator = is_string($condition['operator']) ? strtoupper(trim($condition['operator'])) : null;
+
+        if ('IN' !== $operator && 'NOT IN' !== $operator) {
+            return null;
+        }
+
+        $value = $condition['value'];
+
+        if (!is_iterable($value)) {
+            return null;
+        }
+
+        if (is_countable($value) ? 0 !== count($value) : [] !== iterator_to_array($value)) {
+            return null;
+        }
+
+        return 'NOT IN' === $operator ? '1 = 1' : '1 = 0';
     }
 }

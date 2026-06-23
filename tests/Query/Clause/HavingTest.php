@@ -267,6 +267,30 @@ class HavingTest extends TestCase
         );
     }
 
+    public function testHavingInEmpty(): void
+    {
+        /** @var Having $clause */
+        $clause = $this->getMockForTrait(Having::class);
+        $binds = new BindParamList();
+        $clause->resetHaving();
+        $clause->havingIn('foo', []);
+
+        $this->assertEquals('1 = 0', $clause->having->getStatement($binds));
+        $this->assertEmpty($binds->getArrayCopy());
+    }
+
+    public function testHavingNotInEmpty(): void
+    {
+        /** @var Having $clause */
+        $clause = $this->getMockForTrait(Having::class);
+        $binds = new BindParamList();
+        $clause->resetHaving();
+        $clause->havingNotIn('foo', []);
+
+        $this->assertEquals('1 = 1', $clause->having->getStatement($binds));
+        $this->assertEmpty($binds->getArrayCopy());
+    }
+
     public function testHavingNull(): void
     {
         /** @var Having $clause */

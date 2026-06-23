@@ -279,6 +279,44 @@ class WhereTest extends TestCase
         );
     }
 
+    public function testWhereInEmpty(): void
+    {
+        /** @var Where $clause */
+        $clause = $this->getMockForTrait(Where::class);
+        $binds = new BindParamList();
+        $clause->resetWhere();
+        $clause->whereIn('foo', []);
+
+        $this->assertEquals('1 = 0', $clause->where->getStatement($binds));
+        $this->assertEmpty($binds->getArrayCopy());
+    }
+
+    public function testWhereNotInEmpty(): void
+    {
+        /** @var Where $clause */
+        $clause = $this->getMockForTrait(Where::class);
+        $binds = new BindParamList();
+        $clause->resetWhere();
+        $clause->whereNotIn('foo', []);
+
+        $this->assertEquals('1 = 1', $clause->where->getStatement($binds));
+        $this->assertEmpty($binds->getArrayCopy());
+    }
+
+    public function testWhereInEmptyIsCaseInsensitive(): void
+    {
+        /** @var Where $clause */
+        $clause = $this->getMockForTrait(Where::class);
+        $binds = new BindParamList();
+        $clause->resetWhere();
+        // Operator passed in lower/mixed case through the generic where().
+        $clause->where('foo', 'in', []);
+        $clause->where('bar', 'Not In', []);
+
+        $this->assertEquals('1 = 0 AND 1 = 1', $clause->where->getStatement($binds));
+        $this->assertEmpty($binds->getArrayCopy());
+    }
+
     public function testWhereNull(): void
     {
         /** @var Where $clause */
