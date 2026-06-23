@@ -51,7 +51,13 @@ class JsonType extends AbstractType
                 }
 
                 if ($expected->getName() == stdClass::class) {
-                    return json_decode($value, false, 512, JSON_FORCE_OBJECT);
+                    // JSON_FORCE_OBJECT is an encode-only flag and was ignored by
+                    // json_decode, so invalid JSON returned null silently and a
+                    // JSON array/scalar was returned as a non-object. Use
+                    // JSON_THROW_ON_ERROR and cast to guarantee a stdClass.
+                    $decoded = json_decode($value, false, 512, JSON_THROW_ON_ERROR);
+
+                    return (object)$decoded;
                 }
 
                 throw ValueException::castError($this);

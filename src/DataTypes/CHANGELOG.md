@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `StringType::fromSchema()` now resolves backed-enum typed columns: the `is_a()` class-string check was missing its third `$allow_string` argument, so the `BackedEnum` branch was never reached and valid enum values were rejected with a "not builtin" error
 - `JsonType::fromSchema()` null handling is now reachable (the `assertScalar()` call previously rejected `null` before the null branch could run)
+- `JsonType::fromSchema()` with a `stdClass`-typed property now uses `JSON_THROW_ON_ERROR` instead of the misplaced encode-only `JSON_FORCE_OBJECT` flag (which `json_decode` ignored): invalid JSON now raises a `ValueException` instead of returning `null` silently, and the decoded value is cast to `stdClass` so a JSON array or scalar always yields an object instead of a PHP array/scalar
 - `JsonType::equals()` now compares both sides canonically (recursive key sorting) so object/associative-array values with a different key order are considered equal, avoiding spurious `UPDATE` queries; it also no longer triggers a `TypeError` when the schema side is already a decoded array
 - `UuidType::fromSchema()` no longer triggers a `strlen(null)` deprecation and casts the value to string before length checks
 - `SetType::equals()` now treats an empty string and an empty array as the same empty set (empty members are stripped), avoiding a spurious "not equal" result that triggered unnecessary `UPDATE` queries
