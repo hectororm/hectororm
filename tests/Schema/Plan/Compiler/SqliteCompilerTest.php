@@ -44,7 +44,7 @@ class SqliteCompilerTest extends AbstractCompilerTestCase
             case 'createTableSimple':
                 return <<<'SQL'
                     CREATE TABLE "posts" (
-                      "id" int NOT NULL PRIMARY KEY AUTOINCREMENT,
+                      "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
                       "title" varchar(255) NOT NULL
                     )
                     SQL;
@@ -53,7 +53,7 @@ class SqliteCompilerTest extends AbstractCompilerTestCase
                 // SQLite ignores charset/collation
                 return <<<'SQL'
                     CREATE TABLE "posts" (
-                      "id" int NOT NULL PRIMARY KEY AUTOINCREMENT,
+                      "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
                       "title" varchar(255) NOT NULL
                     )
                     SQL;
@@ -62,7 +62,7 @@ class SqliteCompilerTest extends AbstractCompilerTestCase
                 return [
                     <<<'SQL'
                     CREATE TABLE "posts" (
-                      "id" int NOT NULL PRIMARY KEY AUTOINCREMENT,
+                      "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
                       "user_id" int NOT NULL
                     )
                     SQL,
@@ -72,7 +72,7 @@ class SqliteCompilerTest extends AbstractCompilerTestCase
             case 'createTableMultipleIndexes':
                 return [
                     "CREATE TABLE \"users\" (\n" .
-                    "  \"id\" int NOT NULL PRIMARY KEY AUTOINCREMENT,\n" .
+                    "  \"id\" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,\n" .
                     "  \"email\" varchar(255) NOT NULL,\n" .
                     "  \"name\" varchar(100) NOT NULL\n" .
                     ")",
@@ -83,7 +83,7 @@ class SqliteCompilerTest extends AbstractCompilerTestCase
             case 'createTableIfNotExists':
                 return <<<'SQL'
                     CREATE TABLE IF NOT EXISTS "posts" (
-                      "id" int NOT NULL PRIMARY KEY AUTOINCREMENT,
+                      "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
                       "title" varchar(255) NOT NULL
                     )
                     SQL;
@@ -179,7 +179,7 @@ class SqliteCompilerTest extends AbstractCompilerTestCase
                 return 'ALTER TABLE "users" ADD COLUMN "deleted_at" datetime DEFAULT NULL';
 
             case 'columnAutoIncrement':
-                return 'ALTER TABLE "users" ADD COLUMN "id" int NOT NULL PRIMARY KEY AUTOINCREMENT';
+                return 'ALTER TABLE "users" ADD COLUMN "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT';
 
             case 'columnAfter':
                 // SQLite ignores AFTER
@@ -187,7 +187,7 @@ class SqliteCompilerTest extends AbstractCompilerTestCase
 
             case 'columnFirst':
                 // SQLite ignores FIRST
-                return 'ALTER TABLE "users" ADD COLUMN "id" int NOT NULL PRIMARY KEY AUTOINCREMENT';
+                return 'ALTER TABLE "users" ADD COLUMN "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT';
 
             // Edge cases
             case 'emptyPlan':
@@ -206,13 +206,13 @@ class SqliteCompilerTest extends AbstractCompilerTestCase
                     // Structure first (both CREATE TABLEs)
                     <<<'SQL'
                     CREATE TABLE "posts" (
-                      "id" int NOT NULL PRIMARY KEY AUTOINCREMENT,
+                      "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
                       "user_id" int NOT NULL
                     )
                     SQL,
                     <<<'SQL'
                     CREATE TABLE "users" (
-                      "id" int NOT NULL PRIMARY KEY AUTOINCREMENT,
+                      "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
                       "name" varchar(100) NOT NULL
                     )
                     SQL,
@@ -263,13 +263,13 @@ class SqliteCompilerTest extends AbstractCompilerTestCase
                     // Structure pass: CREATE users, raw, CREATE posts (in order)
                     <<<'SQL'
                     CREATE TABLE "users" (
-                      "id" int NOT NULL PRIMARY KEY AUTOINCREMENT
+                      "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT
                     )
                     SQL,
                     'CREATE FULLTEXT INDEX ft_name ON users (name)',
                     <<<'SQL'
                     CREATE TABLE "posts" (
-                      "id" int NOT NULL PRIMARY KEY AUTOINCREMENT,
+                      "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
                       "user_id" int NOT NULL
                     )
                     SQL,
@@ -329,7 +329,7 @@ class SqliteCompilerTest extends AbstractCompilerTestCase
                 return [
                     <<<'SQL'
                     CREATE TABLE "users" (
-                      "id" int NOT NULL PRIMARY KEY AUTOINCREMENT,
+                      "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
                       "name" varchar(255) NOT NULL
                     )
                     SQL,
@@ -378,7 +378,7 @@ class SqliteCompilerTest extends AbstractCompilerTestCase
                     'PRAGMA foreign_keys = OFF',
                     <<<'SQL'
                     CREATE TABLE "users" (
-                      "id" int NOT NULL PRIMARY KEY AUTOINCREMENT
+                      "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT
                     )
                     SQL,
                     'PRAGMA foreign_keys = ON',
@@ -390,7 +390,7 @@ class SqliteCompilerTest extends AbstractCompilerTestCase
                     'PRAGMA foreign_keys = OFF',
                     <<<'SQL'
                     CREATE TABLE "posts" (
-                      "id" int NOT NULL PRIMARY KEY AUTOINCREMENT,
+                      "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
                       "user_id" int NOT NULL
                     )
                     SQL,

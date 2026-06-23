@@ -456,6 +456,12 @@ class SqliteTest extends TestCase
         $this->assertEquals(
             [
                 [
+                    'name' => 'PRIMARY',
+                    'type' => 'primary',
+                    'table_name' => 'address',
+                    'columns_name' => ['address_id'],
+                ],
+                [
                     'name' => 'idx_fk_city_id',
                     'type' => 'index',
                     'table_name' => 'address',

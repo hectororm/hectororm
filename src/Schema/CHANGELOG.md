@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `ForeignKey::getReferencedTable()` now returns `null` instead of raising a `Call to a member function on null` error when the schema or its container cannot be resolved: the nullsafe operator was applied only to the first link of the chain and not propagated to `getSchema()`/`getTable()`
 - Report every column of a composite primary key as not nullable on SQLite: `PRAGMA table_info` exposes `pk` as the 1-based position in the primary key, and the nullability check compared it to `1`, so the 2nd, 3rd… columns of a composite primary key were wrongly marked nullable
 - Preserve numeric precision/scale (e.g. `DECIMAL(10,2)`) on SQLite table rebuilds: columns carried over unchanged were reconstructed using only the string length, dropping precision/scale (`DECIMAL(10,2)` became `decimal`)
+- Preserve the `INTEGER PRIMARY KEY` and its `AUTOINCREMENT` on SQLite table rebuilds: the generator now introspects the rowid primary key from `PRAGMA table_info` (it never appears in `PRAGMA index_list`) and detects `AUTOINCREMENT` on quoted identifiers, and the compiler emits `INTEGER` (not the `int` synonym, which SQLite rejects) for autoincrement columns. Previously both were silently dropped, corrupting the table on `modifyColumn`/rebuild
 
 ## [1.3.0] - 2026-05-12
 

@@ -265,4 +265,71 @@ class SqliteCompilerExecuteTest extends AbstractCompilerExecuteTestCase
         $cleanPlan->drop('decimal_rebuild_test', ifExists: true);
         static::executePlan($cleanPlan, $connection);
     }
+
+    /**
+     * A rebuild must preserve the INTEGER PRIMARY KEY and its AUTOINCREMENT
+     * behaviour (CRIT-02 / C1): both used to be silently lost because the
+     * SQLite generator did not introspect the rowid primary key nor the
+     * AUTOINCREMENT flag on quoted identifiers.
+     */
+    public function testRebuildPreservesPrimaryKeyAndAutoIncrement(): void
+    {
+        $connection = static::createConnection();
+        static::$connection = $connection;
+
+        $plan = new Plan();
+        $plan->create('pk_rebuild_test', function (TableOperation $t): void {
+            $t->addColumn('id', 'INTEGER', autoIncrement: true)
+                ->addColumn('name', 'VARCHAR(100)')
+                ->addColumn('email', 'VARCHAR(255)')
+                ->addIndex('PRIMARY', ['id'], Index::PRIMARY)
+                ->addIndex('uniq_email', ['email'], Index::UNIQUE);
+        });
+        static::executePlan($plan, $connection);
+
+        $connection->execute("INSERT INTO pk_rebuild_test (name, email) VALUES ('Alice', 'alice@example.com')");
+
+        // Modify "name" — triggers a full rebuild.
+        $compiler = new SqliteCompiler();
+        $generator = new Sqlite($connection);
+        $schema = $generator->generateSchema('main');
+
+        $plan2 = new Plan();
+        $plan2->alter('pk_rebuild_test')->modifyColumn('name', 'TEXT');
+
+        foreach ($plan2->getStatements($compiler, $schema) as $statement) {
+            $connection->execute($statement);
+        }
+
+        // Re-introspect: the primary key must still be there.
+        $schema = $generator->generateSchema('main');
+        $table = $schema->getTable('pk_rebuild_test');
+
+        $primaryIndex = null;
+        $uniqueIndex = null;
+        foreach ($table->getIndexes() as $index) {
+            if (Index::PRIMARY === $index->getType()) {
+                $primaryIndex = $index;
+            }
+            if (Index::UNIQUE === $index->getType()) {
+                $uniqueIndex = $index;
+            }
+        }
+
+        $this->assertNotNull($primaryIndex, 'Primary key lost after rebuild');
+        $this->assertSame(['id'], $primaryIndex->getColumnsName());
+        $this->assertNotNull($uniqueIndex, 'Unique index lost after rebuild');
+        $this->assertTrue($table->getColumn('id')->isAutoIncrement(), 'AUTOINCREMENT lost after rebuild');
+
+        // AUTOINCREMENT must actually work: an insert without id must allocate one.
+        $connection->execute("INSERT INTO pk_rebuild_test (name, email) VALUES ('Bob', 'bob@example.com')");
+        $rows = $connection->fetchAll('SELECT id FROM pk_rebuild_test ORDER BY id');
+        $this->assertCount(2, $rows);
+        $this->assertGreaterThan((int)$rows[0]['id'], (int)$rows[1]['id']);
+
+        // Cleanup
+        $cleanPlan = new Plan();
+        $cleanPlan->drop('pk_rebuild_test', ifExists: true);
+        static::executePlan($cleanPlan, $connection);
+    }
 }
