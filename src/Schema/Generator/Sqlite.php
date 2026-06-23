@@ -138,7 +138,10 @@ class Sqlite extends AbstractGenerator
                     $result['dflt_value'] == 'NULL' ||
                     null === $result['dflt_value'] ?
                         null : $result['dflt_value'],
-                'nullable' => $result['notnull'] == '0' && $result['pk'] != '1' && !$autoIncrement,
+                // PRAGMA table_info exposes `pk` as the 1-based position within the primary
+                // key (0 when not part of it). Comparing to '1' wrongly treated the 2nd, 3rd…
+                // columns of a composite primary key as nullable; any pk > 0 must not be.
+                'nullable' => $result['notnull'] == '0' && $result['pk'] == '0' && !$autoIncrement,
                 'type' => $type['name'],
                 'auto_increment' => $autoIncrement,
                 'maxlength' => $type['maxlength'],

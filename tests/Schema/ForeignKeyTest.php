@@ -14,9 +14,34 @@ namespace Hector\Schema\Tests;
 
 use Hector\Schema\Column;
 use Hector\Schema\ForeignKey;
+use Hector\Schema\Schema;
+use Hector\Schema\Table;
 
 class ForeignKeyTest extends AbstractTestCase
 {
+    public function testGetReferencedTableReturnsNullWithoutContainer(): void
+    {
+        // A schema detached from any container: resolving the referenced table is
+        // impossible, so getReferencedTable() must return null rather than raise an Error
+        // by calling a method on the null container.
+        $foreignKey = new ForeignKey(
+            name: 'fk_orphan',
+            columns_name: ['other_id'],
+            referenced_schema_name: 'sakila',
+            referenced_table_name: 'other',
+            referenced_columns_name: ['id'],
+        );
+        new Table(
+            schema_name: 'sakila',
+            type: Table::TYPE_TABLE,
+            name: 'orphan',
+            foreign_keys: [$foreignKey],
+            schema: new Schema('default', 'sakila', 'utf8mb4'),
+        );
+
+        $this->assertNull($foreignKey->getReferencedTable());
+    }
+
     public function testSerialization(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('customer');

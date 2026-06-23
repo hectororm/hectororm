@@ -220,10 +220,13 @@ class ForeignKey
      */
     public function getReferencedTable(): ?Table
     {
+        // The schema and its container are both nullable, so the nullsafe operator must
+        // propagate through the whole chain; otherwise an unresolved schema/container led to
+        // a "method call on null" Error instead of returning null.
         return
             $this
                 ->getTable()->getSchema()?->getContainer()
-                ->getSchema($this->getReferencedSchemaName())->getTable($this->getReferencedTableName());
+                ?->getSchema($this->getReferencedSchemaName())?->getTable($this->getReferencedTableName());
     }
 
     /**
