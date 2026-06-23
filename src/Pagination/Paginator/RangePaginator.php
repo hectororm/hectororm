@@ -39,6 +39,14 @@ final class RangePaginator implements PaginatorInterface
         private int|false $maxLimit = 100,
         ?PaginationUriBuilderInterface $uriBuilder = null,
     ) {
+        if ($this->defaultLimit < 1) {
+            throw new InvalidArgumentException('defaultLimit must be greater than 0');
+        }
+
+        if (false !== $this->maxLimit && $this->maxLimit < 1) {
+            throw new InvalidArgumentException('maxLimit must be greater than 0 or false');
+        }
+
         $this->uriBuilder = $uriBuilder ?? new RangePaginationUriBuilder($this->rangeParam);
     }
 

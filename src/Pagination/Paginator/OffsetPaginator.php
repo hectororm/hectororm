@@ -17,6 +17,7 @@ namespace Hector\Pagination\Paginator;
 
 use Hector\Pagination\Request\OffsetPaginationRequest;
 use Hector\Pagination\UriBuilder\OffsetPaginationUriBuilder;
+use InvalidArgumentException;
 use Hector\Pagination\UriBuilder\PaginationUriBuilderInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -34,6 +35,14 @@ final class OffsetPaginator implements PaginatorInterface
         private int|false $maxPerPage = false,
         ?PaginationUriBuilderInterface $uriBuilder = null,
     ) {
+        if ($this->defaultPerPage < 1) {
+            throw new InvalidArgumentException('defaultPerPage must be greater than 0');
+        }
+
+        if (false !== $this->maxPerPage && $this->maxPerPage < 1) {
+            throw new InvalidArgumentException('maxPerPage must be greater than 0 or false');
+        }
+
         $this->uriBuilder = $uriBuilder ?? new OffsetPaginationUriBuilder(
             $this->pageParam,
             $this->maxPerPage !== false ? $this->perPageParam : null,

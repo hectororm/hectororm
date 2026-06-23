@@ -39,11 +39,22 @@ final class PaginationView
         UriInterface $baseUri,
     ): self {
         $current = $navigator->getCurrentRequest();
+        $count = $pagination->count();
+
+        // An empty page has no item range: leave start/end null instead of producing
+        // end = offset - 1 (i.e. end < start).
+        $start = null;
+        $end = null;
+
+        if (null !== $current && $count > 0) {
+            $start = $current->getOffset();
+            $end = $current->getOffset() + $count - 1;
+        }
 
         return new self(
-            start: $current?->getOffset(),
-            end: $current !== null ? $current->getOffset() + $pagination->count() - 1 : null,
-            count: $pagination->count(),
+            start: $start,
+            end: $end,
+            count: $count,
             total: $pagination->getTotal(),
             firstUri: $navigator->getFirstUri($baseUri),
             previousUri: $navigator->getPreviousUri($baseUri),

@@ -22,10 +22,27 @@ use Hector\Pagination\Navigator\RangePaginationNavigator;
 use Hector\Pagination\Paginator\RangePaginator;
 use Hector\Pagination\RangePagination;
 use Hector\Pagination\Request\RangePaginationRequest;
+use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 
 class RangePaginatorTest extends TestCase
 {
+    public function testThrowsOnNonPositiveDefaultLimit(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('defaultLimit must be greater than 0');
+
+        new RangePaginator(defaultLimit: 0);
+    }
+
+    public function testThrowsOnNonPositiveMaxLimit(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('maxLimit must be greater than 0 or false');
+
+        new RangePaginator(maxLimit: 0);
+    }
+
     public function testCreateRequestFromQueryString(): void
     {
         $paginator = new RangePaginator();
