@@ -450,8 +450,12 @@ class Connection
     ): Generator {
         $stm = $this->pdoExecute($this->getReadPdo(), $statement, $input_parameters);
 
-        while (false !== ($row = $stm->fetchColumn($column))) {
-            yield $row;
-        }
+        // Iterate the statement with FETCH_COLUMN instead of looping on fetchColumn():
+        // the latter returns false both at end-of-cursor and when the column value
+        // itself is false (e.g. a boolean false from PostgreSQL), which would truncate
+        // the result set. Traversing the statement stops only on a real end-of-cursor.
+        $stm->setFetchMode(PDO::FETCH_COLUMN, $column);
+
+        yield from $stm;
     }
 }

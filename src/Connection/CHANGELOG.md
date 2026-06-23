@@ -18,6 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Fix the transaction counter desyncing when `beginTransaction()` fails: the counter is now incremented only after `PDO::beginTransaction()` succeeds (previously a failure left the counter incremented with no real transaction, permanently routing reads to the write PDO and making the next `commit()` call `PDO::commit()` without an active transaction). Nesting semantics are preserved (only the outermost call touches the real PDO)
+### Fixed
+
+- Fix `Connection::yieldColumn()` truncating the result set when a column value is boolean `false`: it now traverses the statement in `PDO::FETCH_COLUMN` mode instead of looping on `false !== fetchColumn()`, which conflated a `false` value with end-of-cursor (observable with PostgreSQL boolean columns)
 
 ## [1.3.0] - 2026-05-12
 

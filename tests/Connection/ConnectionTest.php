@@ -517,4 +517,28 @@ class ConnectionTest extends TestCase
         $this->assertNotNull($result);
         $this->assertEquals('Bar', $result[0]);
     }
+
+    /**
+     * yieldColumn() must yield every row, including falsy values, and must not stop
+     * early when a value is falsy. The previous implementation looped on
+     * `false !== $stm->fetchColumn()`, which conflates end-of-cursor with a column
+     * value of boolean false (e.g. from PostgreSQL) and would truncate the result.
+     *
+     * SQLite returns 0 / '' (not boolean false) so it cannot reproduce the pgsql-only
+     * truncation directly; this test guards the "reads all rows incl. 0 and ''"
+     * behaviour against regressions.
+     */
+    public function testYieldColumnYieldsAllRowsIncludingFalsyValues(): void
+    {
+        $connection = new Connection('sqlite::memory:');
+        $connection->execute('CREATE TABLE `falsy` (`id` integer primary key, `val` integer);');
+        $connection->execute('INSERT INTO `falsy` (`id`, `val`) VALUES (1, 0), (2, 5), (3, 0), (4, 7);');
+
+        // Read column index 1 (`val`), not 0, to also cover the $column argument.
+        $result = iterator_to_array(
+            $connection->yieldColumn('SELECT `id`, `val` FROM `falsy` ORDER BY `id`;', [], 1)
+        );
+
+        $this->assertSame([0, 5, 0, 7], $result);
+    }
 }
