@@ -66,7 +66,16 @@ final class OffsetPaginationNavigator implements PaginationNavigatorInterface
      */
     public function getLastRequest(): ?OffsetPaginationRequest
     {
-        if (null === ($totalPages = $this->pagination->getTotalPages())) {
+        $totalPages = $this->pagination->getTotalPages();
+
+        // No last page when the total is unknown.
+        if (null === $totalPages) {
+            return null;
+        }
+
+        // No last page when the result set is empty (0 pages): otherwise this would build a
+        // request for page 0 (consistent with RangePaginationNavigator).
+        if ($totalPages < 1) {
             return null;
         }
 

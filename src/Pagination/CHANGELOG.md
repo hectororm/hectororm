@@ -19,6 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - A pagination built from a generator can now be iterated after `count()`, `isEmpty()`, `getArrayCopy()` or `jsonSerialize()` materialised it: `getIterator()` serves the cached items instead of returning the exhausted generator (which raised "Cannot rewind/traverse an already closed generator")
+### Fixed
+
+- `OffsetPaginationNavigator::getLastRequest()` no longer returns a request for page `0` when the total is `0` (an empty result set): it returns `null`, consistently with `RangePaginationNavigator`. This previously produced a `Link rel="last"` to `page=0` (an invalid page yielding a negative offset)
 
 ## [1.3.0] - 2026-05-12
 
