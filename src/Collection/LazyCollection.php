@@ -487,11 +487,16 @@ class LazyCollection implements CollectionInterface
         $generator = function (): Generator {
             $seen = [];
 
+            // Mirror Collection::unique() / array_unique() default SORT_STRING semantics:
+            // de-duplicate on the string cast of each item (so '1e3' and '1000' are kept
+            // apart while 0 and '0' are merged), instead of the previous loose == compare.
             foreach ($this->items as $key => $item) {
-                if (in_array($item, $seen)) {
+                $hash = (string)$item;
+
+                if (array_key_exists($hash, $seen)) {
                     continue;
                 }
-                $seen[] = $item;
+                $seen[$hash] = true;
 
                 yield $key => $item;
             }
