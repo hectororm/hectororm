@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - `Collection::median()` (and `LazyCollection::median()`, which delegates to it) returned a wrong result on unsorted data: it read the middle element by key after an `asort()` that preserves keys, instead of by position. Values are now re-indexed after sorting
+- `LazyCollection::slice()` (and therefore `get()`) no longer drains the whole source for a positive offset/length window: once the window is filled it stops consuming the underlying generator, restoring the lazy contract and making `get()`/`slice()` usable on very large or infinite generators
 - `LazyCollection::flip()` no longer throws a fatal `TypeError` on non-scalar items; such values are now skipped, mirroring `array_flip()`'s "entry skipped" behaviour (`Collection::flip()` already delegated to `array_flip()` and is unchanged)
 
 ## [1.3.0] - 2026-05-12

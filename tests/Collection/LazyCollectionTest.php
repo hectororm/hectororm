@@ -18,6 +18,7 @@ use Generator;
 use Hector\Collection\Collection;
 use Hector\Collection\LazyCollection;
 use InvalidArgumentException;
+use LogicException;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 
@@ -79,5 +80,44 @@ class LazyCollectionTest extends TestCase
         $collection = new LazyCollection(['a' => 'x', 'b' => new stdClass(), 'c' => ['nested'], 'd' => 'z']);
 
         $this->assertSame(['x' => 'a', 'z' => 'd'], $collection->flip()->getArrayCopy());
+    }
+
+    public function testSliceWithPositiveWindowDoesNotDrainTheSource(): void
+    {
+        // A virtually unbounded source: it records how many items get pulled and trips
+        // if it is fully drained, so a regression to the old "drain everything" behaviour
+        // fails fast (and would hang on a truly infinite generator).
+        $pulled = 0;
+        $source = function () use (&$pulled): Generator {
+            for ($i = 0; ; $i++) {
+                if ($pulled++ > 1000) {
+                    throw new LogicException('Source was drained: slice() is not lazy.');
+                }
+
+                yield $i;
+            }
+        };
+
+        $this->assertSame([0], (new LazyCollection($source))->slice(0, 1)->getArrayCopy());
+        // Window of length 1 from offset 0: only the window plus one overshoot is pulled.
+        $this->assertLessThanOrEqual(2, $pulled);
+    }
+
+    public function testGetDoesNotDrainTheSource(): void
+    {
+        $pulled = 0;
+        $source = function () use (&$pulled): Generator {
+            for ($i = 0; ; $i++) {
+                if ($pulled++ > 1000) {
+                    throw new LogicException('Source was drained: get() is not lazy.');
+                }
+
+                yield $i;
+            }
+        };
+
+        $this->assertSame(2, (new LazyCollection($source))->get(2));
+        // get(2) == slice(2, 1): items 0..2 plus one overshoot.
+        $this->assertLessThanOrEqual(4, $pulled);
     }
 }
