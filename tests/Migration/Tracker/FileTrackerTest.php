@@ -116,4 +116,39 @@ class FileTrackerTest extends TestCase
 
         $tracker->getArrayCopy();
     }
+
+    public function testWriteIsAtomicAndLeavesNoTemporaryFile(): void
+    {
+        // The atomic write goes through a temporary file renamed over the target. After a
+        // successful write the directory must contain the tracking file and no leftover
+        // temporary file, and the tracking file must be valid (fully written) JSON.
+        $tracker = new FileTracker($this->tempFile);
+        $tracker->markApplied('m1');
+        $tracker->markApplied('m2');
+
+        $directory = dirname($this->tempFile);
+        $leftovers = glob($directory . DIRECTORY_SEPARATOR . '.hector-migration-*');
+
+        $this->assertSame([], $leftovers);
+        $this->assertIsArray(json_decode((string)file_get_contents($this->tempFile), true));
+
+        // The content must be intact when re-read by a fresh instance.
+        $reloaded = new FileTracker($this->tempFile);
+        $this->assertSame(['m1', 'm2'], $reloaded->getArrayCopy());
+    }
+
+    public function testWriteToUnwritableDirectoryThrows(): void
+    {
+        // Target directory does not exist: the write must fail with a MigrationException and
+        // must not leave a partial target file behind.
+        $path = $this->tempFile . DIRECTORY_SEPARATOR . 'nope' . DIRECTORY_SEPARATOR . 'tracking.json';
+        $tracker = new FileTracker($path);
+
+        try {
+            $tracker->markApplied('m1');
+            $this->fail('Expected a MigrationException');
+        } catch (MigrationException) {
+            $this->assertFileDoesNotExist($path);
+        }
+    }
 }
