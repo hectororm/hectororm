@@ -345,6 +345,35 @@ class QueryBuilderTest extends TestCase
         );
     }
 
+    /**
+     * @dataProvider lockForUpdateProvider
+     */
+    public function testAddLockForUpdateIsDriverAware(string $driver, string $version, string $expectedSuffix): void
+    {
+        $connection = $this->createMock(Connection::class);
+        $connection->method('getDriverInfo')->willReturn(new DriverInfo($driver, $version));
+
+        $queryBuilder = new FakeQueryBuilder($connection);
+
+        $this->assertSame(
+            'SELECT * FROM foo' . $expectedSuffix,
+            $queryBuilder->addLockForUpdate('SELECT * FROM foo'),
+        );
+    }
+
+    public function lockForUpdateProvider(): array
+    {
+        return [
+            // MySQL >= 8.0 supports SKIP LOCKED.
+            'mysql 8.0' => ['mysql', '8.0.30', ' FOR UPDATE SKIP LOCKED'],
+            // MySQL < 8.0 locks rows but has no SKIP LOCKED: must still emit a plain FOR UPDATE
+            // (it previously emitted nothing, silently dropping the lock).
+            'mysql 5.7' => ['mysql', '5.7.40', ' FOR UPDATE'],
+            // SQLite has no row-level locking clause: no suffix.
+            'sqlite' => ['sqlite', '3.45.0', ''],
+        ];
+    }
+
     public function testInsert(): void
     {
         $queryBuilder = new FakeQueryBuilder($this->getConnection());
