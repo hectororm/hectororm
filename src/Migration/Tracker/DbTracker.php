@@ -91,8 +91,9 @@ class DbTracker implements MigrationTrackerInterface
         }
 
         $affectedRows = $this->newQueryBuilder()->insert([
+            'seq' => $this->nextSequence(),
             'migration_id' => $migrationId,
-            'applied_at' => date('Y-m-d H:i:s'),
+            'applied_at' => gmdate('Y-m-d H:i:s'),
             'duration_ms' => $durationMs,
         ]);
 
@@ -136,6 +137,24 @@ class DbTracker implements MigrationTrackerInterface
     }
 
     /**
+     * Compute the next monotonic sequence value (MAX(seq) + 1).
+     *
+     * The sequence is insertion-ordered and used to replay migrations in their
+     * exact application order, which applied_at (second precision) cannot.
+     *
+     * @return int
+     */
+    private function nextSequence(): int
+    {
+        $quote = $this->connection->getDriverInfo()->getIdentifierQuote();
+        $quotedTable = sprintf('%1$s%2$s%1$s', $quote, str_replace($quote, $quote . $quote, $this->tableName));
+
+        $row = $this->connection->fetchOne(sprintf('SELECT MAX(seq) AS max_seq FROM %s', $quotedTable));
+
+        return (int)($row['max_seq'] ?? 0) + 1;
+    }
+
+    /**
      * Create the migrations tracking table.
      *
      * @return void
@@ -146,8 +165,12 @@ class DbTracker implements MigrationTrackerInterface
         $quote = $this->connection->getDriverInfo()->getIdentifierQuote();
         $quotedTable = sprintf('%1$s%2$s%1$s', $quote, str_replace($quote, $quote . $quote, $this->tableName));
 
+        // "seq" is a monotonic, insertion-ordered sequence (computed as MAX+1 on
+        // insert) used to replay migrations in their exact application order;
+        // applied_at only has second precision and cannot disambiguate ties.
         $this->connection->execute(sprintf(
             'CREATE TABLE IF NOT EXISTS %s ('
+            . 'seq BIGINT NOT NULL, '
             . 'migration_id VARCHAR(255) NOT NULL PRIMARY KEY, '
             . 'applied_at DATETIME NOT NULL, '
             . 'duration_ms FLOAT NULL'
@@ -199,8 +222,7 @@ class DbTracker implements MigrationTrackerInterface
         $applied = iterator_to_array(
             $this->newQueryBuilder()
                 ->column('migration_id')
-                ->orderBy('applied_at')
-                ->orderBy('migration_id')
+                ->orderBy('seq')
                 ->fetchColumn(),
             false,
         );

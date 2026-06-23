@@ -67,4 +67,12 @@ class SQLiteCapabilities implements DriverCapabilities
     {
         return version_compare($this->driverInfo->getVersion(), '3.25.0', '>=');
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function hasTransactionalDdl(): bool
+    {
+        return true;
+    }
 }

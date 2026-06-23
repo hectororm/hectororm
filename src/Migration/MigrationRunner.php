@@ -39,6 +39,12 @@ use Throwable;
  * implicit COMMIT on most DDL statements (CREATE/ALTER/DROP TABLE), so a partial
  * failure within such a migration cannot be fully rolled back there. SQLite and
  * PostgreSQL do support transactional DDL.
+ *
+ * Tracking: on transactional-DDL drivers the tracking write is enrolled in the
+ * migration transaction so both commit or roll back together. On other drivers
+ * the tracking write happens right after commit on a best-effort basis; a
+ * failure is reported as a MigrationException + MigrationFailedEvent rather than
+ * leaving the database in an "applied but untracked" state silently.
  */
 class MigrationRunner
 {
@@ -234,6 +240,17 @@ class MigrationRunner
         // The migration's own up()/down() (user code building the Plan) is part of the
         // try/catch too, so an exception there is logged, dispatched as a MigrationFailedEvent
         // and wrapped in a MigrationException like any execution failure.
+        //
+        // When the driver supports transactional DDL (SQLite/PostgreSQL), the tracking write is
+        // performed inside the same transaction as the migration so both commit or roll back
+        // atomically — this closes the window where a migration is applied but not tracked.
+        // Otherwise (MySQL/MariaDB issue an implicit COMMIT on DDL) the tracking is a best-effort
+        // write after commit, but any failure is surfaced as a MigrationFailedEvent +
+        // MigrationException instead of a silent throw.
+        $transactionalDdl = false === $dryRun
+            && $this->connection->getDriverInfo()->getCapabilities()->hasTransactionalDdl();
+        $trackedInTransaction = false;
+
         try {
             $plan = new Plan();
 
@@ -257,6 +274,13 @@ class MigrationRunner
                     if (false === $dryRun) {
                         $this->connection->execute($sql);
                     }
+                }
+
+                // Track inside the transaction when DDL is transactional, so the
+                // migration and its tracking row commit or roll back atomically.
+                if (true === $transactionalDdl) {
+                    $trackedInTransaction = true;
+                    $this->track($direction, $id, (hrtime(true) - $startTime) / 1e6);
                 }
 
                 if (false === $dryRun) {
@@ -304,11 +328,37 @@ class MigrationRunner
 
         $durationMs = (hrtime(true) - $startTime) / 1e6;
 
-        if (false === $dryRun) {
-            match ($direction) {
-                Direction::UP => $this->tracker->markApplied($id, $durationMs),
-                Direction::DOWN => $this->tracker->markReverted($id),
-            };
+        // Best-effort tracking when it could not be enrolled in the transaction
+        // (non-transactional DDL, or an empty plan with no transaction). A
+        // failure here is reported, not swallowed, so the inconsistency is
+        // visible instead of silently re-running the migration next time.
+        if (false === $dryRun && false === $trackedInTransaction) {
+            try {
+                $this->track($direction, $id, $durationMs);
+            } catch (Throwable $e) {
+                $this->logger?->error(sprintf(
+                    '%sMigration %s %s but tracking failed: %s',
+                    $prefix,
+                    $label,
+                    Direction::UP === $direction ? 'applied' : 'reverted',
+                    $e->getMessage(),
+                ));
+
+                $this->eventDispatcher?->dispatch(
+                    new MigrationFailedEvent($id, $migration, $direction, $e, dryRun: $dryRun, durationMs: $durationMs)
+                );
+
+                throw new MigrationException(
+                    message: sprintf(
+                        'Migration "%s" %s but tracking failed: %s',
+                        $id,
+                        Direction::UP === $direction ? 'applied' : 'reverted',
+                        $e->getMessage(),
+                    ),
+                    code: (int)$e->getCode(),
+                    previous: $e,
+                );
+            }
         }
 
         $this->logger?->info(sprintf(
@@ -324,6 +374,23 @@ class MigrationRunner
         );
 
         return true;
+    }
+
+    /**
+     * Record the migration outcome in the tracker.
+     *
+     * @param string $direction Direction::UP or Direction::DOWN
+     * @param string $id
+     * @param float $durationMs
+     *
+     * @return void
+     */
+    private function track(string $direction, string $id, float $durationMs): void
+    {
+        match ($direction) {
+            Direction::UP => $this->tracker->markApplied($id, $durationMs),
+            Direction::DOWN => $this->tracker->markReverted($id),
+        };
     }
 
     /**

@@ -67,4 +67,12 @@ class MySQLCapabilities implements DriverCapabilities
     {
         return version_compare($this->driverInfo->getVersion(), '8.0.0', '>=');
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function hasTransactionalDdl(): bool
+    {
+        return false;
+    }
 }

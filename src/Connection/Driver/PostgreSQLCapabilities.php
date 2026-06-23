@@ -67,4 +67,12 @@ class PostgreSQLCapabilities implements DriverCapabilities
     {
         return true;
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function hasTransactionalDdl(): bool
+    {
+        return true;
+    }
 }

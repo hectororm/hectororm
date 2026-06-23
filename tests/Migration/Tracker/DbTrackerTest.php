@@ -123,4 +123,21 @@ class DbTrackerTest extends TestCase
         $tracker2 = new DbTracker($this->connection);
         $this->assertTrue($tracker2->isApplied('m1'));
     }
+
+    public function testFetchPreservesApplicationOrderWithinSameSecond(): void
+    {
+        // Apply migrations whose real application order differs from their
+        // alphabetical order, within the same second. The reloaded order must
+        // follow application order (seq), not applied_at + alphabetical id.
+        $tracker1 = new DbTracker($this->connection);
+        $tracker1->markApplied('m_c');
+        $tracker1->markApplied('m_a');
+        $tracker1->markApplied('m_b');
+
+        // Fresh instance forces a reload from the database (simulates a new
+        // process, e.g. running `down` after a restart).
+        $tracker2 = new DbTracker($this->connection);
+
+        $this->assertSame(['m_c', 'm_a', 'm_b'], $tracker2->getArrayCopy());
+    }
 }

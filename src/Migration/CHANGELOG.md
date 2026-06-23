@@ -19,6 +19,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `DbTracker::markReverted()` is now idempotent: deleting a migration it does not track is a no-op instead of throwing. This stops a `ChainTracker` from breaking mid-way (leaving trackers out of sync) when reverting a migration that only some trackers recorded
 - `ChainTracker` now validates its strategy in the constructor (throwing `MigrationException` on an unknown value) instead of only failing later on the first read operation
 - `MigrationRunner` now runs a migration's own `up()`/`down()` (the user code that builds the `Plan`) inside the failure handling: an exception thrown while building the plan is logged, dispatched as a `MigrationFailedEvent` and wrapped in a `MigrationException` (with the original as `previous`), like an execution failure — previously it escaped raw. A failing `rollBack()` in the error path no longer masks the original exception, and a rollback is attempted only when a transaction was actually started
+### Changed
+
+- **BREAKING:** the `DbTracker` tracking table now has a mandatory `seq` column (a monotonic, insertion-ordered sequence) used to order applied migrations. Tables created by a previous version must be migrated manually, e.g. `ALTER TABLE hector_migrations ADD COLUMN seq BIGINT NOT NULL DEFAULT 0` followed by backfilling `seq` in application order. Without it, `DbTracker` will fail to read/write the tracking table
+- `DbTracker` now stores `applied_at` in UTC (`gmdate()`) instead of the local timezone
+- `MigrationRunner` now records the tracking write inside the migration transaction when the driver supports transactional DDL (SQLite/PostgreSQL), so a migration and its tracking row commit or roll back atomically
+
+### Fixed
+
+- `MigrationRunner` no longer leaves the database in an "applied but untracked" state when tracking fails: on transactional-DDL drivers the whole migration is rolled back, and on other drivers a tracking failure now raises a `MigrationException` and dispatches a `MigrationFailedEvent` instead of throwing silently outside the error path
+- `DbTracker` now replays migrations in their exact application order via the new `seq` column. Previously it ordered by `applied_at` (second precision) then `migration_id` (alphabetical), so migrations applied within the same second were re-ordered alphabetically, causing `down()` to revert them in the wrong order
 - `MigrationRunner::down()` now reverts migrations in their actual application order (as recorded by the tracker), newest first, instead of the reverse provider order. This fixes incorrect rollback order when migrations were applied out of order. Applied migrations no longer resolvable by the provider are skipped.
 - `DbTracker` operations (`isApplied`, `markApplied`, `markReverted`, iteration) no longer break when the tracking table name needs quoting (e.g. a reserved word such as `order`); previously only `createTable()` quoted it
 

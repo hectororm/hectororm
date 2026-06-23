@@ -67,4 +67,12 @@ class MariaDBCapabilities implements DriverCapabilities
     {
         return version_compare($this->driverInfo->getVersion(), '10.5.2', '>=');
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function hasTransactionalDdl(): bool
+    {
+        return false;
+    }
 }
