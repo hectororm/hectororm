@@ -314,6 +314,29 @@ class ConnectionTest extends TestCase
         $this->assertEquals(0, $reflectionProperty->getValue($connection));
     }
 
+    public function testCommitWhenTransactionImplicitlyCommitted(): void
+    {
+        // Simulate an implicit COMMIT triggered by a DDL statement (MySQL/MariaDB):
+        // the connection counter still believes a transaction is open, but PDO does not.
+        // commit() must be a no-op instead of throwing "There is no active transaction".
+        $pdo = new PDO('sqlite::memory:');
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+        $connection = Connection::fromPdo($pdo);
+
+        $reflectionProperty = new ReflectionProperty(Connection::class, 'transactions');
+        $reflectionProperty->setAccessible(true);
+
+        $connection->beginTransaction();
+        // PDO commits "behind the connection's back" (as a DDL implicit commit would).
+        $pdo->commit();
+        $this->assertFalse($pdo->inTransaction());
+
+        $connection->commit();
+
+        $this->assertEquals(0, $reflectionProperty->getValue($connection));
+    }
+
     public function testRollBack(): void
     {
         $reflectionProperty = new ReflectionProperty(Connection::class, 'transactions');
@@ -323,6 +346,27 @@ class ConnectionTest extends TestCase
         $connection->beginTransaction();
 
         $this->assertEquals(1, $reflectionProperty->getValue($connection));
+
+        $connection->rollBack();
+
+        $this->assertEquals(0, $reflectionProperty->getValue($connection));
+    }
+
+    public function testRollBackWhenTransactionImplicitlyCommitted(): void
+    {
+        // Same implicit-commit scenario as commit(): rollBack() must not throw
+        // "There is no active transaction" and must reset the counter.
+        $pdo = new PDO('sqlite::memory:');
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+        $connection = Connection::fromPdo($pdo);
+
+        $reflectionProperty = new ReflectionProperty(Connection::class, 'transactions');
+        $reflectionProperty->setAccessible(true);
+
+        $connection->beginTransaction();
+        $pdo->commit();
+        $this->assertFalse($pdo->inTransaction());
 
         $connection->rollBack();
 
