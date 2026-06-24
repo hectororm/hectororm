@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace Hector\Migration\Tests\Tracker;
 
 use Hector\Connection\Connection;
+use Hector\Migration\Exception\MigrationException;
 use Hector\Migration\Tracker\DbTracker;
 use PHPUnit\Framework\TestCase;
 
@@ -156,9 +157,12 @@ class DbTrackerTest extends TestCase
         $this->assertSame('m1', $row['migration_id']);
     }
 
-    public function testFallsBackToAppliedAtOrderOnALegacyTableWithoutIdColumn(): void
+    public function testThrowsWhenTrackingTableSchemaIsOutdated(): void
     {
         // Simulate a tracking table created by a previous version (no "id" column).
+        // createTable() (IF NOT EXISTS) is a no-op, then the "ORDER BY id" read fails,
+        // which must surface as a clear MigrationException rather than a raw SQL error
+        // or a silent fallback.
         $this->connection->execute(
             'CREATE TABLE hector_migrations ('
             . 'migration_id VARCHAR(255) NOT NULL PRIMARY KEY, '
@@ -167,17 +171,27 @@ class DbTrackerTest extends TestCase
             . ')'
         );
         $this->connection->execute(
-            "INSERT INTO hector_migrations (migration_id, applied_at) VALUES "
-            . "('m_a', '2026-01-01 00:00:01'), "
-            . "('m_b', '2026-01-01 00:00:02')"
+            "INSERT INTO hector_migrations (migration_id, applied_at) VALUES ('m_a', '2026-01-01 00:00:01')"
         );
 
         $tracker = new DbTracker($this->connection);
 
-        // Deterministic fallback order: applied_at then migration_id (not the "id" column).
-        $this->assertSame(['m_a', 'm_b'], $tracker->getArrayCopy());
-        $this->assertTrue($tracker->isApplied('m_a'));
-        $this->assertCount(2, $tracker);
+        $this->expectException(MigrationException::class);
+        $this->expectExceptionMessage('could not be read');
+
+        $tracker->getArrayCopy();
+    }
+
+    public function testThrowsWhenTableMissingAndAutoCreateDisabled(): void
+    {
+        // autoCreate disabled: the table is never created, so the read fails and a
+        // clear MigrationException is raised (mentioning createTable()/autoCreate).
+        $tracker = new DbTracker($this->connection, autoCreate: false);
+
+        $this->expectException(MigrationException::class);
+        $this->expectExceptionMessage('createTable()');
+
+        $tracker->getArrayCopy();
     }
 
     public function testMarkAppliedIsIdempotentAcrossConcurrentProcesses(): void

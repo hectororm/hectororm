@@ -27,9 +27,6 @@ class DbTracker implements MigrationTrackerInterface
     /** @var list<string>|null */
     private ?array $applied = null;
 
-    /** @var bool|null Cached presence of the "id" auto-increment column */
-    private ?bool $hasIdColumn = null;
-
     /**
      * DbTracker constructor.
      *
@@ -202,75 +199,53 @@ class DbTracker implements MigrationTrackerInterface
             return $this->applied;
         }
 
+        // Ensure the table exists before reading. createTable() uses
+        // "CREATE TABLE IF NOT EXISTS", so it is a no-op when the table is already
+        // present and creates it (with the current schema) on a first install.
+        if (true === $this->autoCreate) {
+            $this->createTable();
+        }
+
         try {
             return $this->applied = $this->fetchApplied();
-        } catch (Throwable) {
-            // Table likely doesn't exist — try auto-creating it
-            if (false === $this->autoCreate) {
-                throw new MigrationException(
-                    sprintf(
-                        'Migration tracking table "%s" does not exist. '
-                        . 'Call createTable() or set autoCreate to true.',
-                        $this->tableName,
-                    )
-                );
-            }
-
-            $this->createTable();
-
-            return $this->applied = [];
+        } catch (Throwable $exception) {
+            // The table could not be read. Either it does not exist (autoCreate is
+            // disabled) or it exists with an outdated schema (e.g. a tracking table
+            // created by a previous version, missing the "id" column). We do not try
+            // to migrate it automatically: surface a clear, actionable error.
+            throw new MigrationException(
+                sprintf(
+                    'Migration tracking table "%s" could not be read. If the package was updated, '
+                    . 'its schema may be outdated: upgrade the tracking table following the '
+                    . 'documentation%s.',
+                    $this->tableName,
+                    false === $this->autoCreate ? ', or call createTable()/enable autoCreate' : '',
+                ),
+                previous: $exception,
+            );
         }
     }
 
     /**
      * Fetch applied migration identifiers from the database.
      *
-     * Orders by the "id" auto-increment column (exact application order) when the
-     * tracking table has it. Tables created by a previous version may not, so the
-     * fallback orders by "applied_at" then "migration_id" — deterministic, but not
-     * necessarily the real application order (that information was never recorded).
+     * Orders by the "id" auto-increment column, which records the exact application
+     * order. A tracking table without this column (e.g. created by a previous
+     * version) raises here, surfaced as a clear error by {@see loadApplied()}.
      *
      * @return list<string>
      */
     private function fetchApplied(): array
     {
-        $builder = $this->newQueryBuilder()->column('migration_id');
-
-        if (true === $this->hasIdColumn()) {
-            $builder->orderBy('id');
-        } else {
-            $builder->orderBy('applied_at')->orderBy('migration_id');
-        }
-
         /** @var list<string> $applied */
-        $applied = iterator_to_array($builder->fetchColumn(), false);
+        $applied = iterator_to_array(
+            $this->newQueryBuilder()
+                ->column('migration_id')
+                ->orderBy('id')
+                ->fetchColumn(),
+            false,
+        );
 
         return $applied;
-    }
-
-    /**
-     * Whether the tracking table has the "id" auto-increment column.
-     *
-     * Tables created by a previous version of {@see DbTracker} predate the column,
-     * so its presence is detected once and cached.
-     *
-     * @return bool
-     */
-    private function hasIdColumn(): bool
-    {
-        if (null !== $this->hasIdColumn) {
-            return $this->hasIdColumn;
-        }
-
-        try {
-            // A zero-row probe: if "id" is unknown, the driver raises and we fall back.
-            $this->connection->fetchOne(
-                sprintf('SELECT id FROM %s WHERE 1 = 0', $this->quotedTable())
-            );
-
-            return $this->hasIdColumn = true;
-        } catch (Throwable) {
-            return $this->hasIdColumn = false;
-        }
     }
 }
