@@ -7,27 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added `DriverCapabilities::hasTransactionalDdl()` to detect whether DDL statements participate in the surrounding transaction (true on SQLite/PostgreSQL, false on MySQL/MariaDB). **Note:** this adds a method to the `DriverCapabilities` interface, so any third-party implementation must implement it
+- Added `ConnectionSet::beginTransaction()`, `ConnectionSet::commit()` and `ConnectionSet::rollBack()` to start/commit/roll back a transaction across every connection of the set
+
 ### Changed
 
 - `LogEntry::__construct()` now requires a non-null `string $statement` (was `?string`): a log entry always represents a statement, and `getStatement(): string` previously threw a `TypeError` when the entry was built with `null`. The constructor now rejects `null` outright. No production caller is affected (`Logger::newEntry()` already typed `$statement` as non-null)
 - `ConnectionSet::addConnection()` now throws a `ConnectionException` when a connection with the same name is already registered, instead of silently overwriting (and discarding) the previous one, which is a configuration error
-### Security
 
-- Mask `user`/`password`/`pwd` parameters embedded in the DSN before logging connection entries
-- Convert PDO connection failures into a `ConnectionException` without secrets, and mark the `username`/`password` constructor arguments with `#[\SensitiveParameter]` to keep them out of stack traces on PHP < 8.2
 ### Fixed
 
 - Fix the transaction counter desyncing when `beginTransaction()` fails: the counter is now incremented only after `PDO::beginTransaction()` succeeds (previously a failure left the counter incremented with no real transaction, permanently routing reads to the write PDO and making the next `commit()` call `PDO::commit()` without an active transaction). Nesting semantics are preserved (only the outermost call touches the real PDO)
 - Fix `Connection::commit()`/`rollBack()` throwing `There is no active transaction` after a DDL statement issued an implicit `COMMIT` (MySQL/MariaDB): both now guard against `PDO::inTransaction()` and become a no-op when the transaction was already closed, instead of failing. This previously left a DDL migration applied but untracked (reported as failed and stuck pending)
-### Fixed
-
 - Fix `Connection::yieldColumn()` truncating the result set when a column value is boolean `false`: it now traverses the statement in `PDO::FETCH_COLUMN` mode instead of looping on `false !== fetchColumn()`, which conflated a `false` value with end-of-cursor (observable with PostgreSQL boolean columns)
-### Added
 
-- Added `DriverCapabilities::hasTransactionalDdl()` to detect whether DDL statements participate in the surrounding transaction (true on SQLite/PostgreSQL, false on MySQL/MariaDB). **Note:** this adds a method to the `DriverCapabilities` interface, so any third-party implementation must implement it
-### Added
+### Security
 
-- Added `ConnectionSet::beginTransaction()`, `ConnectionSet::commit()` and `ConnectionSet::rollBack()` to start/commit/roll back a transaction across every connection of the set
+- Mask `user`/`password`/`pwd` parameters embedded in the DSN before logging connection entries
+- Convert PDO connection failures into a `ConnectionException` without secrets, and mark the `username`/`password` constructor arguments with `#[\SensitiveParameter]` to keep them out of stack traces on PHP < 8.2
 
 ## [1.3.0] - 2026-05-12
 
