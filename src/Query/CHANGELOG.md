@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-06-30
+
 ### Added
 
 - `Helper::isColumnReference()` to detect whether a value is a plain (possibly qualified/quoted) column reference, as opposed to an SQL expression/function, closure or sub-query. Quoted segments may contain dots/spaces, bare segments accept Unicode, and numeric literals are rejected

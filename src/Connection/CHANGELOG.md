@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-06-30
+
 ### Added
 
 - Added `DriverCapabilities::hasTransactionalDdl()` to detect whether DDL statements participate in the surrounding transaction (true on SQLite/PostgreSQL, false on MySQL/MariaDB). **Note:** this adds a method to the `DriverCapabilities` interface, so any third-party implementation must implement it

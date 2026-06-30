@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-06-30
+
 ### Changed
 
 - The `OffsetPaginationRequest` and `RangePaginationRequest` constructors now throw `InvalidArgumentException` on invalid values (`page`/`perPage` < 1, `start` < 0, `end` < `start`), consistent with the `OffsetPagination` and `RangePagination` model classes. The `fromRequest()`/`fromHeader()` factories keep clamping untrusted HTTP input silently and never throw.

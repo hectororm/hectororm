@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-06-30
+
 ### Changed
 
 - `Entity\ReflectionEntity::getTable()` now caches the resolved `Table` (the `??=` assignment that was intended but missing), avoiding a repeated schema-container lookup on every query build, hydration, persist and relationship resolution. No behaviour change

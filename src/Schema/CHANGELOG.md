@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-06-30
+
 ### Added
 
 - `Hector\Schema\Plan\Raw` to express a column default as a raw SQL expression (e.g. `new Raw('CURRENT_TIMESTAMP()')`), emitted verbatim instead of being quoted as a string literal
