@@ -4,8 +4,13 @@ on:
   push:
     branches:
       - main
+      - '*.x'
+  create:
     tags:
-      - 'v1.*'
+      - 'v*.*'
+  delete:
+    tags:
+      - 'v*.*'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
