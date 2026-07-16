@@ -48,6 +48,59 @@ class ConnectionTest extends TestCase
         $this->assertInstanceOf(Connection::class, $connection);
     }
 
+    public function testOptionsArePassedToPdo(): void
+    {
+        $connection = new Connection('sqlite::memory:', options: [PDO::ATTR_CASE => PDO::CASE_UPPER]);
+
+        $this->assertEquals(PDO::CASE_UPPER, $connection->getPdo()->getAttribute(PDO::ATTR_CASE));
+    }
+
+    public function testOptionsArePassedToReadPdo(): void
+    {
+        $connection = new Connection(
+            'sqlite::memory:',
+            readDsn: 'sqlite::memory:',
+            options: [PDO::ATTR_CASE => PDO::CASE_UPPER]
+        );
+
+        $this->assertEquals(PDO::CASE_UPPER, $connection->getReadPdo()->getAttribute(PDO::ATTR_CASE));
+    }
+
+    public function testOptionsDefaultToEmptyArray(): void
+    {
+        $connection = new Connection('sqlite::memory:');
+
+        $this->assertArrayHasKey('options', $connection->__serialize());
+        $this->assertSame([], $connection->__serialize()['options']);
+    }
+
+    public function testSerializationKeepsOptions(): void
+    {
+        $connection = new Connection('sqlite::memory:', options: [PDO::ATTR_CASE => PDO::CASE_UPPER]);
+        $connection2 = unserialize(serialize($connection));
+
+        $this->assertEquals($connection->__serialize(), $connection2->__serialize());
+        $this->assertSame(
+            [PDO::ATTR_CASE => PDO::CASE_UPPER],
+            $connection2->__serialize()['options']
+        );
+    }
+
+    public function testUnserializeWithoutOptionsDefaultsToEmptyArray(): void
+    {
+        $connection = new Connection('sqlite::memory:');
+        $connection->__unserialize([
+            'dsn' => 'sqlite::memory:',
+            'username' => null,
+            'password' => null,
+            'readDsn' => null,
+            'name' => Connection::DEFAULT_NAME,
+            'logger' => null,
+        ]);
+
+        $this->assertSame([], $connection->__serialize()['options']);
+    }
+
     public function testLoggerDoesNotLeakDsnCredentials(): void
     {
         $secret = 'S3cr3t_P@ss';

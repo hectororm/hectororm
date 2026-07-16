@@ -106,7 +106,8 @@ class OrmFactory
             password: $options['password'] ?? null,
             readDsn: $options['read_dsn'] ?? null,
             name: $options['name'] ?? Connection::DEFAULT_NAME,
-            logger: ($options['log'] ?? false) ? new Logger() : null
+            logger: ($options['log'] ?? false) ? new Logger() : null,
+            options: $options['options'] ?? []
         );
     }
 
