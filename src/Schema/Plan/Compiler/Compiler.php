@@ -53,7 +53,7 @@ class Compiler implements CompilerInterface
     private const PHASE_POST = 'post';
 
     public function __construct(
-        private readonly DialectInterface $dialect,
+        private DialectInterface $dialect,
     ) {
     }
 

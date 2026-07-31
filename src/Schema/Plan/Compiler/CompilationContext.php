@@ -32,8 +32,8 @@ final class CompilationContext
      *                                        mechanisms (e.g. SQLite rebuild) skip their own PRAGMA.
      */
     public function __construct(
-        public readonly ?Schema $schema = null,
-        public readonly bool $foreignKeyChecksManaged = false,
+        public ?Schema $schema = null,
+        public bool $foreignKeyChecksManaged = false,
     ) {
     }
 

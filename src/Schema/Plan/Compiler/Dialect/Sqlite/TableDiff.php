@@ -38,7 +38,7 @@ final class TableDiff
     private array $renames = [];
 
     /** @var string[] column names as they existed before any operation */
-    private readonly array $originalColumnNames;
+    private array $originalColumnNames;
 
     /**
      * @param array<string, ColumnDef>     $columns

@@ -1,0 +1,159 @@
+<?php
+/*
+ * This file is part of Hector ORM.
+ *
+ * @license   https://opensource.org/licenses/MIT MIT License
+ * @copyright 2026 Ronan GIRON
+ * @author    Ronan GIRON <https://github.com/ElGigi>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code, to the root.
+ */
+
+declare(strict_types=1);
+
+namespace Hector\Schema\Tests\Plan\Compiler\Dialect\Sqlite;
+
+use Hector\Schema\Index;
+use Hector\Schema\Plan\Compiler\Dialect\Sqlite\ColumnDef;
+use Hector\Schema\Plan\Compiler\Dialect\Sqlite\ForeignKeyDef;
+use Hector\Schema\Plan\Compiler\Dialect\Sqlite\IndexDef;
+use Hector\Schema\Plan\Compiler\Dialect\Sqlite\TableDiff;
+use Hector\Schema\Plan\Operation\AddColumn;
+use Hector\Schema\Plan\Operation\AddForeignKey;
+use Hector\Schema\Plan\Operation\AddIndex;
+use Hector\Schema\Plan\Operation\DropColumn;
+use Hector\Schema\Plan\Operation\DropForeignKey;
+use Hector\Schema\Plan\Operation\DropIndex;
+use Hector\Schema\Plan\Operation\ModifyColumn;
+use Hector\Schema\Plan\Operation\RenameColumn;
+use PHPUnit\Framework\TestCase;
+
+/**
+ * Class TableDiffTest.
+ *
+ * Tests the SQLite rebuild diff model that replaced the previous
+ * assoc-array + IIFE approach.
+ */
+class TableDiffTest extends TestCase
+{
+    private function column(string $name, string $type = 'TEXT'): ColumnDef
+    {
+        return new ColumnDef($name, $type, false, null, false, false);
+    }
+
+    private function diffWithColumns(string ...$names): TableDiff
+    {
+        $columns = [];
+        foreach ($names as $name) {
+            $columns[$name] = $this->column($name);
+        }
+
+        return new TableDiff($columns, [], []);
+    }
+
+    public function testApplyAddColumn(): void
+    {
+        $diff = $this->diffWithColumns('id');
+        $diff->apply(new AddColumn('t', 'name', 'varchar(50)', nullable: true));
+
+        $columns = $diff->columns();
+        $this->assertSame(['id', 'name'], array_keys($columns));
+        $this->assertSame('varchar(50)', $columns['name']->type);
+        $this->assertTrue($columns['name']->nullable);
+    }
+
+    public function testApplyDropColumn(): void
+    {
+        $diff = $this->diffWithColumns('id', 'legacy');
+        $diff->apply(new DropColumn('t', 'legacy'));
+
+        $this->assertSame(['id'], array_keys($diff->columns()));
+    }
+
+    public function testApplyModifyColumnReplacesDefinition(): void
+    {
+        $diff = $this->diffWithColumns('id', 'name');
+        $diff->apply(new ModifyColumn('t', 'name', 'TEXT', nullable: true));
+
+        $this->assertSame('TEXT', $diff->columns()['name']->type);
+        $this->assertTrue($diff->columns()['name']->nullable);
+    }
+
+    public function testApplyModifyColumnOnUnknownColumnIsNoop(): void
+    {
+        $diff = $this->diffWithColumns('id');
+        $diff->apply(new ModifyColumn('t', 'ghost', 'TEXT'));
+
+        $this->assertSame(['id'], array_keys($diff->columns()));
+    }
+
+    public function testApplyRenameColumnUpdatesKeyAndName(): void
+    {
+        $diff = $this->diffWithColumns('id', 'fullname');
+        $diff->apply(new RenameColumn('t', 'fullname', 'display_name'));
+
+        $columns = $diff->columns();
+        $this->assertSame(['id', 'display_name'], array_keys($columns));
+        $this->assertSame('display_name', $columns['display_name']->name);
+    }
+
+    public function testApplyIndexOperations(): void
+    {
+        $diff = new TableDiff(
+            ['id' => $this->column('id')],
+            [
+                'PRIMARY' => new IndexDef('PRIMARY', ['id'], Index::PRIMARY),
+                'idx_old' => new IndexDef('idx_old', ['x'], Index::INDEX),
+            ],
+            [],
+        );
+
+        $diff->apply(new AddIndex('t', 'idx_new', ['y'], Index::UNIQUE));
+        $diff->apply(new DropIndex('t', 'idx_old'));
+
+        $primaryNames = array_map(fn(IndexDef $i): string => $i->name, $diff->primaryIndexes());
+        $nonPrimaryNames = array_map(fn(IndexDef $i): string => $i->name, $diff->nonPrimaryIndexes());
+
+        $this->assertSame(['PRIMARY'], $primaryNames);
+        $this->assertSame(['idx_new'], $nonPrimaryNames);
+    }
+
+    public function testApplyForeignKeyOperations(): void
+    {
+        $diff = new TableDiff(
+            ['id' => $this->column('id')],
+            [],
+            ['fk_old' => new ForeignKeyDef('fk_old', ['a'], 'other', ['id'], 'NO ACTION', 'NO ACTION')],
+        );
+
+        $diff->apply(new AddForeignKey('t', 'fk_new', ['b'], 'ref', ['id']));
+        $diff->apply(new DropForeignKey('t', 'fk_old'));
+
+        $this->assertSame(['fk_new'], array_keys($diff->foreignKeys()));
+    }
+
+    public function testMigrateMappingKeepsSurvivingColumns(): void
+    {
+        $diff = $this->diffWithColumns('id', 'name', 'legacy');
+        $diff->apply(new DropColumn('t', 'legacy'));
+        $diff->apply(new AddColumn('t', 'created_at', 'datetime', nullable: true));
+
+        // Only columns present before AND after are migrated; the new column is not.
+        $this->assertSame(
+            ['id' => 'id', 'name' => 'name'],
+            $diff->migrateMapping(),
+        );
+    }
+
+    public function testMigrateMappingFollowsRenames(): void
+    {
+        $diff = $this->diffWithColumns('id', 'fullname');
+        $diff->apply(new RenameColumn('t', 'fullname', 'display_name'));
+
+        $this->assertSame(
+            ['id' => 'id', 'fullname' => 'display_name'],
+            $diff->migrateMapping(),
+        );
+    }
+}

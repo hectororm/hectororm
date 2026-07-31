@@ -44,7 +44,7 @@ use Hector\Schema\Schema;
  */
 final class SqliteDialect extends AbstractDialect
 {
-    private readonly TableRebuilder $rebuilder;
+    private TableRebuilder $rebuilder;
 
     public function __construct(?DriverCapabilities $capabilities = null)
     {
