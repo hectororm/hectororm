@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Inline foreign keys declared in `Plan::create()` into the `CREATE TABLE` statement on SQLite instead of emitting an unsupported `ALTER TABLE ... ADD CONSTRAINT ... FOREIGN KEY` (which failed with `near "CONSTRAINT": syntax error`)
+- Skip standalone `AddForeignKey`/`DropForeignKey` operations on SQLite, which has no `ALTER TABLE` syntax to add or drop a foreign key (such changes go through the existing table rebuild)
+
 ## [1.4.0] - 2026-06-30
 
 ### Added
