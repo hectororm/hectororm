@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Refactored the plan compiler to separate responsibilities: a single ordering-only `Compiler` orchestrates the three compilation passes and delegates all DBMS-specific SQL to a `Dialect` (`Hector\Schema\Plan\Compiler\Dialect\DialectInterface`), with `MySQLDialect` and `SqliteDialect` implementations. This removes the large `switch` and the dialect-specific SQL that had leaked into the shared base class, and makes adding a new DBMS a single new `Dialect`. The SQLite table rebuild is now isolated in a dedicated `TableRebuilder`
+- Compilation is now stateless: per-run state (schema, foreign-key-check management) travels in an immutable `CompilationContext` instead of mutable compiler properties
+- `MySQLCompiler` and `SqliteCompiler` are kept as thin backward-compatible wrappers around `Compiler` (their constructor signature and behaviour are unchanged); the internal `AbstractCompiler` base class has been removed
+
 ## [1.4.1] - 2026-07-31
 
 ### Fixed
