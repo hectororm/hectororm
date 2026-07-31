@@ -74,6 +74,10 @@ abstract class AbstractCompiler implements CompilerInterface
         // Pass 1: Pre-operations (DisableForeignKeyChecks, DROP FK, DROP TRIGGER, etc.)
         foreach ($plan as $entry) {
             if ($entry instanceof PreOperationInterface) {
+                if ($this->skipForeignKeyOperation($entry)) {
+                    continue;
+                }
+
                 yield from $this->compileOperation($entry, $schema);
                 continue;
             }
@@ -81,6 +85,10 @@ abstract class AbstractCompiler implements CompilerInterface
             if ($entry instanceof OperationGroupInterface) {
                 foreach ($entry as $operation) {
                     if ($operation instanceof PreOperationInterface) {
+                        if ($this->skipForeignKeyOperation($operation)) {
+                            continue;
+                        }
+
                         yield from $this->compileOperation($operation, $schema);
                     }
                 }
@@ -99,18 +107,84 @@ abstract class AbstractCompiler implements CompilerInterface
         // Pass 3: Post-operations (ADD FK, CREATE TRIGGER, EnableForeignKeyChecks, etc.)
         foreach ($plan as $entry) {
             if ($entry instanceof PostOperationInterface) {
+                if ($this->skipForeignKeyOperation($entry)) {
+                    continue;
+                }
+
                 yield from $this->compileOperation($entry, $schema);
                 continue;
             }
 
             if ($entry instanceof OperationGroupInterface) {
+                $inlineForeignKeys = $entry instanceof CreateTable
+                    && $this->shouldInlineCreateTableForeignKeys();
+
                 foreach ($entry as $operation) {
-                    if ($operation instanceof PostOperationInterface) {
-                        yield from $this->compileOperation($operation, $schema);
+                    if (false === ($operation instanceof PostOperationInterface)) {
+                        continue;
                     }
+
+                    // Foreign keys of a CreateTable are inlined into the CREATE TABLE
+                    // body by the dialect (e.g. SQLite), so skip re-emitting them here.
+                    if ($inlineForeignKeys && $operation instanceof AddForeignKey) {
+                        continue;
+                    }
+
+                    if ($this->skipForeignKeyOperation($operation)) {
+                        continue;
+                    }
+
+                    yield from $this->compileOperation($operation, $schema);
                 }
             }
         }
+    }
+
+    /**
+     * Whether a standalone foreign-key operation must be skipped for this dialect.
+     *
+     * Some engines (e.g. SQLite) cannot add or drop a foreign key through
+     * `ALTER TABLE`; such changes require a full table rebuild handled elsewhere,
+     * so the operation must not be emitted on its own.
+     *
+     * @param OperationInterface $operation
+     *
+     * @return bool
+     */
+    private function skipForeignKeyOperation(OperationInterface $operation): bool
+    {
+        if (true === $this->supportsAlterForeignKey()) {
+            return false;
+        }
+
+        return $operation instanceof AddForeignKey || $operation instanceof DropForeignKey;
+    }
+
+    /**
+     * Whether foreign keys declared in a CreateTable are inlined into the
+     * CREATE TABLE statement instead of being emitted as separate ALTER TABLE
+     * post-operations.
+     *
+     * Defaults to false (MySQL/MariaDB emit them as ALTER TABLE ADD CONSTRAINT).
+     *
+     * @return bool
+     */
+    protected function shouldInlineCreateTableForeignKeys(): bool
+    {
+        return false;
+    }
+
+    /**
+     * Whether the dialect can add or drop a foreign key through ALTER TABLE.
+     *
+     * Defaults to true. SQLite returns false: it has no ALTER TABLE syntax to
+     * add/drop a foreign key, so such changes go through a full table rebuild.
+     *
+     * @return bool
+     */
+    protected function supportsAlterForeignKey(): bool
+    {
+        return true;
     }
 
     /**
