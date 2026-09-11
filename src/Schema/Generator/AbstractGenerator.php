@@ -109,6 +109,8 @@ abstract class AbstractGenerator implements GeneratorInterface
                     unsigned: $columnInfo['unsigned'] ?? false,
                     charset: $columnInfo['charset'] ?? null,
                     collation: $columnInfo['collation'] ?? null,
+                    on_update: $columnInfo['on_update'] ?? null,
+                    datetime_precision: $columnInfo['datetime_precision'] ?? null,
                 );
                 $columns[$column->getName()] = $column;
             }

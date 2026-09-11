@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `useCurrentOnUpdate` option on column operations, `TableOperation::addColumn()` and `AlterTable::modifyColumn()` to emit MySQL/MariaDB `ON UPDATE CURRENT_TIMESTAMP` for `TIMESTAMP` / `DATETIME` columns, preserving fractional seconds precision. SQLite accepts and ignores this option without creating triggers
+- `Column::getOnUpdate()` and `Column::getDatetimePrecision()` with MySQL/MariaDB introspection and backward-compatible serialization
 - Added `Plan::purge(string|Table $table, bool $resetIncrement = false)` and the `PurgeTable` operation to clear a table before schema changes. MySQL/MariaDB use `DELETE` or `TRUNCATE` depending on the reset option; SQLite uses `DELETE` and optionally removes the table's `sqlite_sequence` entry (the system table must exist when requesting a reset). Purges follow structure declaration order and use the existing migration logging, dry-run, and failure handling
 - Added `compilePurgeTable(PurgeTable $purgeTable): iterable` to `DialectInterface`; custom dialect implementations must implement this method
 
@@ -17,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Refactored the plan compiler to separate responsibilities: a single ordering-only `Compiler` orchestrates the three compilation passes and delegates all DBMS-specific SQL to a `Dialect` (`Hector\Schema\Plan\Compiler\Dialect\DialectInterface`), with `MySQLDialect` and `SqliteDialect` implementations. This removes the large `switch` and the dialect-specific SQL that had leaked into the shared base class, and makes adding a new DBMS a single new `Dialect`. The SQLite table rebuild is now isolated in a dedicated `TableRebuilder`
 - Compilation is now stateless: per-run state (schema, foreign-key-check management) travels in an immutable `CompilationContext` instead of mutable compiler properties
 - `MySQLCompiler` and `SqliteCompiler` are kept as thin backward-compatible wrappers around `Compiler` (their constructor signature and behaviour are unchanged); the internal `AbstractCompiler` base class has been removed
+
+### Fixed
+
+- Preserve column-level `ON UPDATE`, fractional seconds precision and temporal expression defaults when renaming columns via the legacy MySQL `CHANGE COLUMN` fallback
 
 ## [1.4.1] - 2026-07-31
 

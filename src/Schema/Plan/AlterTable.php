@@ -56,6 +56,7 @@ final class AlterTable extends TableOperation
      * @param bool $autoIncrement
      * @param string|null $after
      * @param bool $first
+     * @param bool $useCurrentOnUpdate MySQL/MariaDB only; ignored on SQLite
      *
      * @return static
      */
@@ -68,6 +69,7 @@ final class AlterTable extends TableOperation
         bool $autoIncrement = false,
         ?string $after = null,
         bool $first = false,
+        bool $useCurrentOnUpdate = false,
     ): static {
         $this->add(new ModifyColumn(
             table: $this->getObjectName(),
@@ -79,6 +81,7 @@ final class AlterTable extends TableOperation
             autoIncrement: $autoIncrement,
             after: $after,
             first: $first,
+            useCurrentOnUpdate: $useCurrentOnUpdate,
         ));
 
         return $this;

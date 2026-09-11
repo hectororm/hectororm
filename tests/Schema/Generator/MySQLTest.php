@@ -214,6 +214,8 @@ class MySQLTest extends TestCase
             [
                 [
                     'name' => 'address_id',
+                    'on_update' => null,
+                    'datetime_precision' => null,
                     'charset' => null,
                     'collation' => null,
                     'position' => 0,
@@ -229,6 +231,8 @@ class MySQLTest extends TestCase
                 [
                     'name' => 'address',
                     'charset' => 'utf8mb4',
+                    'on_update' => null,
+                    'datetime_precision' => null,
                     'collation' => $schemaInfo['collation'],
                     'position' => 1,
                     'default' => null,
@@ -242,6 +246,8 @@ class MySQLTest extends TestCase
                 ],
                 [
                     'name' => 'address2',
+                    'on_update' => null,
+                    'datetime_precision' => null,
                     'charset' => 'utf8mb4',
                     'collation' => $schemaInfo['collation'],
                     'position' => 2,
@@ -256,6 +262,8 @@ class MySQLTest extends TestCase
                 ],
                 [
                     'name' => 'district',
+                    'on_update' => null,
+                    'datetime_precision' => null,
                     'charset' => 'utf8mb4',
                     'collation' => $schemaInfo['collation'],
                     'position' => 3,
@@ -270,6 +278,8 @@ class MySQLTest extends TestCase
                 ],
                 [
                     'name' => 'city_id',
+                    'on_update' => null,
+                    'datetime_precision' => null,
                     'charset' => null,
                     'collation' => null,
                     'position' => 4,
@@ -284,6 +294,8 @@ class MySQLTest extends TestCase
                 ],
                 [
                     'name' => 'postal_code',
+                    'on_update' => null,
+                    'datetime_precision' => null,
                     'charset' => 'utf8mb4',
                     'collation' => $schemaInfo['collation'],
                     'position' => 5,
@@ -298,6 +310,8 @@ class MySQLTest extends TestCase
                 ],
                 [
                     'name' => 'phone',
+                    'on_update' => null,
+                    'datetime_precision' => null,
                     'charset' => 'utf8mb4',
                     'collation' => $schemaInfo['collation'],
                     'position' => 6,
@@ -312,6 +326,8 @@ class MySQLTest extends TestCase
                 ],
                 [
                     'name' => 'location',
+                    'on_update' => null,
+                    'datetime_precision' => null,
                     'charset' => null,
                     'collation' => null,
                     'position' => 7,
@@ -326,6 +342,8 @@ class MySQLTest extends TestCase
                 ],
                 [
                     'name' => 'last_update',
+                    'on_update' => 'CURRENT_TIMESTAMP',
+                    'datetime_precision' => 0,
                     'charset' => null,
                     'collation' => null,
                     'position' => 8,

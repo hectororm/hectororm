@@ -35,6 +35,7 @@ abstract class TableOperation extends OperationGroup
      * @param bool $autoIncrement
      * @param string|null $after
      * @param bool $first
+     * @param bool $useCurrentOnUpdate MySQL/MariaDB only; ignored on SQLite
      *
      * @return static
      */
@@ -47,6 +48,7 @@ abstract class TableOperation extends OperationGroup
         bool $autoIncrement = false,
         ?string $after = null,
         bool $first = false,
+        bool $useCurrentOnUpdate = false,
     ): static {
         $this->add(new AddColumn(
             table: $this->getObjectName(),
@@ -58,6 +60,7 @@ abstract class TableOperation extends OperationGroup
             autoIncrement: $autoIncrement,
             after: $after,
             first: $first,
+            useCurrentOnUpdate: $useCurrentOnUpdate,
         ));
 
         return $this;

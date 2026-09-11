@@ -19,6 +19,7 @@ use Hector\Schema\Generator\GeneratorInterface;
 use Hector\Schema\Index;
 use Hector\Schema\Plan\Compiler\AutoCompiler;
 use Hector\Schema\Plan\Plan;
+use Hector\Schema\Plan\Raw;
 use Hector\Schema\Plan\TableOperation;
 use PHPUnit\Framework\TestCase;
 use Throwable;
@@ -35,6 +36,86 @@ use Throwable;
 abstract class AbstractCompilerExecuteTestCase extends TestCase
 {
     protected static ?Connection $connection = null;
+
+    /**
+     * @dataProvider currentOnUpdateTypes
+     */
+    public function testCurrentOnUpdateRoundTrip(string $type, int $precision): void
+    {
+        $connection = static::createConnection();
+        if (null === $connection) {
+            $this->markTestSkipped('Database connection not available');
+        }
+
+        $sqlite = 'sqlite' === $connection->getDriverInfo()->getDriver();
+        $expression = 'CURRENT_TIMESTAMP' . (0 !== $precision ? '(' . $precision . ')' : '');
+        $default = new Raw($sqlite ? 'CURRENT_TIMESTAMP' : $expression);
+        $tableName = 'hector_on_update_test';
+        $clean = new Plan();
+        $clean->drop($tableName, ifExists: true);
+        static::executePlan($clean, $connection);
+
+        try {
+            $plan = new Plan();
+            $plan->create($tableName)
+                ->addColumn('id', 'INTEGER')
+                ->addColumn('value', 'INTEGER')
+                ->addColumn('updated_at', $type, default: $default, useCurrentOnUpdate: true);
+            static::executePlan($plan, $connection);
+
+            $generator = static::createGenerator($connection);
+            $column = $generator->generateSchema(static::getSchemaName())->getTable($tableName)->getColumn('updated_at');
+            $this->assertSame($sqlite ? null : $expression, $column->getOnUpdate());
+            $this->assertSame($sqlite ? null : $precision, $column->getDatetimePrecision());
+
+            $connection->execute("INSERT INTO $tableName (id, value) VALUES (1, 1)");
+            $this->assertNotNull($connection->fetchOne("SELECT updated_at FROM $tableName")['updated_at']);
+            $old = '2001-01-01 00:00:00' . (0 !== $precision ? '.000000' : '');
+            $connection->execute("UPDATE $tableName SET updated_at = ?", [$old]);
+            $connection->execute("UPDATE $tableName SET value = 2");
+            $value = $connection->fetchOne("SELECT updated_at FROM $tableName")['updated_at'];
+            if ($sqlite) {
+                $this->assertSame($old, $value);
+            } else {
+                $this->assertNotSame($old, $value);
+            }
+
+            // Explicit assignments override the automatic update.
+            $connection->execute("UPDATE $tableName SET value = 3, updated_at = ?", [$old]);
+            $this->assertSame($old, $connection->fetchOne("SELECT updated_at FROM $tableName")['updated_at']);
+
+            // An UPDATE that leaves the other values unchanged must not touch the timestamp.
+            $connection->execute("UPDATE $tableName SET value = 3");
+            $this->assertSame($old, $connection->fetchOne("SELECT updated_at FROM $tableName")['updated_at']);
+
+            // SQLite rebuilds must also accept the flag. MySQL must retain it on MODIFY.
+            $alter = new Plan();
+            $alter->alter($tableName)->modifyColumn('updated_at', $type, default: $default, useCurrentOnUpdate: true);
+            static::executePlan($alter, $connection);
+            $rename = new Plan();
+            $rename->alter($tableName)->renameColumn('updated_at', 'modified_at');
+            static::executePlan($rename, $connection);
+            $column = $generator->generateSchema(static::getSchemaName())->getTable($tableName)->getColumn('modified_at');
+            $this->assertSame($sqlite ? null : $expression, $column->getOnUpdate());
+            $this->assertSame($sqlite ? null : $precision, $column->getDatetimePrecision());
+
+            $disable = new Plan();
+            $disable->alter($tableName)->modifyColumn('modified_at', $type, default: $default);
+            static::executePlan($disable, $connection);
+            $column = $generator->generateSchema(static::getSchemaName())->getTable($tableName)->getColumn('modified_at');
+            $this->assertNull($column->getOnUpdate());
+            $connection->execute("UPDATE $tableName SET modified_at = ?", [$old]);
+            $connection->execute("UPDATE $tableName SET value = 4");
+            $this->assertSame($old, $connection->fetchOne("SELECT modified_at FROM $tableName")['modified_at']);
+        } finally {
+            static::executePlan($clean, $connection);
+        }
+    }
+
+    public static function currentOnUpdateTypes(): array
+    {
+        return [['TIMESTAMP', 0], ['DATETIME(6)', 6]];
+    }
 
     /**
      * Create a connection to the test database.

@@ -34,6 +34,8 @@ class Column
         private ?string $charset = null,
         private ?string $collation = null,
         private ?Table $table = null,
+        private ?string $on_update = null,
+        private ?int $datetime_precision = null,
     ) {
     }
 
@@ -57,6 +59,8 @@ class Column
             'unsigned' => $this->unsigned,
             'charset' => $this->charset,
             'collation' => $this->collation,
+            'on_update' => $this->on_update,
+            'datetime_precision' => $this->datetime_precision,
         ];
     }
 
@@ -79,6 +83,8 @@ class Column
         $this->unsigned = $data['unsigned'];
         $this->charset = $data['charset'];
         $this->collation = $data['collation'];
+        $this->on_update = $data['on_update'] ?? null;
+        $this->datetime_precision = $data['datetime_precision'] ?? null;
         $this->table = null;
     }
 
@@ -186,6 +192,22 @@ class Column
     public function isAutoIncrement(): bool
     {
         return $this->auto_increment;
+    }
+
+    /**
+     * Get the database-side ON UPDATE expression, if any.
+     */
+    public function getOnUpdate(): ?string
+    {
+        return $this->on_update;
+    }
+
+    /**
+     * Get fractional seconds precision.
+     */
+    public function getDatetimePrecision(): ?int
+    {
+        return $this->datetime_precision;
     }
 
     /**
