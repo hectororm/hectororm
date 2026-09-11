@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `useCurrentOnUpdate` option on column operations, `TableOperation::addColumn()` and `AlterTable::modifyColumn()` to emit MySQL/MariaDB `ON UPDATE CURRENT_TIMESTAMP` for `TIMESTAMP` / `DATETIME` columns, preserving fractional seconds precision. SQLite accepts and ignores this option without creating triggers
 - `Column::getOnUpdate()` and `Column::getDatetimePrecision()` with MySQL/MariaDB introspection and backward-compatible serialization
+- Added `Plan::purge(string|Table $table, bool $resetIncrement = false)` and the `PurgeTable` operation to clear a table before schema changes. MySQL/MariaDB use `DELETE` or `TRUNCATE` depending on the reset option; SQLite uses `DELETE` and optionally removes the table's `sqlite_sequence` entry (the system table must exist when requesting a reset). Purges follow structure declaration order and use the existing migration logging, dry-run, and failure handling
+- Added `compilePurgeTable(PurgeTable $purgeTable): iterable` to `DialectInterface`; custom dialect implementations must implement this method
 
 ### Changed
 

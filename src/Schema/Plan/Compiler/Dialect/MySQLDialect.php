@@ -34,6 +34,7 @@ use Hector\Schema\Plan\Operation\PreOperationInterface;
 use Hector\Schema\Plan\Operation\RenameColumn;
 use Hector\Schema\Plan\Operation\RenameTable;
 use Hector\Schema\Plan\OperationInterface;
+use Hector\Schema\Plan\PurgeTable;
 use Hector\Schema\Plan\Raw;
 use Hector\Schema\Schema;
 
@@ -42,6 +43,18 @@ use Hector\Schema\Schema;
  */
 final class MySQLDialect extends AbstractDialect
 {
+    /**
+     * @inheritDoc
+     */
+    public function compilePurgeTable(PurgeTable $purgeTable): iterable
+    {
+        yield sprintf(
+            '%s %s',
+            true === $purgeTable->resetIncrement() ? 'TRUNCATE TABLE' : 'DELETE FROM',
+            $this->quoteIdentifier($purgeTable->getObjectName()),
+        );
+    }
+
     /**
      * @inheritDoc
      */
