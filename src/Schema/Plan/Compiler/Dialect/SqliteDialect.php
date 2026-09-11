@@ -37,6 +37,7 @@ use Hector\Schema\Plan\Operation\RenameColumn;
 use Hector\Schema\Plan\Operation\RenameTable;
 use Hector\Schema\Plan\OperationInterface;
 use Hector\Schema\Plan\Plan;
+use Hector\Schema\Plan\PurgeTable;
 use Hector\Schema\Schema;
 
 /**
@@ -56,6 +57,24 @@ final class SqliteDialect extends AbstractDialect
                 $plan,
                 $context,
             ),
+        );
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function compilePurgeTable(PurgeTable $purgeTable): iterable
+    {
+        yield sprintf('DELETE FROM %s', $this->quoteIdentifier($purgeTable->getObjectName()));
+
+        if (false === $purgeTable->resetIncrement()) {
+            return;
+        }
+
+        // sqlite_sequence must exist; a missing system table is a normal SQL error.
+        yield sprintf(
+            "DELETE FROM sqlite_sequence WHERE name = '%s'",
+            str_replace("'", "''", $purgeTable->getObjectName()),
         );
     }
 

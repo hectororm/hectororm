@@ -33,6 +33,7 @@ use Hector\Schema\Plan\Operation\PreOperationInterface;
 use Hector\Schema\Plan\OperationGroupInterface;
 use Hector\Schema\Plan\OperationInterface;
 use Hector\Schema\Plan\Plan;
+use Hector\Schema\Plan\PurgeTable;
 use Hector\Schema\Plan\RawStatement;
 use Hector\Schema\Schema;
 
@@ -204,6 +205,9 @@ class Compiler implements CompilerInterface
                 break;
             case $operation instanceof DropTable:
                 yield $this->dialect->compileDropTable($operation);
+                break;
+            case $operation instanceof PurgeTable:
+                yield from $this->dialect->compilePurgeTable($operation);
                 break;
             case $operation instanceof MigrateData:
                 yield $this->dialect->compileMigrateData($operation);
