@@ -16,6 +16,8 @@ namespace Hector\Schema\Plan\Compiler;
 
 use Hector\Connection\Connection;
 use Hector\Schema\Exception\PlanException;
+use Hector\Schema\Plan\Compiler\Dialect\MySQLDialect;
+use Hector\Schema\Plan\Compiler\Dialect\SqliteDialect;
 use Hector\Schema\Plan\Plan;
 use Hector\Schema\Schema;
 
@@ -38,9 +40,11 @@ final class AutoCompiler implements CompilerInterface
     {
         $capabilities = $this->connection->getDriverInfo()->getCapabilities();
 
+        // To support a new DBMS, add a Dialect implementation and a branch here:
+        //     'pgsql' => new Compiler(new PostgreSQLDialect($capabilities)),
         return $this->resolved ??= match ($this->connection->getDriverInfo()->getDriver()) {
-            'mysql', 'mariadb', 'vitess' => new MySQLCompiler($capabilities),
-            'sqlite' => new SqliteCompiler($capabilities),
+            'mysql', 'mariadb', 'vitess' => new Compiler(new MySQLDialect($capabilities)),
+            'sqlite' => new Compiler(new SqliteDialect($capabilities)),
             default => throw new PlanException(sprintf(
                 'Unsupported driver "%s" for plan compilation',
                 $this->connection->getDriverInfo()->getDriver(),
