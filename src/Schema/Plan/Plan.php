@@ -136,6 +136,25 @@ class Plan implements Countable, IteratorAggregate
     }
 
     /**
+     * Remove all rows while preserving the table structure.
+     *
+     * Counter resets use database-native semantics. On SQLite, an explicit reset
+     * requires sqlite_sequence to exist. Foreign-key checks are not bypassed.
+     *
+     * @param string|Table $table
+     * @param bool $resetIncrement Explicitly reset the automatic identifier counter
+     *
+     * @return static
+     */
+    public function purge(string|Table $table, bool $resetIncrement = false): static
+    {
+        return $this->add(new PurgeTable(
+            table: $this->resolveTableName($table),
+            resetIncrement: $resetIncrement,
+        ));
+    }
+
+    /**
      * Rename a table.
      *
      * @param string|Table $table

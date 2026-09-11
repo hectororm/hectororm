@@ -27,6 +27,7 @@ use Hector\Schema\Plan\MigrateData;
 use Hector\Schema\Plan\Operation\AddForeignKey;
 use Hector\Schema\Plan\Operation\DropForeignKey;
 use Hector\Schema\Plan\OperationInterface;
+use Hector\Schema\Plan\PurgeTable;
 
 /**
  * A dialect renders SQL statements for a specific DBMS family.
@@ -107,6 +108,15 @@ interface DialectInterface
      * @return string
      */
     public function compileDropTable(DropTable $dropTable): string;
+
+    /**
+     * Compile a table purge, optionally resetting its automatic identifier counter.
+     *
+     * @param PurgeTable $purgeTable
+     *
+     * @return iterable<string>
+     */
+    public function compilePurgeTable(PurgeTable $purgeTable): iterable;
 
     /**
      * Compile a CREATE VIEW statement.

@@ -28,6 +28,7 @@ use Hector\Schema\Plan\MigrateData;
 use Hector\Schema\Plan\Operation\AddForeignKey;
 use Hector\Schema\Plan\Operation\DropForeignKey;
 use Hector\Schema\Plan\OperationInterface;
+use Hector\Schema\Plan\PurgeTable;
 
 /**
  * A minimal DialectInterface implementation for testing the Compiler's
@@ -80,6 +81,11 @@ final class SpyDialect implements DialectInterface
     public function compileDropTable(DropTable $dropTable): string
     {
         return 'DROP:' . $dropTable->getObjectName();
+    }
+
+    public function compilePurgeTable(PurgeTable $purgeTable): iterable
+    {
+        return ['PURGE:' . $purgeTable->getObjectName()];
     }
 
     public function compileCreateView(CreateView $createView): iterable
