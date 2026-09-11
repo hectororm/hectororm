@@ -355,7 +355,9 @@ final class MySQLDialect extends AbstractDialect
     {
         $type = $column->getType();
 
-        if (null !== $column->getMaxlength()) {
+        if (null !== $column->getDatetimePrecision()) {
+            $type .= '(' . $column->getDatetimePrecision() . ')';
+        } elseif (null !== $column->getMaxlength()) {
             $type .= '(' . $column->getMaxlength() . ')';
         } elseif (null !== $column->getNumericPrecision()) {
             $type .= '(' . $column->getNumericPrecision();
@@ -383,6 +385,10 @@ final class MySQLDialect extends AbstractDialect
 
         $defaultClause = match (true) {
             $default instanceof Raw => sprintf('DEFAULT %s', $default->getExpression()),
+            in_array(strtolower($column->getType()), ['timestamp', 'datetime'], true) &&
+                is_string($default) &&
+                1 === preg_match('/^CURRENT_TIMESTAMP(?:\([0-6]?\))?$/i', $default) =>
+                sprintf('DEFAULT %s', $default),
             null !== $default && is_numeric($default) => sprintf('DEFAULT %s', $default),
             null !== $default => sprintf('DEFAULT \'%s\'', str_replace("'", "''", $default)),
             $column->isNullable() => 'DEFAULT NULL',
@@ -395,6 +401,10 @@ final class MySQLDialect extends AbstractDialect
 
         if (true === $column->isAutoIncrement()) {
             $parts[] = 'AUTO_INCREMENT';
+        }
+
+        if (null !== $column->getOnUpdate()) {
+            $parts[] = 'ON UPDATE ' . $column->getOnUpdate();
         }
 
         return implode(' ', $parts);
@@ -423,6 +433,23 @@ final class MySQLDialect extends AbstractDialect
 
         if (true === $operation->isAutoIncrement()) {
             $parts[] = 'AUTO_INCREMENT';
+        }
+
+        if (true === $operation->usesCurrentOnUpdate()) {
+            if (true === $operation->isAutoIncrement() ||
+                1 !== preg_match(
+                    '/^\s*(?:TIMESTAMP|DATETIME)\s*(?:\(\s*([0-6])\s*\))?\s*$/i',
+                    $operation->getType(),
+                    $matches,
+                )) {
+                throw new PlanException(sprintf(
+                    'Column "%s": useCurrentOnUpdate requires TIMESTAMP or DATETIME ' .
+                    'with precision 0 to 6 and no AUTO_INCREMENT',
+                    $operation->getName(),
+                ));
+            }
+
+            $parts[] = 'ON UPDATE CURRENT_TIMESTAMP' . (isset($matches[1]) ? '(' . $matches[1] . ')' : '');
         }
 
         return implode(' ', $parts);

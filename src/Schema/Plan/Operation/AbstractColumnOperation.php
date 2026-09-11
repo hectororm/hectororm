@@ -28,6 +28,7 @@ abstract class AbstractColumnOperation implements OperationInterface
         private bool $autoIncrement = false,
         private ?string $after = null,
         private bool $first = false,
+        private bool $useCurrentOnUpdate = false,
     ) {
     }
 
@@ -97,6 +98,14 @@ abstract class AbstractColumnOperation implements OperationInterface
     public function isAutoIncrement(): bool
     {
         return $this->autoIncrement;
+    }
+
+    /**
+     * Use the current timestamp on update (MySQL/MariaDB only)?
+     */
+    public function usesCurrentOnUpdate(): bool
+    {
+        return $this->useCurrentOnUpdate;
     }
 
     /**

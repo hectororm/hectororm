@@ -114,6 +114,8 @@ class MySQL extends AbstractGenerator
                 'nullable' => $result['IS_NULLABLE'] === 'YES',
                 'type' => strtolower($result['DATA_TYPE']),
                 'auto_increment' => false !== stripos($result['EXTRA'], 'auto_increment'),
+                'on_update' => $this->getOnUpdateValue($result['EXTRA']),
+                'datetime_precision' => isset($result['DATETIME_PRECISION']) ? (int)$result['DATETIME_PRECISION'] : null,
                 'maxlength' => $result['CHARACTER_MAXIMUM_LENGTH'] ? (int)$result['CHARACTER_MAXIMUM_LENGTH'] : null,
                 'numeric_precision' => $result['NUMERIC_PRECISION'] ? (int)$result['NUMERIC_PRECISION'] : null,
                 // NUMERIC_SCALE is "0" (falsy string) for integers and DECIMAL(x,0); only a
@@ -160,6 +162,20 @@ class MySQL extends AbstractGenerator
         }
 
         return $default;
+    }
+
+    /**
+     * Normalize MySQL/MariaDB's EXTRA metadata, preserving fractional precision.
+     */
+    protected function getOnUpdateValue(string $extra): ?string
+    {
+        if (1 !== preg_match('/\bon\s+update\s+current_timestamp(?:\((\d*)\))?/i', $extra, $matches)) {
+            return null;
+        }
+
+        $precision = $matches[1] ?? '';
+
+        return 'CURRENT_TIMESTAMP' . ('' !== $precision && '0' !== $precision ? '(' . $precision . ')' : '');
     }
 
     /**
