@@ -46,7 +46,7 @@ class SqliteDialectTest extends TestCase
      */
     private function toArray(iterable $statements): array
     {
-        return iterator_to_array($statements, false);
+        return is_array($statements) ? array_values($statements) : iterator_to_array($statements, false);
     }
 
     public function testCapabilities(): void
