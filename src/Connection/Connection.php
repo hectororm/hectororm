@@ -44,6 +44,10 @@ class Connection
      * @param string|null $readDsn
      * @param string $name
      * @param Logger|null $logger
+     * @param array $options Driver-specific PDO connection options (PDO constructor $options),
+     *                       shared by both the read/write and read-only connections.
+     *                       Beware that options like PDO::ATTR_AUTOCOMMIT or PDO::ATTR_ERRMODE
+     *                       may interfere with the internal transaction handling.
      */
     public function __construct(
         protected string $dsn,
@@ -53,7 +57,8 @@ class Connection
         private ?string $password = null,
         protected ?string $readDsn = null,
         protected string $name = self::DEFAULT_NAME,
-        protected ?Logger $logger = null
+        protected ?Logger $logger = null,
+        protected array $options = []
     ) {
     }
 
@@ -116,6 +121,7 @@ class Connection
             'readDsn' => $this->readDsn,
             'name' => $this->name,
             'logger' => $this->logger,
+            'options' => $this->options,
         ];
     }
 
@@ -132,6 +138,7 @@ class Connection
         $this->readDsn = $data['readDsn'];
         $this->name = $data['name'];
         $this->logger = $data['logger'];
+        $this->options = $data['options'] ?? [];
     }
 
     /**
@@ -172,7 +179,7 @@ class Connection
         );
 
         try {
-            $this->pdo = new PDO($this->dsn, $this->username, $this->password);
+            $this->pdo = new PDO($this->dsn, $this->username, $this->password, $this->options);
         } catch (PDOException $exception) {
             // Do not chain the PDOException: on PHP < 8.2 its stack trace holds
             // the password passed to the PDO constructor. Re-use its message
@@ -211,7 +218,7 @@ class Connection
         $logEntry = $this->logger?->newEntry($this->name, 'CONNECTION ' . $this->sanitizeDsn($this->readDsn));
 
         try {
-            $this->readPdo = new PDO($this->readDsn, $this->username, $this->password);
+            $this->readPdo = new PDO($this->readDsn, $this->username, $this->password, $this->options);
         } catch (PDOException $exception) {
             throw new ConnectionException(
                 sprintf('Unable to connect to "%s": %s', $this->name, $exception->getMessage())

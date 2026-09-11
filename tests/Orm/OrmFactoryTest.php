@@ -17,6 +17,7 @@ use Hector\Connection\Log\Logger;
 use Hector\Orm\Orm;
 use Hector\Orm\OrmFactory;
 use LogicException;
+use PDO;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
 
@@ -61,5 +62,22 @@ class OrmFactoryTest extends TestCase
         $orm = OrmFactory::orm(['schemas' => ['sakila']], $connection);
 
         $this->assertInstanceOf(Orm::class, $orm);
+    }
+
+    public function testConnectionForwardsOptions(): void
+    {
+        $connection = OrmFactory::connection([
+            'dsn' => 'sqlite::memory:',
+            'options' => [PDO::ATTR_CASE => PDO::CASE_UPPER],
+        ]);
+
+        $this->assertEquals(PDO::CASE_UPPER, $connection->getPdo()->getAttribute(PDO::ATTR_CASE));
+    }
+
+    public function testConnectionOptionsDefaultToEmptyArray(): void
+    {
+        $connection = OrmFactory::connection(['dsn' => 'sqlite::memory:']);
+
+        $this->assertSame([], $connection->__serialize()['options']);
     }
 }
