@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added support for an `options` key in the `OrmFactory::connection()` configuration array, forwarded as the driver-specific PDO connection options to the created `Connection`
+
 ## [1.4.1] - 2026-07-31
 
 _No changes in this release._
