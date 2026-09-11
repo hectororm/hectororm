@@ -59,15 +59,14 @@ class SqliteCompilerTest extends AbstractCompilerTestCase
                     SQL;
 
             case 'createTableWithForeignKey':
-                return [
-                    <<<'SQL'
+                // SQLite inlines the FK into the CREATE TABLE body (no ALTER TABLE)
+                return <<<'SQL'
                     CREATE TABLE "posts" (
                       "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-                      "user_id" int NOT NULL
+                      "user_id" int NOT NULL,
+                      CONSTRAINT "fk_posts_user" FOREIGN KEY ("user_id") REFERENCES "users" ("id") ON DELETE CASCADE
                     )
-                    SQL,
-                    'ALTER TABLE "posts" ADD CONSTRAINT "fk_posts_user" FOREIGN KEY ("user_id") REFERENCES "users" ("id") ON DELETE CASCADE',
-                ];
+                    SQL;
 
             case 'createTableMultipleIndexes':
                 return [
@@ -136,12 +135,11 @@ class SqliteCompilerTest extends AbstractCompilerTestCase
             case 'alterDropIndex':
                 return 'DROP INDEX IF EXISTS "idx_old"';
 
-            // ALTER TABLE — foreign keys (naive SQL without schema)
+            // ALTER TABLE — foreign keys: SQLite cannot add/drop a FK via ALTER TABLE.
+            // Standalone FK operations are skipped (a full table rebuild is required).
             case 'alterAddForeignKey':
-                return 'ALTER TABLE "posts" ADD CONSTRAINT "fk_author" FOREIGN KEY ("author_id") REFERENCES "users" ("id") ON DELETE CASCADE';
-
             case 'alterDropForeignKey':
-                return 'ALTER TABLE "posts" DROP FOREIGN KEY "fk_author"';
+                return [];
 
             // ALTER TABLE — mixed
             case 'alterMixedOperations':
@@ -211,12 +209,14 @@ class SqliteCompilerTest extends AbstractCompilerTestCase
 
             // FK ordering
             case 'fkOrderingCreateTables':
+                // FK is inlined; "posts" references "users" but is created first —
+                // SQLite accepts this because inline FKs are only checked at data time.
                 return [
-                    // Structure first (both CREATE TABLEs)
                     <<<'SQL'
                     CREATE TABLE "posts" (
                       "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-                      "user_id" int NOT NULL
+                      "user_id" int NOT NULL,
+                      CONSTRAINT "fk_user" FOREIGN KEY ("user_id") REFERENCES "users" ("id")
                     )
                     SQL,
                     <<<'SQL'
@@ -225,17 +225,12 @@ class SqliteCompilerTest extends AbstractCompilerTestCase
                       "name" varchar(100) NOT NULL
                     )
                     SQL,
-                    // FK last
-                    'ALTER TABLE "posts" ADD CONSTRAINT "fk_user" FOREIGN KEY ("user_id") REFERENCES "users" ("id")',
                 ];
 
             case 'fkOrderingDropBeforeStructure':
-                return [
-                    // Drop FK first
-                    'ALTER TABLE "posts" DROP FOREIGN KEY "fk_user"',
-                    // Then structure
-                    'ALTER TABLE "posts" DROP COLUMN "user_id"',
-                ];
+                // SQLite skips the standalone DROP FK (no ALTER TABLE DROP FK syntax);
+                // only the structure change remains.
+                return 'ALTER TABLE "posts" DROP COLUMN "user_id"';
 
             // Validation
             case 'alterAddColumnNotNullWithoutDefault':
@@ -269,7 +264,7 @@ class SqliteCompilerTest extends AbstractCompilerTestCase
 
             case 'rawWithFkOrdering':
                 return [
-                    // Structure pass: CREATE users, raw, CREATE posts (in order)
+                    // Structure pass: CREATE users, raw, CREATE posts (in order); FK inlined
                     <<<'SQL'
                     CREATE TABLE "users" (
                       "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT
@@ -279,11 +274,10 @@ class SqliteCompilerTest extends AbstractCompilerTestCase
                     <<<'SQL'
                     CREATE TABLE "posts" (
                       "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-                      "user_id" int NOT NULL
+                      "user_id" int NOT NULL,
+                      CONSTRAINT "fk_user" FOREIGN KEY ("user_id") REFERENCES "users" ("id")
                     )
                     SQL,
-                    // Post pass: FK last (global)
-                    'ALTER TABLE "posts" ADD CONSTRAINT "fk_user" FOREIGN KEY ("user_id") REFERENCES "users" ("id")',
                 ];
 
             case 'rawOnly':
@@ -394,26 +388,26 @@ class SqliteCompilerTest extends AbstractCompilerTestCase
                 ];
 
             case 'fkChecksWithForeignKey':
-                // Pass 1: disable. Pass 2: create table (no FK inline). Pass 3: add FK + enable.
+                // Pass 1: disable. Pass 2: create table (FK inlined). Pass 3: enable.
                 return [
                     'PRAGMA foreign_keys = OFF',
                     <<<'SQL'
                     CREATE TABLE "posts" (
                       "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-                      "user_id" int NOT NULL
+                      "user_id" int NOT NULL,
+                      CONSTRAINT "fk_user" FOREIGN KEY ("user_id") REFERENCES "users" ("id")
                     )
                     SQL,
-                    'ALTER TABLE "posts" ADD CONSTRAINT "fk_user" FOREIGN KEY ("user_id") REFERENCES "users" ("id")',
                     'PRAGMA foreign_keys = ON',
                 ];
 
             case 'fkChecksWithTriggerAndFk':
-                // Pass 1: disable + drop FK. Pass 2: alter structure. Pass 3: add FK + trigger + enable.
+                // SQLite cannot add/drop a FK via ALTER TABLE: the DROP FK and ADD FK
+                // are skipped here (they would require a schema-driven table rebuild).
+                // Pass 1: disable. Pass 2: alter structure. Pass 3: trigger + enable.
                 return [
                     'PRAGMA foreign_keys = OFF',
-                    'ALTER TABLE "posts" DROP FOREIGN KEY "fk_old"',
                     'ALTER TABLE "posts" ADD COLUMN "category_id" int DEFAULT NULL',
-                    'ALTER TABLE "posts" ADD CONSTRAINT "fk_category" FOREIGN KEY ("category_id") REFERENCES "categories" ("id")',
                     'CREATE TRIGGER IF NOT EXISTS "trg_audit" AFTER INSERT ON "posts" FOR EACH ROW BEGIN INSERT INTO audit_log (action) VALUES (\'insert\'); END',
                     'PRAGMA foreign_keys = ON',
                 ];

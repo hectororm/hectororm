@@ -22,6 +22,7 @@ use Hector\Schema\Plan\Compiler\SqliteCompiler;
 use Hector\Schema\Plan\Plan;
 use Hector\Schema\Plan\Raw;
 use Hector\Schema\Plan\TableOperation;
+use PDOException;
 
 /**
  * Class SqliteCompilerExecuteTest.
@@ -369,6 +370,130 @@ class SqliteCompilerExecuteTest extends AbstractCompilerExecuteTestCase
         // Cleanup
         $cleanPlan = new Plan();
         $cleanPlan->drop('raw_default_test', ifExists: true);
+        static::executePlan($cleanPlan, $connection);
+    }
+
+    /**
+     * Regression test for #136: a foreign key declared inline in Plan::create()
+     * must be inlined into the CREATE TABLE statement on SQLite (which has no
+     * ALTER TABLE ... ADD CONSTRAINT syntax), so the plan executes without error
+     * and the FK is actually enforced.
+     */
+    public function testInlineForeignKeyOnCreateTable(): void
+    {
+        $connection = static::createConnection();
+        static::$connection = $connection;
+
+        // Child references parent, declared inline in the create() closure.
+        $plan = new Plan();
+        $plan->create('fk_parent', function (TableOperation $t): void {
+            $t->addColumn('id', 'INTEGER', autoIncrement: true)
+                ->addIndex('PRIMARY', ['id'], Index::PRIMARY);
+        });
+        $plan->create('fk_child', function (TableOperation $t): void {
+            $t->addColumn('id', 'INTEGER', autoIncrement: true)
+                ->addColumn('parent_id', 'INTEGER')
+                ->addIndex('PRIMARY', ['id'], Index::PRIMARY)
+                ->addForeignKey('fk_child_parent', ['parent_id'], 'fk_parent', ['id']);
+        });
+
+        // Must not throw "near CONSTRAINT: syntax error".
+        static::executePlan($plan, $connection);
+
+        // The FK must be present on the child table.
+        $generator = new Sqlite($connection);
+        $schema = $generator->generateSchema('main');
+        $foreignKeys = iterator_to_array($schema->getTable('fk_child')->getForeignKeys());
+
+        // SQLite does not expose FK constraint names via introspection, so assert
+        // on the columns and referenced table instead of the name.
+        $this->assertCount(1, $foreignKeys);
+        $this->assertSame(['parent_id'], $foreignKeys[0]->getColumnsName());
+        $this->assertSame('fk_parent', $foreignKeys[0]->getReferencedTableName());
+
+        // The FK must actually be enforced: inserting an orphan row must fail.
+        $connection->execute("INSERT INTO fk_parent (id) VALUES (1)");
+        $connection->execute("INSERT INTO fk_child (parent_id) VALUES (1)");
+
+        try {
+            $connection->execute("INSERT INTO fk_child (parent_id) VALUES (999)");
+            $this->fail('Expected a foreign key constraint violation');
+        } catch (PDOException) {
+            // Expected: FK enforcement rejected the orphan row.
+        }
+
+        // Cleanup
+        $cleanPlan = new Plan();
+        $cleanPlan->drop('fk_child', ifExists: true);
+        $cleanPlan->drop('fk_parent', ifExists: true);
+        static::executePlan($cleanPlan, $connection);
+    }
+
+    /**
+     * Regression test for #136: adding a foreign key to an existing table on
+     * SQLite goes through a full table rebuild (SQLite cannot ADD a FK via
+     * ALTER TABLE). Existing data must be preserved and the FK enforced.
+     */
+    public function testAddForeignKeyViaRebuild(): void
+    {
+        $connection = static::createConnection();
+        static::$connection = $connection;
+
+        // Create parent and child without any FK.
+        $plan = new Plan();
+        $plan->create('fk_reb_parent', function (TableOperation $t): void {
+            $t->addColumn('id', 'INTEGER', autoIncrement: true)
+                ->addIndex('PRIMARY', ['id'], Index::PRIMARY);
+        });
+        $plan->create('fk_reb_child', function (TableOperation $t): void {
+            $t->addColumn('id', 'INTEGER', autoIncrement: true)
+                ->addColumn('parent_id', 'INTEGER')
+                ->addIndex('PRIMARY', ['id'], Index::PRIMARY);
+        });
+        static::executePlan($plan, $connection);
+
+        // Seed valid data.
+        $connection->execute("INSERT INTO fk_reb_parent (id) VALUES (1)");
+        $connection->execute("INSERT INTO fk_reb_child (parent_id) VALUES (1)");
+
+        // Add the FK on the existing child — triggers a rebuild (needs the schema).
+        $compiler = new SqliteCompiler();
+        $generator = new Sqlite($connection);
+        $schema = $generator->generateSchema('main');
+
+        $plan2 = new Plan();
+        $plan2->alter('fk_reb_child')
+            ->addForeignKey('fk_reb_child_parent', ['parent_id'], 'fk_reb_parent', ['id']);
+
+        foreach ($plan2->getStatements($compiler, $schema) as $statement) {
+            $connection->execute($statement);
+        }
+
+        // The FK must now exist and existing data must be preserved.
+        $schema = $generator->generateSchema('main');
+        $foreignKeys = iterator_to_array($schema->getTable('fk_reb_child')->getForeignKeys());
+
+        // SQLite does not expose FK constraint names via introspection.
+        $this->assertCount(1, $foreignKeys);
+        $this->assertSame(['parent_id'], $foreignKeys[0]->getColumnsName());
+        $this->assertSame('fk_reb_parent', $foreignKeys[0]->getReferencedTableName());
+
+        $rows = $connection->fetchAll('SELECT parent_id FROM fk_reb_child');
+        $this->assertCount(1, $rows);
+        $this->assertSame(1, (int)$rows[0]['parent_id']);
+
+        // FK is enforced after the rebuild.
+        try {
+            $connection->execute("INSERT INTO fk_reb_child (parent_id) VALUES (999)");
+            $this->fail('Expected a foreign key constraint violation');
+        } catch (PDOException) {
+            // Expected.
+        }
+
+        // Cleanup
+        $cleanPlan = new Plan();
+        $cleanPlan->drop('fk_reb_child', ifExists: true);
+        $cleanPlan->drop('fk_reb_parent', ifExists: true);
         static::executePlan($cleanPlan, $connection);
     }
 }

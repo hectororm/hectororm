@@ -72,6 +72,22 @@ final class SqliteCompiler extends AbstractCompiler
     /**
      * @inheritDoc
      */
+    protected function shouldInlineCreateTableForeignKeys(): bool
+    {
+        return true;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    protected function supportsAlterForeignKey(): bool
+    {
+        return false;
+    }
+
+    /**
+     * @inheritDoc
+     */
     protected function compileDisableForeignKeyChecks(): string
     {
         return 'PRAGMA foreign_keys = OFF';
@@ -111,7 +127,13 @@ final class SqliteCompiler extends AbstractCompiler
             ));
         }
 
-        // FK excluded from inline — handled by Post pass in AbstractCompiler::compile()
+        // Foreign keys must be inlined into the CREATE TABLE body: SQLite has no
+        // ALTER TABLE ... ADD CONSTRAINT ... FOREIGN KEY syntax. The matching Post
+        // pass is skipped via shouldInlineCreateTableForeignKeys().
+        array_push($definitions, ...array_map(
+            fn(AddForeignKey $op): string => $this->compileForeignKeyDefinition($op),
+            array_filter($operations, fn($op): bool => $op instanceof AddForeignKey),
+        ));
 
         $statements = [];
 
