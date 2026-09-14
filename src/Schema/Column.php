@@ -36,6 +36,8 @@ class Column
         private ?Table $table = null,
         private ?string $on_update = null,
         private ?int $datetime_precision = null,
+        private ?string $generation_expression = null,
+        private bool $generated_stored = false,
     ) {
     }
 
@@ -61,6 +63,8 @@ class Column
             'collation' => $this->collation,
             'on_update' => $this->on_update,
             'datetime_precision' => $this->datetime_precision,
+            'generation_expression' => $this->generation_expression,
+            'generated_stored' => $this->generated_stored,
         ];
     }
 
@@ -85,6 +89,8 @@ class Column
         $this->collation = $data['collation'];
         $this->on_update = $data['on_update'] ?? null;
         $this->datetime_precision = $data['datetime_precision'] ?? null;
+        $this->generation_expression = $data['generation_expression'] ?? null;
+        $this->generated_stored = $data['generated_stored'] ?? false;
         $this->table = null;
     }
 
@@ -151,7 +157,7 @@ class Column
      */
     public function hasDefault(): bool
     {
-        return $this->isNullable() || null !== $this->default;
+        return false === $this->isGenerated() && ($this->isNullable() || null !== $this->default);
     }
 
     /**
@@ -208,6 +214,36 @@ class Column
     public function getDatetimePrecision(): ?int
     {
         return $this->datetime_precision;
+    }
+
+    /**
+     * Get the database's generation expression, if any.
+     *
+     * @return string|null
+     */
+    public function getGenerationExpression(): ?string
+    {
+        return $this->generation_expression;
+    }
+
+    /**
+     * Is this a generated column?
+     *
+     * @return bool
+     */
+    public function isGenerated(): bool
+    {
+        return null !== $this->generation_expression;
+    }
+
+    /**
+     * Is the generated value stored rather than virtual?
+     *
+     * @return bool
+     */
+    public function isGeneratedStored(): bool
+    {
+        return $this->isGenerated() && $this->generated_stored;
     }
 
     /**

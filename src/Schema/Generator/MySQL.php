@@ -107,6 +107,11 @@ class MySQL extends AbstractGenerator
 
         $columnsInfo = [];
         foreach ($results as $result) {
+            $generationExpression = $result['GENERATION_EXPRESSION'] ?? null;
+            if ('' === $generationExpression) {
+                $generationExpression = null;
+            }
+
             $columnsInfo[] = [
                 'name' => $result['COLUMN_NAME'],
                 'position' => (int)$result['ORDINAL_POSITION'] - 1,
@@ -115,6 +120,9 @@ class MySQL extends AbstractGenerator
                 'type' => strtolower($result['DATA_TYPE']),
                 'auto_increment' => false !== stripos($result['EXTRA'], 'auto_increment'),
                 'on_update' => $this->getOnUpdateValue($result['EXTRA']),
+                'generation_expression' => $generationExpression,
+                'generated_stored' => null !== $generationExpression &&
+                    1 === preg_match('/\b(?:STORED|PERSISTENT)\b/i', $result['EXTRA']),
                 'datetime_precision' => isset($result['DATETIME_PRECISION']) ? (int)$result['DATETIME_PRECISION'] : null,
                 'maxlength' => $result['CHARACTER_MAXIMUM_LENGTH'] ? (int)$result['CHARACTER_MAXIMUM_LENGTH'] : null,
                 'numeric_precision' => $result['NUMERIC_PRECISION'] ? (int)$result['NUMERIC_PRECISION'] : null,

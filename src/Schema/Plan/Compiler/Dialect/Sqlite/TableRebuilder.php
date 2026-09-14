@@ -15,9 +15,11 @@ declare(strict_types=1);
 namespace Hector\Schema\Plan\Compiler\Dialect\Sqlite;
 
 use Hector\Schema\Column;
+use Hector\Schema\Exception\PlanException;
 use Hector\Schema\Plan\AlterTable;
 use Hector\Schema\Plan\Compiler\CompilationContext;
 use Hector\Schema\Plan\CreateTable;
+use Hector\Schema\Plan\Operation\AddColumn;
 use Hector\Schema\Plan\Operation\AddForeignKey;
 use Hector\Schema\Plan\Operation\AddIndex;
 use Hector\Schema\Plan\Operation\DropColumn;
@@ -71,6 +73,10 @@ final class TableRebuilder
     public function isRequired(AlterTable $alterTable): bool
     {
         foreach ($alterTable as $operation) {
+            if ($operation instanceof AddColumn && true === $operation->getGenerated()?->isStored()) {
+                return true;
+            }
+
             if (in_array($operation::class, self::REBUILD_OPERATIONS, true)) {
                 return true;
             }
@@ -101,10 +107,13 @@ final class TableRebuilder
         $schema = $context->schema;
 
         if (null === $schema) {
-            return [];
+            throw new PlanException('SQLite table rebuild requires an existing schema');
         }
 
         $tableName = $alterTable->getObjectName();
+        if (false === $schema->hasTable($tableName)) {
+            throw new PlanException(sprintf('Cannot rebuild SQLite table "%s": missing from the schema', $tableName));
+        }
         $tempName = sprintf('__htemp_%s_%s', substr(bin2hex(random_bytes(2)), 0, 3), $tableName);
 
         $diff = $this->buildDiff($schema, $tableName);
@@ -173,7 +182,7 @@ final class TableRebuilder
             );
         }
 
-        return new TableDiff($columns, $indexes, $foreignKeys);
+        return new TableDiff($columns, $indexes, $foreignKeys, $tableName);
     }
 
     /**
@@ -198,6 +207,15 @@ final class TableRebuilder
         $columns = $diff->columns();
         $primaryIndexes = $diff->primaryIndexes();
         $foreignKeys = $diff->foreignKeys();
+        $mapping = $diff->migrateMapping();
+        if ([] === $mapping) {
+            // An empty mapping means SELECT * to MigrateData, which would write
+            // generated columns or copy unrelated values into newly added columns.
+            throw new PlanException(sprintf(
+                'Cannot rebuild SQLite table "%s": no surviving writable column to migrate',
+                $tableName,
+            ));
+        }
 
         $plan = new Plan();
         $plan->create($tempName, function (CreateTable $t) use ($columns, $primaryIndexes, $foreignKeys): void {
@@ -209,6 +227,7 @@ final class TableRebuilder
                     default: $col->default,
                     hasDefault: $col->hasDefault,
                     autoIncrement: $col->autoIncrement,
+                    generated: $col->generated,
                 );
             }
 
@@ -228,7 +247,7 @@ final class TableRebuilder
             }
         });
 
-        $plan->migrate($tableName, $tempName, $diff->migrateMapping());
+        $plan->migrate($tableName, $tempName, $mapping);
         $plan->drop($tableName);
         $plan->rename($tempName, $tableName);
 

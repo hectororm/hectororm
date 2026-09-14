@@ -69,6 +69,16 @@ class SQLiteCapabilities implements DriverCapabilities
     }
 
     /**
+     * Support of VIRTUAL and STORED generated columns?
+     *
+     * @return bool
+     */
+    public function hasGeneratedColumns(): bool
+    {
+        return version_compare($this->driverInfo->getVersion(), '3.31.0', '>=');
+    }
+
+    /**
      * @inheritDoc
      */
     public function hasTransactionalDdl(): bool

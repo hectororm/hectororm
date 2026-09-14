@@ -190,11 +190,28 @@ abstract class AbstractDialect implements DialectInterface
     protected function validateAlterOperations(AlterTable $alterTable): void
     {
         foreach ($alterTable as $operation) {
+            if ($operation instanceof AddColumn || $operation instanceof ModifyColumn) {
+                // Validate before SQLite rebuilds can transform the operations.
+                $this->validateColumnOperation($operation);
+            }
+
             if (false === ($operation instanceof AddColumn)) {
                 continue;
             }
 
-            if ($operation->isNullable() || $operation->hasDefault() || $operation->isAutoIncrement()) {
+            if ($operation->isGenerated()) {
+                continue;
+            }
+
+            if ($operation->isNullable()) {
+                continue;
+            }
+
+            if ($operation->hasDefault()) {
+                continue;
+            }
+
+            if ($operation->isAutoIncrement()) {
                 continue;
             }
 
@@ -205,6 +222,34 @@ abstract class AbstractDialect implements DialectInterface
                     $alterTable->getObjectName(),
                 )
             );
+        }
+    }
+
+    /**
+     * Validate attributes that are incompatible with a generated column.
+     *
+     * @throws PlanException
+     */
+    protected function validateColumnOperation(AddColumn|ModifyColumn $operation): void
+    {
+        if (false === $operation->isGenerated()) {
+            return;
+        }
+
+        $attribute = match (true) {
+            $operation->hasDefault() || null !== $operation->getDefault() => 'DEFAULT',
+            $operation->isAutoIncrement() => 'AUTO_INCREMENT',
+            $operation->usesCurrentOnUpdate() => 'useCurrentOnUpdate',
+            default => null,
+        };
+
+        if (null !== $attribute) {
+            throw new PlanException(sprintf(
+                'Generated column "%s" on table "%s" cannot specify %s',
+                $operation->getName(),
+                $operation->getObjectName(),
+                $attribute,
+            ));
         }
     }
 

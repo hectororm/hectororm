@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added `SQLiteCapabilities::hasGeneratedColumns()` to detect support for VIRTUAL and STORED generated columns (SQLite 3.31.0 or newer)
 - Added an `$options` parameter to `Connection::__construct()` to pass driver-specific PDO connection options (the PDO constructor `$options` array), shared by both the read/write and read-only connections and preserved across serialization. **Note:** options such as `PDO::ATTR_AUTOCOMMIT` or `PDO::ATTR_ERRMODE` may interfere with the internal transaction handling and should not be altered lightly
 
 ## [1.4.1] - 2026-07-31

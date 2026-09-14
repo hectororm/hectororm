@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace Hector\Schema\Plan\Compiler\Dialect;
 
+use Hector\Connection\Driver\MariaDBCapabilities;
 use Hector\Schema\Column;
 use Hector\Schema\Exception\PlanException;
 use Hector\Schema\Index;
@@ -367,12 +368,13 @@ final class MySQLDialect extends AbstractDialect
     private function compileSchemaColumnDefinition(Column $column, string $newName): string
     {
         $type = $column->getType();
+        $integerType = in_array(strtolower($type), ['tinyint', 'smallint', 'mediumint', 'int', 'integer', 'bigint'], true);
 
         if (null !== $column->getDatetimePrecision()) {
             $type .= '(' . $column->getDatetimePrecision() . ')';
         } elseif (null !== $column->getMaxlength()) {
             $type .= '(' . $column->getMaxlength() . ')';
-        } elseif (null !== $column->getNumericPrecision()) {
+        } elseif (null !== $column->getNumericPrecision() && false === $integerType) {
             $type .= '(' . $column->getNumericPrecision();
 
             if (null !== $column->getNumericScale()) {
@@ -384,6 +386,17 @@ final class MySQLDialect extends AbstractDialect
 
         if (true === $column->isUnsigned()) {
             $type .= ' unsigned';
+        }
+
+        $expression = $column->getGenerationExpression();
+        if (null !== $expression) {
+            return $this->compileGeneratedColumnDefinition(
+                $newName,
+                $type,
+                $expression,
+                $column->isGeneratedStored(),
+                $column->isNullable(),
+            );
         }
 
         $parts = [
@@ -432,10 +445,23 @@ final class MySQLDialect extends AbstractDialect
      */
     private function compileColumnDefinition(AddColumn|ModifyColumn $operation): string
     {
+        $this->validateColumnOperation($operation);
+
         $parts = [
             $this->quoteIdentifier($operation->getName()),
             $operation->getType(),
         ];
+
+        $generated = $operation->getGenerated();
+        if (null !== $generated) {
+            return $this->compileGeneratedColumnDefinition(
+                $operation->getName(),
+                $operation->getType(),
+                $generated->getExpression(),
+                $generated->isStored(),
+                $operation->isNullable(),
+            );
+        }
 
         $parts[] = $operation->isNullable() ? 'NULL' : 'NOT NULL';
 
@@ -466,6 +492,32 @@ final class MySQLDialect extends AbstractDialect
         }
 
         return implode(' ', $parts);
+    }
+
+    /**
+     * Compile a generated definition from either an operation or introspected metadata.
+     */
+    private function compileGeneratedColumnDefinition(
+        string $name,
+        string $type,
+        string $expression,
+        bool $stored,
+        bool $nullable,
+    ): string {
+        $sql = sprintf(
+            '%s %s GENERATED ALWAYS AS (%s) %s',
+            $this->quoteIdentifier($name),
+            $type,
+            $expression,
+            $stored ? 'STORED' : 'VIRTUAL',
+        );
+
+        // MariaDB's generated-column grammar has no NULL / NOT NULL clause.
+        if (false === ($this->capabilities instanceof MariaDBCapabilities)) {
+            $sql .= $nullable ? ' NULL' : ' NOT NULL';
+        }
+
+        return $sql;
     }
 
     /**

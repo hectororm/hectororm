@@ -15,6 +15,8 @@ declare(strict_types=1);
 namespace Hector\Schema\Plan\Compiler\Dialect;
 
 use Hector\Connection\Driver\DriverCapabilities;
+use Hector\Connection\Driver\SQLiteCapabilities;
+use Hector\Schema\Exception\PlanException;
 use Hector\Schema\Index;
 use Hector\Schema\Plan\AlterTable;
 use Hector\Schema\Plan\AlterView;
@@ -264,6 +266,18 @@ final class SqliteDialect extends AbstractDialect
     ): array {
         $quotedTable = $this->quoteIdentifier($tableName);
 
+        if ($operation instanceof AddColumn || $operation instanceof ModifyColumn) {
+            $this->validateColumnOperation($operation);
+            if ($operation->isGenerated() &&
+                ($operation instanceof ModifyColumn || true === $operation->getGenerated()?->isStored())) {
+                throw new PlanException(sprintf(
+                    'Generated column "%s" on table "%s" requires a SQLite table rebuild with an existing schema',
+                    $operation->getName(),
+                    $tableName,
+                ));
+            }
+        }
+
         return match ($operation::class) {
             AddColumn::class => [
                 sprintf(
@@ -350,6 +364,8 @@ final class SqliteDialect extends AbstractDialect
      */
     private function compileColumnDefinition(AddColumn|ModifyColumn $operation): string
     {
+        $this->validateColumnOperation($operation);
+
         $autoIncrement = true === $operation->isAutoIncrement();
 
         $parts = [
@@ -359,6 +375,20 @@ final class SqliteDialect extends AbstractDialect
             // rejects, so force the exact "INTEGER" keyword in that case.
             $autoIncrement ? 'INTEGER' : $operation->getType(),
         ];
+
+        $generated = $operation->getGenerated();
+        if (null !== $generated) {
+            if ($this->capabilities instanceof SQLiteCapabilities &&
+                false === $this->capabilities->hasGeneratedColumns()) {
+                throw new PlanException('Generated columns require SQLite 3.31.0 or newer');
+            }
+
+            $parts[] = sprintf(
+                'GENERATED ALWAYS AS (%s) %s',
+                $generated->getExpression(),
+                $generated->isStored() ? 'STORED' : 'VIRTUAL',
+            );
+        }
 
         if (false === $operation->isNullable()) {
             $parts[] = 'NOT NULL';

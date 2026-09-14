@@ -15,9 +15,13 @@ declare(strict_types=1);
 namespace Hector\Schema\Tests\Plan\Compiler;
 
 use Hector\Connection\Connection;
+use Hector\Connection\Driver\DriverInfo;
+use Hector\Connection\Driver\MySQLCapabilities;
 use Hector\Schema\Generator\GeneratorInterface;
 use Hector\Schema\Index;
 use Hector\Schema\Plan\Compiler\AutoCompiler;
+use Hector\Schema\Plan\Compiler\MySQLCompiler;
+use Hector\Schema\Plan\Generated;
 use Hector\Schema\Plan\Plan;
 use Hector\Schema\Plan\Raw;
 use Hector\Schema\Plan\TableOperation;
@@ -36,6 +40,83 @@ use Throwable;
 abstract class AbstractCompilerExecuteTestCase extends TestCase
 {
     protected static ?Connection $connection = null;
+
+    /**
+     * @dataProvider generatedStorageModes
+     */
+    public function testGeneratedColumnDdlExecution(bool $stored): void
+    {
+        $connection = static::createConnection();
+        if (null === $connection) {
+            $this->markTestSkipped('Database connection not available');
+        }
+
+        $table = 'hector_generated_ddl_test';
+        $clean = new Plan();
+        $clean->drop($table, ifExists: true);
+        static::executePlan($clean, $connection);
+
+        try {
+            $create = new Plan();
+            $create->create($table)
+                ->addColumn('quantity', 'INTEGER')
+                ->addColumn('price', 'INTEGER')
+                ->addColumn('total', 'INTEGER', generated: new Generated('quantity * price', stored: $stored));
+            static::executePlan($create, $connection);
+
+            $generator = static::createGenerator($connection);
+            $schema = $generator->generateSchema(static::getSchemaName());
+            $column = $schema->getTable($table)->getColumn('total');
+            $this->assertTrue($column->isGenerated());
+            $this->assertSame($stored, $column->isGeneratedStored());
+            $this->assertFalse($column->hasDefault());
+            $this->assertSame('quantity*price', preg_replace('/[\s`()]/', '', $column->getGenerationExpression()));
+            $this->assertFalse($schema->getTable($table)->getColumn('quantity')->isGenerated());
+
+            $connection->execute("INSERT INTO $table (quantity, price) VALUES (2, 5)");
+            $this->assertSame(10, (int)$connection->fetchOne("SELECT total FROM $table")['total']);
+            $connection->execute("UPDATE $table SET quantity = 3");
+            $this->assertSame(15, (int)$connection->fetchOne("SELECT total FROM $table")['total']);
+
+            $add = new Plan();
+            $add->alter($table)->addColumn('next_total', 'INTEGER', generated: 'quantity * (price + 1)');
+            static::executePlan($add, $connection);
+            $this->assertSame(18, (int)$connection->fetchOne("SELECT next_total FROM $table")['next_total']);
+
+            if (true === $stored && 'sqlite' !== $connection->getDriverInfo()->getDriver()) {
+                $modify = new Plan();
+                $modify->alter($table)->modifyColumn('total', 'INTEGER',
+                    generated: new Generated('quantity * price + 1', stored: true));
+                static::executePlan($modify, $connection);
+                $this->assertSame(16, (int)$connection->fetchOne("SELECT total FROM $table")['total']);
+            }
+
+            if ('mysql' === $connection->getDriverInfo()->getDriver()) {
+                // Execute the legacy rename even on modern MySQL to verify a complete definition.
+                $schema = $generator->generateSchema(static::getSchemaName());
+                $before = $schema->getTable($table)->getColumn('total');
+                $rename = new Plan();
+                $rename->alter($table)->renameColumn('total', 'renamed_total');
+                $compiler = new MySQLCompiler(new MySQLCapabilities(new DriverInfo('mysql', '5.7.44')));
+                foreach ($rename->getStatements($compiler, $schema) as $statement) {
+                    $connection->execute($statement);
+                }
+
+                $after = $generator->generateSchema(static::getSchemaName())->getTable($table)->getColumn('renamed_total');
+                $this->assertSame($before->getGenerationExpression(), $after->getGenerationExpression());
+                $this->assertSame($stored, $after->isGeneratedStored());
+                $this->assertSame($stored ? 16 : 15,
+                    (int)$connection->fetchOne("SELECT renamed_total FROM $table")['renamed_total']);
+            }
+        } finally {
+            static::executePlan($clean, $connection);
+        }
+    }
+
+    public static function generatedStorageModes(): array
+    {
+        return [[false], [true]];
+    }
 
     /**
      * @dataProvider currentOnUpdateTypes

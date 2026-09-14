@@ -16,6 +16,36 @@ use Hector\Schema\Column;
 
 class ColumnTest extends AbstractTestCase
 {
+    /**
+     * @dataProvider generatedStorageModes
+     */
+    public function testGeneratedMetadataSurvivesSerialization(bool $stored): void
+    {
+        $column = new Column('computed', 1, null, true, 'integer',
+            generation_expression: '0', generated_stored: $stored);
+        /** @var Column $restored */
+        $restored = unserialize(serialize($column));
+
+        $this->assertTrue($restored->isGenerated());
+        $this->assertSame('0', $restored->getGenerationExpression());
+        $this->assertSame($stored, $restored->isGeneratedStored());
+        $this->assertFalse($restored->hasDefault());
+        $this->assertTrue($restored->isNullable());
+
+        $legacy = $column->__serialize();
+        unset($legacy['generation_expression'], $legacy['generated_stored']);
+        $restored->__unserialize($legacy);
+        $this->assertNull($restored->getGenerationExpression());
+        $this->assertFalse($restored->isGenerated());
+        $this->assertFalse($restored->isGeneratedStored());
+        $this->assertTrue($restored->hasDefault());
+    }
+
+    public static function generatedStorageModes(): array
+    {
+        return [[false], [true]];
+    }
+
     public function testSerialization(): void
     {
         $table = $this->getSchemaContainer()->getSchema('sakila')->getTable('customer');

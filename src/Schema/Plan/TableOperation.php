@@ -36,6 +36,7 @@ abstract class TableOperation extends OperationGroup
      * @param string|null $after
      * @param bool $first
      * @param bool $useCurrentOnUpdate MySQL/MariaDB only; ignored on SQLite
+     * @param Generated|string|null $generated A string is a SQL expression for a VIRTUAL column
      *
      * @return static
      */
@@ -49,6 +50,7 @@ abstract class TableOperation extends OperationGroup
         ?string $after = null,
         bool $first = false,
         bool $useCurrentOnUpdate = false,
+        Generated|string|null $generated = null,
     ): static {
         $this->add(new AddColumn(
             table: $this->getObjectName(),
@@ -61,6 +63,7 @@ abstract class TableOperation extends OperationGroup
             after: $after,
             first: $first,
             useCurrentOnUpdate: $useCurrentOnUpdate,
+            generated: $generated,
         ));
 
         return $this;

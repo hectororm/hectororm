@@ -14,10 +14,13 @@ declare(strict_types=1);
 
 namespace Hector\Schema\Plan\Operation;
 
+use Hector\Schema\Plan\Generated;
 use Hector\Schema\Plan\OperationInterface;
 
 abstract class AbstractColumnOperation implements OperationInterface
 {
+    private ?Generated $generated;
+
     public function __construct(
         private string $table,
         private string $name,
@@ -29,7 +32,29 @@ abstract class AbstractColumnOperation implements OperationInterface
         private ?string $after = null,
         private bool $first = false,
         private bool $useCurrentOnUpdate = false,
+        Generated|string|null $generated = null,
     ) {
+        $this->generated = is_string($generated) ? new Generated($generated) : $generated;
+    }
+
+    /**
+     * Get the normalized generated column definition.
+     *
+     * @return Generated|null
+     */
+    public function getGenerated(): ?Generated
+    {
+        return $this->generated;
+    }
+
+    /**
+     * Is this a generated column?
+     *
+     * @return bool
+     */
+    public function isGenerated(): bool
+    {
+        return null !== $this->generated;
     }
 
     /**
@@ -83,11 +108,15 @@ abstract class AbstractColumnOperation implements OperationInterface
     /**
      * Has default value?
      *
+     * Nullable ordinary columns implicitly default to NULL. Generated columns
+     * do not have that implicit default; an explicitly enabled default is kept
+     * visible so the dialect can reject the incompatible definition.
+     *
      * @return bool
      */
     public function hasDefault(): bool
     {
-        return $this->hasDefault || $this->nullable;
+        return $this->hasDefault || ($this->nullable && false === $this->isGenerated());
     }
 
     /**

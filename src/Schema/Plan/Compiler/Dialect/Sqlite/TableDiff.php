@@ -14,7 +14,10 @@ declare(strict_types=1);
 
 namespace Hector\Schema\Plan\Compiler\Dialect\Sqlite;
 
+use Hector\Schema\Exception\PlanException;
+use Hector\Schema\Generator\Sqlite\CreateTableParser;
 use Hector\Schema\Index;
+use Hector\Schema\Plan\Generated;
 use Hector\Schema\Plan\Operation\AddColumn;
 use Hector\Schema\Plan\Operation\AddForeignKey;
 use Hector\Schema\Plan\Operation\AddIndex;
@@ -34,8 +37,8 @@ use Hector\Schema\Plan\OperationInterface;
  */
 final class TableDiff
 {
-    /** @var array<string, string> old column name => new column name */
-    private array $renames = [];
+    /** @var array<string, string> current column name => original source name */
+    private array $sources;
 
     /** @var string[] column names as they existed before any operation */
     private array $originalColumnNames;
@@ -45,9 +48,14 @@ final class TableDiff
      * @param array<string, IndexDef>      $indexes
      * @param array<string, ForeignKeyDef> $foreignKeys
      */
-    public function __construct(private array $columns, private array $indexes, private array $foreignKeys)
-    {
-        $this->originalColumnNames = array_keys($this->columns);
+    public function __construct(
+        private array $columns,
+        private array $indexes,
+        private array $foreignKeys,
+        private ?string $tableName = null,
+    ) {
+        $this->originalColumnNames = array_map('strval', array_keys($this->columns));
+        $this->sources = array_combine($this->originalColumnNames, $this->originalColumnNames);
     }
 
     /**
@@ -84,31 +92,109 @@ final class TableDiff
     private function putColumn(ColumnDef $column): void
     {
         $this->columns[$column->name] = $column;
+        unset($this->sources[$column->name]);
     }
 
     private function modifyColumn(ModifyColumn $operation): void
     {
-        if (false === isset($this->columns[$operation->getName()])) {
+        $name = $this->resolveColumnName($operation->getName());
+        if (null === $name) {
             return;
         }
 
-        $this->columns[$operation->getName()] = ColumnDef::fromOperation($operation);
+        $this->columns[$name] = ColumnDef::fromOperation($operation)->withName($name);
     }
 
     private function dropColumn(string $name): void
     {
+        $name = $this->resolveColumnName($name);
+        if (null === $name) {
+            return;
+        }
+
         unset($this->columns[$name]);
+        unset($this->sources[$name]);
     }
 
     private function renameColumn(string $oldName, string $newName): void
     {
-        if (false === isset($this->columns[$oldName])) {
+        $oldName = $this->resolveColumnName($oldName);
+        if (null === $oldName) {
             return;
         }
 
-        $this->columns[$newName] = $this->columns[$oldName]->withName($newName);
-        unset($this->columns[$oldName]);
-        $this->renames[$oldName] = $newName;
+        if ($oldName === $newName) {
+            return;
+        }
+
+        $existing = $this->resolveColumnName($newName);
+        if (null !== $existing && $existing !== $oldName) {
+            throw new PlanException(sprintf('Cannot rename column "%s" to existing column "%s"', $oldName, $newName));
+        }
+
+        // Preserve declaration order and follow rename chains back to the original data.
+        $columns = [];
+        $parser = new CreateTableParser();
+        foreach ($this->columns as $column) {
+            $name = $column->name;
+            $targetName = $name === $oldName ? $newName : $name;
+            $column = $column->withName($targetName);
+            if (null !== $column->generated) {
+                $column->generated = new Generated(
+                    $parser->renameColumnReferences($column->generated->getExpression(), $oldName, $newName),
+                    $column->generated->isStored(),
+                );
+            }
+            $columns[$targetName] = $column;
+        }
+        $this->columns = $columns;
+
+        if (isset($this->sources[$oldName])) {
+            $this->sources[$newName] = $this->sources[$oldName];
+            unset($this->sources[$oldName]);
+        }
+
+        foreach ($this->indexes as $name => $index) {
+            $index = clone $index;
+            $index->columns = $this->renameReferences($index->columns, $oldName, $newName);
+            $this->indexes[$name] = $index;
+        }
+
+        foreach ($this->foreignKeys as $name => $foreignKey) {
+            $foreignKey = clone $foreignKey;
+            $foreignKey->columns = $this->renameReferences($foreignKey->columns, $oldName, $newName);
+            if (null !== $this->tableName && 0 === strcasecmp($foreignKey->referencedTable, $this->tableName)) {
+                $foreignKey->referencedColumns = $this->renameReferences(
+                    $foreignKey->referencedColumns,
+                    $oldName,
+                    $newName,
+                );
+            }
+            $this->foreignKeys[$name] = $foreignKey;
+        }
+    }
+
+    private function resolveColumnName(string $name): ?string
+    {
+        foreach ($this->columns as $column) {
+            if (0 === strcasecmp($column->name, $name)) {
+                return $column->name;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param string[] $names
+     * @return string[]
+     */
+    private function renameReferences(array $names, string $oldName, string $newName): array
+    {
+        return array_map(
+            static fn(string $name): string => 0 === strcasecmp($name, $oldName) ? $newName : $name,
+            $names,
+        );
     }
 
     private function putIndex(IndexDef $index): void
@@ -174,27 +260,26 @@ final class TableDiff
      *
      * Only columns present in both the original and target shapes are kept
      * (matched by original name, or by their new name when renamed).
+     * Generated targets are omitted so SQLite recalculates their values.
      *
      * @return array<string, string>
      */
     public function migrateMapping(): array
     {
         $mapping = [];
+        $targets = array_flip($this->sources);
 
         foreach ($this->originalColumnNames as $oldName) {
-            if (isset($this->renames[$oldName])) {
-                $newName = $this->renames[$oldName];
-
-                if (isset($this->columns[$newName])) {
-                    $mapping[$oldName] = $newName;
-                }
-
+            if (false === isset($targets[$oldName])) {
                 continue;
             }
 
-            if (isset($this->columns[$oldName])) {
-                $mapping[$oldName] = $oldName;
+            $newName = (string)$targets[$oldName];
+            if (null !== $this->columns[$newName]->generated) {
+                continue;
             }
+
+            $mapping[$oldName] = $newName;
         }
 
         return $mapping;
