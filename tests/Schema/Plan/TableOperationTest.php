@@ -18,6 +18,8 @@ use Hector\Schema\Column;
 use Hector\Schema\ForeignKey;
 use Hector\Schema\Index;
 use Hector\Schema\Plan\AlterTable;
+use Hector\Schema\Plan\CreateTable;
+use Hector\Schema\Plan\Generated;
 use Hector\Schema\Plan\Operation\AddColumn;
 use Hector\Schema\Plan\Operation\AddForeignKey;
 use Hector\Schema\Plan\Operation\AddIndex;
@@ -58,6 +60,8 @@ class TableOperationTest extends TestCase
         $this->assertFalse($op->isAutoIncrement());
         $this->assertNull($op->getAfter());
         $this->assertFalse($op->isFirst());
+        $this->assertNull($op->getGenerated());
+        $this->assertFalse($op->isGenerated());
     }
 
     public function testAddColumnWithAllOptions(): void
@@ -80,6 +84,72 @@ class TableOperationTest extends TestCase
         $this->assertTrue($op->hasDefault());
         $this->assertSame('active', $op->getDefault());
         $this->assertSame('name', $op->getAfter());
+    }
+
+    /**
+     * @dataProvider generatedDefinitions
+     */
+    public function testGeneratedColumnDefinitions(Generated|string|null $generated): void
+    {
+        $create = new CreateTable('items');
+        $this->assertSame($create, $create->addColumn('total', 'INTEGER', generated: $generated));
+
+        $alter = new AlterTable('items');
+        $this->assertSame($alter, $alter->addColumn('total', 'INTEGER', generated: $generated));
+        $column = new Column('total', 0, null, false, 'int');
+        $this->assertSame($alter, $alter->modifyColumn($column, 'INTEGER', generated: $generated));
+
+        $operations = [
+            new AddColumn('items', 'total', 'INTEGER', generated: $generated),
+            new ModifyColumn('items', 'total', 'INTEGER', generated: $generated),
+            ...$create->getArrayCopy(),
+            ...$alter->getArrayCopy(),
+        ];
+
+        foreach ($operations as $operation) {
+            $definition = $operation->getGenerated();
+            $this->assertSame(null !== $generated, $operation->isGenerated());
+            $this->assertSame('total', $operation->getName());
+
+            if (is_string($generated)) {
+                $this->assertInstanceOf(Generated::class, $definition);
+                $this->assertSame($generated, $definition->getExpression());
+                $this->assertFalse($definition->isStored());
+                continue;
+            }
+
+            // Explicit objects retain their identity and storage mode; null stays null.
+            $this->assertSame($generated, $definition);
+        }
+    }
+
+    public static function generatedDefinitions(): array
+    {
+        return [
+            'ordinary' => [null],
+            'virtual shorthand' => [' quantity * price '],
+            'constant zero' => ['0'],
+            'virtual object' => [new Generated('quantity * price')],
+            'stored object' => [new Generated('quantity * price', stored: true)],
+        ];
+    }
+
+    public function testNullableGeneratedColumnsHaveNoImplicitDefault(): void
+    {
+        $table = new AlterTable('items');
+        $table->addColumn('ordinary', 'INTEGER', nullable: true);
+        $table->addColumn('virtual', 'INTEGER', nullable: true, generated: 'quantity * price');
+        $table->modifyColumn('stored', 'INTEGER', nullable: true,
+            generated: new Generated('quantity * price', stored: true));
+        $table->addColumn('explicit_default', 'INTEGER', nullable: true, hasDefault: true, generated: '0');
+        $table->addColumn('disabled_default', 'INTEGER', nullable: true, hasDefault: false, generated: '0');
+
+        [$ordinary, $virtual, $stored, $explicitDefault, $disabledDefault] = $table->getArrayCopy();
+        $this->assertTrue($ordinary->hasDefault());
+        $this->assertFalse($virtual->hasDefault());
+        $this->assertFalse($stored->hasDefault());
+        $this->assertTrue($explicitDefault->hasDefault());
+        $this->assertFalse($disabledDefault->hasDefault());
     }
 
     public function testAddColumnAutoHasDefaultFromValue(): void
@@ -183,6 +253,8 @@ class TableOperationTest extends TestCase
         $this->assertInstanceOf(ModifyColumn::class, $op);
         $this->assertSame('name', $op->getName());
         $this->assertSame('varchar(500)', $op->getType());
+        $this->assertNull($op->getGenerated());
+        $this->assertFalse($op->isGenerated());
     }
 
     public function testModifyColumnAcceptsColumnObject(): void

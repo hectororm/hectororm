@@ -15,6 +15,9 @@ declare(strict_types=1);
 namespace Hector\Schema\Tests\Plan\Compiler\Dialect\Sqlite;
 
 use Hector\Schema\Index;
+use Hector\Schema\Column;
+use Hector\Schema\Exception\PlanException;
+use Hector\Schema\Plan\Generated;
 use Hector\Schema\Plan\Compiler\Dialect\Sqlite\ColumnDef;
 use Hector\Schema\Plan\Compiler\Dialect\Sqlite\ForeignKeyDef;
 use Hector\Schema\Plan\Compiler\Dialect\Sqlite\IndexDef;
@@ -37,6 +40,71 @@ use PHPUnit\Framework\TestCase;
  */
 class TableDiffTest extends TestCase
 {
+    public function testGeneratedDefinitionsSurviveSchemaAndOperationConversion(): void
+    {
+        $column = new Column('total', 0, null, true, 'int',
+            generation_expression: 'quantity * price', generated_stored: true);
+        $definition = ColumnDef::fromSchema($column, 'INTEGER');
+        $this->assertSame('quantity * price', $definition->generated->getExpression());
+        $this->assertTrue($definition->generated->isStored());
+        $this->assertFalse($definition->hasDefault);
+        $this->assertSame($definition->generated, $definition->withName('renamed')->generated);
+
+        $operation = new ModifyColumn('items', 'total', 'INTEGER', generated: 'quantity * price');
+        $this->assertSame($operation->getGenerated(), ColumnDef::fromOperation($operation)->generated);
+    }
+
+    public function testMigrationMappingFollowsTargetWritabilityAndRenameChains(): void
+    {
+        $diff = $this->diffWithColumns('quantity', 'price', 'total', 'materialized');
+        $diff->apply(new ModifyColumn('t', 'total', 'INTEGER', generated: 'quantity * price'));
+        $diff->apply(new RenameColumn('t', 'QUANTITY', 'amount'));
+        $diff->apply(new RenameColumn('t', 'amount', 'units'));
+        $diff->apply(new DropColumn('t', 'materialized'));
+        $diff->apply(new AddColumn('t', 'materialized', 'INTEGER', default: 0, hasDefault: true));
+
+        $this->assertSame(['quantity' => 'units', 'price' => 'price'], $diff->migrateMapping());
+        $this->assertSame(['units', 'price', 'total', 'materialized'], array_keys($diff->columns()));
+        $this->assertSame('"units" * price', $diff->columns()['total']->generated->getExpression());
+    }
+
+    public function testGeneratedSourceCanBecomeWritable(): void
+    {
+        $definition = new ColumnDef('total', 'INTEGER', false, null, false, false, new Generated('quantity * price'));
+        $diff = new TableDiff(['quantity' => $this->column('quantity'), 'total' => $definition], [], []);
+        $diff->apply(new ModifyColumn('t', 'total', 'INTEGER'));
+        $diff->apply(new RenameColumn('t', 'total', 'snapshot'));
+
+        $this->assertSame(['quantity' => 'quantity', 'total' => 'snapshot'], $diff->migrateMapping());
+    }
+
+    public function testRenameUpdatesIndexesAndLocalAndSelfReferencingForeignKeys(): void
+    {
+        $diff = new TableDiff(
+            ['id' => $this->column('id')],
+            ['idx_id' => new IndexDef('idx_id', ['id'], Index::INDEX)],
+            [
+                'self' => new ForeignKeyDef('self', ['id'], 'items', ['id'], 'NO ACTION', 'NO ACTION'),
+                'external' => new ForeignKeyDef('external', ['id'], 'other', ['id'], 'NO ACTION', 'NO ACTION'),
+            ],
+            'items',
+        );
+        $diff->apply(new RenameColumn('items', 'id', 'entry_id'));
+
+        $this->assertSame(['entry_id'], $diff->nonPrimaryIndexes()[0]->columns);
+        $this->assertSame(['entry_id'], $diff->foreignKeys()['self']->columns);
+        $this->assertSame(['entry_id'], $diff->foreignKeys()['self']->referencedColumns);
+        $this->assertSame(['entry_id'], $diff->foreignKeys()['external']->columns);
+        $this->assertSame(['id'], $diff->foreignKeys()['external']->referencedColumns);
+    }
+
+    public function testRenameCannotOverwriteAnExistingColumn(): void
+    {
+        $diff = $this->diffWithColumns('quantity', 'price');
+        $this->expectException(PlanException::class);
+        $diff->apply(new RenameColumn('items', 'quantity', 'PRICE'));
+    }
+
     private function column(string $name, string $type = 'TEXT'): ColumnDef
     {
         return new ColumnDef($name, $type, false, null, false, false);

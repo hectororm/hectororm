@@ -111,6 +111,8 @@ abstract class AbstractGenerator implements GeneratorInterface
                     collation: $columnInfo['collation'] ?? null,
                     on_update: $columnInfo['on_update'] ?? null,
                     datetime_precision: $columnInfo['datetime_precision'] ?? null,
+                    generation_expression: $columnInfo['generation_expression'] ?? null,
+                    generated_stored: $columnInfo['generated_stored'] ?? false,
                 );
                 $columns[$column->getName()] = $column;
             }

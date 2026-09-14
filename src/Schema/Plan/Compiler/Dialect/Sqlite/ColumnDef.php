@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace Hector\Schema\Plan\Compiler\Dialect\Sqlite;
 
 use Hector\Schema\Column;
+use Hector\Schema\Plan\Generated;
 use Hector\Schema\Plan\Operation\AddColumn;
 use Hector\Schema\Plan\Operation\ModifyColumn;
 use Hector\Schema\Plan\Raw;
@@ -31,6 +32,7 @@ final class ColumnDef
      * @param Raw|string|int|float|bool|null $default
      * @param bool                  $hasDefault
      * @param bool                  $autoIncrement
+     * @param Generated|null        $generated
      */
     public function __construct(
         public string $name,
@@ -39,6 +41,7 @@ final class ColumnDef
         public Raw|string|int|float|bool|null $default,
         public bool $hasDefault,
         public bool $autoIncrement,
+        public ?Generated $generated = null,
     ) {
     }
 
@@ -52,13 +55,18 @@ final class ColumnDef
      */
     public static function fromSchema(Column $column, string $type): self
     {
+        $default = $column->getDefault();
+        $expression = $column->getGenerationExpression();
+
         return new self(
             name: $column->getName(),
             type: $type,
             nullable: $column->isNullable(),
-            default: $column->getDefault(),
+            // PRAGMA returns SQL defaults, including quotes around literal strings.
+            default: is_string($default) ? new Raw($default) : $default,
             hasDefault: null !== $column->getDefault(),
             autoIncrement: $column->isAutoIncrement(),
+            generated: null !== $expression ? new Generated($expression, $column->isGeneratedStored()) : null,
         );
     }
 
@@ -78,6 +86,7 @@ final class ColumnDef
             default: $operation->getDefault(),
             hasDefault: $operation->hasDefault(),
             autoIncrement: $operation->isAutoIncrement(),
+            generated: $operation->getGenerated(),
         );
     }
 

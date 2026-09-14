@@ -15,11 +15,13 @@ declare(strict_types=1);
 namespace Hector\Schema\Tests\Plan\Compiler\Dialect\Sqlite;
 
 use Hector\Schema\Column;
+use Hector\Schema\Exception\PlanException;
 use Hector\Schema\Index;
 use Hector\Schema\Plan\AlterTable;
 use Hector\Schema\Plan\Compiler\CompilationContext;
 use Hector\Schema\Plan\Compiler\Dialect\Sqlite\TableRebuilder;
 use Hector\Schema\Plan\Compiler\Dialect\SqliteDialect;
+use Hector\Schema\Plan\Generated;
 use Hector\Schema\Plan\Operation\AddIndex;
 use Hector\Schema\Schema;
 use Hector\Schema\Table;
@@ -30,6 +32,38 @@ use PHPUnit\Framework\TestCase;
  */
 class TableRebuilderTest extends TestCase
 {
+    public function testStoredAddRequiresRebuildButVirtualAddDoesNot(): void
+    {
+        $virtual = new AlterTable('users');
+        $virtual->addColumn('computed', 'INTEGER', generated: 'length(name)');
+        $stored = new AlterTable('users');
+        $stored->addColumn('computed', 'INTEGER', generated: new Generated('length(name)', stored: true));
+
+        $this->assertFalse($this->rebuilder()->isRequired($virtual));
+        $this->assertTrue($this->rebuilder()->isRequired($stored));
+    }
+
+    public function testRebuildWithStoredAddEmitsGeneratedDefinitionAndWritableMapping(): void
+    {
+        $alter = new AlterTable('users');
+        $alter->addColumn('computed', 'INTEGER', generated: new Generated('length(name)', stored: true));
+        $statements = [...(new SqliteDialect())->compileAlterTable($alter, new CompilationContext($this->schemaWithUsers()))];
+
+        $this->assertStringContainsString(
+            '"computed" INTEGER GENERATED ALWAYS AS (length(name)) STORED NOT NULL',
+            $statements[1],
+        );
+        $this->assertStringContainsString('("id", "name", "legacy") SELECT "id", "name", "legacy"', $statements[2]);
+        $this->assertStringNotContainsString('computed', $statements[2]);
+    }
+
+    public function testRebuilderRequiresSchema(): void
+    {
+        $this->expectException(PlanException::class);
+        $this->expectExceptionMessage('SQLite table rebuild requires an existing schema');
+        $this->rebuilder()->compile(new AlterTable('users'), new CompilationContext());
+    }
+
     private function rebuilder(): TableRebuilder
     {
         // Callables are irrelevant for isRequired(); provide trivial stubs.

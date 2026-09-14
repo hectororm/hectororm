@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace Hector\Schema\Generator;
 
 use Hector\Schema\Exception\SchemaException;
+use Hector\Schema\Generator\Sqlite\CreateTableParser;
 use Hector\Schema\Index;
 use Hector\Schema\Table;
 
@@ -106,8 +107,13 @@ class Sqlite extends AbstractGenerator
     {
         $this->assertSafeIdentifier($table);
 
-        $stm = 'PRAGMA table_info(\'' . $table . '\');';
+        $stm = 'PRAGMA table_xinfo(\'' . $table . '\');';
         $results = $this->connection->fetchAll($stm);
+        if ([] === $results) {
+            // Older SQLite versions return no rows for an unknown PRAGMA.
+            // They cannot have generated columns, but ordinary schemas still work.
+            $results = $this->connection->fetchAll('PRAGMA table_info(\'' . $table . '\');');
+        }
 
         // Get sql statement
         $stm =
@@ -122,10 +128,30 @@ class Sqlite extends AbstractGenerator
         }
         $tableStatement = $tableStatement['sql'];
 
+        $expressions = null;
         $columnsInfo = [];
         foreach ($results as $result) {
+            $hidden = (int)($result['hidden'] ?? 0);
+            if (1 === $hidden) {
+                // Hidden virtual-table implementation columns are not generated columns.
+                continue;
+            }
+
+            $generationExpression = null;
+            if (2 === $hidden || 3 === $hidden) {
+                $expressions ??= (new CreateTableParser())->getGeneratedExpressions($tableStatement);
+                $generationExpression = $expressions[$result['name']] ?? null;
+                if (null === $generationExpression) {
+                    throw new SchemaException(sprintf(
+                        'Cannot extract generation expression for column "%s" on table "%s"',
+                        $result['name'],
+                        $table,
+                    ));
+                }
+            }
+
             $type = $this->getTypeInfo($result['type']);
-            $autoIncrement = $this->isAutoIncrement($result['name'], $tableStatement);
+            $autoIncrement = null === $generationExpression && $this->isAutoIncrement($result['name'], $tableStatement);
 
             $columnsInfo[] = [
                 'name' => $result['name'],
@@ -134,12 +160,14 @@ class Sqlite extends AbstractGenerator
                     $result['dflt_value'] == 'NULL' ||
                     null === $result['dflt_value'] ?
                         null : $result['dflt_value'],
-                // PRAGMA table_info exposes `pk` as the 1-based position within the primary
+                // PRAGMA table_xinfo exposes `pk` as the 1-based position within the primary
                 // key (0 when not part of it). Comparing to '1' wrongly treated the 2nd, 3rd…
                 // columns of a composite primary key as nullable; any pk > 0 must not be.
                 'nullable' => $result['notnull'] == '0' && $result['pk'] == '0' && !$autoIncrement,
                 'type' => $type['name'],
                 'auto_increment' => $autoIncrement,
+                'generation_expression' => $generationExpression,
+                'generated_stored' => 3 === $hidden,
                 'maxlength' => $type['maxlength'],
                 'numeric_precision' => $type['numeric_precision'],
                 'numeric_scale' => $type['numeric_scale'],

@@ -214,6 +214,8 @@ class MySQLTest extends TestCase
             [
                 [
                     'name' => 'address_id',
+                    'generation_expression' => null,
+                    'generated_stored' => false,
                     'on_update' => null,
                     'datetime_precision' => null,
                     'charset' => null,
@@ -231,6 +233,8 @@ class MySQLTest extends TestCase
                 [
                     'name' => 'address',
                     'charset' => 'utf8mb4',
+                    'generation_expression' => null,
+                    'generated_stored' => false,
                     'on_update' => null,
                     'datetime_precision' => null,
                     'collation' => $schemaInfo['collation'],
@@ -246,6 +250,8 @@ class MySQLTest extends TestCase
                 ],
                 [
                     'name' => 'address2',
+                    'generation_expression' => null,
+                    'generated_stored' => false,
                     'on_update' => null,
                     'datetime_precision' => null,
                     'charset' => 'utf8mb4',
@@ -262,6 +268,8 @@ class MySQLTest extends TestCase
                 ],
                 [
                     'name' => 'district',
+                    'generation_expression' => null,
+                    'generated_stored' => false,
                     'on_update' => null,
                     'datetime_precision' => null,
                     'charset' => 'utf8mb4',
@@ -278,6 +286,8 @@ class MySQLTest extends TestCase
                 ],
                 [
                     'name' => 'city_id',
+                    'generation_expression' => null,
+                    'generated_stored' => false,
                     'on_update' => null,
                     'datetime_precision' => null,
                     'charset' => null,
@@ -294,6 +304,8 @@ class MySQLTest extends TestCase
                 ],
                 [
                     'name' => 'postal_code',
+                    'generation_expression' => null,
+                    'generated_stored' => false,
                     'on_update' => null,
                     'datetime_precision' => null,
                     'charset' => 'utf8mb4',
@@ -310,6 +322,8 @@ class MySQLTest extends TestCase
                 ],
                 [
                     'name' => 'phone',
+                    'generation_expression' => null,
+                    'generated_stored' => false,
                     'on_update' => null,
                     'datetime_precision' => null,
                     'charset' => 'utf8mb4',
@@ -326,6 +340,8 @@ class MySQLTest extends TestCase
                 ],
                 [
                     'name' => 'location',
+                    'generation_expression' => null,
+                    'generated_stored' => false,
                     'on_update' => null,
                     'datetime_precision' => null,
                     'charset' => null,
@@ -342,6 +358,8 @@ class MySQLTest extends TestCase
                 ],
                 [
                     'name' => 'last_update',
+                    'generation_expression' => null,
+                    'generated_stored' => false,
                     'on_update' => 'CURRENT_TIMESTAMP',
                     'datetime_precision' => 0,
                     'charset' => null,

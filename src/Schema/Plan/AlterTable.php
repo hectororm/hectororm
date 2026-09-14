@@ -57,6 +57,7 @@ final class AlterTable extends TableOperation
      * @param string|null $after
      * @param bool $first
      * @param bool $useCurrentOnUpdate MySQL/MariaDB only; ignored on SQLite
+     * @param Generated|string|null $generated A string is a SQL expression for a VIRTUAL column
      *
      * @return static
      */
@@ -70,6 +71,7 @@ final class AlterTable extends TableOperation
         ?string $after = null,
         bool $first = false,
         bool $useCurrentOnUpdate = false,
+        Generated|string|null $generated = null,
     ): static {
         $this->add(new ModifyColumn(
             table: $this->getObjectName(),
@@ -82,6 +84,7 @@ final class AlterTable extends TableOperation
             after: $after,
             first: $first,
             useCurrentOnUpdate: $useCurrentOnUpdate,
+            generated: $generated,
         ));
 
         return $this;

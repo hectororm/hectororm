@@ -216,6 +216,8 @@ class SqliteTest extends TestCase
             [
                 [
                     'name' => 'address_id',
+                    'generation_expression' => null,
+                    'generated_stored' => false,
                     'charset' => null,
                     'collation' => null,
                     'position' => 0,
@@ -231,6 +233,8 @@ class SqliteTest extends TestCase
                 [
                     'name' => 'address',
                     'charset' => 'utf-8',
+                    'generation_expression' => null,
+                    'generated_stored' => false,
                     'collation' => null,
                     'position' => 1,
                     'default' => null,
@@ -244,6 +248,8 @@ class SqliteTest extends TestCase
                 ],
                 [
                     'name' => 'address2',
+                    'generation_expression' => null,
+                    'generated_stored' => false,
                     'charset' => 'utf-8',
                     'collation' => null,
                     'position' => 2,
@@ -258,6 +264,8 @@ class SqliteTest extends TestCase
                 ],
                 [
                     'name' => 'district',
+                    'generation_expression' => null,
+                    'generated_stored' => false,
                     'charset' => 'utf-8',
                     'collation' => null,
                     'position' => 3,
@@ -272,6 +280,8 @@ class SqliteTest extends TestCase
                 ],
                 [
                     'name' => 'city_id',
+                    'generation_expression' => null,
+                    'generated_stored' => false,
                     'charset' => null,
                     'collation' => null,
                     'position' => 4,
@@ -286,6 +296,8 @@ class SqliteTest extends TestCase
                 ],
                 [
                     'name' => 'postal_code',
+                    'generation_expression' => null,
+                    'generated_stored' => false,
                     'charset' => 'utf-8',
                     'collation' => null,
                     'position' => 5,
@@ -300,6 +312,8 @@ class SqliteTest extends TestCase
                 ],
                 [
                     'name' => 'phone',
+                    'generation_expression' => null,
+                    'generated_stored' => false,
                     'charset' => 'utf-8',
                     'collation' => null,
                     'position' => 6,
@@ -314,6 +328,8 @@ class SqliteTest extends TestCase
                 ],
                 [
                     'name' => 'last_update',
+                    'generation_expression' => null,
+                    'generated_stored' => false,
                     'charset' => null,
                     'collation' => null,
                     'position' => 7,
