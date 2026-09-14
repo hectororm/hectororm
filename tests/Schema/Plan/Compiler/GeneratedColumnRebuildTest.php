@@ -23,6 +23,7 @@ use Hector\Schema\Plan\Generated;
 use Hector\Schema\Plan\Plan;
 use Hector\Schema\Plan\Raw;
 use Hector\Schema\Table;
+use PDO;
 use PHPUnit\Framework\TestCase;
 
 class GeneratedColumnRebuildTest extends TestCase
@@ -32,7 +33,8 @@ class GeneratedColumnRebuildTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->connection = new Connection('sqlite::memory:');
+        // Exercise the string-valued numeric results returned by older PDO_SQLite versions.
+        $this->connection = new Connection('sqlite::memory:', options: [PDO::ATTR_STRINGIFY_FETCHES => true]);
         $this->connection->execute('PRAGMA foreign_keys = ON');
     }
 
@@ -50,6 +52,11 @@ class GeneratedColumnRebuildTest extends TestCase
     private function table(): Table
     {
         return (new Sqlite($this->connection))->generateSchema('main')->getTable('items');
+    }
+
+    private function numericRow(string $sql): array
+    {
+        return array_map('intval', $this->connection->fetchOne($sql));
     }
 
     private function createItems(bool $generated = false): void
@@ -82,17 +89,20 @@ class GeneratedColumnRebuildTest extends TestCase
         $this->assertStringContainsString('GENERATED ALWAYS AS (quantity * price) STORED', $statements[1]);
         $this->assertStringNotContainsString('total', $statements[2]);
         $this->assertStringContainsString('("id", "quantity", "price", "label", "created_at") SELECT', $statements[2]);
-        $this->assertSame([10, 12], array_column($this->connection->fetchAll('SELECT total FROM items ORDER BY id'), 'total'));
+        $this->assertSame([10, 12], array_map('intval', array_column(
+            $this->connection->fetchAll('SELECT total FROM items ORDER BY id'),
+            'total',
+        )));
         $this->assertTrue($this->table()->getColumn('total')->isGeneratedStored());
 
         $this->connection->execute('UPDATE items SET quantity = 3 WHERE id = 1');
-        $this->assertSame(15, $this->connection->fetchOne('SELECT total FROM items WHERE id = 1')['total']);
+        $this->assertSame(15, $this->numericRow('SELECT total FROM items WHERE id = 1')['total']);
         $this->connection->execute('INSERT INTO items (quantity, price) VALUES (1, 7)');
         $row = $this->connection->fetchOne('SELECT id, label, created_at, total FROM items WHERE id = 3');
         $this->assertSame('quantity', $row['label']);
-        $this->assertSame(7, $row['total']);
+        $this->assertSame(7, (int)$row['total']);
         $this->assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2} /', $row['created_at']);
-        $this->assertSame(1, $this->connection->fetchOne('PRAGMA foreign_keys')['foreign_keys']);
+        $this->assertSame(1, $this->numericRow('PRAGMA foreign_keys')['foreign_keys']);
         $this->assertSame([], $this->connection->fetchAll("SELECT name FROM sqlite_master WHERE name LIKE '__htemp_%'"));
     }
 
@@ -118,8 +128,8 @@ class GeneratedColumnRebuildTest extends TestCase
         $this->execute($drop);
         $this->connection->execute('UPDATE items SET price = 7 WHERE id = 1');
         $this->assertSame(['total' => 14, 'bonus' => 15],
-            $this->connection->fetchOne('SELECT total, bonus FROM items WHERE id = 1'));
-        $this->assertSame(2, $this->connection->fetchOne('SELECT COUNT(*) AS n FROM items')['n']);
+            $this->numericRow('SELECT total, bonus FROM items WHERE id = 1'));
+        $this->assertSame(2, $this->numericRow('SELECT COUNT(*) AS n FROM items')['n']);
     }
 
     public function testChangingGeneratedDefinitionsAndConvertingToOrdinaryColumn(): void
@@ -133,7 +143,7 @@ class GeneratedColumnRebuildTest extends TestCase
         $generate->alter('items')->modifyColumn('snapshot', 'INTEGER',
             generated: new Generated('total * 2', stored: true));
         $this->execute($generate);
-        $this->assertSame(20, $this->connection->fetchOne('SELECT snapshot FROM items WHERE id = 1')['snapshot']);
+        $this->assertSame(20, $this->numericRow('SELECT snapshot FROM items WHERE id = 1')['snapshot']);
 
         $changeMode = new Plan();
         $changeMode->alter('items')->modifyColumn('total', 'INTEGER',
@@ -141,7 +151,7 @@ class GeneratedColumnRebuildTest extends TestCase
         $this->execute($changeMode);
         $this->assertTrue($this->table()->getColumn('total')->isGeneratedStored());
         $this->assertSame(['total' => 30, 'bonus' => 31, 'snapshot' => 60],
-            $this->connection->fetchOne('SELECT total, bonus, snapshot FROM items WHERE id = 1'));
+            $this->numericRow('SELECT total, bonus, snapshot FROM items WHERE id = 1'));
 
         $ordinary = new Plan();
         $ordinary->alter('items')->modifyColumn('total', 'INTEGER');
@@ -151,7 +161,7 @@ class GeneratedColumnRebuildTest extends TestCase
         $this->assertFalse($this->table()->getColumn('total')->isGenerated());
         $this->connection->execute('UPDATE items SET quantity = 100 WHERE id = 1');
         $this->assertSame(['total' => 30, 'bonus' => 31, 'snapshot' => 60],
-            $this->connection->fetchOne('SELECT total, bonus, snapshot FROM items WHERE id = 1'));
+            $this->numericRow('SELECT total, bonus, snapshot FROM items WHERE id = 1'));
     }
 
     public function testCombinedRenamesRewriteReferencesButKeepSqlStringsAndIndexes(): void
@@ -179,10 +189,11 @@ class GeneratedColumnRebuildTest extends TestCase
         $this->assertSame(['computed_total'], $table->getIndex('idx_total')->getColumnsName());
         $this->assertSame(['id', 'units', 'price', 'label', 'created_at', 'computed_total', 'bonus', 'summary'],
             array_map(static fn($column): string => $column->getName(), iterator_to_array($table->getColumns(), false)));
-        $this->assertSame(['units' => 2, 'computed_total' => 10, 'bonus' => 11, 'summary' => 'a:2:quantity'],
-            $this->connection->fetchOne('SELECT units, computed_total, bonus, summary FROM items WHERE id = 1'));
+        $this->assertSame(['units' => 2, 'computed_total' => 10, 'bonus' => 11],
+            $this->numericRow('SELECT units, computed_total, bonus FROM items WHERE id = 1'));
+        $this->assertSame('a:2:quantity', $this->connection->fetchOne('SELECT summary FROM items WHERE id = 1')['summary']);
         $this->connection->execute('UPDATE items SET units = 3 WHERE id = 1');
-        $this->assertSame(15, $this->connection->fetchOne('SELECT computed_total FROM items WHERE id = 1')['computed_total']);
+        $this->assertSame(15, $this->numericRow('SELECT computed_total FROM items WHERE id = 1')['computed_total']);
     }
 
     public function testNoWritableMappingFailsBeforeChangingTheDatabase(): void
@@ -203,8 +214,8 @@ class GeneratedColumnRebuildTest extends TestCase
             $this->assertStringContainsString('no surviving writable column to migrate', $exception->getMessage());
         }
 
-        $this->assertSame(['source' => 5, 'computed' => 10], $this->connection->fetchOne('SELECT * FROM items'));
-        $this->assertSame(1, $this->connection->fetchOne('PRAGMA foreign_keys')['foreign_keys']);
+        $this->assertSame(['source' => 5, 'computed' => 10], $this->numericRow('SELECT * FROM items'));
+        $this->assertSame(1, $this->numericRow('PRAGMA foreign_keys')['foreign_keys']);
         $this->assertSame([], $this->connection->fetchAll("SELECT name FROM sqlite_master WHERE name LIKE '__htemp_%'"));
     }
 
@@ -220,7 +231,7 @@ class GeneratedColumnRebuildTest extends TestCase
             generated: new Generated('2 + "3"', stored: true));
         $this->execute($alter);
 
-        $this->assertSame(['3' => 5, 'computed' => 7], $this->connection->fetchOne('SELECT * FROM items'));
+        $this->assertSame(['3' => 5, 'computed' => 7], $this->numericRow('SELECT * FROM items'));
         $this->assertSame('2 + "3"', $this->table()->getColumn('computed')->getGenerationExpression());
     }
 
@@ -242,7 +253,7 @@ class GeneratedColumnRebuildTest extends TestCase
 
         $this->assertSame([], $this->connection->fetchAll('PRAGMA foreign_key_check'));
         $this->assertSame(['entry_id' => 2, 'ancestor_id' => 1, 'stored_parent' => 1],
-            $this->connection->fetchOne('SELECT * FROM items WHERE entry_id = 2'));
+            $this->numericRow('SELECT * FROM items WHERE entry_id = 2'));
         $foreignKeys = iterator_to_array($this->table()->getForeignKeys(), false);
         $this->assertSame(['ancestor_id'], $foreignKeys[0]->getColumnsName());
         $this->assertSame(['entry_id'], $foreignKeys[0]->getReferencedColumnsName());
