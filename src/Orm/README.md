@@ -31,5 +31,3 @@ $ composer require hectororm/orm
 
 For usage and examples, visit
 the [official documentation on **gethectororm.com**](https://gethectororm.com/).
-
-See also [relationship lifecycle policies and the v2 migration](RELATIONSHIP_LIFECYCLE.md).
