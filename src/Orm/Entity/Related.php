@@ -14,12 +14,14 @@ declare(strict_types=1);
 
 namespace Hector\Orm\Entity;
 
+use SplObjectStorage;
 use Countable;
 use Hector\Orm\Collection\Collection;
 use Hector\Orm\Exception\OrmException;
 use Hector\Orm\Orm;
 use Hector\Orm\Query\Builder;
 use Hector\Orm\Relationship\Relationships;
+use Hector\Orm\Relationship\Relationship;
 use InvalidArgumentException;
 
 class Related implements Countable
@@ -153,7 +155,57 @@ class Related implements Countable
             );
         }
 
+        $this->related[$name] = $relationship->prepareAssignment($this->related[$name] ?? null, $value);
+    }
+
+    /**
+     * Hydration is not a user replacement and must never schedule orphan removal.
+     *
+     * @internal
+     */
+    public function setLoaded(string $name, Collection|Entity|null $value): void
+    {
+        $relationship = $this->getRelationships()->get($name);
+        if (false === $relationship->valid($value)) {
+            throw new InvalidArgumentException(sprintf('Invalid loaded value for relationship "%s"', $name));
+        }
         $this->related[$name] = $value;
+    }
+
+    /** @internal Invalidate inverse caches before an explicit child detachment. */
+    public function invalidateParent(Relationship $parentRelationship): void
+    {
+        foreach (array_keys($this->related) as $name) {
+            $relation = $this->getRelationships()->get($name);
+            if ($relation->getTargetEntity() === $parentRelationship->getSourceEntity()
+                && $relation->getSourceColumns() === $parentRelationship->getTargetColumns()
+                && $relation->getTargetColumns() === $parentRelationship->getSourceColumns()) {
+                unset($this->related[$name]);
+            }
+        }
+    }
+
+    /** @internal Does the materialized graph contain a lifecycle relation? */
+    public function hasLifecyclePolicy(?SplObjectStorage $visited = null): bool
+    {
+        $visited ??= new SplObjectStorage();
+        if ($visited->contains($this->entity)) {
+            return false;
+        }
+        $visited->attach($this->entity);
+
+        foreach ($this->related as $name => $value) {
+            if ($this->getRelationships()->get($name)->hasLifecyclePolicy()) {
+                return true;
+            }
+            foreach ($value instanceof Collection ? $value : [$value] as $entity) {
+                if ($entity instanceof Entity && $entity->getRelated()->hasLifecyclePolicy($visited)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     /**

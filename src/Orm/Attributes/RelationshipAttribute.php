@@ -52,6 +52,9 @@ abstract class RelationshipAttribute
     final public function init(Relationships $relationships): Relationship
     {
         $relationship = $this->addRelationship($relationships);
+        if (array_key_exists('orphanRemoval', $this->params)) {
+            $relationship->setOrphanRemoval($this->params['orphanRemoval']);
+        }
         $this->addClauses($relationship);
 
         return $relationship;

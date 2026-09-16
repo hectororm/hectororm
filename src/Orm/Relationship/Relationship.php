@@ -216,6 +216,36 @@ abstract class Relationship
     }
 
     /**
+     * Whether loaded instances of this relation need an atomic lifecycle operation.
+     */
+    public function hasLifecyclePolicy(): bool
+    {
+        return false;
+    }
+
+    /**
+     * Explicit user assignment, as opposed to loading a query result.
+     *
+     * @internal
+     */
+    public function prepareAssignment(
+        Entity|Collection|null $previous,
+        Entity|Collection|null $value,
+    ): Entity|Collection|null {
+        return $value;
+    }
+
+    /**
+     * Lifecycle options are deliberately unsupported unless a relation opts in.
+     */
+    public function setOrphanRemoval(?bool $orphanRemoval): void
+    {
+        if (null !== $orphanRemoval) {
+            throw new RelationException(sprintf('Relationship "%s" does not support orphanRemoval', $this->name));
+        }
+    }
+
+    /**
      * Valid related entity or collection.
      *
      * @param mixed &$related

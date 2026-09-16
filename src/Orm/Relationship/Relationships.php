@@ -150,11 +150,17 @@ class Relationships implements Countable
      * @param string $target
      * @param string $name
      * @param array|null $columns
+     * @param bool|null $orphanRemoval Null preserves historical orphan deletion until v2.
      *
      * @return OneToMany
      * @throws OrmException
      */
-    public function hasMany(string $target, string $name, ?array $columns = null): OneToMany
+    public function hasMany(
+        string $target,
+        string $name,
+        ?array $columns = null,
+        ?bool $orphanRemoval = null,
+    ): OneToMany
     {
         $this->assertEntity($target);
 
@@ -163,7 +169,8 @@ class Relationships implements Countable
                 $name,
                 $this->entity->getName(),
                 $target,
-                $columns
+                $columns,
+                $orphanRemoval,
             );
     }
 

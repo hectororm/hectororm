@@ -14,6 +14,8 @@ declare(strict_types=1);
 
 namespace Hector\Orm\Collection;
 
+use SplObjectStorage;
+use Hector\Orm\Exception\RelationException;
 use Closure;
 use Hector\Orm\Entity\Entity;
 use Hector\Orm\Entity\ReflectionEntity;
@@ -169,6 +171,42 @@ class Collection extends \Hector\Collection\Collection
     }
 
     /**
+     * Replacing an element is also an explicit removal of its previous value.
+     */
+    public function offsetSet(mixed $offset, mixed $value): void
+    {
+        if (null !== $offset && $this->offsetExists($offset)) {
+            $this->detached[] = $this->offsetGet($offset);
+        }
+
+        parent::offsetSet($offset, $value);
+    }
+
+    /** @internal */
+    public function trackDetached(Entity $entity): void
+    {
+        $this->detached[] = $entity;
+    }
+
+    /** @internal Snapshot only materialized relation collections. */
+    public function lifecycleSnapshot(): array
+    {
+        return [$this->getArrayCopy(), $this->detached];
+    }
+
+    /** @internal Restore without manufacturing user removals. */
+    public function restoreLifecycleSnapshot(array $snapshot): void
+    {
+        foreach (array_keys($this->getArrayCopy()) as $key) {
+            parent::offsetUnset($key);
+        }
+        foreach ($snapshot[0] as $key => $value) {
+            parent::offsetSet($key, $value);
+        }
+        $this->detached = $snapshot[1];
+    }
+
+    /**
      * Get detached entities.
      *
      * @return iterable
@@ -176,7 +214,18 @@ class Collection extends \Hector\Collection\Collection
      */
     public function detached(): iterable
     {
-        yield from $this->detached;
+        $seen = new SplObjectStorage();
+        foreach ($this->detached as $entity) {
+            if (!$entity instanceof Entity) {
+                throw new RelationException('Detached collection values must be entities');
+            }
+            // An explicitly removed child may have been reattached before saving.
+            if ($seen->contains($entity) || $this->contains($entity)) {
+                continue;
+            }
+            $seen->attach($entity);
+            yield $entity;
+        }
     }
 
     /**

@@ -29,6 +29,8 @@ use Hector\Orm\Exception\OrmException;
 use Hector\Orm\Mapper\Mapper;
 use Hector\Orm\Query\Builder;
 use Hector\Orm\Storage\EntityStorage;
+use Hector\Orm\Storage\LifecycleTransaction;
+use Hector\Orm\Collection\Collection;
 use Hector\Query\QueryBuilder;
 use Hector\Schema\SchemaContainer;
 use Psr\EventDispatcher\EventDispatcherInterface;
@@ -44,6 +46,50 @@ class Orm
     protected EntityStorage $storage;
     private array $reflections = [];
     private array $mappers = [];
+    private ?LifecycleTransaction $lifecycleTransaction = null;
+    private array $persisting = [];
+
+    /** @internal Atomic persistence for parent-child lifecycle operations. */
+    public function lifecycle(Entity $entity, callable $operation): mixed
+    {
+        if (null !== $this->lifecycleTransaction) {
+            $this->lifecycleTransaction->capture($entity);
+            return $operation();
+        }
+
+        $transaction = new LifecycleTransaction(
+            $this,
+            $this->storage,
+            $this->getConnection(ReflectionEntity::get($entity)->connection),
+        );
+        $this->lifecycleTransaction = $transaction;
+        try {
+            $transaction->capture($entity);
+            return $transaction->run($operation);
+        } finally {
+            $this->lifecycleTransaction = null;
+        }
+    }
+
+    /** @internal Capture state before relationship key propagation or removal. */
+    public function trackLifecycle(Entity|Collection $value): void
+    {
+        if ($value instanceof Collection) {
+            $this->lifecycleTransaction?->captureCollection($value);
+            return;
+        }
+        $this->lifecycleTransaction?->capture($value);
+    }
+
+    /** @internal A removed, never-persisted child needs no database DELETE. */
+    public function cancelPendingInsert(Entity $entity): void
+    {
+        $this->trackLifecycle($entity);
+        if (EntityStorage::STATUS_TO_INSERT === $this->getStatus($entity)
+            && null === ReflectionEntity::get($entity)->getHectorData($entity)->get('original')) {
+            $this->storage->detach($entity);
+        }
+    }
 
     /**
      * Orm constructor.
@@ -243,10 +289,26 @@ class Orm
      */
     public function save(Entity $entity, bool $persist = false): void
     {
+        if ($persist && null === $this->lifecycleTransaction && $entity->getRelated()->hasLifecyclePolicy()) {
+            $this->lifecycle($entity, fn() => $this->save($entity, true));
+            return;
+        }
+        $this->trackLifecycle($entity);
         $status = EntityStorage::STATUS_TO_INSERT;
         if ($this->storage->contains($entity)) {
             // Already in storage for an action?
             if ($this->storage[$entity] !== EntityStorage::STATUS_NONE) {
+                // A scheduled child still needs to be written before its parent
+                // lifecycle completes. An actively saving parent must not recurse.
+                if ($persist && null !== $this->lifecycleTransaction
+                    && !isset($this->persisting[spl_object_id($entity)])
+                    && in_array(
+                        $this->storage[$entity],
+                        [EntityStorage::STATUS_TO_INSERT, EntityStorage::STATUS_TO_UPDATE],
+                        true,
+                    )) {
+                    $this->persistEntity($entity);
+                }
                 return;
             }
 
@@ -270,13 +332,19 @@ class Orm
      */
     public function delete(Entity $entity, bool $persist = false): void
     {
+        $this->trackLifecycle($entity);
         if (!$this->storage->contains($entity)) {
             throw new OrmException('Entity does not exists in storage');
         }
 
         // Already in storage
         if ($this->storage[$entity] !== EntityStorage::STATUS_NONE) {
-            return;
+            // Explicit orphan removal supersedes a pending (not active) update.
+            if (null === $this->lifecycleTransaction
+                || EntityStorage::STATUS_TO_UPDATE !== $this->storage[$entity]
+                || isset($this->persisting[spl_object_id($entity)])) {
+                return;
+            }
         }
 
         $this->storage->attach($entity, EntityStorage::STATUS_TO_DELETE);
@@ -307,6 +375,21 @@ class Orm
      */
     public function persist(): void
     {
+        // Keep snapshots until the complete batch succeeds, not merely until an
+        // individual relationship releases its savepoint.
+        foreach ($this->storage as $entity) {
+            if ($entity->getRelated()->hasLifecyclePolicy()) {
+                $this->lifecycle($entity, function (): void {
+                    foreach ($this->storage as $pending) {
+                        $this->trackLifecycle($pending);
+                    }
+                    foreach ($this->storage as $pending) {
+                        $this->persistEntity($pending);
+                    }
+                });
+                return;
+            }
+        }
         try {
             $this->connections->beginTransaction();
 
@@ -335,6 +418,23 @@ class Orm
      * @throws OrmException
      */
     private function persistEntity(Entity $entity): void
+    {
+        if (false === $this->storage->contains($entity)) {
+            return;
+        }
+        $id = spl_object_id($entity);
+        if (isset($this->persisting[$id])) {
+            return;
+        }
+        $this->persisting[$id] = true;
+        try {
+            $this->doPersistEntity($entity);
+        } finally {
+            unset($this->persisting[$id]);
+        }
+    }
+
+    private function doPersistEntity(Entity $entity): void
     {
         $status = $this->storage[$entity];
 
