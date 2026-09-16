@@ -114,8 +114,9 @@ class OneToMany extends RegularRelationship
             throw new RelationException('Foreign must be a collection');
         }
 
-        Orm::get()->lifecycle($entity, function () use ($entity, $foreign): void {
-            Orm::get()->trackLifecycle($foreign);
+        $lifecycle = Orm::get()->lifecycle();
+        $lifecycle->transaction($entity, function () use ($entity, $foreign, $lifecycle): void {
+            $lifecycle->track($foreign);
             foreach ($foreign as $child) {
                 if (!$child instanceof ($this->getTargetEntity())) {
                     throw new RelationException('Invalid child entity type');
@@ -125,7 +126,7 @@ class OneToMany extends RegularRelationship
                 if (!$child instanceof ($this->getTargetEntity())) {
                     throw new RelationException('Invalid detached child entity type');
                 }
-                ChildLifecycle::remove($this, $entity, $child, $this->orphanRemoval ?? true);
+                $lifecycle->removeChild($this, $entity, $child, $this->orphanRemoval ?? true);
             }
 
             $this->linkChildren($entity, $foreign);

@@ -14,13 +14,13 @@ declare(strict_types=1);
 
 namespace Hector\Orm\Collection;
 
-use SplObjectStorage;
-use Hector\Orm\Exception\RelationException;
 use Closure;
 use Hector\Orm\Entity\Entity;
 use Hector\Orm\Entity\ReflectionEntity;
 use Hector\Orm\Exception\OrmException;
+use Hector\Orm\Exception\RelationException;
 use Hector\Orm\Orm;
+use SplObjectStorage;
 
 /**
  * Collection of {@see \Hector\Orm\Entity\Entity} objects.

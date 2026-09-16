@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added support for an `options` key in the `OrmFactory::connection()` configuration array, forwarded as the driver-specific PDO connection options to the created `Connection`
 - Explicit `orphanRemoval` policy for `HasMany`, `Relationships::hasMany()` and `OneToMany`: detach nullable child links or delete removed children; omitted policy preserves historical deletion until v2 (#146)
 - Shared child lifecycle operations and single-connection transactions with savepoint isolation and rollback restoration of mapped entity state, relation caches and collection removal tracking (#146)
+- `Orm::lifecycle()` exposes a dedicated `Lifecycle` service for lifecycle transactions, child removal policies and internal change tracking (#146)
 - Opt-in whole-collection replacement tracking limited to materialized members; query hydration and unseen rows never imply orphan removal (#146)
 
 ### Fixed

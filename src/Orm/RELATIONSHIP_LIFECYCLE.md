@@ -71,6 +71,23 @@ Inverting a relationship does not copy its deletion policy to the opposite direc
 
 ## Atomic writes and rollback
 
+`Orm::lifecycle()` exposes the `Hector\Orm\Lifecycle` service associated with that ORM instance. It orchestrates child
+detachment/removal, change tracking and the active transaction context. Normal entity saves invoke it automatically.
+The underlying `Storage\LifecycleTransaction` handles snapshots and database transaction/savepoint mechanics.
+
+An explicit operation can use the same service:
+
+```php
+$orm->lifecycle()->transaction($order, function () use ($order): void {
+    $order->save();
+    // Additional ORM writes on the same connection share the lifecycle context.
+});
+```
+
+The callback result is returned. Nested calls join the active context; their exceptions must propagate to its boundary
+to roll back the complete operation. The service resets its active context on both success and failure. Its `track()`,
+`removeChild()` and `cancelPendingInsert()` methods are internal integration points for the ORM and relationships.
+
 Saving a materialized graph containing a parent-child lifecycle relation runs its linking/removal writes and the parent
 save in one transaction. Direct `OneToMany::linkNative()` calls also protect their child operations. Removed links are
 released before new children are saved, allowing replacements under unique constraints.

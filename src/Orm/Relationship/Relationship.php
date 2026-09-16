@@ -14,11 +14,6 @@ declare(strict_types=1);
 
 namespace Hector\Orm\Relationship;
 
-use Hector\Query\Clause\Where;
-use Hector\Query\Clause\Group;
-use Hector\Query\Clause\Having;
-use Hector\Query\Clause\Order;
-use Hector\Query\Clause\Limit;
 use Hector\Orm\Assert\EntityAssert;
 use Hector\Orm\Collection\Collection;
 use Hector\Orm\Entity\Entity;
@@ -29,6 +24,11 @@ use Hector\Orm\Orm;
 use Hector\Orm\Query\Builder;
 use Hector\Orm\Query\Component\Conditions;
 use Hector\Orm\Storage\EntityStorage;
+use Hector\Query\Clause\Group;
+use Hector\Query\Clause\Having;
+use Hector\Query\Clause\Limit;
+use Hector\Query\Clause\Order;
+use Hector\Query\Clause\Where;
 use Hector\Query\Statement\Quoted;
 use Hector\Query\StatementInterface;
 use Hector\Schema\Exception\SchemaException;

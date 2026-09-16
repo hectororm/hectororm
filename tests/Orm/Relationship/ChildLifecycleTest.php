@@ -21,18 +21,19 @@ use Hector\Orm\Collection\Collection;
 use Hector\Orm\Entity\Entity;
 use Hector\Orm\Entity\MagicEntity;
 use Hector\Orm\Entity\ReflectionEntity;
-use Hector\Orm\Exception\RelationException;
-use Hector\Orm\Exception\OrmException;
 use Hector\Orm\Event\EntityBeforeDeleteEvent;
 use Hector\Orm\Event\EntityBeforeSaveEvent;
-use Psr\EventDispatcher\EventDispatcherInterface;
+use Hector\Orm\Exception\OrmException;
+use Hector\Orm\Exception\RelationException;
 use Hector\Orm\Orm;
 use Hector\Orm\Relationship\OneToMany;
 use Hector\Orm\Storage\EntityStorage;
 use Hector\Schema\Generator\Sqlite;
 use Hector\Schema\SchemaContainer;
 use PHPUnit\Framework\TestCase;
+use Psr\EventDispatcher\EventDispatcherInterface;
 use ReflectionProperty;
+use RuntimeException;
 use Throwable;
 
 class ChildLifecycleTest extends TestCase
@@ -147,7 +148,7 @@ class ChildLifecycleTest extends TestCase
         unset($children[0]);
         $children[] = $child;
         $parent->save();
-        $this->assertSame(1, $this->row(10)['parent_id']);
+        $this->assertSame(1, (int)$this->row(10)['parent_id']);
         $this->assertSame(EntityStorage::STATUS_NONE, $this->orm->getStatus($child));
     }
 
@@ -275,7 +276,7 @@ class ChildLifecycleTest extends TestCase
         $parent->filtered = new Collection();
         $parent->save();
         $this->assertNull($this->row(10));
-        $this->assertSame(1, $this->row(11)['parent_id']);
+        $this->assertSame(1, (int)$this->row(11)['parent_id']);
     }
 
     public function testUnloadedCollectionAssignmentIsAdditiveAndCacheUnsetIsNotRemoval(): void
@@ -299,7 +300,7 @@ class ChildLifecycleTest extends TestCase
         $parent->save();
         $this->assertNull($this->row(10)['parent_id']);
         $this->assertNull($this->row(11)['parent_id']);
-        $this->assertSame(2, $this->row(12)['parent_id']);
+        $this->assertSame(2, (int)$this->row(12)['parent_id']);
     }
 
     public function testHydrationDoesNotScheduleCollectionRemoval(): void
@@ -413,15 +414,19 @@ class ChildLifecycleTest extends TestCase
 
     public function testCompositeDetachmentClearsAllColumnsAndKeepsOtherParent(): void
     {
-        $parent = LifecycleCompositeParent::find(['a', 0]);
+        $parent = LifecycleCompositeParent::query()->whereEquals(['tenant' => 'a', 'ref' => 0])->get();
+        // This test exercises composite detachment, independently of tuple-IN
+        // support in the SQLite library bundled with older PHP distributions.
+        $parent->getRelated()->setLoaded('children', new Collection([LifecycleCompositeChild::find(1)]));
         $children = $parent->children;
         $this->assertCount(1, $children);
         unset($children[0]);
         $parent->save();
-        $this->assertSame(
-            ['id' => 1, 'tenant' => null, 'parent_ref' => null],
-            $this->connection->fetchOne('SELECT * FROM lifecycle_composite_child WHERE id = 1'),
-        );
+        $row = $this->connection->fetchOne('SELECT * FROM lifecycle_composite_child WHERE id = 1');
+        $this->assertNotNull($row);
+        $this->assertSame(1, (int)$row['id']);
+        $this->assertNull($row['tenant']);
+        $this->assertNull($row['parent_ref']);
         $this->assertSame(
             'b',
             $this->connection->fetchOne('SELECT * FROM lifecycle_composite_child WHERE id = 2')['tenant'],
@@ -574,6 +579,60 @@ class ChildLifecycleTest extends TestCase
         $this->orm->persist();
         $this->assertNull($this->row(10));
         $this->assertNull($this->orm->getStatus($child));
+    }
+
+    public function testLifecycleServiceSharesNestedContextAndReturnsOperationResult(): void
+    {
+        $parent = new LifecycleParent();
+        $parent->name = 'service';
+        $lifecycle = $this->orm->lifecycle();
+
+        $result = $lifecycle->transaction($parent, function () use ($parent, $lifecycle): int {
+            $this->assertSame($lifecycle, $this->orm->lifecycle());
+            $this->assertTrue($lifecycle->isActive());
+
+            return $lifecycle->transaction($parent, function () use ($parent): int {
+                $parent->save();
+
+                return $parent->id;
+            });
+        });
+
+        $this->assertSame($parent->id, $result);
+        $this->assertFalse($lifecycle->isActive());
+        $this->assertFalse($this->connection->inTransaction());
+        $this->assertCount(3, $this->connection->fetchAll('SELECT * FROM lifecycle_parent'));
+    }
+
+    public function testLifecycleServiceRestoresNestedWritesAndResetsContextAfterFailure(): void
+    {
+        $parent = new LifecycleParent();
+        $parent->name = 'service';
+        $lifecycle = $this->orm->lifecycle();
+
+        try {
+            $lifecycle->transaction($parent, function () use ($parent, $lifecycle): void {
+                $lifecycle->transaction($parent, function () use ($parent): void {
+                    $parent->save();
+                });
+
+                throw new RuntimeException('Abort outer lifecycle operation');
+            });
+            $this->fail('The outer operation must fail');
+        } catch (RuntimeException $exception) {
+            $this->assertSame('Abort outer lifecycle operation', $exception->getMessage());
+        }
+
+        $this->assertFalse($lifecycle->isActive());
+        $this->assertFalse($this->connection->inTransaction());
+        $this->assertNull($parent->id);
+        $this->assertNull($this->orm->getStatus($parent));
+        $this->assertCount(2, $this->connection->fetchAll('SELECT * FROM lifecycle_parent'));
+
+        $lifecycle->transaction($parent, function () use ($parent): void {
+            $parent->save();
+        });
+        $this->assertNotNull($parent->id);
     }
 }
 

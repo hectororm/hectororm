@@ -14,15 +14,15 @@ declare(strict_types=1);
 
 namespace Hector\Orm\Entity;
 
-use SplObjectStorage;
 use Countable;
 use Hector\Orm\Collection\Collection;
 use Hector\Orm\Exception\OrmException;
 use Hector\Orm\Orm;
 use Hector\Orm\Query\Builder;
-use Hector\Orm\Relationship\Relationships;
 use Hector\Orm\Relationship\Relationship;
+use Hector\Orm\Relationship\Relationships;
 use InvalidArgumentException;
+use SplObjectStorage;
 
 class Related implements Countable
 {
@@ -177,9 +177,11 @@ class Related implements Countable
     {
         foreach (array_keys($this->related) as $name) {
             $relation = $this->getRelationships()->get($name);
-            if ($relation->getTargetEntity() === $parentRelationship->getSourceEntity()
+            if (
+                $relation->getTargetEntity() === $parentRelationship->getSourceEntity()
                 && $relation->getSourceColumns() === $parentRelationship->getTargetColumns()
-                && $relation->getTargetColumns() === $parentRelationship->getSourceColumns()) {
+                && $relation->getTargetColumns() === $parentRelationship->getSourceColumns()
+            ) {
                 unset($this->related[$name]);
             }
         }
