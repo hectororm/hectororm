@@ -141,7 +141,18 @@ abstract class Entity
      */
     public function save(bool $cascade = false): void
     {
-        Orm::get()->save($this, true);
+        $orm = Orm::get();
+        if (
+            true === $cascade
+            && false === $orm->lifecycle()->isActive()
+            && true === $this->getRelated()->hasLifecyclePolicy()
+        ) {
+            $orm->lifecycle()->transaction($this, fn() => $this->save($cascade));
+
+            return;
+        }
+
+        $orm->save($this, true);
         true === $cascade && $this->getRelated()->save();
     }
 

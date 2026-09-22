@@ -18,7 +18,9 @@ use Closure;
 use Hector\Orm\Entity\Entity;
 use Hector\Orm\Entity\ReflectionEntity;
 use Hector\Orm\Exception\OrmException;
+use Hector\Orm\Exception\RelationException;
 use Hector\Orm\Orm;
+use SplObjectStorage;
 
 /**
  * Collection of {@see \Hector\Orm\Entity\Entity} objects.
@@ -169,6 +171,59 @@ class Collection extends \Hector\Collection\Collection
     }
 
     /**
+     * Replacing an element is also an explicit removal of its previous value.
+     */
+    public function offsetSet(mixed $offset, mixed $value): void
+    {
+        if (null !== $offset && $this->offsetExists($offset)) {
+            $this->detached[] = $this->offsetGet($offset);
+        }
+
+        parent::offsetSet($offset, $value);
+    }
+
+    /**
+     * Record an explicitly removed entity when replacing a relation collection.
+     *
+     * @param Entity $entity
+     * @internal
+     */
+    public function trackDetached(Entity $entity): void
+    {
+        $this->detached[] = $entity;
+    }
+
+    /**
+     * Snapshot only materialized relation collections.
+     *
+     * @return array{array, array}
+     * @internal
+     */
+    public function lifecycleSnapshot(): array
+    {
+        return [$this->getArrayCopy(), $this->detached];
+    }
+
+    /**
+     * Restore without manufacturing user removals.
+     *
+     * @param array{array, array} $snapshot
+     * @internal
+     */
+    public function restoreLifecycleSnapshot(array $snapshot): void
+    {
+        foreach (array_keys($this->getArrayCopy()) as $key) {
+            parent::offsetUnset($key);
+        }
+
+        foreach ($snapshot[0] as $key => $value) {
+            parent::offsetSet($key, $value);
+        }
+
+        $this->detached = $snapshot[1];
+    }
+
+    /**
      * Get detached entities.
      *
      * @return iterable
@@ -176,7 +231,20 @@ class Collection extends \Hector\Collection\Collection
      */
     public function detached(): iterable
     {
-        yield from $this->detached;
+        $seen = new SplObjectStorage();
+        foreach ($this->detached as $entity) {
+            if (!$entity instanceof Entity) {
+                throw new RelationException('Detached collection values must be entities');
+            }
+
+            // An explicitly removed child may have been reattached before saving.
+            if (true === $seen->contains($entity) || true === $this->contains($entity)) {
+                continue;
+            }
+
+            $seen->attach($entity);
+            yield $entity;
+        }
     }
 
     /**

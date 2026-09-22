@@ -19,8 +19,10 @@ use Hector\Orm\Collection\Collection;
 use Hector\Orm\Exception\OrmException;
 use Hector\Orm\Orm;
 use Hector\Orm\Query\Builder;
+use Hector\Orm\Relationship\Relationship;
 use Hector\Orm\Relationship\Relationships;
 use InvalidArgumentException;
+use SplObjectStorage;
 
 class Related implements Countable
 {
@@ -153,7 +155,98 @@ class Related implements Countable
             );
         }
 
+        $this->related[$name] = $relationship->prepareAssignment($this->related[$name] ?? null, $value);
+    }
+
+    /**
+     * Hydration is not a user replacement and must never schedule orphan removal.
+     *
+     * @internal
+     */
+    public function setLoaded(string $name, Collection|Entity|null $value): void
+    {
+        $relationship = $this->getRelationships()->get($name);
+        if (false === $relationship->valid($value)) {
+            throw new InvalidArgumentException(sprintf('Invalid loaded value for relationship "%s"', $name));
+        }
+
         $this->related[$name] = $value;
+    }
+
+    /**
+     * Invalidate inverse caches before an explicit child detachment.
+     *
+     * @param Relationship $parentRelationship
+     * @internal
+     */
+    public function invalidateParent(Relationship $parentRelationship): void
+    {
+        foreach (array_keys($this->related) as $name) {
+            $relation = $this->getRelationships()->get($name);
+            if (
+                $relation->getTargetEntity() === $parentRelationship->getSourceEntity()
+                && $relation->getSourceColumns() === $parentRelationship->getTargetColumns()
+                && $relation->getTargetColumns() === $parentRelationship->getSourceColumns()
+            ) {
+                unset($this->related[$name]);
+            }
+        }
+    }
+
+    /**
+     * Does the materialized graph contain a lifecycle relation?
+     *
+     * @param SplObjectStorage<Entity, null>|null $visited
+     * @return bool
+     * @internal
+     */
+    public function hasLifecyclePolicy(?SplObjectStorage $visited = null): bool
+    {
+        $visited ??= new SplObjectStorage();
+        if (true === $visited->contains($this->entity)) {
+            return false;
+        }
+
+        $visited->attach($this->entity);
+
+        foreach ($this->related as $name => $value) {
+            if (true === $this->getRelationships()->get($name)->hasLifecyclePolicy()) {
+                return true;
+            }
+
+            foreach ($value instanceof Collection ? $value : [$value] as $entity) {
+                if ($entity instanceof Entity && $entity->getRelated()->hasLifecyclePolicy($visited)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Prepare loaded relationship graphs before a lifecycle batch is written.
+     *
+     * @param SplObjectStorage<Entity, null>|null $visited
+     * @internal
+     */
+    public function prepareLifecycle(?SplObjectStorage $visited = null): void
+    {
+        $visited ??= new SplObjectStorage();
+        if (true === $visited->contains($this->entity)) {
+            return;
+        }
+
+        $visited->attach($this->entity);
+        foreach ($this->related as $name => $value) {
+            $this->getRelationships()->get($name)->prepareLifecycle($this->entity, $value);
+
+            foreach ($value instanceof Collection ? $value : [$value] as $entity) {
+                if ($entity instanceof Entity) {
+                    $entity->getRelated()->prepareLifecycle($visited);
+                }
+            }
+        }
     }
 
     /**

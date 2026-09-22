@@ -280,7 +280,7 @@ class ManyToMany extends Relationship
         if (empty($this->filterEntities(...$entities))) {
             array_walk(
                 $entities,
-                fn(Entity $entity) => $entity->getRelated()->set(
+                fn(Entity $entity) => $entity->getRelated()->setLoaded(
                     $this->name,
                     new Collection()
                 )
@@ -292,7 +292,7 @@ class ManyToMany extends Relationship
         // Set default collections
         array_walk(
             $entities,
-            fn(Entity $entity) => $entity->getRelated()->set(
+            fn(Entity $entity) => $entity->getRelated()->setLoaded(
                 $this->name,
                 new Collection([])
             )

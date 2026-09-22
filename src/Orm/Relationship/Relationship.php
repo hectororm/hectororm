@@ -14,11 +14,6 @@ declare(strict_types=1);
 
 namespace Hector\Orm\Relationship;
 
-use Hector\Query\Clause\Where;
-use Hector\Query\Clause\Group;
-use Hector\Query\Clause\Having;
-use Hector\Query\Clause\Order;
-use Hector\Query\Clause\Limit;
 use Hector\Orm\Assert\EntityAssert;
 use Hector\Orm\Collection\Collection;
 use Hector\Orm\Entity\Entity;
@@ -29,6 +24,11 @@ use Hector\Orm\Orm;
 use Hector\Orm\Query\Builder;
 use Hector\Orm\Query\Component\Conditions;
 use Hector\Orm\Storage\EntityStorage;
+use Hector\Query\Clause\Group;
+use Hector\Query\Clause\Having;
+use Hector\Query\Clause\Limit;
+use Hector\Query\Clause\Order;
+use Hector\Query\Clause\Where;
 use Hector\Query\Statement\Quoted;
 use Hector\Query\StatementInterface;
 use Hector\Schema\Exception\SchemaException;
@@ -213,6 +213,45 @@ abstract class Relationship
      */
     public function linkNative(Entity $entity, Entity|Collection|null $foreign): void
     {
+    }
+
+    /**
+     * Whether loaded instances of this relation need an atomic lifecycle operation.
+     */
+    public function hasLifecyclePolicy(): bool
+    {
+        return false;
+    }
+
+    /**
+     * Prepare pending relationship work before a lifecycle batch writes any rows.
+     *
+     * @internal
+     */
+    public function prepareLifecycle(Entity $entity, Entity|Collection|null $foreign): void
+    {
+    }
+
+    /**
+     * Explicit user assignment, as opposed to loading a query result.
+     *
+     * @internal
+     */
+    public function prepareAssignment(
+        Entity|Collection|null $previous,
+        Entity|Collection|null $value,
+    ): Entity|Collection|null {
+        return $value;
+    }
+
+    /**
+     * Lifecycle options are deliberately unsupported unless a relation opts in.
+     */
+    public function setOrphanRemoval(?bool $orphanRemoval): void
+    {
+        if (null !== $orphanRemoval) {
+            throw new RelationException(sprintf('Relationship "%s" does not support orphanRemoval', $this->name));
+        }
     }
 
     /**

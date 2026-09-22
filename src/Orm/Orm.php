@@ -14,17 +14,17 @@ declare(strict_types=1);
 
 namespace Hector\Orm;
 
-use Hector\Orm\Event\NullEventDispatcher;
-use Hector\Orm\Event\EntityBeforeDeleteEvent;
-use Hector\Orm\Event\EntityAfterDeleteEvent;
-use Hector\Orm\Event\EntityBeforeSaveEvent;
-use Hector\Orm\Event\EntityAfterSaveEvent;
 use Hector\Connection\Connection;
 use Hector\Connection\ConnectionSet;
 use Hector\Connection\Exception\NotFoundException;
 use Hector\DataTypes\TypeSet;
 use Hector\Orm\Entity\Entity;
 use Hector\Orm\Entity\ReflectionEntity;
+use Hector\Orm\Event\EntityAfterDeleteEvent;
+use Hector\Orm\Event\EntityAfterSaveEvent;
+use Hector\Orm\Event\EntityBeforeDeleteEvent;
+use Hector\Orm\Event\EntityBeforeSaveEvent;
+use Hector\Orm\Event\NullEventDispatcher;
 use Hector\Orm\Exception\OrmException;
 use Hector\Orm\Mapper\Mapper;
 use Hector\Orm\Query\Builder;
@@ -44,6 +44,8 @@ class Orm
     protected EntityStorage $storage;
     private array $reflections = [];
     private array $mappers = [];
+    private ?Lifecycle $lifecycle = null;
+    private array $persisting = [];
 
     /**
      * Orm constructor.
@@ -102,6 +104,14 @@ class Orm
     public function __unserialize(array $data): void
     {
         throw new OrmException('Orm is not serializable');
+    }
+
+    /**
+     * Get the relationship lifecycle service associated with this ORM instance.
+     */
+    public function lifecycle(): Lifecycle
+    {
+        return $this->lifecycle ??= new Lifecycle($this, $this->storage);
     }
 
     /**
@@ -243,10 +253,28 @@ class Orm
      */
     public function save(Entity $entity, bool $persist = false): void
     {
+        if ($persist && false === $this->lifecycle()->isActive() && $entity->getRelated()->hasLifecyclePolicy()) {
+            $this->lifecycle()->transaction($entity, fn() => $this->save($entity, true));
+            return;
+        }
+        $this->lifecycle()->track($entity);
         $status = EntityStorage::STATUS_TO_INSERT;
         if ($this->storage->contains($entity)) {
             // Already in storage for an action?
             if ($this->storage[$entity] !== EntityStorage::STATUS_NONE) {
+                // A scheduled child still needs to be written before its parent
+                // lifecycle completes. An actively saving parent must not recurse.
+                if (
+                    $persist && $this->lifecycle()->isActive()
+                    && !isset($this->persisting[spl_object_id($entity)])
+                    && in_array(
+                        $this->storage[$entity],
+                        [EntityStorage::STATUS_TO_INSERT, EntityStorage::STATUS_TO_UPDATE],
+                        true,
+                    )
+                ) {
+                    $this->persistEntity($entity);
+                }
                 return;
             }
 
@@ -270,13 +298,21 @@ class Orm
      */
     public function delete(Entity $entity, bool $persist = false): void
     {
+        $this->lifecycle()->track($entity);
         if (!$this->storage->contains($entity)) {
             throw new OrmException('Entity does not exists in storage');
         }
 
         // Already in storage
         if ($this->storage[$entity] !== EntityStorage::STATUS_NONE) {
-            return;
+            // Explicit orphan removal supersedes a pending (not active) update.
+            if (
+                false === $this->lifecycle()->isActive()
+                || EntityStorage::STATUS_TO_UPDATE !== $this->storage[$entity]
+                || isset($this->persisting[spl_object_id($entity)])
+            ) {
+                return;
+            }
         }
 
         $this->storage->attach($entity, EntityStorage::STATUS_TO_DELETE);
@@ -308,6 +344,44 @@ class Orm
     public function persist(): void
     {
         try {
+            $this->persistPendingEntities();
+        } catch (OrmException $exception) {
+            throw $exception;
+        } catch (Throwable $exception) {
+            throw new OrmException('Error while persisting entities', previous: $exception);
+        }
+    }
+
+    /**
+     * Select the batch transaction scope before executing pending writes.
+     */
+    private function persistPendingEntities(): void
+    {
+        $persistEntity = fn(Entity $entity) => $this->persistEntity($entity);
+        if (true === $this->lifecycle()->isActive()) {
+            $this->lifecycle()->persistBatch($persistEntity);
+
+            return;
+        }
+
+        // Keep snapshots until the complete batch succeeds, not merely until an
+        // individual relationship releases its savepoint.
+        foreach ($this->storage as $entity) {
+            if (EntityStorage::STATUS_NONE === $this->getStatus($entity)) {
+                continue;
+            }
+
+            if (true === $entity->getRelated()->hasLifecyclePolicy()) {
+                $this->lifecycle()->transaction(
+                    $entity,
+                    fn() => $this->lifecycle()->persistBatch($persistEntity),
+                );
+
+                return;
+            }
+        }
+
+        try {
             $this->connections->beginTransaction();
 
             /** @var Entity $entity */
@@ -316,14 +390,10 @@ class Orm
             }
 
             $this->connections->commit();
-        } catch (OrmException $exception) {
-            $this->connections->rollBack();
-
-            throw $exception;
         } catch (Throwable $exception) {
             $this->connections->rollBack();
 
-            throw new OrmException('Error while persisting entities', previous: $exception);
+            throw $exception;
         }
     }
 
@@ -335,6 +405,23 @@ class Orm
      * @throws OrmException
      */
     private function persistEntity(Entity $entity): void
+    {
+        if (false === $this->storage->contains($entity)) {
+            return;
+        }
+        $id = spl_object_id($entity);
+        if (isset($this->persisting[$id])) {
+            return;
+        }
+        $this->persisting[$id] = true;
+        try {
+            $this->doPersistEntity($entity);
+        } finally {
+            unset($this->persisting[$id]);
+        }
+    }
+
+    private function doPersistEntity(Entity $entity): void
     {
         $status = $this->storage[$entity];
 

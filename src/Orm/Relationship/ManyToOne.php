@@ -85,7 +85,7 @@ class ManyToOne extends RegularRelationship
             );
             $foreignersFiltered = array_column($foreignersFiltered, 'entity');
 
-            $entity['entity']->getRelated()->set($this->getName(), reset($foreignersFiltered) ?: null);
+            $entity['entity']->getRelated()->setLoaded($this->getName(), reset($foreignersFiltered) ?: null);
         }
     }
 
