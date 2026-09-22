@@ -677,6 +677,27 @@ class OneToOneLifecycleTest extends TestCase
         );
     }
 
+    public function testPhpSerializationKeepsValuesButNotPendingScalarAssignments(): void
+    {
+        $parent = OneParent::find(1);
+        $previous = $parent->owned;
+        $replacement = OneChild::find(11);
+        $parent->owned = $replacement;
+
+        $this->assertSame(['related'], array_keys($parent->getRelated()->__serialize()));
+        $restored = unserialize(serialize($parent));
+        $this->assertInstanceOf(OneParent::class, $restored);
+        $this->assertSame($replacement->id, $restored->owned->id);
+        $this->assertNull($restored->getRelated()->getAssignment('owned'));
+
+        // Serialization is independent of the live object's transaction journal.
+        $this->assertSame($previous, $parent->getRelated()->getAssignment('owned')['previous']);
+        $this->assertNotNull($this->childRow(10));
+        $parent->save();
+        $this->assertNull($this->childRow(10));
+        $this->assertSame(1, (int)$this->childRow(11)['parent_id']);
+    }
+
     private function relation(string $name): OneToOne
     {
         return $this->orm->getMapper(OneParent::class)->getRelationships()->get($name);

@@ -21,10 +21,11 @@ use Hector\Orm\Orm;
 use Hector\Orm\Query\Builder;
 use Hector\Orm\Relationship\Relationship;
 use Hector\Orm\Relationship\Relationships;
+use Hector\Orm\Storage\LifecycleSnapshotInterface;
 use InvalidArgumentException;
 use SplObjectStorage;
 
-class Related implements Countable
+class Related implements Countable, LifecycleSnapshotInterface
 {
     private array $related = [];
     private array $assignments = [];
@@ -42,14 +43,53 @@ class Related implements Countable
     {
         return [
             'related' => $this->related,
-            'assignments' => $this->assignments,
         ];
     }
 
     public function __unserialize(array $data): void
     {
         $this->related = $data['related'];
-        $this->assignments = $data['assignments'] ?? [];
+        $this->assignments = [];
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function lifecycleSnapshot(): array
+    {
+        return [
+            'related' => $this->related,
+            'assignments' => $this->assignments,
+        ];
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function restoreLifecycleSnapshot(array $snapshot): void
+    {
+        $this->related = $snapshot['related'];
+        $this->assignments = $snapshot['assignments'];
+    }
+
+    /**
+     * Expose materialized graph references without exposing the snapshot format.
+     * Removed scalar values still need their entity state restored on rollback.
+     *
+     * @return iterable<Entity|Collection>
+     * @internal
+     */
+    public function getLifecycleReferences(): iterable
+    {
+        foreach ($this->related as $value) {
+            if ($value instanceof Entity || $value instanceof Collection) {
+                yield $value;
+            }
+        }
+
+        foreach ($this->assignments as $assignment) {
+            yield from $assignment['removed'];
+        }
     }
 
     /**

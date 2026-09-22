@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `HasOneChild` and programmatic `hasOneChild()` / `oneToOne()` declarations for scalar child relations, with shared lifecycle policies and non-destructive `orphanRemoval: false` default (#135)
 - Optional `isParent` on `OneToOne`: infer unambiguous FK direction/mappings, propagate parent keys after insertion, and invert resolved direction in `reverse()` while preserving the unresolved historical fallback until v2 (#135)
 - Scalar assignment tracking for loaded and unloaded child replacement, atomic removal and retry after rollback; filtered-out children are never implicitly deleted (#135)
+- Internal `LifecycleSnapshotInterface` shared by `Related`, ORM collections and `EntityData`; transaction snapshots retain pending scalar assignments independently of the existing PHP serialization format (#135)
 - Added support for an `options` key in the `OrmFactory::connection()` configuration array, forwarded as the driver-specific PDO connection options to the created `Connection`
 - Explicit `orphanRemoval` policy for `HasMany`, `Relationships::hasMany()` and `OneToMany`: detach nullable child links or delete removed children; omitted policy preserves historical deletion until v2 (#146)
 - Shared child lifecycle operations and single-connection transactions with savepoint isolation and rollback restoration of mapped entity state, relation caches and collection removal tracking (#146)

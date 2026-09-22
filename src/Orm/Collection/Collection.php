@@ -20,6 +20,7 @@ use Hector\Orm\Entity\ReflectionEntity;
 use Hector\Orm\Exception\OrmException;
 use Hector\Orm\Exception\RelationException;
 use Hector\Orm\Orm;
+use Hector\Orm\Storage\LifecycleSnapshotInterface;
 use SplObjectStorage;
 
 /**
@@ -31,7 +32,7 @@ use SplObjectStorage;
  * @template T of \Hector\Orm\Entity\Entity
  * @extends \Hector\Collection\Collection<T>
  */
-class Collection extends \Hector\Collection\Collection
+class Collection extends \Hector\Collection\Collection implements LifecycleSnapshotInterface
 {
     private array $detached = [];
 
