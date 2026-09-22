@@ -12,7 +12,7 @@
 
 declare(strict_types=1);
 
-namespace Hector\Orm\Tests\Relationship;
+namespace Hector\Orm\Tests;
 
 use Hector\Connection\Connection;
 use Hector\Connection\ConnectionSet;
@@ -36,7 +36,7 @@ use ReflectionProperty;
 use RuntimeException;
 use Throwable;
 
-class ChildLifecycleTest extends TestCase
+class LifecycleTest extends TestCase
 {
     private Connection $connection;
     private Orm $orm;
