@@ -16,11 +16,9 @@ namespace Hector\Orm\Relationship;
 
 use Hector\Orm\Collection\Collection;
 use Hector\Orm\Entity\Entity;
-use Hector\Orm\Entity\ReflectionEntity;
 use Hector\Orm\Exception\OrmException;
 use Hector\Orm\Exception\RelationException;
 use Hector\Orm\Orm;
-use Hector\Orm\Storage\EntityStorage;
 
 class OneToMany extends RegularRelationship
 {
@@ -85,6 +83,14 @@ class OneToMany extends RegularRelationship
     public function hasLifecyclePolicy(): bool
     {
         return true;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getChildren(Entity|Collection|null $related): iterable
+    {
+        return $related instanceof Collection ? $related : [];
     }
 
     /**
@@ -177,45 +183,9 @@ class OneToMany extends RegularRelationship
      */
     private function linkChildren(Entity $entity, Collection $foreign): void
     {
-        $entityReflection = ReflectionEntity::get($entity::class);
-
-        $sourceColumns = $entityReflection->getMapper()->collectEntity($entity, $this->getSourceColumns());
-        $targetColumns = array_combine($this->getTargetColumns(), $sourceColumns);
-
         /** @var Entity $foreignEntity */
         foreach ($foreign as $foreignEntity) {
-            $foreignEntityReflection = ReflectionEntity::get($foreignEntity::class);
-            $targetColumnsOrigin = $foreignEntityReflection->getMapper()->collectEntity(
-                $foreignEntity,
-                $this->getTargetColumns()
-            );
-
-            // Already hydrated?
-            if ($targetColumns == array_filter($targetColumnsOrigin, fn($value): bool => null !== $value)) {
-                // Not altered?
-                if (false === $foreignEntity->isAltered(...$this->getTargetColumns())) {
-                    continue;
-                }
-            }
-
-            // Hydrate foreign entity
-            $foreignEntity->getRelated()->invalidateParent($this);
-            $foreignEntityReflection->getMapper()->hydrateEntity($foreignEntity, $targetColumns);
-
-            // Save foreign
-            $foreignEntity->save();
-            if (EntityStorage::STATUS_NONE !== Orm::get()->getStatus($foreignEntity)) {
-                throw new RelationException('Child saving was prevented; the lifecycle operation was rolled back');
-            }
-
-            if (
-                false === self::keysMatch(
-                    $targetColumns,
-                    $foreignEntityReflection->getMapper()->collectEntity($foreignEntity, $this->getTargetColumns()),
-                )
-            ) {
-                throw new RelationException('Child linking was prevented; the lifecycle operation was rolled back');
-            }
+            Orm::get()->lifecycle()->linkChild($this, $entity, $foreignEntity);
         }
     }
 

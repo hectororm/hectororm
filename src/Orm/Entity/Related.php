@@ -21,12 +21,14 @@ use Hector\Orm\Orm;
 use Hector\Orm\Query\Builder;
 use Hector\Orm\Relationship\Relationship;
 use Hector\Orm\Relationship\Relationships;
+use Hector\Orm\Storage\LifecycleSnapshotInterface;
 use InvalidArgumentException;
 use SplObjectStorage;
 
-class Related implements Countable
+class Related implements Countable, LifecycleSnapshotInterface
 {
     private array $related = [];
+    private array $assignments = [];
 
     /**
      * Related constructor.
@@ -47,6 +49,47 @@ class Related implements Countable
     public function __unserialize(array $data): void
     {
         $this->related = $data['related'];
+        $this->assignments = [];
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function lifecycleSnapshot(): array
+    {
+        return [
+            'related' => $this->related,
+            'assignments' => $this->assignments,
+        ];
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function restoreLifecycleSnapshot(array $snapshot): void
+    {
+        $this->related = $snapshot['related'];
+        $this->assignments = $snapshot['assignments'];
+    }
+
+    /**
+     * Expose materialized graph references without exposing the snapshot format.
+     * Removed scalar values still need their entity state restored on rollback.
+     *
+     * @return iterable<Entity|Collection>
+     * @internal
+     */
+    public function getLifecycleReferences(): iterable
+    {
+        foreach ($this->related as $value) {
+            if ($value instanceof Entity || $value instanceof Collection) {
+                yield $value;
+            }
+        }
+
+        foreach ($this->assignments as $assignment) {
+            yield from $assignment['removed'];
+        }
     }
 
     /**
@@ -155,7 +198,42 @@ class Related implements Countable
             );
         }
 
-        $this->related[$name] = $relationship->prepareAssignment($this->related[$name] ?? null, $value);
+        $previous = $this->related[$name] ?? null;
+        $value = $relationship->prepareAssignment($previous, $value);
+        if (true === $relationship->tracksAssignments()) {
+            $this->assignments[$name] ??= [
+                'loaded' => array_key_exists($name, $this->related),
+                'previous' => $previous,
+                'removed' => [],
+            ];
+
+            if ($previous instanceof Entity && $previous !== $value) {
+                $this->assignments[$name]['removed'][] = $previous;
+            }
+        }
+
+        $this->related[$name] = $value;
+    }
+
+    /**
+     * Get the baseline of an explicit scalar assignment without loading it.
+     *
+     * @return array{loaded: bool, previous: Entity|null, removed: Entity[]}|null
+     * @internal
+     */
+    public function getAssignment(string $name): ?array
+    {
+        return $this->assignments[$name] ?? null;
+    }
+
+    /**
+     * Clear successfully persisted scalar changes (transaction snapshots retain them on failure).
+     *
+     * @internal
+     */
+    public function clearAssignment(string $name): void
+    {
+        unset($this->assignments[$name]);
     }
 
     /**
@@ -165,6 +243,10 @@ class Related implements Countable
      */
     public function setLoaded(string $name, Collection|Entity|null $value): void
     {
+        if (array_key_exists($name, $this->assignments)) {
+            return;
+        }
+
         $relationship = $this->getRelationships()->get($name);
         if (false === $relationship->valid($value)) {
             throw new InvalidArgumentException(sprintf('Invalid loaded value for relationship "%s"', $name));
@@ -250,6 +332,19 @@ class Related implements Countable
     }
 
     /**
+     * Get materialized children without loading new relationships.
+     *
+     * @return iterable<Entity>
+     * @internal
+     */
+    public function getChildren(): iterable
+    {
+        foreach ($this->related as $name => $value) {
+            yield from $this->getRelationships()->get($name)->getChildren($value);
+        }
+    }
+
+    /**
      * __set() PHP magic method.
      *
      * @param string $name
@@ -299,7 +394,7 @@ class Related implements Countable
             return;
         }
 
-        unset($this->related[$name]);
+        unset($this->related[$name], $this->assignments[$name]);
     }
 
     /**
