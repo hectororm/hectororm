@@ -224,6 +224,15 @@ abstract class Relationship
     }
 
     /**
+     * Prepare pending relationship work before a lifecycle batch writes any rows.
+     *
+     * @internal
+     */
+    public function prepareLifecycle(Entity $entity, Entity|Collection|null $foreign): void
+    {
+    }
+
+    /**
      * Explicit user assignment, as opposed to loading a query result.
      *
      * @internal

@@ -27,7 +27,7 @@ class OneToMany extends RegularRelationship
     use ValidToManyTrait;
 
     /**
-     * ManyToOne constructor.
+     * OneToMany constructor.
      *
      * @param string $name
      * @param string $sourceEntity
@@ -61,22 +61,53 @@ class OneToMany extends RegularRelationship
         }
     }
 
+    /**
+     * @inheritDoc
+     */
     public function setOrphanRemoval(?bool $orphanRemoval): void
     {
         $this->orphanRemoval = $orphanRemoval;
     }
 
-    /** Null denotes the pre-v2 compatibility default (delete detached children). */
+    /**
+     * Null denotes the pre-v2 compatibility default (delete detached children).
+     *
+     * @return bool|null
+     */
     public function getOrphanRemoval(): ?bool
     {
         return $this->orphanRemoval;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function hasLifecyclePolicy(): bool
     {
         return true;
     }
 
+    /**
+     * @inheritDoc
+     */
+    public function prepareLifecycle(Entity $entity, Entity|Collection|null $foreign): void
+    {
+        if (!$foreign instanceof Collection) {
+            return;
+        }
+
+        foreach ($foreign->detached() as $child) {
+            if (!$child instanceof ($this->getTargetEntity())) {
+                throw new RelationException('Invalid detached child entity type');
+            }
+
+            Orm::get()->lifecycle()->cancelPendingInsert($child);
+        }
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function prepareAssignment(
         Entity|Collection|null $previous,
         Entity|Collection|null $value,
@@ -85,10 +116,12 @@ class OneToMany extends RegularRelationship
         if (null === $this->orphanRemoval) {
             return $value;
         }
+
         $value ??= new Collection();
         if (!$value instanceof Collection) {
             throw new RelationException('Foreign must be a collection');
         }
+
         if ($previous instanceof Collection && $previous !== $value) {
             // Only known, visible members are replaced. Never query unseen rows
             // to infer removals from a possibly filtered or limited collection.
@@ -101,6 +134,7 @@ class OneToMany extends RegularRelationship
                 $value->trackDetached($child);
             }
         }
+
         return $value;
     }
 
@@ -134,6 +168,13 @@ class OneToMany extends RegularRelationship
         });
     }
 
+    /**
+     * Propagate parent keys to retained and newly attached children.
+     *
+     * @param Entity $entity
+     * @param Collection<Entity> $foreign
+     * @throws OrmException
+     */
     private function linkChildren(Entity $entity, Collection $foreign): void
     {
         $entityReflection = ReflectionEntity::get($entity::class);
@@ -165,6 +206,15 @@ class OneToMany extends RegularRelationship
             $foreignEntity->save();
             if (EntityStorage::STATUS_NONE !== Orm::get()->getStatus($foreignEntity)) {
                 throw new RelationException('Child saving was prevented; the lifecycle operation was rolled back');
+            }
+
+            if (
+                false === self::keysMatch(
+                    $targetColumns,
+                    $foreignEntityReflection->getMapper()->collectEntity($foreignEntity, $this->getTargetColumns()),
+                )
+            ) {
+                throw new RelationException('Child linking was prevented; the lifecycle operation was rolled back');
             }
         }
     }

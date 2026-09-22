@@ -350,8 +350,10 @@ class LifecycleTest extends TestCase
         try {
             $this->orm->persist();
             $this->fail('Batch must fail');
-        } catch (Throwable $exception) {
-            $this->assertStringContainsString('CHECK', $exception->getMessage());
+        } catch (OrmException $exception) {
+            $this->assertSame('Error while persisting entities', $exception->getMessage());
+            $this->assertNotNull($exception->getPrevious());
+            $this->assertStringContainsString('CHECK', $exception->getPrevious()->getMessage());
         }
         $this->assertNotNull($this->row(10));
         $this->assertSame(EntityStorage::STATUS_NONE, $this->orm->getStatus($old));
@@ -633,6 +635,134 @@ class LifecycleTest extends TestCase
             $parent->save();
         });
         $this->assertNotNull($parent->id);
+    }
+
+    public function testCascadeFailureRollsBackEarlierOrphanRemoval(): void
+    {
+        $parent = LifecycleParent::find(1);
+        $children = $parent->owned;
+        $removed = $children[0];
+        unset($children[0]);
+        $children[1]->code = 'invalid';
+
+        try {
+            $parent->save(cascade: true);
+            $this->fail('Invalid child must abort the complete cascade');
+        } catch (Throwable $exception) {
+            $this->assertStringContainsString('CHECK', $exception->getMessage());
+        }
+
+        $this->assertNotNull($this->row(10));
+        $this->assertSame('b', $this->row(11)['code']);
+        $this->assertSame(EntityStorage::STATUS_NONE, $this->orm->getStatus($removed));
+        $this->assertSame('invalid', $children[1]->code);
+        $this->assertCount(1, iterator_to_array($children->detached()));
+
+        $children[1]->code = 'valid';
+        $parent->save(cascade: true);
+        $this->assertNull($this->row(10));
+        $this->assertSame('valid', $this->row(11)['code']);
+    }
+
+    public function testPendingWritesJoinAnExplicitLifecycleTransaction(): void
+    {
+        $parent = LifecycleParent::find(1);
+        $child = new LifecycleChild();
+        $child->code = 'pending';
+        $this->orm->save($child);
+
+        try {
+            $this->orm->lifecycle()->transaction($parent, function (): void {
+                $this->orm->persist();
+                throw new RuntimeException('Abort after flushing queued writes');
+            });
+            $this->fail('The outer operation must fail');
+        } catch (RuntimeException $exception) {
+            $this->assertSame('Abort after flushing queued writes', $exception->getMessage());
+        }
+
+        $this->assertNull($child->id);
+        $this->assertSame(EntityStorage::STATUS_TO_INSERT, $this->orm->getStatus($child));
+        $this->assertCount(3, $this->connection->fetchAll('SELECT * FROM lifecycle_child'));
+    }
+
+    public function testDetachmentCannotBeUndoneByBeforeSaveListener(): void
+    {
+        $parent = LifecycleParent::find(1);
+        $children = $parent->children;
+        $removed = $children[0];
+        unset($children[0]);
+        $this->orm->setEventDispatcher(new class implements EventDispatcherInterface {
+            public function dispatch(object $event): object
+            {
+                if ($event instanceof EntityBeforeSaveEvent && $event->getEntity() instanceof LifecycleChild) {
+                    $event->getEntity()->parent_id = 1;
+                }
+
+                return $event;
+            }
+        });
+
+        try {
+            $parent->save();
+            $this->fail('A restored FK must not be reported as a successful detachment');
+        } catch (RelationException $exception) {
+            $this->assertStringContainsString('detachment was prevented', $exception->getMessage());
+        }
+
+        $this->assertSame(1, $removed->parent_id);
+        $this->assertSame(1, (int)$this->row(10)['parent_id']);
+        $this->assertCount(1, iterator_to_array($children->detached()));
+    }
+
+    public function testChildLinkCannotBeRedirectedByBeforeSaveListener(): void
+    {
+        $parent = LifecycleParent::find(1);
+        $child = new LifecycleChild();
+        $child->code = 'new';
+        $parent->owned = new Collection([$child]);
+        $this->orm->setEventDispatcher(new class implements EventDispatcherInterface {
+            public function dispatch(object $event): object
+            {
+                if ($event instanceof EntityBeforeSaveEvent && $event->getEntity() instanceof LifecycleChild) {
+                    $event->getEntity()->parent_id = 2;
+                }
+
+                return $event;
+            }
+        });
+
+        try {
+            $parent->save();
+            $this->fail('A child linked to a different parent must abort the operation');
+        } catch (RelationException $exception) {
+            $this->assertStringContainsString('linking was prevented', $exception->getMessage());
+        }
+
+        $this->assertNull($child->id);
+        $this->assertNull($child->parent_id);
+        $this->assertCount(3, $this->connection->fetchAll('SELECT * FROM lifecycle_child'));
+    }
+
+    public function testPendingChildRemovedBeforeParentIsNotInserted(): void
+    {
+        $parent = new LifecycleParent();
+        $parent->name = 'new';
+        $child = new LifecycleChild();
+        $child->code = 'invalid';
+        $children = new Collection([$child]);
+        $parent->owned = $children;
+        unset($children[0]);
+
+        // Queue the child first to ensure insertion order cannot resurrect it.
+        $this->orm->save($child);
+        $this->orm->save($parent);
+        $this->orm->persist();
+
+        $this->assertNull($child->id);
+        $this->assertNull($this->orm->getStatus($child));
+        $this->assertNotNull($parent->id);
+        $this->assertCount(3, $this->connection->fetchAll('SELECT * FROM lifecycle_child'));
     }
 }
 

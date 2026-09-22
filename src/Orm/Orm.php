@@ -343,21 +343,44 @@ class Orm
      */
     public function persist(): void
     {
+        try {
+            $this->persistPendingEntities();
+        } catch (OrmException $exception) {
+            throw $exception;
+        } catch (Throwable $exception) {
+            throw new OrmException('Error while persisting entities', previous: $exception);
+        }
+    }
+
+    /**
+     * Select the batch transaction scope before executing pending writes.
+     */
+    private function persistPendingEntities(): void
+    {
+        $persistEntity = fn(Entity $entity) => $this->persistEntity($entity);
+        if (true === $this->lifecycle()->isActive()) {
+            $this->lifecycle()->persistBatch($persistEntity);
+
+            return;
+        }
+
         // Keep snapshots until the complete batch succeeds, not merely until an
         // individual relationship releases its savepoint.
         foreach ($this->storage as $entity) {
-            if ($entity->getRelated()->hasLifecyclePolicy()) {
-                $this->lifecycle()->transaction($entity, function (): void {
-                    foreach ($this->storage as $pending) {
-                        $this->lifecycle()->track($pending);
-                    }
-                    foreach ($this->storage as $pending) {
-                        $this->persistEntity($pending);
-                    }
-                });
+            if (EntityStorage::STATUS_NONE === $this->getStatus($entity)) {
+                continue;
+            }
+
+            if (true === $entity->getRelated()->hasLifecyclePolicy()) {
+                $this->lifecycle()->transaction(
+                    $entity,
+                    fn() => $this->lifecycle()->persistBatch($persistEntity),
+                );
+
                 return;
             }
         }
+
         try {
             $this->connections->beginTransaction();
 
@@ -367,14 +390,10 @@ class Orm
             }
 
             $this->connections->commit();
-        } catch (OrmException $exception) {
-            $this->connections->rollBack();
-
-            throw $exception;
         } catch (Throwable $exception) {
             $this->connections->rollBack();
 
-            throw new OrmException('Error while persisting entities', previous: $exception);
+            throw $exception;
         }
     }
 

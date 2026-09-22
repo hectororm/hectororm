@@ -21,20 +21,29 @@ use Hector\Orm\Exception\RelationException;
 use Hector\Orm\Relationship\Relationship;
 use Hector\Orm\Storage\EntityStorage;
 use Hector\Orm\Storage\LifecycleTransaction;
+use LogicException;
+use SplObjectStorage;
 
 /**
  * Orchestrates relationship lifecycle policies and their transactional state.
  */
 final class Lifecycle
 {
+    /** @var LifecycleTransaction|null Active lifecycle transaction, shared by nested operations. */
     private ?LifecycleTransaction $transaction = null;
 
+    /**
+     * @param Orm $orm
+     * @param EntityStorage $storage
+     */
     public function __construct(private Orm $orm, private EntityStorage $storage)
     {
     }
 
     /**
      * Whether a lifecycle transaction is currently active.
+     *
+     * @return bool
      */
     public function isActive(): bool
     {
@@ -44,6 +53,10 @@ final class Lifecycle
     /**
      * Execute a lifecycle operation atomically on the entity connection.
      * Nested calls share the active context and its rollback snapshots.
+     *
+     * @param Entity $entity
+     * @param callable(): mixed $operation
+     * @return mixed
      */
     public function transaction(Entity $entity, callable $operation): mixed
     {
@@ -83,6 +96,40 @@ final class Lifecycle
         }
 
         $this->transaction?->capture($value);
+    }
+
+    /**
+     * Flush pending entities inside the active lifecycle transaction.
+     * Capture the entire batch before cancelling removed transient children so
+     * rollback restores their pending status regardless of scheduling order.
+     *
+     * @param callable(Entity): void $persistEntity
+     * @internal
+     */
+    public function persistBatch(callable $persistEntity): void
+    {
+        if (false === $this->isActive()) {
+            throw new LogicException('Lifecycle batch persistence requires an active transaction');
+        }
+
+        $pending = [];
+        foreach ($this->storage as $entity) {
+            if (EntityStorage::STATUS_NONE === $this->orm->getStatus($entity)) {
+                continue;
+            }
+
+            $this->track($entity);
+            $pending[] = $entity;
+        }
+
+        $visited = new SplObjectStorage();
+        foreach ($pending as $entity) {
+            $entity->getRelated()->prepareLifecycle($visited);
+        }
+
+        foreach ($pending as $entity) {
+            $persistEntity($entity);
+        }
     }
 
     /**
@@ -187,6 +234,10 @@ final class Lifecycle
         if (
             EntityStorage::STATUS_NONE !== $this->orm->getStatus($child)
             || $child->isAltered(...$relationship->getTargetColumns())
+            || [] !== array_filter(
+                $reflection->getMapper()->collectEntity($child, $relationship->getTargetColumns()),
+                fn($value): bool => null !== $value,
+            )
         ) {
             throw new RelationException('Child detachment was prevented; the lifecycle operation was rolled back');
         }

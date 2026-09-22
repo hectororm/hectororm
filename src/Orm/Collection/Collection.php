@@ -182,27 +182,44 @@ class Collection extends \Hector\Collection\Collection
         parent::offsetSet($offset, $value);
     }
 
-    /** @internal */
+    /**
+     * Record an explicitly removed entity when replacing a relation collection.
+     *
+     * @param Entity $entity
+     * @internal
+     */
     public function trackDetached(Entity $entity): void
     {
         $this->detached[] = $entity;
     }
 
-    /** @internal Snapshot only materialized relation collections. */
+    /**
+     * Snapshot only materialized relation collections.
+     *
+     * @return array{array, array}
+     * @internal
+     */
     public function lifecycleSnapshot(): array
     {
         return [$this->getArrayCopy(), $this->detached];
     }
 
-    /** @internal Restore without manufacturing user removals. */
+    /**
+     * Restore without manufacturing user removals.
+     *
+     * @param array{array, array} $snapshot
+     * @internal
+     */
     public function restoreLifecycleSnapshot(array $snapshot): void
     {
         foreach (array_keys($this->getArrayCopy()) as $key) {
             parent::offsetUnset($key);
         }
+
         foreach ($snapshot[0] as $key => $value) {
             parent::offsetSet($key, $value);
         }
+
         $this->detached = $snapshot[1];
     }
 
@@ -219,10 +236,12 @@ class Collection extends \Hector\Collection\Collection
             if (!$entity instanceof Entity) {
                 throw new RelationException('Detached collection values must be entities');
             }
+
             // An explicitly removed child may have been reattached before saving.
-            if ($seen->contains($entity) || $this->contains($entity)) {
+            if (true === $seen->contains($entity) || true === $this->contains($entity)) {
                 continue;
             }
+
             $seen->attach($entity);
             yield $entity;
         }

@@ -169,10 +169,16 @@ class Related implements Countable
         if (false === $relationship->valid($value)) {
             throw new InvalidArgumentException(sprintf('Invalid loaded value for relationship "%s"', $name));
         }
+
         $this->related[$name] = $value;
     }
 
-    /** @internal Invalidate inverse caches before an explicit child detachment. */
+    /**
+     * Invalidate inverse caches before an explicit child detachment.
+     *
+     * @param Relationship $parentRelationship
+     * @internal
+     */
     public function invalidateParent(Relationship $parentRelationship): void
     {
         foreach (array_keys($this->related) as $name) {
@@ -187,19 +193,27 @@ class Related implements Countable
         }
     }
 
-    /** @internal Does the materialized graph contain a lifecycle relation? */
+    /**
+     * Does the materialized graph contain a lifecycle relation?
+     *
+     * @param SplObjectStorage<Entity, null>|null $visited
+     * @return bool
+     * @internal
+     */
     public function hasLifecyclePolicy(?SplObjectStorage $visited = null): bool
     {
         $visited ??= new SplObjectStorage();
-        if ($visited->contains($this->entity)) {
+        if (true === $visited->contains($this->entity)) {
             return false;
         }
+
         $visited->attach($this->entity);
 
         foreach ($this->related as $name => $value) {
-            if ($this->getRelationships()->get($name)->hasLifecyclePolicy()) {
+            if (true === $this->getRelationships()->get($name)->hasLifecyclePolicy()) {
                 return true;
             }
+
             foreach ($value instanceof Collection ? $value : [$value] as $entity) {
                 if ($entity instanceof Entity && $entity->getRelated()->hasLifecyclePolicy($visited)) {
                     return true;
@@ -208,6 +222,31 @@ class Related implements Countable
         }
 
         return false;
+    }
+
+    /**
+     * Prepare loaded relationship graphs before a lifecycle batch is written.
+     *
+     * @param SplObjectStorage<Entity, null>|null $visited
+     * @internal
+     */
+    public function prepareLifecycle(?SplObjectStorage $visited = null): void
+    {
+        $visited ??= new SplObjectStorage();
+        if (true === $visited->contains($this->entity)) {
+            return;
+        }
+
+        $visited->attach($this->entity);
+        foreach ($this->related as $name => $value) {
+            $this->getRelationships()->get($name)->prepareLifecycle($this->entity, $value);
+
+            foreach ($value instanceof Collection ? $value : [$value] as $entity) {
+                if ($entity instanceof Entity) {
+                    $entity->getRelated()->prepareLifecycle($visited);
+                }
+            }
+        }
     }
 
     /**
