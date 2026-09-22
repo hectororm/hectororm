@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `HasOneChild` and programmatic `hasOneChild()` / `oneToOne()` declarations for scalar child relations, with shared lifecycle policies and non-destructive `orphanRemoval: false` default (#135)
+- Optional `isParent` on `OneToOne`: infer unambiguous FK direction/mappings, propagate parent keys after insertion, and invert resolved direction in `reverse()` while preserving the unresolved historical fallback until v2 (#135)
+- Scalar assignment tracking for loaded and unloaded child replacement, atomic removal and retry after rollback; filtered-out children are never implicitly deleted (#135)
 - Added support for an `options` key in the `OrmFactory::connection()` configuration array, forwarded as the driver-specific PDO connection options to the created `Connection`
 - Explicit `orphanRemoval` policy for `HasMany`, `Relationships::hasMany()` and `OneToMany`: detach nullable child links or delete removed children; omitted policy preserves historical deletion until v2 (#146)
 - Shared child lifecycle operations and single-connection transactions with savepoint isolation and rollback restoration of mapped entity state, relation caches and collection removal tracking (#146)
@@ -17,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- One-to-one bidirectional saves can start at either entity without reinserting an active parent or child; child key propagation is shared with collection relations through `Lifecycle::linkChild()` (#135)
 - Keep cascading saves and nested `persist()` batches inside the active lifecycle transaction, restore queued entity state on rollback, and cancel removed transient children before queued writes regardless of scheduling order
 - Reject lifecycle writes when an event listener restores a detached link or redirects an attached child to a different parent
 - Track explicit collection offset replacement and cancel removals when an entity is reattached before saving; transient removed children no longer cause invalid deletes

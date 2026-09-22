@@ -79,6 +79,12 @@ final class LifecycleTransaction
                 $this->captureCollection($value);
             }
         }
+
+        foreach ($related['assignments'] ?? [] as $assignment) {
+            foreach ($assignment['removed'] as $removed) {
+                $this->capture($removed);
+            }
+        }
     }
 
     /**

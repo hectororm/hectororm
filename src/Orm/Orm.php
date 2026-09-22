@@ -244,6 +244,16 @@ class Orm
     }
 
     /**
+     * Whether an entity is already being written in the current graph traversal.
+     *
+     * @internal
+     */
+    public function isPersisting(Entity $entity): bool
+    {
+        return isset($this->persisting[spl_object_id($entity)]);
+    }
+
+    /**
      * Save entity.
      *
      * @param Entity $entity
