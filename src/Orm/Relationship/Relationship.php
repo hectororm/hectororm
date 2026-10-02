@@ -224,6 +224,25 @@ abstract class Relationship
     }
 
     /**
+     * Whether explicit assignments require a persisted scalar baseline.
+     */
+    public function tracksAssignments(): bool
+    {
+        return false;
+    }
+
+    /**
+     * Return materialized dependent children for lifecycle batch ordering.
+     *
+     * @return iterable<Entity>
+     * @internal
+     */
+    public function getChildren(Entity|Collection|null $related): iterable
+    {
+        return [];
+    }
+
+    /**
      * Prepare pending relationship work before a lifecycle batch writes any rows.
      *
      * @internal

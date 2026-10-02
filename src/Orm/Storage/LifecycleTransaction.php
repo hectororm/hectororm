@@ -37,8 +37,8 @@ final class LifecycleTransaction
     /** @var SplObjectStorage<Entity, array> */
     private SplObjectStorage $entities;
 
-    /** @var SplObjectStorage<Collection, array> */
-    private SplObjectStorage $collections;
+    /** @var SplObjectStorage<LifecycleSnapshotInterface, array> */
+    private SplObjectStorage $snapshots;
 
     /**
      * Create a transaction context for the given ORM storage and connection.
@@ -46,7 +46,7 @@ final class LifecycleTransaction
     public function __construct(private Orm $orm, private EntityStorage $storage, private Connection $connection)
     {
         $this->entities = new SplObjectStorage();
-        $this->collections = new SplObjectStorage();
+        $this->snapshots = new SplObjectStorage();
     }
 
     /**
@@ -63,13 +63,13 @@ final class LifecycleTransaction
             return;
         }
 
-        $data = $reflection->getHectorData($entity)->__serialize();
-        $data['pivot'] = null === $data['pivot'] ? null : clone $data['pivot'];
-        $related = $entity->getRelated()->__serialize();
+        $this->captureSnapshot($reflection->getHectorData($entity));
+        $related = $entity->getRelated();
+        $this->captureSnapshot($related);
         $properties = $this->captureProperties($entity, $reflection);
 
-        $this->entities[$entity] = [$this->orm->getStatus($entity), $data, $related, $properties];
-        foreach ($related['related'] as $value) {
+        $this->entities[$entity] = [$this->orm->getStatus($entity), $properties];
+        foreach ($related->getLifecycleReferences() as $value) {
             if ($value instanceof Entity) {
                 $this->capture($value);
                 continue;
@@ -113,11 +113,11 @@ final class LifecycleTransaction
      */
     public function captureCollection(Collection $collection): void
     {
-        if (true === $this->collections->contains($collection)) {
+        if (true === $this->snapshots->contains($collection)) {
             return;
         }
 
-        $this->collections[$collection] = $collection->lifecycleSnapshot();
+        $this->captureSnapshot($collection);
         foreach ($collection as $entity) {
             if ($entity instanceof Entity) {
                 $this->capture($entity);
@@ -125,6 +125,16 @@ final class LifecycleTransaction
         }
         foreach ($collection->detached() as $entity) {
             $this->capture($entity);
+        }
+    }
+
+    /**
+     * Capture each participant once through its rollback-specific contract.
+     */
+    private function captureSnapshot(LifecycleSnapshotInterface $participant): void
+    {
+        if (false === $this->snapshots->contains($participant)) {
+            $this->snapshots[$participant] = $participant->lifecycleSnapshot();
         }
     }
 
@@ -172,7 +182,7 @@ final class LifecycleTransaction
     private function restore(): void
     {
         foreach ($this->entities as $entity) {
-            [$status, $data, $related, $properties] = $this->entities[$entity];
+            [$status, $properties] = $this->entities[$entity];
             foreach ($properties as [$property, $initialized, $value]) {
                 if (true === $initialized) {
                     if (false === $property->isInitialized($entity) || $property->getValue($entity) !== $value) {
@@ -189,17 +199,14 @@ final class LifecycleTransaction
                 );
                 $unset($entity, $property->getName());
             }
-            $reflection = ReflectionEntity::get($entity);
-            $reflection->getHectorData($entity)->__unserialize($data);
-            $entity->getRelated()->__unserialize($related);
             if (null === $status) {
                 $this->storage->detach($entity);
             } else {
                 $this->storage->attach($entity, $status);
             }
         }
-        foreach ($this->collections as $collection) {
-            $collection->restoreLifecycleSnapshot($this->collections[$collection]);
+        foreach ($this->snapshots as $participant) {
+            $participant->restoreLifecycleSnapshot($this->snapshots[$participant]);
         }
     }
 }
