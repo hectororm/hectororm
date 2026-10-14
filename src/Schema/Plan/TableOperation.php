@@ -59,6 +59,8 @@ abstract class TableOperation extends OperationGroup
      * @param bool $first
      * @param bool $useCurrentOnUpdate MySQL/MariaDB only; ignored on SQLite
      * @param Generated|string|null $generated A string is a SQL expression for a VIRTUAL column
+     * @param string|null $charset Native character set name (MySQL/MariaDB only; ignored on SQLite)
+     * @param string|null $collation Native collation name, without cross-dialect translation
      *
      * @return static
      */
@@ -73,6 +75,8 @@ abstract class TableOperation extends OperationGroup
         bool $first = false,
         bool $useCurrentOnUpdate = false,
         Generated|string|null $generated = null,
+        ?string $charset = null,
+        ?string $collation = null,
     ): static {
         $this->add(new AddColumn(
             table: $this->getObjectName(),
@@ -86,6 +90,8 @@ abstract class TableOperation extends OperationGroup
             first: $first,
             useCurrentOnUpdate: $useCurrentOnUpdate,
             generated: $generated,
+            charset: $charset,
+            collation: $collation,
         ));
 
         return $this;
