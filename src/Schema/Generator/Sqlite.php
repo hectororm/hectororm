@@ -24,6 +24,33 @@ class Sqlite extends AbstractGenerator
     private ?string $encoding = null;
 
     /**
+     * @inheritDoc
+     */
+    protected function getChecksInfo(string $schema, string $table): ?array
+    {
+        $result = $this->connection->fetchOne(
+            'SELECT `type`, `sql` FROM `sqlite_master` WHERE `name` = :table AND `type` IN (\'table\', \'view\')',
+            ['table' => $table],
+        );
+        if (null === $result) {
+            throw new SchemaException(sprintf('Table "%s" not found', $table));
+        }
+        if ('view' === $result['type']) {
+            return [];
+        }
+        if (null === $result['sql']) {
+            throw new SchemaException(sprintf('Missing SQLite CREATE TABLE SQL for table "%s"', $table));
+        }
+
+        $checks = (new CreateTableParser())->getChecks($result['sql']);
+        if (null === $checks) {
+            return null;
+        }
+
+        return array_map(static fn(array $check): array => $check + ['enforced' => true], $checks);
+    }
+
+    /**
      * Assert identifier is safe for use in PRAGMA statements.
      *
      * PRAGMA statements do not support PDO parameter binding,

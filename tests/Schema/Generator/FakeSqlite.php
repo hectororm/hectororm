@@ -45,4 +45,9 @@ class FakeSqlite extends Sqlite
     {
         return parent::getTypeInfo($type);
     }
+
+    public function getChecksInfo(string $schema, string $table): ?array
+    {
+        return parent::getChecksInfo($schema, $table);
+    }
 }

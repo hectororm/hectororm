@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace Hector\Schema\Generator;
 
 use Hector\Connection\Connection;
+use Hector\Schema\CheckConstraint;
 use Hector\Schema\Column;
 use Hector\Schema\Exception\SchemaException;
 use Hector\Schema\ForeignKey;
@@ -83,6 +84,19 @@ abstract class AbstractGenerator implements GeneratorInterface
     abstract protected function getForeignKeysInfo(string $schema, string $table): array;
 
     /**
+     * Get complete CHECK metadata, or null when this generator cannot collect it.
+     *
+     * The default keeps custom generators usable without assuming an empty list.
+     *
+     * @return array<array{name: ?string, expression: string, enforced?: ?bool}>|null
+     * @throws SchemaException
+     */
+    protected function getChecksInfo(string $schema, string $table): ?array
+    {
+        return null;
+    }
+
+    /**
      * @inheritDoc
      */
     public function generateSchema(string $name): Schema
@@ -147,6 +161,19 @@ abstract class AbstractGenerator implements GeneratorInterface
             }
             ksort($foreignKeys);
 
+            $checksInfo = Table::TYPE_VIEW === $tableInfo['type'] ? [] : $this->getChecksInfo($name, $tableName);
+            $checks = null;
+            if (null !== $checksInfo) {
+                $checks = array_map(
+                    static fn(array $info): CheckConstraint => new CheckConstraint(
+                        name: $info['name'],
+                        expression: $info['expression'],
+                        enforced: $info['enforced'] ?? null,
+                    ),
+                    $checksInfo,
+                );
+            }
+
             $tables[$tableName] = new Table(
                 schema_name: $tableInfo['schema_name'],
                 type: $tableInfo['type'],
@@ -156,6 +183,7 @@ abstract class AbstractGenerator implements GeneratorInterface
                 columns: $columns ?? [],
                 indexes: $indexes ?? [],
                 foreign_keys: $foreignKeys ?? [],
+                checks: $checks,
             );
             ksort($tables);
         }

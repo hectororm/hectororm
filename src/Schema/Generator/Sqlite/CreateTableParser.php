@@ -18,7 +18,7 @@ use Hector\Schema\Exception\SchemaException;
 use Hector\Schema\Exception\PlanException;
 
 /**
- * Extract generated expressions and rewrite their column-reference tokens.
+ * Extract generated expressions and CHECKs, and rewrite column-reference tokens.
  *
  * @internal
  */
@@ -127,12 +127,83 @@ final class CreateTableParser
      */
     public function getGeneratedExpressions(string $sql): array
     {
+        $expressions = [];
+        foreach ($this->getDefinitions($this->tokenize($sql)) as $tokens) {
+            $expressions += $this->parseColumn($sql, $tokens);
+        }
+
+        return $expressions;
+    }
+
+    /**
+     * Extract named and unnamed column/table CHECKs without changing expressions.
+     *
+     * Virtual table declarations belong to their module, not the ordinary table grammar.
+     *
+     * @return array<array{name: ?string, expression: string}>|null Null for virtual tables.
+     * @throws SchemaException
+     */
+    public function getChecks(string $sql): ?array
+    {
         $tokens = $this->tokenize($sql);
+        $index = 1;
+        if (isset($tokens[$index]) &&
+            ($this->isToken($tokens[$index], 'TEMP') || $this->isToken($tokens[$index], 'TEMPORARY'))) {
+            $index++;
+        }
+        if (isset($tokens[$index]) && $this->isToken($tokens[$index], 'VIRTUAL')) {
+            return null;
+        }
+
+        $checks = [];
+        foreach ($this->getDefinitions($tokens) as $definition) {
+            array_push($checks, ...$this->parseChecks($sql, $definition));
+        }
+
+        return $checks;
+    }
+
+    /**
+     * @param array<array{text: string, start: int, end: int, quoted: bool}> $tokens
+     * @return array<array<array{text: string, start: int, end: int, quoted: bool}>>
+     */
+    private function getDefinitions(array $tokens): array
+    {
+        $index = 0;
+        if (false === isset($tokens[$index]) || false === $this->isToken($tokens[$index], 'CREATE')) {
+            throw new SchemaException('Expected SQLite CREATE TABLE statement');
+        }
+        $index++;
+        if (isset($tokens[$index]) &&
+            ($this->isToken($tokens[$index], 'TEMP') || $this->isToken($tokens[$index], 'TEMPORARY'))) {
+            $index++;
+        }
+        if (false === isset($tokens[$index]) || false === $this->isToken($tokens[$index], 'TABLE')) {
+            throw new SchemaException('Expected SQLite CREATE TABLE statement');
+        }
+        $index++;
+        if (isset($tokens[$index]) && $this->isToken($tokens[$index], 'IF')) {
+            if (false === isset($tokens[$index + 2]) ||
+                false === $this->isToken($tokens[$index + 1], 'NOT') ||
+                false === $this->isToken($tokens[$index + 2], 'EXISTS')) {
+                throw new SchemaException('Expected SQLite IF NOT EXISTS clause');
+            }
+            $index += 3;
+        }
+        $index++; // Table name.
+        if (isset($tokens[$index]) && $this->isToken($tokens[$index], '.')) {
+            $index += 2; // Schema-qualified table name.
+        }
+        if (false === isset($tokens[$index]) || false === $this->isToken($tokens[$index], '(')) {
+            throw new SchemaException('Cannot parse SQLite CREATE TABLE definitions');
+        }
+
         $depth = 0;
         $start = null;
-        $expressions = [];
+        $definitions = [];
 
-        foreach ($tokens as $index => $token) {
+        for (; $index < count($tokens); $index++) {
+            $token = $tokens[$index];
             if ($this->isToken($token, '(')) {
                 if (0 === $depth) {
                     $start = $index + 1;
@@ -144,9 +215,9 @@ final class CreateTableParser
             if ($this->isToken($token, ')')) {
                 $depth--;
                 if (0 === $depth && null !== $start) {
-                    $expressions += $this->parseColumn($sql, array_slice($tokens, $start, $index - $start));
+                    $definitions[] = array_slice($tokens, $start, $index - $start);
 
-                    return $expressions;
+                    return $definitions;
                 }
                 if (0 > $depth) {
                     break;
@@ -155,12 +226,72 @@ final class CreateTableParser
             }
 
             if (1 === $depth && $this->isToken($token, ',') && null !== $start) {
-                $expressions += $this->parseColumn($sql, array_slice($tokens, $start, $index - $start));
+                $definitions[] = array_slice($tokens, $start, $index - $start);
                 $start = $index + 1;
             }
         }
 
-        throw new SchemaException('Cannot parse SQLite CREATE TABLE column definitions');
+        throw new SchemaException('Cannot parse SQLite CREATE TABLE definitions');
+    }
+
+    /**
+     * @param array<array{text: string, start: int, end: int, quoted: bool}> $tokens
+     * @return array<array{name: ?string, expression: string}>
+     */
+    private function parseChecks(string $sql, array $tokens): array
+    {
+        $checks = [];
+        $depth = 0;
+        for ($index = 0; $index < count($tokens); $index++) {
+            $token = $tokens[$index];
+            if ($this->isToken($token, '(')) {
+                $depth++;
+                continue;
+            }
+            if ($this->isToken($token, ')')) {
+                $depth--;
+                continue;
+            }
+            if (0 !== $depth) {
+                continue;
+            }
+            if ($this->isToken($token, 'CONSTRAINT')) {
+                $index++; // A constraint's name is not a constraint keyword.
+                continue;
+            }
+            if (false === $this->isToken($token, 'CHECK')) {
+                continue;
+            }
+
+            $name = 2 <= $index && $this->isToken($tokens[$index - 2], 'CONSTRAINT')
+                ? $tokens[$index - 1]['text'] : null;
+            $open = $index + 1;
+            if (false === isset($tokens[$open]) || false === $this->isToken($tokens[$open], '(')) {
+                throw new SchemaException('Missing parenthesized SQLite CHECK expression');
+            }
+
+            $depth = 1;
+            for ($index = $open + 1; $index < count($tokens); $index++) {
+                if ($this->isToken($tokens[$index], '(')) {
+                    $depth++;
+                } elseif ($this->isToken($tokens[$index], ')')) {
+                    $depth--;
+                }
+                if (0 === $depth) {
+                    break;
+                }
+            }
+            if (0 !== $depth || $open + 1 === $index) {
+                throw new SchemaException('Empty or unbalanced SQLite CHECK expression');
+            }
+
+            $checks[] = [
+                'name' => $name,
+                'expression' => substr($sql, $tokens[$open]['end'], $tokens[$index]['start'] - $tokens[$open]['end']),
+            ];
+        }
+
+        return $checks;
     }
 
     /**

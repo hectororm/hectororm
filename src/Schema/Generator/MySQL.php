@@ -20,6 +20,65 @@ use Hector\Schema\Table;
 
 class MySQL extends AbstractGenerator
 {
+    private ?bool $hasMariaDbCheckMetadata = null;
+
+    /**
+     * @inheritDoc
+     */
+    protected function getChecksInfo(string $schema, string $table): ?array
+    {
+        $driverInfo = $this->connection->getDriverInfo();
+        if (false === in_array($driverInfo->getDriver(), ['mysql', 'mariadb'], true) ||
+            false === $driverInfo->getCapabilities()->hasCheckConstraints()) {
+            return null;
+        }
+
+        $mariaDb = 'mariadb' === $driverInfo->getDriver();
+        if ($mariaDb) {
+            // CHECK enforcement predates this catalog (backported to MariaDB 10.2.22).
+            $this->hasMariaDbCheckMetadata ??= null !== $this->connection->fetchOne(
+                'SELECT `TABLE_NAME` FROM `information_schema`.`tables` ' .
+                'WHERE `TABLE_SCHEMA` = \'information_schema\' AND `TABLE_NAME` = \'CHECK_CONSTRAINTS\'',
+            );
+            if (false === $this->hasMariaDbCheckMetadata) {
+                return null;
+            }
+
+            // MariaDB names are table-scoped and the catalog includes column CHECKs.
+            $stm = 'SELECT c.* FROM `information_schema`.`check_constraints` c ' .
+                'WHERE c.`CONSTRAINT_SCHEMA` = :schema AND c.`TABLE_NAME` = :table ' .
+                'ORDER BY c.`CONSTRAINT_NAME`';
+        } else {
+            // MySQL stores table membership and enforcement in TABLE_CONSTRAINTS.
+            $stm = 'SELECT c.*, t.`ENFORCED` FROM `information_schema`.`check_constraints` c ' .
+                'INNER JOIN `information_schema`.`table_constraints` t ' .
+                'ON t.`CONSTRAINT_CATALOG` = c.`CONSTRAINT_CATALOG` ' .
+                'AND t.`CONSTRAINT_SCHEMA` = c.`CONSTRAINT_SCHEMA` ' .
+                'AND t.`CONSTRAINT_NAME` = c.`CONSTRAINT_NAME` ' .
+                'WHERE t.`TABLE_SCHEMA` = :schema AND t.`TABLE_NAME` = :table ' .
+                'AND t.`CONSTRAINT_TYPE` = \'CHECK\' ORDER BY c.`CONSTRAINT_NAME`';
+        }
+
+        $checks = [];
+        foreach ($this->connection->fetchAll($stm, ['schema' => $schema, 'table' => $table]) as $result) {
+            if (null === ($result['CHECK_CLAUSE'] ?? null) || '' === trim($result['CHECK_CLAUSE'])) {
+                throw new SchemaException(sprintf('Missing CHECK expression for table "%s.%s"', $schema, $table));
+            }
+
+            $checks[] = [
+                'name' => $result['CONSTRAINT_NAME'],
+                'expression' => $result['CHECK_CLAUSE'],
+                'enforced' => match ($result['ENFORCED'] ?? ($mariaDb ? 'YES' : null)) {
+                    'YES' => true,
+                    'NO' => false,
+                    default => null,
+                },
+            ];
+        }
+
+        return $checks;
+    }
+
     /**
      * @inheritDoc
      */

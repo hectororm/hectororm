@@ -381,7 +381,7 @@ class Table implements Countable, IteratorAggregate
     }
 
     /**
-     * Get all CHECK constraints in declaration order, including unnamed constraints.
+     * Get all CHECK constraints in metadata order, including unnamed constraints.
      *
      * Yields numeric keys rather than names, which need not be present or unique.
      *
