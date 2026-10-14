@@ -93,9 +93,7 @@ class BindParamList implements Countable, IteratorAggregate
                 throw new ValueError('Integer name of bind value must be greater than 0');
             }
 
-            if (null === $name) {
-                $name = '_h_' . $this->increment++;
-            }
+            $name ??= '_h_' . $this->increment++;
 
             $value = new BindParam($name, $value, $type);
         }

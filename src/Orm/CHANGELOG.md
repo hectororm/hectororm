@@ -27,6 +27,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Track explicit collection offset replacement and cancel removals when an entity is reattached before saving; transient removed children no longer cause invalid deletes
 - Release removed child links before persisting replacements, preserving unique constraints and restoring pending edits when persistence fails
 
+### Changed
+
+- Simplify default many-to-many pivot table naming and remove redundant reflection property defaults assigned during initialization
+
 ### Deprecated
 
 - The implicit `OneToMany` deletion policy: declare `orphanRemoval: true` to preserve it across v2, whose target default is non-destructive detachment
