@@ -419,6 +419,11 @@ final class SqliteDialect extends AbstractDialect
             $autoIncrement ? 'INTEGER' : $operation->getType(),
         ];
 
+        // SQLite has no per-column character set. Collation names remain native.
+        if (null !== $operation->getCollation()) {
+            $parts[] = 'COLLATE ' . $this->quoteIdentifier($operation->getCollation());
+        }
+
         $generated = $operation->getGenerated();
         if (null !== $generated) {
             if ($this->capabilities instanceof SQLiteCapabilities &&
