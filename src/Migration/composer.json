@@ -21,8 +21,8 @@
   "require": {
     "php": "^8.0",
     "ext-pdo": "*",
-    "hectororm/connection": "^1.0",
-    "hectororm/schema": "^1.3"
+    "hectororm/connection": "^1.5",
+    "hectororm/schema": "^1.5"
   },
   "suggest": {
     "hectororm/query": "Required for DbTracker (^1.0)",

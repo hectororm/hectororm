@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fully compile migrations before executing SQL, so compilation failures cannot leave partial DDL changes
 - Move SQLite foreign-key toggles outside the migration transaction and reject rebuilds inside caller-owned transactions. Refresh supplied SQLite schema metadata between executed migrations; reject CHECK additions when session enforcement is disabled
 
+### Changed
+
+- Require `hectororm/connection ^1.5` and `hectororm/schema ^1.5` for CHECK-aware migration compilation and schema introspection
+
 ## [1.4.1] - 2026-07-31
 
 _No changes in this release._
