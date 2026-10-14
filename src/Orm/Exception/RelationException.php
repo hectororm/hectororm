@@ -17,6 +17,14 @@ namespace Hector\Orm\Exception;
 class RelationException extends OrmException
 {
     /**
+     * @param list<string> $path
+     */
+    public static function circularReference(array $path): RelationException
+    {
+        return new static(sprintf('Circular relationship dependency: %s', implode(' -> ', $path)));
+    }
+
+    /**
      * Not found.
      *
      * @param string $name

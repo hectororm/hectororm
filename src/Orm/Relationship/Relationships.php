@@ -31,8 +31,10 @@ class Relationships implements Countable
     private array $list = [];
     /** @var array<string, RelationshipAttribute> */
     private array $declarations = [];
-    /** @var array<string, bool> */
+    /** @var array<string, int> Positions of this registry's active declarations in the shared path. */
     private array $resolving = [];
+    /** @var list<string> Dependency path shared by synchronous resolution across mappers. */
+    private static array $resolutionPath = [];
 
     /**
      * Relationships constructor.
@@ -78,16 +80,18 @@ class Relationships implements Countable
         $this->assertExists($name);
 
         if (isset($this->resolving[$name])) {
-            throw new RelationException(
-                sprintf('Relationship "%s" is already being resolved in entity "%s"', $name, $this->entity->getName()),
-            );
+            $path = array_slice(self::$resolutionPath, $this->resolving[$name]);
+            $path[] = $this->entity->getName() . '.' . $name;
+
+            throw RelationException::circularReference($path);
         }
 
         if (isset($this->list[$name])) {
             return $this->list[$name];
         }
 
-        $this->resolving[$name] = true;
+        $this->resolving[$name] = count(self::$resolutionPath);
+        self::$resolutionPath[] = $this->entity->getName() . '.' . $name;
 
         try {
             $relationship = $this->declarations[$name]->init($this);
@@ -100,6 +104,7 @@ class Relationships implements Countable
 
             throw $exception;
         } finally {
+            array_pop(self::$resolutionPath);
             unset($this->resolving[$name]);
         }
     }

@@ -179,6 +179,102 @@ class RelationshipResolutionTest extends TestCase
             'child first' => [ResolutionChild::class],
         ];
     }
+
+    /** @dataProvider chainEntryPointProvider */
+    public function testChainOfInversionsEndsAtConcreteRelationship(string $entity, string $name): void
+    {
+        $relationship = $this->orm->getMapper($entity)->getRelationships()->get($name);
+
+        $this->assertSame($relationship, $this->orm->getMapper($entity)->getRelationships()->get($name));
+        $left = $this->orm->getMapper(ResolutionChainLeft::class)->getRelationships();
+        $right = $this->orm->getMapper(ResolutionChainRight::class)->getRelationships();
+        $this->assertInstanceOf(OneToMany::class, $left->get('first'));
+        $this->assertSame(['id'], $left->get('first')->getSourceColumns());
+        $this->assertSame(['parent_id'], $left->get('first')->getTargetColumns());
+        $this->assertInstanceOf(ManyToOne::class, $right->get('second'));
+        $this->assertInstanceOf(OneToMany::class, $left->get('third'));
+        $this->assertInstanceOf(ManyToOne::class, $right->get('parent'));
+    }
+
+    public function chainEntryPointProvider(): array
+    {
+        return [
+            'first inversion' => [ResolutionChainLeft::class, 'first'],
+            'second inversion' => [ResolutionChainRight::class, 'second'],
+            'third inversion' => [ResolutionChainLeft::class, 'third'],
+            'concrete relation' => [ResolutionChainRight::class, 'parent'],
+        ];
+    }
+
+    /** @dataProvider cycleProvider */
+    public function testCycleReportsDependencyPathOnEveryAttempt(string $entity, string $name, array $path): void
+    {
+        $relationships = $this->orm->getMapper($entity)->getRelationships();
+
+        for ($attempt = 0; $attempt < 2; $attempt++) {
+            try {
+                $relationships->get($name);
+                $this->fail('A dependency cycle without a concrete relationship must throw');
+            } catch (RelationException $exception) {
+                $this->assertSame(
+                    'Circular relationship dependency: ' . implode(' -> ', $path),
+                    $exception->getMessage(),
+                );
+            }
+        }
+
+        // A failed resolution must not contaminate a subsequent valid dependency chain.
+        $valid = $this->orm->getMapper(ResolutionChainLeft::class)->getRelationships()->get('first');
+        $this->assertInstanceOf(OneToMany::class, $valid);
+    }
+
+    public function cycleProvider(): array
+    {
+        return [
+            'direct self dependency' => [
+                ResolutionCycleCategory::class,
+                'self',
+                [ResolutionCycleCategory::class . '.self', ResolutionCycleCategory::class . '.self'],
+            ],
+            'three self-referencing declarations' => [
+                ResolutionCycleCategory::class,
+                'first',
+                [
+                    ResolutionCycleCategory::class . '.first',
+                    ResolutionCycleCategory::class . '.second',
+                    ResolutionCycleCategory::class . '.third',
+                    ResolutionCycleCategory::class . '.first',
+                ],
+            ],
+            'parent entry point' => [
+                ResolutionCycleParent::class,
+                'children',
+                [
+                    ResolutionCycleParent::class . '.children',
+                    ResolutionCycleChild::class . '.parent',
+                    ResolutionCycleParent::class . '.children',
+                ],
+            ],
+            'child entry point' => [
+                ResolutionCycleChild::class,
+                'parent',
+                [
+                    ResolutionCycleChild::class . '.parent',
+                    ResolutionCycleParent::class . '.children',
+                    ResolutionCycleChild::class . '.parent',
+                ],
+            ],
+            'entry outside the cycle' => [
+                ResolutionCycleParent::class,
+                'entry',
+                [
+                    ResolutionCycleChild::class . '.parent',
+                    ResolutionCycleParent::class . '.children',
+                    ResolutionCycleChild::class . '.parent',
+                ],
+            ],
+        ];
+    }
 }
 
 #[OrmAttribute\Table('resolution_category')]
@@ -212,5 +308,41 @@ class ResolutionParent extends MagicEntity
 #[OrmAttribute\BelongsTo(ResolutionParent::class, 'children', 'children')]
 #[OrmAttribute\HasOne(ResolutionParent::class, 'parent', ['parent_id' => 'id'])]
 class ResolutionChild extends MagicEntity
+{
+}
+
+#[OrmAttribute\Table('resolution_parent')]
+#[OrmAttribute\BelongsTo(ResolutionChainRight::class, 'first', 'second')]
+#[OrmAttribute\BelongsTo(ResolutionChainRight::class, 'third', 'parent')]
+class ResolutionChainLeft extends MagicEntity
+{
+}
+
+#[OrmAttribute\Table('resolution_child')]
+#[OrmAttribute\BelongsTo(ResolutionChainLeft::class, 'second', 'third')]
+#[OrmAttribute\HasOne(ResolutionChainLeft::class, 'parent', ['parent_id' => 'id'])]
+class ResolutionChainRight extends MagicEntity
+{
+}
+
+#[OrmAttribute\Table('resolution_category')]
+#[OrmAttribute\BelongsTo(ResolutionCycleCategory::class, 'self', 'self')]
+#[OrmAttribute\BelongsTo(ResolutionCycleCategory::class, 'first', 'second')]
+#[OrmAttribute\BelongsTo(ResolutionCycleCategory::class, 'second', 'third')]
+#[OrmAttribute\BelongsTo(ResolutionCycleCategory::class, 'third', 'first')]
+class ResolutionCycleCategory extends MagicEntity
+{
+}
+
+#[OrmAttribute\Table('resolution_parent')]
+#[OrmAttribute\BelongsTo(ResolutionCycleChild::class, 'entry', 'parent')]
+#[OrmAttribute\BelongsTo(ResolutionCycleChild::class, 'children', 'parent')]
+class ResolutionCycleParent extends MagicEntity
+{
+}
+
+#[OrmAttribute\Table('resolution_child')]
+#[OrmAttribute\BelongsTo(ResolutionCycleParent::class, 'parent', 'children')]
+class ResolutionCycleChild extends MagicEntity
 {
 }

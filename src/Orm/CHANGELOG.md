@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Discover relationship attributes before resolving individual relationships, so named inversions no longer depend on declaration order (#153)
+- Report the dependency path when relationship inversions form a cycle without a concrete definition (#153)
 - One-to-one bidirectional saves can start at either entity without reinserting an active parent or child; child key propagation is shared with collection relations through `Lifecycle::linkChild()` (#135)
 - Keep cascading saves and nested `persist()` batches inside the active lifecycle transaction, restore queued entity state on rollback, and cancel removed transient children before queued writes regardless of scheduling order
 - Reject lifecycle writes when an event listener restores a detached link or redirects an attached child to a different parent
