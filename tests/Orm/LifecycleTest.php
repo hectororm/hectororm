@@ -20,6 +20,7 @@ use Hector\Orm\Attributes as OrmAttribute;
 use Hector\Orm\Collection\Collection;
 use Hector\Orm\Entity\Entity;
 use Hector\Orm\Entity\MagicEntity;
+use Hector\Orm\Entity\PivotData;
 use Hector\Orm\Entity\ReflectionEntity;
 use Hector\Orm\Event\EntityBeforeDeleteEvent;
 use Hector\Orm\Event\EntityBeforeSaveEvent;
@@ -763,6 +764,47 @@ class LifecycleTest extends TestCase
         $this->assertNull($this->orm->getStatus($child));
         $this->assertNotNull($parent->id);
         $this->assertCount(3, $this->connection->fetchAll('SELECT * FROM lifecycle_child'));
+    }
+
+    public function testRollbackRestoresMetadataRelationsAndCollectionsThroughSnapshots(): void
+    {
+        $parent = LifecycleParent::find(1);
+        $metadata = ReflectionEntity::get($parent)->getHectorData($parent);
+        $related = $parent->getRelated();
+        $children = $parent->owned;
+        $first = $children[0];
+        $metadata->set('marker', 'before');
+        $metadata->setPivot(new PivotData(['parent_id' => 1], ['phase' => 'before']));
+
+        try {
+            $this->orm->lifecycle()->transaction($parent, function () use ($parent, $metadata, $children): void {
+                $metadata->set('marker', 'after');
+                $metadata->getPivot()->setData(['phase' => 'after']);
+                unset($children[0]);
+                $parent->name = 'after';
+                $parent->save();
+                $parent->getRelated()->setLoaded('owned', new Collection());
+
+                throw new RuntimeException('Restore all snapshot participants');
+            });
+            $this->fail('The transaction must fail');
+        } catch (RuntimeException $exception) {
+            $this->assertSame('Restore all snapshot participants', $exception->getMessage());
+        }
+
+        $this->assertSame($metadata, ReflectionEntity::get($parent)->getHectorData($parent));
+        $this->assertSame($related, $parent->getRelated());
+        $this->assertSame($children, $parent->owned);
+        $this->assertSame($first, $children[0]);
+        $this->assertCount(2, $children);
+        $this->assertSame([], iterator_to_array($children->detached()));
+        $this->assertSame('before', $metadata->get('marker'));
+        $this->assertSame(['parent_id' => 1], $parent->getPivot()->getKeys());
+        $this->assertSame(['phase' => 'before'], $parent->getPivot()->getData());
+        $this->assertSame('original', $parent->name);
+        $this->assertFalse($parent->isAltered());
+        $this->assertNotNull($this->row(10));
+        $this->assertSame(EntityStorage::STATUS_NONE, $this->orm->getStatus($first));
     }
 }
 

@@ -198,6 +198,40 @@ class Relationships implements Countable
     }
 
     /**
+     * Declare a scalar relationship with an explicit or inferred parent role.
+     */
+    public function oneToOne(
+        string $target,
+        string $name,
+        ?array $columns = null,
+        ?bool $isParent = null,
+        ?bool $orphanRemoval = null,
+    ): OneToOne {
+        $this->assertEntity($target);
+
+        return $this->list[$name] = new OneToOne(
+            $name,
+            $this->entity->getName(),
+            $target,
+            $columns,
+            $isParent,
+            $orphanRemoval,
+        );
+    }
+
+    /**
+     * Declare a single child on the target side, without implicit orphan deletion.
+     */
+    public function hasOneChild(
+        string $target,
+        string $name,
+        ?array $columns = null,
+        bool $orphanRemoval = false,
+    ): OneToOne {
+        return $this->oneToOne($target, $name, $columns, isParent: true, orphanRemoval: $orphanRemoval);
+    }
+
+    /**
      * Belongs to.
      *
      * @param string $target

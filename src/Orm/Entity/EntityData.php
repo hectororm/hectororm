@@ -14,7 +14,9 @@ declare(strict_types=1);
 
 namespace Hector\Orm\Entity;
 
-final class EntityData
+use Hector\Orm\Storage\LifecycleSnapshotInterface;
+
+final class EntityData implements LifecycleSnapshotInterface
 {
     private Related $related;
     private ?PivotData $pivot = null;
@@ -39,6 +41,31 @@ final class EntityData
         $this->related = $data['related'];
         $this->pivot = $data['pivot'];
         $this->data = $data['data'];
+    }
+
+    /**
+     * Snapshot ORM metadata independently of its PHP serialization contract.
+     * Related and collection state are captured separately by the transaction.
+     *
+     * @inheritDoc
+     */
+    public function lifecycleSnapshot(): array
+    {
+        return [
+            'related' => $this->related,
+            'pivot' => null === $this->pivot ? null : clone $this->pivot,
+            'data' => $this->data,
+        ];
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function restoreLifecycleSnapshot(array $snapshot): void
+    {
+        $this->related = $snapshot['related'];
+        $this->pivot = $snapshot['pivot'];
+        $this->data = $snapshot['data'];
     }
 
     public function restore(Entity $entity): void

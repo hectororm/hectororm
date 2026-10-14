@@ -127,6 +127,20 @@ final class Lifecycle
             $entity->getRelated()->prepareLifecycle($visited);
         }
 
+        // Start with graph roots; their link operations persist descendants in
+        // dependency order, even if a child was explicitly queued first.
+        $children = new SplObjectStorage();
+        foreach ($pending as $entity) {
+            foreach ($entity->getRelated()->getChildren() as $child) {
+                $children->attach($child);
+            }
+        }
+        usort(
+            $pending,
+            static fn(Entity $left, Entity $right): int =>
+                (int)$children->contains($left) <=> (int)$children->contains($right),
+        );
+
         foreach ($pending as $entity) {
             $persistEntity($entity);
         }
@@ -147,6 +161,55 @@ final class Lifecycle
         ) {
             $this->storage->detach($entity);
         }
+    }
+
+    /**
+     * Propagate parent keys and persist a scalar or collection child when required.
+     * The caller owns the lifecycle transaction and any preceding removal.
+     *
+     * @internal
+     */
+    public function linkChild(Relationship $relationship, Entity $parent, Entity $child): void
+    {
+        $this->track($child);
+        $parentMapper = $this->orm->getMapper($parent);
+        $childMapper = $this->orm->getMapper($child);
+        $parentValues = $parentMapper->collectEntity($parent, $relationship->getSourceColumns());
+        $columns = $relationship->getTargetColumns();
+        $values = array_combine($columns, array_values($parentValues));
+        $current = $childMapper->collectEntity($child, $columns);
+
+        if (true === $this->keysMatch($values, $current) && false === $child->isAltered(...$columns)) {
+            return;
+        }
+
+        $child->getRelated()->invalidateParent($relationship);
+        $childMapper->hydrateEntity($child, $values);
+
+        // On a bidirectional save started at the child, the parent is inserted
+        // from linkForeign(). The outer child write will use these hydrated keys.
+        if (true === $this->orm->isPersisting($child)) {
+            return;
+        }
+
+        $child->save();
+        if (EntityStorage::STATUS_NONE !== $this->orm->getStatus($child)) {
+            throw new RelationException('Child saving was prevented; the lifecycle operation was rolled back');
+        }
+
+        if (false === $this->keysMatch($values, $childMapper->collectEntity($child, $columns))) {
+            throw new RelationException('Child linking was prevented; the lifecycle operation was rolled back');
+        }
+    }
+
+    /**
+     * Compare complete key tuples without conflating null, zero or numeric-looking strings.
+     */
+    private function keysMatch(array $expected, array $actual): bool
+    {
+        $normalize = static fn($value): ?string => null === $value ? null : (string)$value;
+
+        return array_map($normalize, array_values($expected)) === array_map($normalize, array_values($actual));
     }
 
     /**
