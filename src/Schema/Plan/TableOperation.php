@@ -16,6 +16,7 @@ namespace Hector\Schema\Plan;
 
 use Hector\Schema\ForeignKey;
 use Hector\Schema\Index;
+use Hector\Schema\Plan\Operation\AddCheck;
 use Hector\Schema\Plan\Operation\AddColumn;
 use Hector\Schema\Plan\Operation\AddForeignKey;
 use Hector\Schema\Plan\Operation\AddIndex;
@@ -23,6 +24,27 @@ use Hector\Schema\Table;
 
 abstract class TableOperation extends OperationGroup
 {
+    /**
+     * Add an explicitly named, enforced CHECK constraint.
+     *
+     * The expression is SQL, not a bound value; syntax depends on the database.
+     *
+     * @param string $name
+     * @param Raw|string $expression SQL expression emitted verbatim
+     *
+     * @return static
+     */
+    public function addCheck(string $name, Raw|string $expression): static
+    {
+        $this->add(new AddCheck(
+            table: $this->getObjectName(),
+            name: $name,
+            expression: $expression,
+        ));
+
+        return $this;
+    }
+
     /**
      * Add a column.
      *

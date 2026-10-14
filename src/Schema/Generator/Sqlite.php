@@ -24,6 +24,47 @@ class Sqlite extends AbstractGenerator
     private ?string $encoding = null;
 
     /**
+     * @inheritDoc
+     */
+    protected function getTriggerDefinitions(string $schema, string $table): ?array
+    {
+        $results = $this->connection->fetchAll(
+            'SELECT `name`, `sql` FROM `sqlite_master` ' .
+            'WHERE `tbl_name` = :table AND `type` = \'trigger\' ORDER BY `name`',
+            ['table' => $table],
+        );
+
+        return array_column($results, 'sql', 'name');
+    }
+
+    /**
+     * @inheritDoc
+     */
+    protected function getChecksInfo(string $schema, string $table): ?array
+    {
+        $result = $this->connection->fetchOne(
+            'SELECT `type`, `sql` FROM `sqlite_master` WHERE `name` = :table AND `type` IN (\'table\', \'view\')',
+            ['table' => $table],
+        );
+        if (null === $result) {
+            throw new SchemaException(sprintf('Table "%s" not found', $table));
+        }
+        if ('view' === $result['type']) {
+            return [];
+        }
+        if (null === $result['sql']) {
+            throw new SchemaException(sprintf('Missing SQLite CREATE TABLE SQL for table "%s"', $table));
+        }
+
+        $checks = (new CreateTableParser())->getChecks($result['sql']);
+        if (null === $checks) {
+            return null;
+        }
+
+        return array_map(static fn(array $check): array => $check + ['enforced' => true], $checks);
+    }
+
+    /**
      * Assert identifier is safe for use in PRAGMA statements.
      *
      * PRAGMA statements do not support PDO parameter binding,
@@ -94,6 +135,7 @@ class Sqlite extends AbstractGenerator
                 'charset' => $this->getEncoding(),
                 'collation' => null,
                 'type' => $result['type'] === 'view' ? Table::TYPE_VIEW : Table::TYPE_TABLE,
+                'definition' => $result['sql'],
             ];
         }
 
@@ -290,6 +332,11 @@ class Sqlite extends AbstractGenerator
         $stm = 'PRAGMA index_list(\'' . $table . '\');';
         $results = $this->connection->fetchAll($stm);
 
+        $definitions = array_column($this->connection->fetchAll(
+            'SELECT `name`, `sql` FROM `sqlite_master` WHERE `tbl_name` = :table AND `type` = \'index\'',
+            ['table' => $table],
+        ), 'sql', 'name');
+
         $indexesInfo = [];
         $hasPrimary = false;
         foreach ($results as $result) {
@@ -312,6 +359,8 @@ class Sqlite extends AbstractGenerator
                 'name' => $result['name'],
                 'type' => $indexType,
                 'columns_name' => array_column($resultsIndexInfo, 'name'),
+                'definition' => $definitions[$result['name']] ?? null,
+                'implicit' => 'c' !== $result['origin'],
             ];
         }
 
@@ -326,6 +375,8 @@ class Sqlite extends AbstractGenerator
                     'name' => 'PRIMARY',
                     'type' => Index::PRIMARY,
                     'columns_name' => $pkColumns,
+                    'definition' => null,
+                    'implicit' => true,
                 ]);
             }
         }

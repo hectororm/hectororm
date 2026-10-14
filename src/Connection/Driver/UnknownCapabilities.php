@@ -71,4 +71,20 @@ class UnknownCapabilities implements DriverCapabilities
     {
         return false;
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function hasCheckConstraints(): bool
+    {
+        return false;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function hasDropCheck(): bool
+    {
+        return false;
+    }
 }

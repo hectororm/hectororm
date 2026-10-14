@@ -73,4 +73,25 @@ interface DriverCapabilities
      * @return bool
      */
     public function hasTransactionalDdl(): bool;
+
+    /**
+     * Does the server enforce CHECK constraints rather than merely parse them?
+     *
+     * Describes engine support, not session settings that may disable enforcement.
+     * Does not imply that a schema plan dialect exists for this engine.
+     * Offline callers must supply capabilities for the intended engine and version.
+     *
+     * @return bool
+     */
+    public function hasCheckConstraints(): bool;
+
+    /**
+     * Does the server support the ALTER TABLE ... DROP CHECK name syntax?
+     *
+     * False does not imply support for DROP CONSTRAINT: SQLite needs a rebuild.
+     * Check hasCheckConstraints() before selecting a constraint operation.
+     *
+     * @return bool
+     */
+    public function hasDropCheck(): bool;
 }

@@ -24,8 +24,10 @@ use Hector\Schema\Plan\Compiler\CompilationContext;
 use Hector\Schema\Plan\CreateTable;
 use Hector\Schema\Plan\CreateTrigger;
 use Hector\Schema\Plan\CreateView;
+use Hector\Schema\Plan\Operation\AddCheck;
 use Hector\Schema\Plan\Operation\AddColumn;
 use Hector\Schema\Plan\Operation\AddIndex;
+use Hector\Schema\Plan\Operation\DropCheck;
 use Hector\Schema\Plan\Operation\DropColumn;
 use Hector\Schema\Plan\Operation\DropIndex;
 use Hector\Schema\Plan\Operation\ModifyCharset;
@@ -133,6 +135,11 @@ final class MySQLDialect extends AbstractDialect
             array_filter($operations, fn($op): bool => $op instanceof AddIndex),
         ));
 
+        array_push($definitions, ...array_map(
+            fn(AddCheck $op): string => $this->compileCheckDefinition($op),
+            array_filter($operations, fn($op): bool => $op instanceof AddCheck),
+        ));
+
         if ([] === $definitions) {
             return [];
         }
@@ -220,6 +227,8 @@ final class MySQLDialect extends AbstractDialect
         ?Schema $schema
     ): array {
         return match ($operation::class) {
+            AddCheck::class => ['ADD ' . $this->compileCheckDefinition($operation)],
+            DropCheck::class => [$this->compileAlterDropCheck($operation)],
             AddColumn::class => [
                 sprintf(
                     'ADD COLUMN %s%s',
@@ -245,6 +254,20 @@ final class MySQLDialect extends AbstractDialect
             ModifyCharset::class => [$this->compileAlterModifyCharset($operation)],
             default => [],
         };
+    }
+
+    /**
+     * Compile the engine-specific CHECK removal clause.
+     */
+    private function compileAlterDropCheck(DropCheck $operation): string
+    {
+        $this->assertCheckConstraintsSupported();
+
+        return sprintf(
+            'DROP %s %s',
+            $this->capabilities->hasDropCheck() ? 'CHECK' : 'CONSTRAINT',
+            $this->quoteIdentifier($operation->getName()),
+        );
     }
 
     /**

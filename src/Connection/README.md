@@ -29,5 +29,38 @@ $ composer require hectororm/connection
 
 ## Documentation
 
+### CHECK constraint capabilities
+
+`DriverCapabilities::hasCheckConstraints()` reports enforced CHECK support.
+`DriverCapabilities::hasDropCheck()` reports native `ALTER TABLE ... DROP CHECK`
+syntax support.
+
+| Engine | `hasCheckConstraints()` | `hasDropCheck()` |
+| --- | --- | --- |
+| MySQL 8.0.16+ | `true` | `true` (`DROP CHECK`) |
+| MariaDB 10.2.1+ | `true` | `false` (`DROP CONSTRAINT` in the MySQL dialect) |
+| SQLite | `true` | `false` (table rebuild required) |
+| PostgreSQL | `true` | `false` (`DROP CONSTRAINT`) |
+| Older MySQL/MariaDB | `false` | `false` |
+| Vitess / unknown | `false` | `false` |
+
+**Compatibility:** third-party implementations of `DriverCapabilities` must add
+both methods when upgrading. Return `false` when support cannot be established.
+These values describe engine support; they do not inspect session settings that
+disable enforcement or imply availability of a schema plan dialect. PostgreSQL
+has native CHECK support but currently has no schema plan compiler.
+
+For offline use, resolve capabilities from the intended engine and version:
+
+```php
+use Hector\Connection\Driver\DriverInfo;
+
+$capabilities = (new DriverInfo('mysql', '8.0.16'))->getCapabilities();
+$supportsChecks = $capabilities->hasCheckConstraints();
+```
+
+Consumers must treat missing capabilities or a `false` result as unsupported for
+enforced CHECK operations, rather than assuming a recent MySQL-compatible server.
+
 For usage and examples, visit
 the [official documentation on **gethectororm.com**](https://gethectororm.com/docs/current/components/connection).

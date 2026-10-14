@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Native SQL definitions on `Table` (including views) and `Index`, with named trigger definitions attached to their table/view and implicit-index metadata. Definitions survive serialization; older payloads leave definitions unavailable
+- SQLite CHECK additions/removals through table rebuilds, retaining named and anonymous CHECKs during unrelated rebuilds. CHECK-only changes preserve source table definitions, indexes, triggers, generated columns, rowids and AUTOINCREMENT history; incomplete CHECK metadata and unsafe dependency rewrites fail explicitly
+- Named CHECK plan operations (`addCheck()` / `dropCheck()`) with non-empty input validation, CREATE compilation on MySQL/MariaDB/SQLite and native ALTER compilation on supported MySQL/MariaDB versions. MySQL-family CHECK compilation requires explicit enforcement capabilities, including for offline compilers
+- CHECK introspection for MySQL/MariaDB and SQLite, preserving MySQL enforcement state and SQLite named/unnamed column and table constraints. Unsupported catalogs (including older MariaDB versions without `CHECK_CONSTRAINTS`) retain unknown metadata
+- `CheckConstraint` metadata with nullable names, verbatim SQL expressions and nullable enforcement state; `Table` CHECK accessors and serialization preserve unnamed constraints and distinguish unavailable metadata from a known empty list, including when reading older serialized schemas
 - `Generated` value object and `generated: Generated|string|null` on column operations, `addColumn()` and `modifyColumn()`. Strings declare VIRTUAL columns; `new Generated($expression, stored: true)` declares STORED columns on MySQL/MariaDB and SQLite 3.31+. Generated columns reject explicit defaults, AUTO_INCREMENT and useCurrentOnUpdate
 - Generated-column introspection (`Column::getGenerationExpression()`, `isGenerated()`, `isGeneratedStored()`) with backward-compatible serialization. SQLite uses `table_xinfo` and token-aware extraction of generation expressions; hidden virtual-table implementation columns remain excluded
 - Automatic SQLite table rebuilds for STORED column additions, preserving generated definitions and recalculating generated destinations instead of copying their values
@@ -26,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Reject SQLite rebuilds that would reuse a schema snapshot after earlier structural changes to the same table in one plan; combine operations in a single `alter()` or use separate migrations
 - Preserve generated expressions and storage modes in the legacy MySQL/MariaDB CHANGE COLUMN rename fallback; avoid reconstructing integer types with decimal precision/scale
 - Preserve SQL expression and quoted literal defaults during SQLite rebuilds. Follow column rename chains, update generated references and index/local foreign-key metadata, and avoid copying dropped-and-readded columns. Reject rebuilds without surviving writable columns and ambiguous keyword rewrites before emitting destructive SQL
 - Preserve column-level `ON UPDATE`, fractional seconds precision and temporal expression defaults when renaming columns via the legacy MySQL `CHANGE COLUMN` fallback

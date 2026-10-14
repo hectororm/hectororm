@@ -75,4 +75,20 @@ class PostgreSQLCapabilities implements DriverCapabilities
     {
         return true;
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function hasCheckConstraints(): bool
+    {
+        return 'pgsql' === $this->driverInfo->getDriver();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function hasDropCheck(): bool
+    {
+        return false;
+    }
 }

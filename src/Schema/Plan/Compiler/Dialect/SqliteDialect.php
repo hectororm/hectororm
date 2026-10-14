@@ -26,9 +26,11 @@ use Hector\Schema\Plan\Compiler\Dialect\Sqlite\TableRebuilder;
 use Hector\Schema\Plan\CreateTable;
 use Hector\Schema\Plan\CreateTrigger;
 use Hector\Schema\Plan\CreateView;
+use Hector\Schema\Plan\Operation\AddCheck;
 use Hector\Schema\Plan\Operation\AddColumn;
 use Hector\Schema\Plan\Operation\AddForeignKey;
 use Hector\Schema\Plan\Operation\AddIndex;
+use Hector\Schema\Plan\Operation\DropCheck;
 use Hector\Schema\Plan\Operation\DropColumn;
 use Hector\Schema\Plan\Operation\DropIndex;
 use Hector\Schema\Plan\Operation\ModifyCharset;
@@ -94,6 +96,17 @@ final class SqliteDialect extends AbstractDialect
     protected function getIdentifierQuote(): string
     {
         return '"';
+    }
+
+    /**
+     * Selecting the SQLite dialect establishes native CHECK support even offline.
+     * Explicit capabilities may still deny it (e.g. a custom SQLite build).
+     */
+    protected function assertCheckConstraintsSupported(): void
+    {
+        if (null !== $this->capabilities) {
+            parent::assertCheckConstraintsSupported();
+        }
     }
 
     /**
@@ -176,6 +189,11 @@ final class SqliteDialect extends AbstractDialect
             array_filter($operations, fn($op): bool => $op instanceof AddForeignKey),
         ));
 
+        array_push($definitions, ...array_map(
+            fn(AddCheck $op): string => $this->compileCheckDefinition($op),
+            array_filter($operations, fn($op): bool => $op instanceof AddCheck),
+        ));
+
         $statements = [];
 
         if ([] !== $definitions) {
@@ -204,7 +222,21 @@ final class SqliteDialect extends AbstractDialect
         // Validate operations
         $this->validateAlterOperations($alterTable);
 
+        foreach ($alterTable as $operation) {
+            if ($operation instanceof AddCheck || $operation instanceof DropCheck) {
+                $this->assertCheckConstraintsSupported();
+                if (null === $context->schema) {
+                    throw new PlanException('SQLite CHECK alteration requires a table rebuild with an existing schema');
+                }
+            }
+        }
+
         if (null !== $context->schema && $this->rebuilder->isRequired($alterTable)) {
+            if (in_array(strtolower($alterTable->getObjectName()), array_map('strtolower', $context->modifiedTables), true)) {
+                throw new PlanException(
+                    'SQLite rebuild cannot reuse stale table metadata; combine changes in one alter() or use separate migrations',
+                );
+            }
             yield from $this->rebuilder->compile($alterTable, $context);
 
             // Emit rename after rebuild if present
@@ -265,6 +297,17 @@ final class SqliteDialect extends AbstractDialect
         ?Schema $schema
     ): array {
         $quotedTable = $this->quoteIdentifier($tableName);
+
+        if ($operation instanceof AddCheck || $operation instanceof DropCheck) {
+            $alter = new AlterTable($tableName);
+            if ($operation instanceof AddCheck) {
+                $alter->addCheck($operation->getName(), $operation->getExpression());
+            } else {
+                $alter->dropCheck($operation->getName());
+            }
+
+            return iterator_to_array($this->compileAlterTable($alter, new CompilationContext($schema)), false);
+        }
 
         if ($operation instanceof AddColumn || $operation instanceof ModifyColumn) {
             $this->validateColumnOperation($operation);

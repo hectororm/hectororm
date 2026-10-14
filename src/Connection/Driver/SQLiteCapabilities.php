@@ -85,4 +85,20 @@ class SQLiteCapabilities implements DriverCapabilities
     {
         return true;
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function hasCheckConstraints(): bool
+    {
+        return 'sqlite' === $this->driverInfo->getDriver();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function hasDropCheck(): bool
+    {
+        return false;
+    }
 }

@@ -40,4 +40,9 @@ class FakeMySQL extends MySQL
     {
         return parent::getForeignKeysInfo($schema, $table);
     }
+
+    public function getChecksInfo(string $schema, string $table): ?array
+    {
+        return parent::getChecksInfo($schema, $table);
+    }
 }

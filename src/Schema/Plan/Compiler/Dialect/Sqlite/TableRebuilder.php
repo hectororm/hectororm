@@ -16,17 +16,25 @@ namespace Hector\Schema\Plan\Compiler\Dialect\Sqlite;
 
 use Hector\Schema\Column;
 use Hector\Schema\Exception\PlanException;
+use Hector\Schema\Generator\Sqlite\CreateTableParser;
+use Hector\Schema\Index;
 use Hector\Schema\Plan\AlterTable;
 use Hector\Schema\Plan\Compiler\CompilationContext;
 use Hector\Schema\Plan\CreateTable;
+use Hector\Schema\Plan\Operation\AddCheck;
 use Hector\Schema\Plan\Operation\AddColumn;
 use Hector\Schema\Plan\Operation\AddForeignKey;
 use Hector\Schema\Plan\Operation\AddIndex;
 use Hector\Schema\Plan\Operation\DropColumn;
+use Hector\Schema\Plan\Operation\DropCheck;
+use Hector\Schema\Plan\Operation\DropIndex;
 use Hector\Schema\Plan\Operation\DropForeignKey;
 use Hector\Schema\Plan\Operation\ModifyColumn;
+use Hector\Schema\Plan\Operation\RenameColumn;
+use Hector\Schema\Plan\Operation\RenameTable;
 use Hector\Schema\Plan\Plan;
 use Hector\Schema\Schema;
+use Hector\Schema\Table;
 
 /**
  * Builds the SQLite "table rebuild" statement sequence.
@@ -47,6 +55,8 @@ final class TableRebuilder
      * therefore require a full table rebuild.
      */
     private const REBUILD_OPERATIONS = [
+        AddCheck::class,
+        DropCheck::class,
         ModifyColumn::class,
         DropColumn::class,
         AddForeignKey::class,
@@ -116,10 +126,80 @@ final class TableRebuilder
         }
         $tempName = sprintf('__htemp_%s_%s', substr(bin2hex(random_bytes(2)), 0, 3), $tableName);
 
+        $table = $schema->getTable($tableName);
+        if (false === $table->hasCheckMetadata()) {
+            throw new PlanException(sprintf('SQLite table "%s" requires complete CHECK metadata to rebuild', $tableName));
+        }
+        $definition = $table->getDefinition();
+        $triggers = $table->getTriggerDefinitions() ?? [];
+        $parser = new CreateTableParser();
+        $sourceOnly = null !== $definition;
+        $changesReferences = false;
+        $changedIndexes = [];
+        foreach ($alterTable as $operation) {
+            if (false === ($operation instanceof AddCheck || $operation instanceof DropCheck ||
+                $operation instanceof RenameTable || $operation instanceof AddIndex || $operation instanceof DropIndex)) {
+                $sourceOnly = false;
+            }
+            if ($operation instanceof RenameColumn || $operation instanceof DropColumn) {
+                $changesReferences = true;
+            }
+            if ($operation instanceof AddIndex || $operation instanceof DropIndex) {
+                $changedIndexes[$operation->getName()] = true;
+                if (str_starts_with(strtolower($operation->getName()), 'sqlite_autoindex_')) {
+                    throw new PlanException('Cannot alter an implicit SQLite index independently of its constraint');
+                }
+                if ($operation instanceof AddIndex && Index::PRIMARY === $operation->getType()) {
+                    $sourceOnly = false;
+                }
+            }
+        }
+        if (null !== $definition) {
+            if (false === $sourceOnly && [] !== ($features = $parser->getUnsupportedRebuildFeatures($definition))) {
+                throw new PlanException('Cannot faithfully rebuild SQLite definitions with: ' . implode(', ', $features));
+            }
+        }
+        if ($changesReferences && [] !== $triggers) {
+            throw new PlanException('Cannot safely rewrite SQLite triggers during column rename/drop');
+        }
+        foreach ($schema->getTables(Table::TYPE_VIEW) as $view) {
+            $sql = $view->getDefinition();
+            if (null !== $sql && $parser->containsIdentifier($sql, $tableName)) {
+                throw new PlanException('Cannot rebuild SQLite table with dependent views; drop and recreate them first');
+            }
+        }
+        if ($changesReferences) {
+            foreach ($table->getIndexes() as $index) {
+                $sql = $index->getDefinition();
+                if (null !== $sql && false === isset($changedIndexes[$index->getName()]) &&
+                    false === $parser->isSimpleIndex($sql)) {
+                    throw new PlanException('Cannot safely rewrite SQLite expression/partial index: ' . $index->getName());
+                }
+            }
+        }
+
         $diff = $this->buildDiff($schema, $tableName);
 
         foreach ($alterTable as $operation) {
             $diff->apply($operation);
+        }
+
+        if ($changesReferences) {
+            $columnNames = array_map('strtolower', array_keys($diff->columns()));
+            foreach (array_merge($diff->primaryIndexes(), $diff->nonPrimaryIndexes()) as $index) {
+                foreach ($index->columns as $column) {
+                    if (false === in_array(strtolower($column), $columnNames, true)) {
+                        throw new PlanException('Drop index before dropping its referenced column: ' . $index->name);
+                    }
+                }
+            }
+            foreach ($diff->foreignKeys() as $foreignKey) {
+                foreach ($foreignKey->columns as $column) {
+                    if (false === in_array(strtolower($column), $columnNames, true)) {
+                        throw new PlanException('Drop foreign key before dropping its referenced column: ' . $foreignKey->name);
+                    }
+                }
+            }
         }
 
         $statements = [];
@@ -128,14 +208,29 @@ final class TableRebuilder
             $statements[] = 'PRAGMA foreign_keys = OFF';
         }
 
-        array_push($statements, ...$this->compileRebuildPlan($diff, $tableName, $tempName, $schema, $context));
+        array_push($statements, ...$this->compileRebuildPlan(
+            $diff, $tableName, $tempName, $schema, $context,
+            $sourceOnly ? $definition : null,
+        ));
 
         // Recreate non-primary indexes AFTER the DROP + RENAME: SQLite index
         // names are global to the database, so they can only be reused once the
         // original table (and its indexes) is gone and the temp table is renamed.
         foreach ($diff->nonPrimaryIndexes() as $index) {
+            if ($table->hasIndex($index->name) && false === isset($changedIndexes[$index->name])) {
+                $original = $table->getIndex($index->name);
+                if ($original->isImplicit()) {
+                    continue; // Inline UNIQUE constraints recreate their implicit indexes.
+                }
+                if (null !== $original->getDefinition() && false === $changesReferences) {
+                    $statements[] = $original->getDefinition();
+                    continue;
+                }
+            }
             $statements[] = ($this->createIndexCompiler)($tableName, $index->toAddIndex($tableName));
         }
+
+        array_push($statements, ...array_values($triggers));
 
         if (false === $context->foreignKeyChecksManaged) {
             $statements[] = 'PRAGMA foreign_keys = ON';
@@ -157,8 +252,12 @@ final class TableRebuilder
         $table = $schema->getTable($tableName);
 
         $columns = [];
+        $types = null === $table->getDefinition() ? [] :
+            (new CreateTableParser())->getColumnTypes($table->getDefinition());
         foreach ($table->getColumns() as $column) {
-            $columns[$column->getName()] = ColumnDef::fromSchema($column, $this->reconstructColumnType($column));
+            $columns[$column->getName()] = ColumnDef::fromSchema(
+                $column, $types[$column->getName()] ?? $this->reconstructColumnType($column),
+            );
         }
 
         $indexes = [];
@@ -182,7 +281,7 @@ final class TableRebuilder
             );
         }
 
-        return new TableDiff($columns, $indexes, $foreignKeys, $tableName);
+        return new TableDiff($columns, $indexes, $foreignKeys, $tableName, iterator_to_array($table->getChecks()));
     }
 
     /**
@@ -203,6 +302,7 @@ final class TableRebuilder
         string $tempName,
         Schema $schema,
         CompilationContext $context,
+        ?string $sourceSql = null,
     ): array {
         $columns = $diff->columns();
         $primaryIndexes = $diff->primaryIndexes();
@@ -247,7 +347,33 @@ final class TableRebuilder
             }
         });
 
+        // Preserve hidden rowids whenever an alias is available in both shapes.
+        $table = $schema->getTable($tableName);
+        $definition = $table->getDefinition();
+        $parser = new CreateTableParser();
+        if (null !== $definition && false === $parser->hasTableOption($definition, 'WITHOUT')) {
+            $names = array_map('strtolower', array_merge(array_keys($columns), array_keys($mapping)));
+            $rowidAlias = null;
+            foreach (['rowid', '_rowid_', 'oid'] as $alias) {
+                if (false === in_array($alias, $names, true)) {
+                    $rowidAlias = $alias;
+                    $mapping = [$alias => $alias] + $mapping;
+                    break;
+                }
+            }
+            if (null === $rowidAlias) {
+                throw new PlanException('Cannot preserve SQLite rowids: all rowid aliases are shadowed');
+            }
+        }
         $plan->migrate($tableName, $tempName, $mapping);
+
+        // Retain the AUTOINCREMENT high-water mark, including deleted rows.
+        if (null !== $definition && $parser->containsKeyword($definition, 'AUTOINCREMENT')) {
+            $old = "'" . str_replace("'", "''", $tableName) . "'";
+            $temp = "'" . str_replace("'", "''", $tempName) . "'";
+            $plan->raw('UPDATE sqlite_sequence SET seq = MAX(seq, COALESCE(' .
+                '(SELECT seq FROM sqlite_sequence WHERE name = ' . $old . '), 0)) WHERE name = ' . $temp);
+        }
         $plan->drop($tableName);
         $plan->rename($tempName, $tableName);
 
@@ -256,7 +382,32 @@ final class TableRebuilder
         // (or prematurely toggling) foreign_keys.
         $innerContext = $context->withForeignKeyChecksManaged(true);
 
-        return iterator_to_array(($this->planCompiler)($plan, $innerContext), false);
+        $statements = iterator_to_array(($this->planCompiler)($plan, $innerContext), false);
+        $checks = [];
+        foreach ($diff->checks() as $check) {
+            if (true !== $check->isEnforced()) {
+                throw new PlanException('SQLite rebuild requires known enforced CHECK constraints');
+            }
+            $checks[] = (null === $check->getName() ? '' :
+                'CONSTRAINT "' . str_replace('"', '""', $check->getName()) . '" ') .
+                'CHECK (' . $check->getExpression() . ')';
+        }
+        $statements[0] = $parser->rebuildWithChecks($sourceSql ?? $statements[0], $tempName, $checks);
+
+        if (null === $sourceSql) {
+            $implicit = [];
+            foreach ($diff->nonPrimaryIndexes() as $index) {
+                if ($table->hasIndex($index->name) && $table->getIndex($index->name)->isImplicit()) {
+                    $implicit[] = 'UNIQUE (' . implode(', ', array_map(
+                        static fn(string $name): string => '"' . str_replace('"', '""', $name) . '"',
+                        $index->columns,
+                    )) . ')';
+                }
+            }
+            $statements[0] = $parser->rebuildWithChecks($statements[0], $tempName, array_merge($checks, $implicit));
+        }
+
+        return $statements;
     }
 
     /**

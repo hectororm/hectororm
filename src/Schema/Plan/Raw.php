@@ -17,7 +17,7 @@ namespace Hector\Schema\Plan;
 use Stringable;
 
 /**
- * Raw SQL expression for a column default value.
+ * Raw SQL expression for a column default value or CHECK constraint.
  *
  * Wrap a value in this class to have it emitted verbatim in the
  * generated DEFAULT clause instead of being quoted as a string
@@ -27,6 +27,7 @@ use Stringable;
  * Use a plain string for literal defaults; reserve this wrapper for
  * actual SQL expressions. It is not intended to express a NULL
  * default (use a null value with hasDefault enabled instead).
+ * CHECK expressions accept either Raw or a plain SQL string; neither is quoted.
  */
 final class Raw implements Stringable
 {

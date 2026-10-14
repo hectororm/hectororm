@@ -26,6 +26,12 @@ class Table implements Countable, IteratorAggregate
     public const TYPE_TABLE = 'table';
     public const TYPE_VIEW = 'view';
 
+    /**
+     * @param CheckConstraint[]|null $checks Complete CHECK metadata, or null when not collected.
+     * @param string|null $definition Native CREATE TABLE/VIEW SQL, or null when unavailable.
+     * @param array<string, string>|null $trigger_definitions Trigger name => native CREATE TRIGGER SQL,
+     *                                                      or null when not collected.
+     */
     public function __construct(
         private string $schema_name,
         private string $type,
@@ -36,6 +42,9 @@ class Table implements Countable, IteratorAggregate
         private array $indexes = [],
         private array $foreign_keys = [],
         private ?Schema $schema = null,
+        private ?array $checks = null,
+        private ?string $definition = null,
+        private ?array $trigger_definitions = null,
     ) {
         $this->restoreInheritance();
     }
@@ -56,6 +65,9 @@ class Table implements Countable, IteratorAggregate
             'columns' => $this->columns,
             'indexes' => $this->indexes,
             'foreign_keys' => $this->foreign_keys,
+            'checks' => $this->checks,
+            'definition' => $this->definition,
+            'trigger_definitions' => $this->trigger_definitions,
         ];
     }
 
@@ -74,6 +86,9 @@ class Table implements Countable, IteratorAggregate
         $this->columns = $data['columns'];
         $this->indexes = $data['indexes'];
         $this->foreign_keys = $data['foreign_keys'];
+        $this->checks = $data['checks'] ?? null;
+        $this->definition = $data['definition'] ?? null;
+        $this->trigger_definitions = $data['trigger_definitions'] ?? null;
         $this->schema = null;
 
         $this->restoreInheritance();
@@ -87,6 +102,10 @@ class Table implements Countable, IteratorAggregate
         array_walk($this->columns, fn(Column $column) => $column->setTable($this));
         array_walk($this->indexes, fn(Index $index) => $index->setTable($this));
         array_walk($this->foreign_keys, fn(ForeignKey $foreign_key) => $foreign_key->setTable($this));
+
+        foreach ($this->checks ?? [] as $check) {
+            $check->setTable($this);
+        }
     }
 
     /**
@@ -355,6 +374,103 @@ class Table implements Countable, IteratorAggregate
                 yield $foreign_key;
             }
         }
+    }
+
+    /**
+     * Whether complete CHECK metadata is available, including a known empty list.
+     *
+     * Old serialized schemas and tables constructed without $checks have unknown
+     * metadata, not an empty constraint list.
+     *
+     * @return bool
+     */
+    public function hasCheckMetadata(): bool
+    {
+        return null !== $this->checks;
+    }
+
+    /**
+     * Get the native CREATE TABLE/VIEW SQL, or null when unavailable.
+     */
+    public function getDefinition(): ?string
+    {
+        return $this->definition;
+    }
+
+    /**
+     * Get native definitions of triggers attached to this table/view.
+     *
+     * @return array<string, string>|null Null when not collected; [] when none exist.
+     */
+    public function getTriggerDefinitions(): ?array
+    {
+        return $this->trigger_definitions;
+    }
+
+    /**
+     * Get all CHECK constraints in metadata order, including unnamed constraints.
+     *
+     * Yields numeric keys rather than names, which need not be present or unique.
+     *
+     * @return Generator<CheckConstraint>
+     * @throws SchemaException When CHECK metadata was not collected.
+     */
+    public function getChecks(): Generator
+    {
+        if (null === $this->checks) {
+            throw new SchemaException(sprintf('CHECK metadata is unavailable for table "%s"', $this->name));
+        }
+
+        foreach ($this->checks as $check) {
+            yield $check;
+        }
+    }
+
+    /**
+     * Whether a CHECK with the given name exists.
+     *
+     * @param string $name
+     *
+     * @return bool
+     * @throws SchemaException When CHECK metadata was not collected.
+     */
+    public function hasCheck(string $name): bool
+    {
+        foreach ($this->getChecks() as $check) {
+            if ($name === $check->getName()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Get a uniquely named CHECK constraint.
+     *
+     * @param string $name
+     *
+     * @return CheckConstraint
+     * @throws NotFoundException When no constraint has this name.
+     * @throws SchemaException When metadata is unavailable or the name is ambiguous.
+     */
+    public function getCheck(string $name): CheckConstraint
+    {
+        $found = null;
+
+        foreach ($this->getChecks() as $check) {
+            if ($name !== $check->getName()) {
+                continue;
+            }
+
+            if (null !== $found) {
+                throw new SchemaException(sprintf('Ambiguous CHECK name "%s" in table "%s"', $name, $this->name));
+            }
+
+            $found = $check;
+        }
+
+        return $found ?? throw new NotFoundException(sprintf('CHECK "%s" not found in table "%s"', $name, $this->name));
     }
 
     /**

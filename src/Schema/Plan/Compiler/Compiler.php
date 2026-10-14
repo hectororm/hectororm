@@ -26,6 +26,8 @@ use Hector\Schema\Plan\DropTrigger;
 use Hector\Schema\Plan\DropView;
 use Hector\Schema\Plan\EnableForeignKeyChecks;
 use Hector\Schema\Plan\MigrateData;
+use Hector\Schema\Plan\Operation\AddCheck;
+use Hector\Schema\Plan\Operation\DropCheck;
 use Hector\Schema\Plan\Operation\AddForeignKey;
 use Hector\Schema\Plan\Operation\DropForeignKey;
 use Hector\Schema\Plan\Operation\PostOperationInterface;
@@ -103,11 +105,14 @@ class Compiler implements CompilerInterface
         foreach ($plan as $entry) {
             if ($entry instanceof OperationGroupInterface) {
                 yield from $this->compileGroupForPhase($entry, $context, $phase);
-                continue;
+            } elseif ($this->phaseOf($entry) === $phase) {
+                yield from $this->compileOperation($entry, $context);
             }
 
-            if ($this->phaseOf($entry) === $phase) {
-                yield from $this->compileOperation($entry, $context);
+            if (self::PHASE_STRUCTURE === $phase && $this->phaseOf($entry) === $phase &&
+                false === ($entry instanceof RawStatement || $entry instanceof MigrateData ||
+                    $entry instanceof PurgeTable) && null !== $entry->getObjectName()) {
+                $context = $context->withModifiedTable($entry->getObjectName());
             }
         }
     }
@@ -202,6 +207,16 @@ class Compiler implements CompilerInterface
                 break;
             case $operation instanceof AlterTable:
                 yield from $this->dialect->compileAlterTable($operation, $context);
+                break;
+            case $operation instanceof AddCheck:
+            case $operation instanceof DropCheck:
+                $alter = new AlterTable($operation->getObjectName());
+                if ($operation instanceof AddCheck) {
+                    $alter->addCheck($operation->getName(), $operation->getExpression());
+                } else {
+                    $alter->dropCheck($operation->getName());
+                }
+                yield from $this->dialect->compileAlterTable($alter, $context);
                 break;
             case $operation instanceof DropTable:
                 yield $this->dialect->compileDropTable($operation);
