@@ -290,6 +290,48 @@ class Relationships implements Countable
     }
 
     /**
+     * Structurally invert an explicitly named relationship on the target mapper.
+     *
+     * @throws OrmException
+     */
+    public function inverseOf(string $target, string $name, string $foreignName): Relationship
+    {
+        $targetReflection = ReflectionEntity::get($target);
+        $source = $this->entity->getName();
+        $target = $targetReflection->getName();
+        $foreign = $targetReflection->getMapper()->getRelationships()->getWith($source, $foreignName);
+
+        if ($foreign->getSourceEntity() !== $target) {
+            throw new RelationException(sprintf(
+                'Relationship "%s.%s" must originate from "%s" to be inverted as "%s.%s"',
+                $target,
+                $foreignName,
+                $target,
+                $source,
+                $name,
+            ));
+        }
+
+        $inverse = $foreign->reverse($name);
+        if (
+            $inverse === $foreign
+            || $inverse->getName() !== $name
+            || $inverse->getSourceEntity() !== $source
+            || $inverse->getTargetEntity() !== $target
+        ) {
+            throw new RelationException(sprintf(
+                'Relationship "%s.%s" returned an invalid inverse for "%s.%s"',
+                $target,
+                $foreignName,
+                $source,
+                $name,
+            ));
+        }
+
+        return $this->list[$name] = $inverse;
+    }
+
+    /**
      * Belongs to.
      *
      * @param string $target
