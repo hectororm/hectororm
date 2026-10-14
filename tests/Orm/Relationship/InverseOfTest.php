@@ -400,6 +400,103 @@ class InverseOfTest extends TestCase
         $this->assertCount(1, $connection->fetchAll('SELECT * FROM inverse_parent'));
         $this->assertCount(1, $connection->fetchAll('SELECT * FROM inverse_child'));
     }
+
+    /** @dataProvider belongsToProvider */
+    public function testBelongsToDiagnosesOnlyNonParentReferences(string $type, bool $attribute): void
+    {
+        $parents = $this->orm->getMapper(InverseParent::class)->getRelationships();
+        $children = $this->orm->getMapper(InverseChild::class)->getRelationships();
+        $columns = ['id' => 'parent_id'];
+        match ($type) {
+            'many' => $parents->hasMany(InverseChild::class, 'original', $columns),
+            'one' => $parents->hasOne(InverseChild::class, 'original', $columns),
+            'parent' => $parents->hasOneChild(InverseChild::class, 'original', $columns),
+            'dependent' => $parents->oneToOne(InverseChild::class, 'original', $columns, isParent: false),
+            'inferred' => $parents->oneToOne(InverseChild::class, 'original', $columns),
+            'fallback' => $parents->oneToOne(InverseChild::class, 'original', ['id' => 'id']),
+            'pivot' => $parents->belongsToMany(
+                InverseChild::class, 'original', 'inverse_pivot', ['id' => 'parent_key'], ['child_key' => 'id'],
+            ),
+        };
+        $warnings = [];
+        set_error_handler(static function (int $severity, string $message) use (&$warnings): bool {
+            $warnings[] = $message;
+
+            return true;
+        }, E_USER_DEPRECATED);
+        try {
+            for ($attempt = 0; $attempt < 2; $attempt++) {
+                if ($attribute) {
+                    if (0 === $attempt) {
+                        $children->addDeclaration(new Mapping\BelongsTo(InverseParent::class, 'inverse', 'original'));
+                    }
+                    $inverse = $children->get('inverse');
+                } else {
+                    // Omitting foreignName remains supported for unambiguous legacy declarations.
+                    $inverse = $children->belongsTo(InverseParent::class, 'inverse');
+                }
+                $this->assertSame($inverse, $children->get('inverse'));
+            }
+        } finally {
+            restore_error_handler();
+        }
+
+        $deprecated = in_array($type, ['one', 'dependent', 'pivot'], true);
+        $this->assertCount($deprecated ? 1 : 0, $warnings);
+        if ($deprecated) {
+            $this->assertStringContainsString(InverseChild::class . '.inverse', $warnings[0]);
+            $this->assertStringContainsString('InverseOf(', $warnings[0]);
+            $this->assertStringContainsString('foreignName: "original"', $warnings[0]);
+        }
+        if ('one' === $type) {
+            $this->assertInstanceOf(OneToMany::class, $inverse);
+            $this->assertNull($inverse->getOrphanRemoval());
+        }
+        if (in_array($type, ['parent', 'inferred', 'dependent', 'fallback'], true)) {
+            $this->assertInstanceOf(OneToOne::class, $inverse);
+            $this->assertSame(match ($type) {
+                'dependent' => true,
+                'fallback' => null,
+                default => false,
+            }, $inverse->isParent());
+        }
+    }
+
+    public function belongsToProvider(): iterable
+    {
+        yield from $this->structuralProvider();
+    }
+
+    public function testLegacyCollectionKeepsDeletionBehaviorWithoutWarningsOnEveryAccessOrSave(): void
+    {
+        $connection = $this->orm->getConnection();
+        $connection->execute('INSERT INTO inverse_parent VALUES (1, 10)');
+        $connection->execute('INSERT INTO inverse_child VALUES (2, 20, 1, NULL)');
+        $this->orm->getMapper(InverseChild::class)->getRelationships()
+            ->hasOne(InverseParent::class, 'parent', ['parent_id' => 'id']);
+        $this->orm->getMapper(InverseParent::class)->getRelationships()
+            ->addDeclaration(new Mapping\BelongsTo(InverseChild::class, 'children', 'parent'));
+        $warnings = 0;
+        set_error_handler(static function () use (&$warnings): bool {
+            $warnings++;
+
+            return true;
+        }, E_USER_DEPRECATED);
+        try {
+            $parent = InverseParent::find(1);
+            $collection = $parent->children;
+            $this->assertSame($collection, $parent->children);
+            $parent->save();
+            unset($collection[0]);
+            $parent->save();
+            $parent->save();
+        } finally {
+            restore_error_handler();
+        }
+        $this->assertSame(1, $warnings);
+        $this->assertCount(0, $connection->fetchAll('SELECT * FROM inverse_child'));
+        $this->assertCount(1, $connection->fetchAll('SELECT * FROM inverse_parent'));
+    }
 }
 
 #[Mapping\Table('inverse_parent')]

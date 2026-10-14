@@ -40,6 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Deprecated
 
+- `BelongsTo` resolving to collections or parent-side `OneToOne` relations: use `InverseOf` with an explicit `foreignName`; existing behavior is preserved before v2 and warnings are emitted once per relation registry/name (#145)
 - The implicit `OneToMany` deletion policy: declare `orphanRemoval: true` to preserve it across v2, whose target default is non-destructive detachment
 
 ## [1.4.1] - 2026-07-31
