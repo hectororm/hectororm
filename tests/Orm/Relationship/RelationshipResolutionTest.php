@@ -14,6 +14,9 @@ declare(strict_types=1);
 
 namespace Hector\Orm\Tests\Relationship;
 
+use Attribute;
+use Closure;
+use Error;
 use Hector\Connection\Connection;
 use Hector\Orm\Attributes as OrmAttribute;
 use Hector\Orm\Entity\MagicEntity;
@@ -22,6 +25,8 @@ use Hector\Orm\Exception\RelationException;
 use Hector\Orm\Orm;
 use Hector\Orm\Relationship\ManyToOne;
 use Hector\Orm\Relationship\OneToMany;
+use Hector\Orm\Relationship\Relationship;
+use Hector\Orm\Relationship\Relationships;
 use Hector\Schema\Generator\Sqlite;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
@@ -57,6 +62,9 @@ class RelationshipResolutionTest extends TestCase
 
     protected function tearDown(): void
     {
+        ResolutionObservedHasMany::$onConstruct = null;
+        ResolutionObservedHasMany::$onAdd = null;
+        ResolutionObservedHasMany::$onClauses = null;
         Orm::$instance = $this->previousOrm;
         $reflections = new ReflectionProperty(ReflectionEntity::class, 'reflections');
         $reflections->setAccessible(true);
@@ -275,6 +283,118 @@ class RelationshipResolutionTest extends TestCase
             ],
         ];
     }
+
+    /** @dataProvider initializationFailureProvider */
+    public function testInitializationCanRecoverAfterRepeatedFailures(string $hook): void
+    {
+        $attempts = 0;
+        $created = [];
+        ResolutionObservedHasMany::${$hook} = static function (?Relationship $relationship = null) use (
+            &$attempts,
+            &$created,
+        ): void {
+            $attempts++;
+            if (null !== $relationship) {
+                $created[] = $relationship;
+            }
+
+            if (3 > $attempts) {
+                throw new Error('Transient metadata failure');
+            }
+        };
+
+        $mapper = $this->orm->getMapper(ResolutionObservedCategory::class);
+        $stable = null;
+        for ($attempt = 0; $attempt < 2; $attempt++) {
+            try {
+                $mapper->getRelationships()->get('children');
+                $this->fail('The initialization hook must fail on both initial attempts');
+            } catch (Error $exception) {
+                $this->assertSame('Transient metadata failure', $exception->getMessage());
+            }
+
+            if ('onConstruct' !== $hook) {
+                $relationships = $mapper->getRelationships();
+                $this->assertCount(3, $relationships);
+                $this->assertTrue($relationships->exists('children'));
+                $stable ??= $relationships->get('stable');
+                $this->assertSame($stable, $relationships->get('stable'));
+            }
+        }
+
+        $relationships = $mapper->getRelationships();
+        $children = $relationships->get('children');
+        $this->assertSame(3, $attempts);
+        $this->assertInstanceOf(OneToMany::class, $children);
+        $this->assertTrue($children->getOrphanRemoval());
+        $this->assertCount(1, $children->where);
+        $this->assertCount(1, $children->group);
+        $this->assertCount(1, $children->having);
+        $this->assertCount(1, $children->order);
+        $this->assertSame(10, $children->limit->getLimit());
+        $this->assertSame(2, $children->limit->getOffset());
+        $this->assertSame($children, $relationships->get('children'));
+        $this->assertInstanceOf(ManyToOne::class, $relationships->get('parent'));
+
+        if ('onConstruct' !== $hook) {
+            $this->assertNotSame($created[0], $children);
+            $this->assertNotSame($created[1], $children);
+            $this->assertSame($created[2], $children);
+            $this->assertSame($stable, $relationships->get('stable'));
+        }
+    }
+
+    public function initializationFailureProvider(): array
+    {
+        return [
+            'attribute discovery' => ['onConstruct'],
+            'relationship construction' => ['onAdd'],
+            'clause application' => ['onClauses'],
+        ];
+    }
+
+    public function testReentrantLookupCannotExposeRelationshipDuringClauseApplication(): void
+    {
+        $relationships = $this->orm->getMapper(ResolutionObservedCategory::class)->getRelationships();
+        $observations = 0;
+        ResolutionObservedHasMany::$onClauses = function (Relationship $relationship) use (
+            $relationships,
+            &$observations,
+        ): void {
+            $this->assertInstanceOf(OneToMany::class, $relationship);
+            $this->assertTrue($relationship->getOrphanRemoval());
+            $this->assertCount(1, $relationship->order);
+
+            foreach (['children', 'parent'] as $name) {
+                try {
+                    $relationships->get($name);
+                    $this->fail('An unfinished relationship must not be exposed to reentrant lookups');
+                } catch (RelationException $exception) {
+                    $this->assertStringContainsString('Circular relationship dependency:', $exception->getMessage());
+                    $observations++;
+                }
+            }
+        };
+
+        $children = $relationships->get('children');
+        $this->assertSame(2, $observations);
+        $this->assertSame($children, $relationships->get('children'));
+        $this->assertInstanceOf(ManyToOne::class, $relationships->get('parent'));
+    }
+
+    public function testInvalidOptionDoesNotLeaveConstructedRelationshipInCache(): void
+    {
+        $relationships = $this->orm->getMapper(ResolutionInvalidOptionCategory::class)->getRelationships();
+
+        for ($attempt = 0; $attempt < 2; $attempt++) {
+            try {
+                $relationships->get('parent');
+                $this->fail('Invalid options must be validated on every attempt');
+            } catch (RelationException $exception) {
+                $this->assertSame('Relationship "parent" does not support orphanRemoval', $exception->getMessage());
+            }
+        }
+    }
 }
 
 #[OrmAttribute\Table('resolution_category')]
@@ -344,5 +464,63 @@ class ResolutionCycleParent extends MagicEntity
 #[OrmAttribute\Table('resolution_child')]
 #[OrmAttribute\BelongsTo(ResolutionCycleParent::class, 'parent', 'children')]
 class ResolutionCycleChild extends MagicEntity
+{
+}
+
+#[Attribute(Attribute::TARGET_CLASS | Attribute::IS_REPEATABLE)]
+class ResolutionObservedHasMany extends OrmAttribute\HasMany
+{
+    public static ?Closure $onConstruct = null;
+    public static ?Closure $onAdd = null;
+    public static ?Closure $onClauses = null;
+
+    public function __construct(string $target, string $name, ?array $columns = null, ...$params)
+    {
+        parent::__construct($target, $name, $columns, ...$params);
+        if (null !== self::$onConstruct) {
+            (self::$onConstruct)();
+        }
+    }
+
+    protected function addRelationship(Relationships $relationships): Relationship
+    {
+        $relationship = parent::addRelationship($relationships);
+        if (null !== self::$onAdd) {
+            (self::$onAdd)($relationship);
+        }
+
+        return $relationship;
+    }
+
+    protected function addClauses(Relationship $relationship): void
+    {
+        parent::addClauses($relationship);
+        if (null !== self::$onClauses) {
+            (self::$onClauses)($relationship);
+        }
+    }
+}
+
+#[OrmAttribute\Table('resolution_category')]
+#[OrmAttribute\HasOne(ResolutionObservedCategory::class, 'stable', ['parent_id' => 'id'])]
+#[OrmAttribute\BelongsTo(ResolutionObservedCategory::class, 'parent', 'children')]
+#[ResolutionObservedHasMany(
+    ResolutionObservedCategory::class,
+    'children',
+    ['id' => 'parent_id'],
+    orphanRemoval: true,
+    where: ['id' => 1],
+    groupBy: ['id'],
+    having: ['id' => 1],
+    orderBy: ['id' => 'DESC'],
+    limit: [10, 2],
+)]
+class ResolutionObservedCategory extends MagicEntity
+{
+}
+
+#[OrmAttribute\Table('resolution_category')]
+#[OrmAttribute\HasOne(ResolutionInvalidOptionCategory::class, 'parent', ['parent_id' => 'id'], orphanRemoval: true)]
+class ResolutionInvalidOptionCategory extends MagicEntity
 {
 }
