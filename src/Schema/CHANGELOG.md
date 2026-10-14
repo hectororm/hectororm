@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Native SQL definitions on `Table` (including views) and `Index`, with named trigger definitions attached to their table/view and implicit-index metadata. Definitions survive serialization; older payloads leave definitions unavailable
+- SQLite CHECK additions/removals through table rebuilds, retaining named and anonymous CHECKs during unrelated rebuilds. CHECK-only changes preserve source table definitions, indexes, triggers, generated columns, rowids and AUTOINCREMENT history; incomplete CHECK metadata and unsafe dependency rewrites fail explicitly
 - Named CHECK plan operations (`addCheck()` / `dropCheck()`) with non-empty input validation, CREATE compilation on MySQL/MariaDB/SQLite and native ALTER compilation on supported MySQL/MariaDB versions. MySQL-family CHECK compilation requires explicit enforcement capabilities, including for offline compilers
 - CHECK introspection for MySQL/MariaDB and SQLite, preserving MySQL enforcement state and SQLite named/unnamed column and table constraints. Unsupported catalogs (including older MariaDB versions without `CHECK_CONSTRAINTS`) retain unknown metadata
 - `CheckConstraint` metadata with nullable names, verbatim SQL expressions and nullable enforcement state; `Table` CHECK accessors and serialization preserve unnamed constraints and distinguish unavailable metadata from a known empty list, including when reading older serialized schemas

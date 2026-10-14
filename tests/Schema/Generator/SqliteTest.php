@@ -206,7 +206,10 @@ class SqliteTest extends TestCase
                     'type' => Table::TYPE_TABLE,
                 ],
             ],
-            $this->getGenerator()->getTablesInfo('main')
+            array_map(
+                static fn(array $info): array => array_diff_key($info, ['definition' => true]),
+                $this->getGenerator()->getTablesInfo('main'),
+            )
         );
     }
 
@@ -469,6 +472,9 @@ class SqliteTest extends TestCase
 
     public function testGetIndexesInfo(): void
     {
+        $indexes = $this->getGenerator()->getIndexesInfo('main', 'address');
+        $this->assertNull($indexes[0]['definition']);
+        $this->assertStringContainsString('idx_fk_city_id', $indexes[1]['definition']);
         $this->assertEquals(
             [
                 [
@@ -476,15 +482,17 @@ class SqliteTest extends TestCase
                     'type' => 'primary',
                     'table_name' => 'address',
                     'columns_name' => ['address_id'],
+                    'implicit' => true,
                 ],
                 [
                     'name' => 'idx_fk_city_id',
                     'type' => 'index',
                     'table_name' => 'address',
                     'columns_name' => ['city_id'],
+                    'implicit' => false,
                 ],
             ],
-            $this->getGenerator()->getIndexesInfo('main', 'address')
+            array_map(static fn(array $info): array => array_diff_key($info, ['definition' => true]), $indexes)
         );
     }
 

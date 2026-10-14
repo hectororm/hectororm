@@ -88,7 +88,7 @@ class GeneratedColumnRebuildTest extends TestCase
 
         $this->assertStringContainsString('GENERATED ALWAYS AS (quantity * price) STORED', $statements[1]);
         $this->assertStringNotContainsString('total', $statements[2]);
-        $this->assertStringContainsString('("id", "quantity", "price", "label", "created_at") SELECT', $statements[2]);
+        $this->assertStringContainsString('("rowid", "id", "quantity", "price", "label", "created_at") SELECT', $statements[2]);
         $this->assertSame([10, 12], array_map('intval', array_column(
             $this->connection->fetchAll('SELECT total FROM items ORDER BY id'),
             'total',

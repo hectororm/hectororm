@@ -29,6 +29,8 @@ class Index
         private string $type,
         private array $columns_name = [],
         private ?Table $table = null,
+        private ?string $definition = null,
+        private bool $implicit = false,
     ) {
     }
 
@@ -43,6 +45,8 @@ class Index
             'name' => $this->name,
             'type' => $this->type,
             'columns_name' => $this->columns_name,
+            'definition' => $this->definition,
+            'implicit' => $this->implicit,
         ];
     }
 
@@ -56,6 +60,8 @@ class Index
         $this->name = $data['name'];
         $this->type = $data['type'];
         $this->columns_name = $data['columns_name'];
+        $this->definition = $data['definition'] ?? null;
+        $this->implicit = $data['implicit'] ?? false;
         $this->table = null;
     }
 
@@ -77,6 +83,22 @@ class Index
     public function getType(): string
     {
         return $this->type;
+    }
+
+    /**
+     * Get the native CREATE INDEX SQL, or null for implicit/unavailable definitions.
+     */
+    public function getDefinition(): ?string
+    {
+        return $this->definition;
+    }
+
+    /**
+     * Whether this index is created implicitly by a table constraint.
+     */
+    public function isImplicit(): bool
+    {
+        return $this->implicit;
     }
 
     /**

@@ -186,7 +186,7 @@ class CheckConstraintSqlTest extends TestCase
     public static function providerSqliteAlterContexts(): iterable
     {
         foreach (['add', 'drop'] as $operation) {
-            foreach (['no schema', 'missing table', 'unknown checks', 'complete'] as $context) {
+            foreach (['no schema', 'missing table', 'unknown checks'] as $context) {
                 yield [$operation, $context];
             }
         }
@@ -213,7 +213,6 @@ class CheckConstraintSqlTest extends TestCase
             'no schema' => 'existing schema',
             'missing table' => 'missing from the schema',
             'unknown checks' => 'complete CHECK metadata',
-            'complete' => 'requires table rebuild support',
         });
         foreach ((new SqliteCompiler())->compile($plan, $schema) as $statement) {
             self::fail('CHECK alteration emitted an incomplete rebuild: ' . $statement);

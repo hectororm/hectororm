@@ -434,6 +434,7 @@ class SqliteCompilerTest extends AbstractCompilerTestCase
             schema_name: 'mydb',
             type: Table::TYPE_TABLE,
             name: 'posts',
+            checks: [],
             columns: [
                 'id' => new Column(name: 'id', position: 0, default: null, nullable: false, type: 'int',
                     auto_increment: true),
@@ -496,6 +497,7 @@ class SqliteCompilerTest extends AbstractCompilerTestCase
             schema_name: 'mydb',
             type: Table::TYPE_TABLE,
             name: 'posts',
+            checks: [],
             columns: [
                 'id' => new Column(name: 'id', position: 0, default: null, nullable: false, type: 'int',
                     auto_increment: true),

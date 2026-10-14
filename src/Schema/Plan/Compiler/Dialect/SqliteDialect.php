@@ -224,7 +224,10 @@ final class SqliteDialect extends AbstractDialect
 
         foreach ($alterTable as $operation) {
             if ($operation instanceof AddCheck || $operation instanceof DropCheck) {
-                $this->rejectNativeCheckAlter($operation, $context->schema);
+                $this->assertCheckConstraintsSupported();
+                if (null === $context->schema) {
+                    throw new PlanException('SQLite CHECK alteration requires a table rebuild with an existing schema');
+                }
             }
         }
 
@@ -291,7 +294,14 @@ final class SqliteDialect extends AbstractDialect
         $quotedTable = $this->quoteIdentifier($tableName);
 
         if ($operation instanceof AddCheck || $operation instanceof DropCheck) {
-            $this->rejectNativeCheckAlter($operation, $schema);
+            $alter = new AlterTable($tableName);
+            if ($operation instanceof AddCheck) {
+                $alter->addCheck($operation->getName(), $operation->getExpression());
+            } else {
+                $alter->dropCheck($operation->getName());
+            }
+
+            return iterator_to_array($this->compileAlterTable($alter, new CompilationContext($schema)), false);
         }
 
         if ($operation instanceof AddColumn || $operation instanceof ModifyColumn) {
@@ -344,28 +354,6 @@ final class SqliteDialect extends AbstractDialect
             ModifyCharset::class => [], // Silently ignored on SQLite
             default => [],
         };
-    }
-
-    /**
-     * CHECK changes must never fall through to unsupported native ALTER SQL or be ignored.
-     *
-     * @throws PlanException
-     */
-    private function rejectNativeCheckAlter(AddCheck|DropCheck $operation, ?Schema $schema): void
-    {
-        $this->assertCheckConstraintsSupported();
-        $tableName = $operation->getObjectName();
-        if (null === $schema) {
-            throw new PlanException('SQLite CHECK alteration requires a table rebuild with an existing schema');
-        }
-        if (false === $schema->hasTable($tableName)) {
-            throw new PlanException(sprintf('Cannot rebuild SQLite table "%s": missing from the schema', $tableName));
-        }
-        if (false === $schema->getTable($tableName)->hasCheckMetadata()) {
-            throw new PlanException(sprintf('SQLite table "%s" requires complete CHECK metadata to rebuild', $tableName));
-        }
-
-        throw new PlanException('SQLite CHECK alteration requires table rebuild support');
     }
 
     /**

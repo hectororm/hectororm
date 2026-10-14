@@ -82,6 +82,7 @@ class TableRebuilderTest extends TestCase
             schema_name: 'main',
             type: Table::TYPE_TABLE,
             name: 'users',
+            checks: [],
             columns: [
                 'id' => new Column(name: 'id', position: 0, default: null, nullable: false, type: 'INTEGER',
                     auto_increment: true),

@@ -14,14 +14,17 @@ declare(strict_types=1);
 
 namespace Hector\Schema\Plan\Compiler\Dialect\Sqlite;
 
+use Hector\Schema\CheckConstraint;
 use Hector\Schema\Exception\PlanException;
 use Hector\Schema\Generator\Sqlite\CreateTableParser;
 use Hector\Schema\Index;
 use Hector\Schema\Plan\Generated;
+use Hector\Schema\Plan\Operation\AddCheck;
 use Hector\Schema\Plan\Operation\AddColumn;
 use Hector\Schema\Plan\Operation\AddForeignKey;
 use Hector\Schema\Plan\Operation\AddIndex;
 use Hector\Schema\Plan\Operation\DropColumn;
+use Hector\Schema\Plan\Operation\DropCheck;
 use Hector\Schema\Plan\Operation\DropForeignKey;
 use Hector\Schema\Plan\Operation\DropIndex;
 use Hector\Schema\Plan\Operation\ModifyColumn;
@@ -53,6 +56,7 @@ final class TableDiff
         private array $indexes,
         private array $foreignKeys,
         private ?string $tableName = null,
+        private array $checks = [],
     ) {
         $this->originalColumnNames = array_map('strval', array_keys($this->columns));
         $this->sources = array_combine($this->originalColumnNames, $this->originalColumnNames);
@@ -66,6 +70,8 @@ final class TableDiff
     public function apply(OperationInterface $operation): void
     {
         match ($operation::class) {
+            AddCheck::class => $this->addCheck($operation),
+            DropCheck::class => $this->dropCheck($operation->getName()),
             AddColumn::class => $this->putColumn(ColumnDef::fromOperation($operation)),
             ModifyColumn::class => $this->modifyColumn($operation),
             DropColumn::class => $this->dropColumn($operation->getName()),
@@ -112,6 +118,13 @@ final class TableDiff
             return;
         }
 
+        foreach ($this->checks as $check) {
+            // Conservative: ambiguous identifiers must never silently lose a constraint.
+            if ((new CreateTableParser())->containsIdentifier($check->getExpression(), $name)) {
+                throw new PlanException(sprintf('Drop CHECK before dropping referenced column "%s"', $name));
+            }
+        }
+
         unset($this->columns[$name]);
         unset($this->sources[$name]);
     }
@@ -148,6 +161,14 @@ final class TableDiff
             $columns[$targetName] = $column;
         }
         $this->columns = $columns;
+
+        foreach ($this->checks as $index => $check) {
+            $this->checks[$index] = new CheckConstraint(
+                $check->getName(),
+                $parser->renameColumnReferences($check->getExpression(), $oldName, $newName),
+                $check->isEnforced(),
+            );
+        }
 
         if (isset($this->sources[$oldName])) {
             $this->sources[$newName] = $this->sources[$oldName];
@@ -200,6 +221,32 @@ final class TableDiff
     private function putIndex(IndexDef $index): void
     {
         $this->indexes[$index->name] = $index;
+    }
+
+    private function addCheck(AddCheck $operation): void
+    {
+        foreach ($this->checks as $check) {
+            if (null !== $check->getName() && 0 === strcasecmp($check->getName(), $operation->getName())) {
+                throw new PlanException(sprintf('CHECK "%s" already exists', $operation->getName()));
+            }
+        }
+        $this->checks[] = new CheckConstraint($operation->getName(), $operation->getExpression(), true);
+    }
+
+    private function dropCheck(string $name): void
+    {
+        $matches = array_keys(array_filter($this->checks, static fn(CheckConstraint $check): bool =>
+            null !== $check->getName() && 0 === strcasecmp($check->getName(), $name)));
+        if (1 !== count($matches)) {
+            throw new PlanException(sprintf('CHECK "%s" is missing or ambiguous', $name));
+        }
+        unset($this->checks[$matches[0]]);
+    }
+
+    /** @return CheckConstraint[] */
+    public function checks(): array
+    {
+        return array_values($this->checks);
     }
 
     private function dropIndex(string $name): void

@@ -97,6 +97,16 @@ abstract class AbstractGenerator implements GeneratorInterface
     }
 
     /**
+     * Get native definitions of triggers attached to this table/view.
+     *
+     * @return array<string, string>|null Null when not collected.
+     */
+    protected function getTriggerDefinitions(string $schema, string $table): ?array
+    {
+        return null;
+    }
+
+    /**
      * @inheritDoc
      */
     public function generateSchema(string $name): Schema
@@ -141,6 +151,8 @@ abstract class AbstractGenerator implements GeneratorInterface
                     name: $indexInfo['name'],
                     type: $indexInfo['type'],
                     columns_name: $indexInfo['columns_name'] ?? [],
+                    definition: $indexInfo['definition'] ?? null,
+                    implicit: $indexInfo['implicit'] ?? false,
                 );
                 $indexes[$index->getName()] = $index;
             }
@@ -184,6 +196,8 @@ abstract class AbstractGenerator implements GeneratorInterface
                 indexes: $indexes ?? [],
                 foreign_keys: $foreignKeys ?? [],
                 checks: $checks,
+                definition: $tableInfo['definition'] ?? null,
+                trigger_definitions: $this->getTriggerDefinitions($name, $tableName),
             );
             ksort($tables);
         }

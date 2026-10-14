@@ -28,6 +28,9 @@ class Table implements Countable, IteratorAggregate
 
     /**
      * @param CheckConstraint[]|null $checks Complete CHECK metadata, or null when not collected.
+     * @param string|null $definition Native CREATE TABLE/VIEW SQL, or null when unavailable.
+     * @param array<string, string>|null $trigger_definitions Trigger name => native CREATE TRIGGER SQL,
+     *                                                      or null when not collected.
      */
     public function __construct(
         private string $schema_name,
@@ -40,6 +43,8 @@ class Table implements Countable, IteratorAggregate
         private array $foreign_keys = [],
         private ?Schema $schema = null,
         private ?array $checks = null,
+        private ?string $definition = null,
+        private ?array $trigger_definitions = null,
     ) {
         $this->restoreInheritance();
     }
@@ -61,6 +66,8 @@ class Table implements Countable, IteratorAggregate
             'indexes' => $this->indexes,
             'foreign_keys' => $this->foreign_keys,
             'checks' => $this->checks,
+            'definition' => $this->definition,
+            'trigger_definitions' => $this->trigger_definitions,
         ];
     }
 
@@ -80,6 +87,8 @@ class Table implements Countable, IteratorAggregate
         $this->indexes = $data['indexes'];
         $this->foreign_keys = $data['foreign_keys'];
         $this->checks = $data['checks'] ?? null;
+        $this->definition = $data['definition'] ?? null;
+        $this->trigger_definitions = $data['trigger_definitions'] ?? null;
         $this->schema = null;
 
         $this->restoreInheritance();
@@ -378,6 +387,24 @@ class Table implements Countable, IteratorAggregate
     public function hasCheckMetadata(): bool
     {
         return null !== $this->checks;
+    }
+
+    /**
+     * Get the native CREATE TABLE/VIEW SQL, or null when unavailable.
+     */
+    public function getDefinition(): ?string
+    {
+        return $this->definition;
+    }
+
+    /**
+     * Get native definitions of triggers attached to this table/view.
+     *
+     * @return array<string, string>|null Null when not collected; [] when none exist.
+     */
+    public function getTriggerDefinitions(): ?array
+    {
+        return $this->trigger_definitions;
     }
 
     /**

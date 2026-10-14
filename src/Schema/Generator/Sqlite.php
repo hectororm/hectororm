@@ -26,6 +26,20 @@ class Sqlite extends AbstractGenerator
     /**
      * @inheritDoc
      */
+    protected function getTriggerDefinitions(string $schema, string $table): ?array
+    {
+        $results = $this->connection->fetchAll(
+            'SELECT `name`, `sql` FROM `sqlite_master` ' .
+            'WHERE `tbl_name` = :table AND `type` = \'trigger\' ORDER BY `name`',
+            ['table' => $table],
+        );
+
+        return array_column($results, 'sql', 'name');
+    }
+
+    /**
+     * @inheritDoc
+     */
     protected function getChecksInfo(string $schema, string $table): ?array
     {
         $result = $this->connection->fetchOne(
@@ -121,6 +135,7 @@ class Sqlite extends AbstractGenerator
                 'charset' => $this->getEncoding(),
                 'collation' => null,
                 'type' => $result['type'] === 'view' ? Table::TYPE_VIEW : Table::TYPE_TABLE,
+                'definition' => $result['sql'],
             ];
         }
 
@@ -317,6 +332,11 @@ class Sqlite extends AbstractGenerator
         $stm = 'PRAGMA index_list(\'' . $table . '\');';
         $results = $this->connection->fetchAll($stm);
 
+        $definitions = array_column($this->connection->fetchAll(
+            'SELECT `name`, `sql` FROM `sqlite_master` WHERE `tbl_name` = :table AND `type` = \'index\'',
+            ['table' => $table],
+        ), 'sql', 'name');
+
         $indexesInfo = [];
         $hasPrimary = false;
         foreach ($results as $result) {
@@ -339,6 +359,8 @@ class Sqlite extends AbstractGenerator
                 'name' => $result['name'],
                 'type' => $indexType,
                 'columns_name' => array_column($resultsIndexInfo, 'name'),
+                'definition' => $definitions[$result['name']] ?? null,
+                'implicit' => 'c' !== $result['origin'],
             ];
         }
 
@@ -353,6 +375,8 @@ class Sqlite extends AbstractGenerator
                     'name' => 'PRIMARY',
                     'type' => Index::PRIMARY,
                     'columns_name' => $pkColumns,
+                    'definition' => null,
+                    'implicit' => true,
                 ]);
             }
         }

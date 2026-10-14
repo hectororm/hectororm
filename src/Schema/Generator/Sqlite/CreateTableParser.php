@@ -106,7 +106,7 @@ final class CreateTableParser
                     'DISTINCT', 'CURRENT_DATE', 'CURRENT_TIME', 'CURRENT_TIMESTAMP',
                 ], true)) {
                     throw new PlanException(sprintf(
-                        'Cannot safely rewrite unquoted keyword "%s" in a generated expression; ' .
+                        'Cannot safely rewrite unquoted keyword "%s" in a SQL expression; ' .
                         'use a separate native SQLite rename before rebuilding',
                         $oldName,
                     ));
@@ -157,10 +157,223 @@ final class CreateTableParser
 
         $checks = [];
         foreach ($this->getDefinitions($tokens) as $definition) {
-            array_push($checks, ...$this->parseChecks($sql, $definition));
+            foreach ($this->parseChecks($sql, $definition) as $check) {
+                $checks[] = ['name' => $check['name'], 'expression' => $check['expression']];
+            }
         }
 
         return $checks;
+    }
+
+    /**
+     * Keep the original column/table definitions, replace CHECKs, and rename the new table.
+     *
+     * @param string[] $checks Compiled CHECK fragments, including any CONSTRAINT name.
+     */
+    public function rebuildWithChecks(string $sql, string $tableName, array $checks): string
+    {
+        $tokens = $this->tokenize($sql);
+        $definitions = [];
+        foreach ($this->getDefinitions($tokens) as $definition) {
+            if ([] === $definition) {
+                throw new PlanException('Cannot rebuild an empty SQLite table definition');
+            }
+            $ranges = $this->parseChecks($sql, $definition);
+            if ([] !== $ranges && false === $this->isColumnDefinition($definition)) {
+                continue;
+            }
+            $offset = $definition[0]['start'];
+            $text = '';
+            foreach ($ranges as $range) {
+                $text .= substr($sql, $offset, $range['start'] - $offset);
+                $offset = $range['end'];
+            }
+            $text .= substr($sql, $offset, $definition[array_key_last($definition)]['end'] - $offset);
+            $definitions[] = trim($text);
+        }
+
+        return sprintf(
+            "CREATE TABLE \"%s\" (\n  %s\n)%s",
+            str_replace('"', '""', $tableName),
+            implode(",\n  ", array_merge($definitions, $checks)),
+            substr($sql, $this->getBodyEnd($tokens)),
+        );
+    }
+
+    /** @return array<string, string> Original SQLite column type declarations. */
+    public function getColumnTypes(string $sql): array
+    {
+        $types = [];
+        foreach ($this->getDefinitions($this->tokenize($sql)) as $definition) {
+            if (false === $this->isColumnDefinition($definition)) {
+                continue;
+            }
+            $start = $end = $definition[0]['end'];
+            $depth = 0;
+            foreach (array_slice($definition, 1) as $token) {
+                if (0 === $depth && false === $token['quoted'] && in_array(strtoupper($token['text']), [
+                    'CONSTRAINT', 'PRIMARY', 'NOT', 'NULL', 'UNIQUE', 'CHECK', 'DEFAULT',
+                    'COLLATE', 'REFERENCES', 'GENERATED', 'AS',
+                ], true)) {
+                    break;
+                }
+                $end = $token['end'];
+                if ($this->isToken($token, '(')) {
+                    $depth++;
+                } elseif ($this->isToken($token, ')')) {
+                    $depth--;
+                }
+            }
+            $types[$definition[0]['text']] = trim(substr($sql, $start, $end - $start));
+        }
+
+        return $types;
+    }
+
+    /**
+     * Features not represented by the structured column/index/FK diff.
+     * The source-preserving CHECK-only path can retain these unchanged.
+     *
+     * @return string[]
+     */
+    public function getUnsupportedRebuildFeatures(string $sql): array
+    {
+        $features = [];
+        $types = $this->getColumnTypes($sql);
+        foreach ($this->getDefinitions($this->tokenize($sql)) as $definition) {
+            $column = $this->isColumnDefinition($definition);
+            $depth = 0;
+            foreach ($definition as $index => $token) {
+                if ($this->isToken($token, '(')) {
+                    $depth++;
+                } elseif ($this->isToken($token, ')')) {
+                    $depth--;
+                }
+                if (false === $column && in_array(strtoupper($definition[0]['text']), ['UNIQUE', 'PRIMARY'], true) &&
+                    false === $token['quoted'] && in_array(strtoupper($token['text']), ['COLLATE', 'ASC', 'DESC'], true)) {
+                    $features[] = strtoupper($token['text']);
+                }
+                if (0 !== $depth || $token['quoted']) {
+                    continue;
+                }
+                $keyword = strtoupper($token['text']);
+                if (in_array($keyword, ['COLLATE', 'CONFLICT', 'DEFERRABLE', 'INITIALLY', 'MATCH', 'ASC', 'DESC'], true)) {
+                    $features[] = $keyword;
+                }
+                if ('CONSTRAINT' === $keyword && isset($definition[$index + 2]) &&
+                    false === $this->isToken($definition[$index + 2], 'CHECK') &&
+                    false === $this->isToken($definition[$index + 2], 'FOREIGN')) {
+                    $features[] = 'named non-CHECK constraints';
+                }
+                if ('PRIMARY' === $keyword &&
+                    (false === $column || 'INTEGER' !== strtoupper($types[$definition[0]['text']] ?? ''))) {
+                    $features[] = 'non-inline INTEGER PRIMARY KEY';
+                }
+            }
+        }
+        foreach (['STRICT', 'WITHOUT'] as $option) {
+            if ($this->hasTableOption($sql, $option)) {
+                $features[] = $option;
+            }
+        }
+
+        return array_values(array_unique($features));
+    }
+
+    public function hasTableOption(string $sql, string $option): bool
+    {
+        $tokens = $this->tokenize($sql);
+        $end = $this->getBodyEnd($tokens);
+        foreach ($tokens as $token) {
+            if ($token['start'] >= $end && $this->isToken($token, $option)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /** Conservative identifier detection for dependencies in views. */
+    public function containsIdentifier(string $sql, string $name): bool
+    {
+        foreach ($this->tokenize($sql) as $token) {
+            if ("'" !== $sql[$token['start']] && 0 === strcasecmp($token['text'], $name)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public function containsKeyword(string $sql, string $keyword): bool
+    {
+        foreach ($this->tokenize($sql) as $token) {
+            if ($this->isToken($token, $keyword)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /** Whether an explicit index can be reconstructed from a simple column list. */
+    public function isSimpleIndex(string $sql): bool
+    {
+        $tokens = $this->tokenize($sql);
+        foreach ($tokens as $index => $token) {
+            if (false === $this->isToken($token, 'ON')) {
+                continue;
+            }
+            $index += 2; // ON table
+            if (isset($tokens[$index]) && $this->isToken($tokens[$index], '.')) {
+                $index += 2;
+            }
+            if (false === isset($tokens[$index]) || false === $this->isToken($tokens[$index], '(')) {
+                return false;
+            }
+            $expectColumn = true;
+            for ($index++; $index < count($tokens); $index++) {
+                $token = $tokens[$index];
+                if ($this->isToken($token, ')')) {
+                    return false === $expectColumn &&
+                        (false === isset($tokens[$index + 1]) || $this->isToken($tokens[$index + 1], ';'));
+                }
+                if ($expectColumn) {
+                    if ("'" === $sql[$token['start']] ||
+                        (false === $token['quoted'] && 1 !== preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*$/', $token['text']))) {
+                        return false;
+                    }
+                } elseif (false === $this->isToken($token, ',')) {
+                    return false;
+                }
+                $expectColumn = !$expectColumn;
+            }
+        }
+
+        return false;
+    }
+
+    /** @param array<array{text: string, start: int, end: int, quoted: bool}> $tokens */
+    private function isColumnDefinition(array $tokens): bool
+    {
+        return [] !== $tokens && ($tokens[0]['quoted'] || false === in_array(
+            strtoupper($tokens[0]['text']), ['CONSTRAINT', 'PRIMARY', 'UNIQUE', 'CHECK', 'FOREIGN'], true,
+        ));
+    }
+
+    /** @param array<array{text: string, start: int, end: int, quoted: bool}> $tokens */
+    private function getBodyEnd(array $tokens): int
+    {
+        $depth = 0;
+        foreach ($tokens as $token) {
+            if ($this->isToken($token, '(')) {
+                $depth++;
+            } elseif ($this->isToken($token, ')') && 0 === --$depth) {
+                return $token['end'];
+            }
+        }
+
+        throw new SchemaException('Cannot find the end of SQLite CREATE TABLE definitions');
     }
 
     /**
@@ -236,7 +449,7 @@ final class CreateTableParser
 
     /**
      * @param array<array{text: string, start: int, end: int, quoted: bool}> $tokens
-     * @return array<array{name: ?string, expression: string}>
+     * @return array<array{name: ?string, expression: string, start: int, end: int}>
      */
     private function parseChecks(string $sql, array $tokens): array
     {
@@ -288,6 +501,8 @@ final class CreateTableParser
             $checks[] = [
                 'name' => $name,
                 'expression' => substr($sql, $tokens[$open]['end'], $tokens[$index]['start'] - $tokens[$open]['end']),
+                'start' => null !== $name ? $tokens[$open - 3]['start'] : $token['start'],
+                'end' => $tokens[$index]['end'],
             ];
         }
 
