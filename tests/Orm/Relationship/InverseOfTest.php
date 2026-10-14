@@ -497,6 +497,23 @@ class InverseOfTest extends TestCase
         $this->assertCount(0, $connection->fetchAll('SELECT * FROM inverse_child'));
         $this->assertCount(1, $connection->fetchAll('SELECT * FROM inverse_parent'));
     }
+
+    public function testEachDirectionQueriesItsOwnTargetAndDoesNotInvertAFilteredSet(): void
+    {
+        $connection = $this->orm->getConnection();
+        $connection->execute('INSERT INTO inverse_parent VALUES (1, 10)');
+        $connection->execute('INSERT INTO inverse_child VALUES (2, 20, 1, NULL), (3, 21, 1, NULL)');
+        $this->orm->getMapper(InverseParent::class)->getRelationships()
+            ->hasMany(InverseChild::class, 'children', ['id' => 'parent_id'])->whereEquals(['tenant' => 20]);
+        $this->orm->getMapper(InverseChild::class)->getRelationships()->addDeclaration(new Mapping\InverseOf(
+            InverseParent::class, 'parent', 'children', where: ['tenant' => 10],
+        ));
+        $parent = InverseParent::find(1);
+        $this->assertCount(1, $parent->children);
+        $this->assertEquals(2, $parent->children->first()->id);
+        $this->assertEquals(1, InverseChild::find(3)->parent->id);
+        $this->assertEquals(1, $parent->children->first()->parent->id);
+    }
 }
 
 #[Mapping\Table('inverse_parent')]

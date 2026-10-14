@@ -185,10 +185,10 @@ class RelationshipsTest extends AbstractTestCase
         $relationships->hasMany(stdClass::class, 'foo', []);
     }
 
-    public function testBelongsTo(): void
+    public function testInverseOf(): void
     {
         $relationships = new Relationships(Language::class);
-        $relation = $relationships->belongsTo(Film::class, 'films', 'language');
+        $relation = $relationships->inverseOf(Film::class, 'films', 'language');
 
         $this->assertInstanceOf(OneToMany::class, $relation);
     }

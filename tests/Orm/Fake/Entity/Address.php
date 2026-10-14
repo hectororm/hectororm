@@ -13,12 +13,12 @@
 namespace Hector\Orm\Tests\Fake\Entity;
 
 use DateTime;
-use Hector\Orm\Attributes\BelongsTo;
+use Hector\Orm\Attributes\InverseOf;
 use Hector\Orm\Attributes\HasOne;
 use Hector\Orm\Entity\Entity;
 
 #[HasOne(City::class, 'city')]
-#[BelongsTo(Customer::class, 'customers')]
+#[InverseOf(Customer::class, 'customers', 'address', orphanRemoval: true)]
 class Address extends Entity
 {
     public ?int $address_id = null;

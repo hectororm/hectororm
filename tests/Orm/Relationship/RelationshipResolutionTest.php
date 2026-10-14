@@ -582,13 +582,13 @@ class RelationshipResolutionTest extends TestCase
 
 #[OrmAttribute\Table('resolution_category')]
 #[OrmAttribute\HasOne(ResolutionConcreteFirstCategory::class, 'parent', ['parent_id' => 'id'])]
-#[OrmAttribute\BelongsTo(ResolutionConcreteFirstCategory::class, 'children', 'parent')]
+#[OrmAttribute\InverseOf(ResolutionConcreteFirstCategory::class, 'children', 'parent')]
 class ResolutionConcreteFirstCategory extends MagicEntity
 {
 }
 
 #[OrmAttribute\Table('resolution_category')]
-#[OrmAttribute\BelongsTo(ResolutionInverseFirstCategory::class, 'children', 'parent')]
+#[OrmAttribute\InverseOf(ResolutionInverseFirstCategory::class, 'children', 'parent')]
 #[OrmAttribute\HasOne(ResolutionInverseFirstCategory::class, 'parent', ['parent_id' => 'id'])]
 class ResolutionInverseFirstCategory extends MagicEntity
 {
@@ -602,7 +602,7 @@ class ResolutionInvalidCategory extends MagicEntity
 }
 
 #[OrmAttribute\Table('resolution_parent')]
-#[OrmAttribute\BelongsTo(ResolutionChild::class, 'children', 'parent')]
+#[OrmAttribute\InverseOf(ResolutionChild::class, 'children', 'parent')]
 class ResolutionParent extends MagicEntity
 {
 }
@@ -615,8 +615,8 @@ class ResolutionChild extends MagicEntity
 }
 
 #[OrmAttribute\Table('resolution_parent')]
-#[OrmAttribute\BelongsTo(ResolutionChainRight::class, 'first', 'second')]
-#[OrmAttribute\BelongsTo(ResolutionChainRight::class, 'third', 'parent')]
+#[OrmAttribute\InverseOf(ResolutionChainRight::class, 'first', 'second')]
+#[OrmAttribute\InverseOf(ResolutionChainRight::class, 'third', 'parent')]
 class ResolutionChainLeft extends MagicEntity
 {
 }
@@ -713,7 +713,7 @@ class ResolutionCustomInverse extends OrmAttribute\RelationshipAttribute
 {
     protected function addRelationship(Relationships $relationships): Relationship
     {
-        return $relationships->belongsTo($this->target, $this->name, $this->params['foreignName']);
+        return $relationships->inverseOf($this->target, $this->name, $this->params['foreignName']);
     }
 
     protected function addClauses(Relationship $relationship): void

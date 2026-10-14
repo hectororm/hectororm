@@ -50,12 +50,12 @@ class BelongsToTest extends AbstractTestCase
 
     public function testInit(): void
     {
-        $attribute = new BelongsTo(Customer::class, 'customer', 'address');
-        $relationships = new Relationships(Address::class);
+        $attribute = new BelongsTo(Address::class, 'address', 'customers');
+        $relationships = new Relationships(Customer::class);
         $attribute->init($relationships);
 
-        $this->assertInstanceOf(Relationship::class, $relationships->get('customer'));
-        $this->assertEquals('customer', $relationships->get('customer')->getName());
-        $this->assertEquals(Customer::class, $relationships->get('customer')->getTargetEntity());
+        $this->assertInstanceOf(Relationship::class, $relationships->get('address'));
+        $this->assertEquals('address', $relationships->get('address')->getName());
+        $this->assertEquals(Address::class, $relationships->get('address')->getTargetEntity());
     }
 }
