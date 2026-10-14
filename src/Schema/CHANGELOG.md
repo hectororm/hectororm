@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Named CHECK plan operations (`addCheck()` / `dropCheck()`) with non-empty input validation, CREATE compilation on MySQL/MariaDB/SQLite and native ALTER compilation on supported MySQL/MariaDB versions. MySQL-family CHECK compilation requires explicit enforcement capabilities, including for offline compilers
 - CHECK introspection for MySQL/MariaDB and SQLite, preserving MySQL enforcement state and SQLite named/unnamed column and table constraints. Unsupported catalogs (including older MariaDB versions without `CHECK_CONSTRAINTS`) retain unknown metadata
 - `CheckConstraint` metadata with nullable names, verbatim SQL expressions and nullable enforcement state; `Table` CHECK accessors and serialization preserve unnamed constraints and distinguish unavailable metadata from a known empty list, including when reading older serialized schemas
 - `Generated` value object and `generated: Generated|string|null` on column operations, `addColumn()` and `modifyColumn()`. Strings declare VIRTUAL columns; `new Generated($expression, stored: true)` declares STORED columns on MySQL/MariaDB and SQLite 3.31+. Generated columns reject explicit defaults, AUTO_INCREMENT and useCurrentOnUpdate

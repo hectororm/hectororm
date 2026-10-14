@@ -23,6 +23,10 @@ use Hector\Schema\Plan\Compiler\Dialect\MySQLDialect;
  * Thin convenience wrapper around {@see Compiler} configured with the
  * {@see MySQLDialect}. Kept for backward compatibility; new code may use
  * `new Compiler(new MySQLDialect($capabilities))` directly.
+ *
+ * CHECK operations require explicit capabilities for the intended engine/version.
+ * Offline callers can obtain them from DriverInfo::getCapabilities(); omitting
+ * capabilities must not assume a recent MySQL server that enforces constraints.
  */
 final class MySQLCompiler extends Compiler
 {

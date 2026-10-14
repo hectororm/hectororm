@@ -21,6 +21,7 @@ use Hector\Schema\Plan\DropTable;
 use Hector\Schema\Plan\DropTrigger;
 use Hector\Schema\Plan\DropView;
 use Hector\Schema\Plan\MigrateData;
+use Hector\Schema\Plan\Operation\AddCheck;
 use Hector\Schema\Plan\Operation\AddColumn;
 use Hector\Schema\Plan\Operation\AddForeignKey;
 use Hector\Schema\Plan\Operation\DropForeignKey;
@@ -175,6 +176,34 @@ abstract class AbstractDialect implements DialectInterface
     protected function quoteIdentifiers(array $names): string
     {
         return implode(', ', array_map(fn(string $name): string => $this->quoteIdentifier($name), $names));
+    }
+
+    /**
+     * Require explicitly established CHECK enforcement support.
+     *
+     * @throws PlanException
+     */
+    protected function assertCheckConstraintsSupported(): void
+    {
+        if (null === $this->capabilities || false === $this->capabilities->hasCheckConstraints()) {
+            throw new PlanException(
+                'CHECK constraints require capabilities confirming enforcement support for the target engine/version',
+            );
+        }
+    }
+
+    /**
+     * Compile a named CHECK definition for CREATE TABLE or ALTER TABLE.
+     */
+    protected function compileCheckDefinition(AddCheck $operation): string
+    {
+        $this->assertCheckConstraintsSupported();
+
+        return sprintf(
+            'CONSTRAINT %s CHECK (%s)',
+            $this->quoteIdentifier($operation->getName()),
+            $operation->getExpression(),
+        );
     }
 
     /**

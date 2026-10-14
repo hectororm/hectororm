@@ -17,6 +17,7 @@ namespace Hector\Schema\Plan;
 use Hector\Schema\Column;
 use Hector\Schema\ForeignKey;
 use Hector\Schema\Index;
+use Hector\Schema\Plan\Operation\DropCheck;
 use Hector\Schema\Plan\Operation\DropColumn;
 use Hector\Schema\Plan\Operation\DropForeignKey;
 use Hector\Schema\Plan\Operation\DropIndex;
@@ -27,6 +28,20 @@ use Hector\Schema\Plan\Operation\RenameTable;
 
 final class AlterTable extends TableOperation
 {
+    /**
+     * Drop a named CHECK constraint.
+     *
+     * @param string $name
+     *
+     * @return static
+     */
+    public function dropCheck(string $name): static
+    {
+        $this->add(new DropCheck(table: $this->getObjectName(), name: $name));
+
+        return $this;
+    }
+
     /**
      * Drop a column.
      *

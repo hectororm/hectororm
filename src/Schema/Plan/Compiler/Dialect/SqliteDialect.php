@@ -26,9 +26,11 @@ use Hector\Schema\Plan\Compiler\Dialect\Sqlite\TableRebuilder;
 use Hector\Schema\Plan\CreateTable;
 use Hector\Schema\Plan\CreateTrigger;
 use Hector\Schema\Plan\CreateView;
+use Hector\Schema\Plan\Operation\AddCheck;
 use Hector\Schema\Plan\Operation\AddColumn;
 use Hector\Schema\Plan\Operation\AddForeignKey;
 use Hector\Schema\Plan\Operation\AddIndex;
+use Hector\Schema\Plan\Operation\DropCheck;
 use Hector\Schema\Plan\Operation\DropColumn;
 use Hector\Schema\Plan\Operation\DropIndex;
 use Hector\Schema\Plan\Operation\ModifyCharset;
@@ -94,6 +96,17 @@ final class SqliteDialect extends AbstractDialect
     protected function getIdentifierQuote(): string
     {
         return '"';
+    }
+
+    /**
+     * Selecting the SQLite dialect establishes native CHECK support even offline.
+     * Explicit capabilities may still deny it (e.g. a custom SQLite build).
+     */
+    protected function assertCheckConstraintsSupported(): void
+    {
+        if (null !== $this->capabilities) {
+            parent::assertCheckConstraintsSupported();
+        }
     }
 
     /**
@@ -176,6 +189,11 @@ final class SqliteDialect extends AbstractDialect
             array_filter($operations, fn($op): bool => $op instanceof AddForeignKey),
         ));
 
+        array_push($definitions, ...array_map(
+            fn(AddCheck $op): string => $this->compileCheckDefinition($op),
+            array_filter($operations, fn($op): bool => $op instanceof AddCheck),
+        ));
+
         $statements = [];
 
         if ([] !== $definitions) {
@@ -203,6 +221,12 @@ final class SqliteDialect extends AbstractDialect
     {
         // Validate operations
         $this->validateAlterOperations($alterTable);
+
+        foreach ($alterTable as $operation) {
+            if ($operation instanceof AddCheck || $operation instanceof DropCheck) {
+                $this->rejectNativeCheckAlter($operation, $context->schema);
+            }
+        }
 
         if (null !== $context->schema && $this->rebuilder->isRequired($alterTable)) {
             yield from $this->rebuilder->compile($alterTable, $context);
@@ -266,6 +290,10 @@ final class SqliteDialect extends AbstractDialect
     ): array {
         $quotedTable = $this->quoteIdentifier($tableName);
 
+        if ($operation instanceof AddCheck || $operation instanceof DropCheck) {
+            $this->rejectNativeCheckAlter($operation, $schema);
+        }
+
         if ($operation instanceof AddColumn || $operation instanceof ModifyColumn) {
             $this->validateColumnOperation($operation);
             if ($operation->isGenerated() &&
@@ -316,6 +344,28 @@ final class SqliteDialect extends AbstractDialect
             ModifyCharset::class => [], // Silently ignored on SQLite
             default => [],
         };
+    }
+
+    /**
+     * CHECK changes must never fall through to unsupported native ALTER SQL or be ignored.
+     *
+     * @throws PlanException
+     */
+    private function rejectNativeCheckAlter(AddCheck|DropCheck $operation, ?Schema $schema): void
+    {
+        $this->assertCheckConstraintsSupported();
+        $tableName = $operation->getObjectName();
+        if (null === $schema) {
+            throw new PlanException('SQLite CHECK alteration requires a table rebuild with an existing schema');
+        }
+        if (false === $schema->hasTable($tableName)) {
+            throw new PlanException(sprintf('Cannot rebuild SQLite table "%s": missing from the schema', $tableName));
+        }
+        if (false === $schema->getTable($tableName)->hasCheckMetadata()) {
+            throw new PlanException(sprintf('SQLite table "%s" requires complete CHECK metadata to rebuild', $tableName));
+        }
+
+        throw new PlanException('SQLite CHECK alteration requires table rebuild support');
     }
 
     /**
