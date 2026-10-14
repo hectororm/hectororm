@@ -75,4 +75,26 @@ class MySQLCapabilities implements DriverCapabilities
     {
         return false;
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function hasCheckConstraints(): bool
+    {
+        if ('mysql' !== $this->driverInfo->getDriver() ||
+            1 !== preg_match('/^(\d+\.\d+\.\d+)(?:[-+].*)?$/', $this->driverInfo->getVersion(), $matches)) {
+            return false;
+        }
+
+        // Server suffixes such as "-log" are not prerelease version qualifiers.
+        return version_compare($matches[1], '8.0.16', '>=');
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function hasDropCheck(): bool
+    {
+        return $this->hasCheckConstraints();
+    }
 }

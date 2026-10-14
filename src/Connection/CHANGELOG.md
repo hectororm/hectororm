@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added `DriverCapabilities::hasCheckConstraints()` for enforced CHECK support (MySQL 8.0.16+, MariaDB 10.2.1+, SQLite and PostgreSQL) and `DriverCapabilities::hasDropCheck()` for native `DROP CHECK` syntax detection. **Note:** these additions break compatibility with third-party implementations of `DriverCapabilities`, which must implement both methods
 - Added `SQLiteCapabilities::hasGeneratedColumns()` to detect support for VIRTUAL and STORED generated columns (SQLite 3.31.0 or newer)
 - Added an `$options` parameter to `Connection::__construct()` to pass driver-specific PDO connection options (the PDO constructor `$options` array), shared by both the read/write and read-only connections and preserved across serialization. **Note:** options such as `PDO::ATTR_AUTOCOMMIT` or `PDO::ATTR_ERRMODE` may interfere with the internal transaction handling and should not be altered lightly
 

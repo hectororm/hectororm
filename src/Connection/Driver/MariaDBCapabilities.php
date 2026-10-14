@@ -75,4 +75,25 @@ class MariaDBCapabilities implements DriverCapabilities
     {
         return false;
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function hasCheckConstraints(): bool
+    {
+        if ('mariadb' !== $this->driverInfo->getDriver() ||
+            1 !== preg_match('/^(\d+\.\d+\.\d+)(?:[-+].*)?$/', $this->driverInfo->getVersion(), $matches)) {
+            return false;
+        }
+
+        return version_compare($matches[1], '10.2.1', '>=');
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function hasDropCheck(): bool
+    {
+        return false;
+    }
 }
