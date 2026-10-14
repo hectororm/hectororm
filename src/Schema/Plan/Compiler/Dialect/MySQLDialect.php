@@ -411,6 +411,8 @@ final class MySQLDialect extends AbstractDialect
             $type .= ' unsigned';
         }
 
+        $type .= $this->compileColumnTextOptions($column->getCharset(), $column->getCollation());
+
         $expression = $column->getGenerationExpression();
         if (null !== $expression) {
             return $this->compileGeneratedColumnDefinition(

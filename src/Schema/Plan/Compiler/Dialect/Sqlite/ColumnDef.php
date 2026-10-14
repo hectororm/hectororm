@@ -33,6 +33,7 @@ final class ColumnDef
      * @param bool                  $hasDefault
      * @param bool                  $autoIncrement
      * @param Generated|null        $generated
+     * @param string|null           $collation
      */
     public function __construct(
         public string $name,
@@ -42,6 +43,7 @@ final class ColumnDef
         public bool $hasDefault,
         public bool $autoIncrement,
         public ?Generated $generated = null,
+        public ?string $collation = null,
     ) {
     }
 
@@ -67,6 +69,7 @@ final class ColumnDef
             hasDefault: null !== $column->getDefault(),
             autoIncrement: $column->isAutoIncrement(),
             generated: null !== $expression ? new Generated($expression, $column->isGeneratedStored()) : null,
+            collation: $column->getCollation(),
         );
     }
 
@@ -87,6 +90,7 @@ final class ColumnDef
             hasDefault: $operation->hasDefault(),
             autoIncrement: $operation->isAutoIncrement(),
             generated: $operation->getGenerated(),
+            collation: $operation->getCollation(),
         );
     }
 

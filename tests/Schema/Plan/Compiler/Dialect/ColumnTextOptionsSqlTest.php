@@ -16,14 +16,46 @@ namespace Hector\Schema\Tests\Plan\Compiler\Dialect;
 
 use Hector\Connection\Driver\DriverInfo;
 use Hector\Connection\Driver\MariaDBCapabilities;
+use Hector\Connection\Driver\MySQLCapabilities;
+use Hector\Schema\Column;
 use Hector\Schema\Plan\Compiler\MySQLCompiler;
 use Hector\Schema\Plan\Compiler\SqliteCompiler;
 use Hector\Schema\Plan\Generated;
 use Hector\Schema\Plan\Plan;
+use Hector\Schema\Schema;
+use Hector\Schema\Table;
 use PHPUnit\Framework\TestCase;
 
 class ColumnTextOptionsSqlTest extends TestCase
 {
+    /** @dataProvider legacyDefinitions */
+    public function testLegacyRenamePreservesTextOptions(bool $mariaDb, bool $generated): void
+    {
+        $column = new Column('reference', 0, null, false, 'char', maxlength: 36,
+            charset: 'ascii', collation: 'ascii_bin', generation_expression: $generated ? "'abc'" : null);
+        $table = new Table('main', Table::TYPE_TABLE, 'items', columns: ['reference' => $column]);
+        $schema = new Schema('default', 'main', 'utf8mb4', tables: ['items' => $table]);
+        $compiler = new MySQLCompiler($mariaDb
+            ? new MariaDBCapabilities(new DriverInfo('mariadb', '10.5.1'))
+            : new MySQLCapabilities(new DriverInfo('mysql', '5.7.44')));
+        $plan = new Plan();
+        $plan->alter('items')->renameColumn('reference', 'code');
+
+        $suffix = $generated ? " GENERATED ALWAYS AS ('abc') VIRTUAL" : '';
+        if (false === $generated || false === $mariaDb) {
+            $suffix .= ' NOT NULL';
+        }
+        $this->assertSame([
+            'ALTER TABLE `items` CHANGE COLUMN `reference` `code` char(36) CHARACTER SET `ascii` COLLATE `ascii_bin`'
+            . $suffix,
+        ], [...$plan->getStatements($compiler, $schema)]);
+    }
+
+    public static function legacyDefinitions(): array
+    {
+        return [[false, false], [false, true], [true, false], [true, true]];
+    }
+
     /** @dataProvider mysqlOptions */
     public function testMysqlCreateAddAndModify(?string $charset, ?string $collation, string $options): void
     {
