@@ -123,9 +123,16 @@ class Relationships implements Countable
     {
         // Given name so... more simple to found :)
         if (null !== $name) {
+            $this->assertExists($name);
+            $candidate = $this->list[$name] ?? $this->declarations[$name];
+            $target = $candidate instanceof Relationship ? $candidate->getTargetEntity() : $candidate->target;
+            if ($target !== $foreignEntity) {
+                throw RelationException::notFoundBetween($this->entity->getName(), $foreignEntity);
+            }
+
             $relation = $this->get($name);
 
-            if (null !== $relation && $relation->getTargetEntity() === $foreignEntity) {
+            if ($relation->getTargetEntity() === $foreignEntity) {
                 return $relation;
             }
 
@@ -142,14 +149,16 @@ class Relationships implements Countable
                 continue;
             }
 
-            $relationship = $this->get((string)$relationshipName);
-
-            // Search columns if given
-            if (null !== $columns && $relationship->getSourceColumns() != $columns) {
-                continue;
+            // Inspect available column metadata before resolving a candidate. In particular,
+            // an in-progress relationship with different columns is not a dependency of this lookup.
+            if (null !== $columns) {
+                $relationship = $candidate instanceof Relationship ? $candidate : $this->get((string)$relationshipName);
+                if ($relationship->getSourceColumns() != $columns) {
+                    continue;
+                }
             }
 
-            $relationshipFounds[] = $relationship;
+            $relationshipFounds[] = (string)$relationshipName;
         }
 
         // If more than one result, it's ambiguous, and need to more descriptive
@@ -159,7 +168,7 @@ class Relationships implements Countable
 
         // Return only result of relationship array
         if (count($relationshipFounds) === 1) {
-            return reset($relationshipFounds);
+            return $this->get(reset($relationshipFounds));
         }
 
         throw RelationException::notFoundBetween($this->entity->getName(), $foreignEntity);

@@ -22,6 +22,7 @@ use Hector\Orm\Attributes as OrmAttribute;
 use Hector\Orm\Entity\MagicEntity;
 use Hector\Orm\Entity\ReflectionEntity;
 use Hector\Orm\Exception\RelationException;
+use Hector\Orm\Mapper\MagicMapper;
 use Hector\Orm\Orm;
 use Hector\Orm\Relationship\ManyToOne;
 use Hector\Orm\Relationship\OneToMany;
@@ -395,6 +396,188 @@ class RelationshipResolutionTest extends TestCase
             }
         }
     }
+
+    public function testNamedTargetMismatchIsDiagnosedBeforeResolvingDependencies(): void
+    {
+        $relationships = $this->orm->getMapper(ResolutionCycleParent::class)->getRelationships();
+
+        $this->expectException(RelationException::class);
+        $this->expectExceptionMessage(
+            sprintf('Relationship not found between "%s" and "%s"', ResolutionCycleParent::class, ResolutionParent::class),
+        );
+        $relationships->getWith(ResolutionParent::class, 'children');
+    }
+
+    /** @dataProvider lookupCacheProvider */
+    public function testUnnamedAmbiguityIncludesUnconstructedDeclarations(bool $warmCache): void
+    {
+        $relationships = new Relationships(ResolutionConcreteFirstCategory::class);
+        $relationships->addDeclaration(new OrmAttribute\HasOne(
+            ResolutionConcreteFirstCategory::class,
+            'concrete',
+            ['parent_id' => 'id'],
+        ));
+        $relationships->addDeclaration(new OrmAttribute\BelongsTo(
+            ResolutionConcreteFirstCategory::class,
+            'invalid',
+            'missing',
+        ));
+        if ($warmCache) {
+            $relationships->get('concrete');
+        }
+
+        $this->expectException(RelationException::class);
+        $this->expectExceptionMessage('Ambiguous relationship between');
+        $relationships->getWith(ResolutionConcreteFirstCategory::class);
+    }
+
+    public function lookupCacheProvider(): array
+    {
+        return ['cold cache' => [false], 'partially constructed' => [true]];
+    }
+
+    public function testUnnamedLookupDoesNotResolveDeclarationsForOtherTargets(): void
+    {
+        $relationships = new Relationships(ResolutionConcreteFirstCategory::class);
+        $relationships->addDeclaration(new OrmAttribute\BelongsTo(
+            ResolutionCycleParent::class,
+            'unrelated',
+            'children',
+        ));
+        $relationships->addDeclaration(new OrmAttribute\HasOne(
+            ResolutionConcreteFirstCategory::class,
+            'parent',
+            ['parent_id' => 'id'],
+        ));
+
+        $this->assertSame('parent', $relationships->getWith(ResolutionConcreteFirstCategory::class)->getName());
+        $this->assertCount(2, $relationships);
+    }
+
+    public function testColumnFilteredLookupSkipsUnrelatedInProgressRelationship(): void
+    {
+        $relationships = new Relationships(ResolutionObservedCategory::class);
+        $relationships->addDeclaration(new ResolutionObservedHasMany(
+            ResolutionObservedCategory::class,
+            'children',
+            ['id' => 'parent_id'],
+        ));
+        $relationships->addDeclaration(new OrmAttribute\HasOne(
+            ResolutionObservedCategory::class,
+            'parent',
+            ['parent_id' => 'id'],
+        ));
+        $found = null;
+        ResolutionObservedHasMany::$onClauses = static function () use ($relationships, &$found): void {
+            $found = $relationships->getWith(ResolutionObservedCategory::class, columns: ['parent_id']);
+        };
+
+        $this->assertInstanceOf(OneToMany::class, $relationships->get('children'));
+        $this->assertSame($relationships->get('parent'), $found);
+        $this->assertCount(2, $relationships);
+    }
+
+    /** @dataProvider lookupCacheProvider */
+    public function testColumnFilterSelectsAmongDeclaredRelationships(bool $warmCache): void
+    {
+        $relationships = $this->orm->getMapper(ResolutionInverseFirstCategory::class)->getRelationships();
+        if ($warmCache) {
+            $relationships->get('children');
+        }
+
+        $parent = $relationships->getWith(ResolutionInverseFirstCategory::class, columns: ['parent_id']);
+        $children = $relationships->getWith(ResolutionInverseFirstCategory::class, columns: ['id']);
+        $this->assertSame($relationships->get('parent'), $parent);
+        $this->assertSame($relationships->get('children'), $children);
+        // A supplied name historically takes precedence over the optional column filter.
+        $this->assertSame(
+            $parent,
+            $relationships->getWith(ResolutionInverseFirstCategory::class, 'parent', ['id']),
+        );
+    }
+
+    public function testColumnFilterRetainsAmbiguityDiagnostic(): void
+    {
+        $relationships = new Relationships(ResolutionConcreteFirstCategory::class);
+        foreach (['first', 'second'] as $name) {
+            $relationships->addDeclaration(new OrmAttribute\HasOne(
+                ResolutionConcreteFirstCategory::class,
+                $name,
+                ['parent_id' => 'id'],
+            ));
+        }
+
+        $this->expectException(RelationException::class);
+        $this->expectExceptionMessage('Ambiguous relationship between');
+        $relationships->getWith(ResolutionConcreteFirstCategory::class, columns: ['parent_id']);
+    }
+
+    public function testColumnFilterRetainsNotFoundDiagnostic(): void
+    {
+        $relationships = $this->orm->getMapper(ResolutionInverseFirstCategory::class)->getRelationships();
+
+        $this->expectException(RelationException::class);
+        $this->expectExceptionMessage('Relationship not found between');
+        $relationships->getWith(ResolutionInverseFirstCategory::class, columns: ['unknown']);
+    }
+
+    public function testProgrammaticReplacementControlsTargetLookupAndCount(): void
+    {
+        $relationships = new Relationships(ResolutionParent::class);
+        $relationships->addDeclaration(new OrmAttribute\HasOne(ResolutionChild::class, '0', ['id' => 'id']));
+        $replacement = $relationships->hasOne(ResolutionConcreteFirstCategory::class, '0', ['id' => 'id']);
+
+        $this->assertCount(1, $relationships);
+        $this->assertTrue($relationships->exists('0'));
+        $this->assertSame($replacement, $relationships->get('0'));
+        $this->assertSame($replacement, $relationships->getWith(ResolutionConcreteFirstCategory::class));
+        $this->expectException(RelationException::class);
+        $this->expectExceptionMessage('Relationship not found between');
+        $relationships->getWith(ResolutionChild::class);
+    }
+
+    public function testCustomRelationshipAttributeRetainsConstructionAndClauseHooks(): void
+    {
+        $relationships = $this->orm->getMapper(ResolutionCustomAttributeCategory::class)->getRelationships();
+        $children = $relationships->get('children');
+
+        $this->assertInstanceOf(OneToMany::class, $children);
+        $this->assertSame(['id'], $children->getSourceColumns());
+        $this->assertSame(['parent_id'], $children->getTargetColumns());
+        $this->assertCount(2, $children->order);
+        $this->assertSame($children, $relationships->get('children'));
+        $this->assertCount(2, $relationships);
+    }
+
+    public function testInverseResolutionUsesCustomMapperExtensions(): void
+    {
+        $child = $this->orm->getMapper(ResolutionMapperChild::class)->getRelationships();
+        $parent = $child->get('parent');
+        $mapper = $this->orm->getMapper(ResolutionMapperParent::class);
+        $relationships = $mapper->getRelationships();
+
+        $this->assertInstanceOf(ResolutionCustomMapper::class, $mapper);
+        $this->assertInstanceOf(ManyToOne::class, $parent);
+        $this->assertSame(['parent_id'], $parent->getSourceColumns());
+        $this->assertCount(2, $relationships);
+        $this->assertCount(1, $relationships->get('attribute')->order);
+        $this->assertCount(1, $relationships->get('programmatic')->order);
+        $this->assertSame($relationships, $mapper->getRelationships());
+        $this->assertSame($parent, $child->get('parent'));
+    }
+
+    public function testLoadingCollectionSetsInverseUsingColumnFilteredLookup(): void
+    {
+        $this->orm->getConnection()->execute('INSERT INTO resolution_category VALUES (1, NULL), (2, 1)');
+        $parent = ResolutionInverseFirstCategory::find(1);
+        $children = $parent->children;
+
+        $this->assertCount(1, $children);
+        foreach ($children as $child) {
+            $this->assertCount(1, $child->getRelated());
+            $this->assertSame($parent, $child->parent);
+        }
+    }
 }
 
 #[OrmAttribute\Table('resolution_category')]
@@ -522,5 +705,60 @@ class ResolutionObservedCategory extends MagicEntity
 #[OrmAttribute\Table('resolution_category')]
 #[OrmAttribute\HasOne(ResolutionInvalidOptionCategory::class, 'parent', ['parent_id' => 'id'], orphanRemoval: true)]
 class ResolutionInvalidOptionCategory extends MagicEntity
+{
+}
+
+#[Attribute(Attribute::TARGET_CLASS | Attribute::IS_REPEATABLE)]
+class ResolutionCustomInverse extends OrmAttribute\RelationshipAttribute
+{
+    protected function addRelationship(Relationships $relationships): Relationship
+    {
+        return $relationships->belongsTo($this->target, $this->name, $this->params['foreignName']);
+    }
+
+    protected function addClauses(Relationship $relationship): void
+    {
+        parent::addClauses($relationship);
+        $relationship->orderBy('parent_id');
+    }
+}
+
+#[OrmAttribute\Table('resolution_category')]
+#[ResolutionCustomInverse(
+    ResolutionCustomAttributeCategory::class,
+    'children',
+    ['foreignName' => 'parent', 'orderBy' => ['id']],
+)]
+#[OrmAttribute\HasOne(ResolutionCustomAttributeCategory::class, 'parent', ['parent_id' => 'id'])]
+class ResolutionCustomAttributeCategory extends MagicEntity
+{
+}
+
+class ResolutionCustomMapper extends MagicMapper
+{
+    public function getRelationships(): Relationships
+    {
+        if (null !== $this->relationships) {
+            return $this->relationships;
+        }
+
+        $relationships = parent::getRelationships();
+        $relationships->get('attribute')->orderBy('id');
+        $relationships->hasMany(ResolutionMapperChild::class, 'programmatic', ['id' => 'parent_id'])->orderBy('id');
+
+        return $relationships;
+    }
+}
+
+#[OrmAttribute\Table('resolution_parent')]
+#[OrmAttribute\Mapper(ResolutionCustomMapper::class)]
+#[OrmAttribute\HasMany(ResolutionMapperChild::class, 'attribute', ['id' => 'parent_id'])]
+class ResolutionMapperParent extends MagicEntity
+{
+}
+
+#[OrmAttribute\Table('resolution_child')]
+#[OrmAttribute\BelongsTo(ResolutionMapperParent::class, 'parent', 'programmatic')]
+class ResolutionMapperChild extends MagicEntity
 {
 }
