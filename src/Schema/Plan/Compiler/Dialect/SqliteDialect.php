@@ -232,6 +232,11 @@ final class SqliteDialect extends AbstractDialect
         }
 
         if (null !== $context->schema && $this->rebuilder->isRequired($alterTable)) {
+            if (in_array(strtolower($alterTable->getObjectName()), array_map('strtolower', $context->modifiedTables), true)) {
+                throw new PlanException(
+                    'SQLite rebuild cannot reuse stale table metadata; combine changes in one alter() or use separate migrations',
+                );
+            }
             yield from $this->rebuilder->compile($alterTable, $context);
 
             // Emit rename after rebuild if present

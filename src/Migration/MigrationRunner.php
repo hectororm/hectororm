@@ -22,7 +22,10 @@ use Hector\Migration\Event\MigrationFailedEvent;
 use Hector\Migration\Exception\MigrationException;
 use Hector\Migration\Provider\MigrationProviderInterface;
 use Hector\Migration\Tracker\MigrationTrackerInterface;
+use Hector\Schema\Generator\Sqlite;
 use Hector\Schema\Plan\Compiler\CompilerInterface;
+use Hector\Schema\Plan\Operation\AddCheck;
+use Hector\Schema\Plan\OperationGroupInterface;
 use Hector\Schema\Plan\Plan;
 use Hector\Schema\Schema;
 use Psr\EventDispatcher\EventDispatcherInterface;
@@ -56,6 +59,8 @@ use Throwable;
  */
 class MigrationRunner
 {
+    private bool $refreshSchema = false;
+
     /**
      * MigrationRunner constructor.
      *
@@ -244,6 +249,7 @@ class MigrationRunner
 
         $startTime = hrtime(true);
         $inTransaction = false;
+        $sqliteForeignKeys = null;
 
         // The migration's own up()/down() (user code building the Plan) is part of the
         // try/catch too, so an exception there is logged, dispatched as a MigrationFailedEvent
@@ -271,16 +277,51 @@ class MigrationRunner
 
             // Plan not empty?
             if (false === $plan->isEmpty()) {
+                if ($this->refreshSchema && null !== $this->schema) {
+                    $this->schema = (new Sqlite($this->connection))->generateSchema($this->schema->getName());
+                    $this->refreshSchema = false;
+                }
+
+                // Finish compilation before executing SQL, including non-transactional DDL.
+                $statements = [...$plan->getStatements($this->compiler, $this->schema)];
+                $sqlite = false === $dryRun && 'sqlite' === $this->connection->getDriverInfo()->getDriver();
+                if ($sqlite) {
+                    $this->assertSqliteCheckEnforcement($plan);
+                    if ([] !== array_filter($statements, fn(string $sql): bool => $this->isSqliteForeignKeyPragma($sql))) {
+                        if ($this->connection->inTransaction()) {
+                            throw new MigrationException('SQLite table rebuilds require their own transaction');
+                        }
+                        $sqliteForeignKeys = (int)$this->connection->getPdo()->query('PRAGMA foreign_keys')->fetchColumn();
+                        $this->connection->execute('PRAGMA foreign_keys = OFF');
+                        $this->logger?->debug(sprintf('[%s] PRAGMA foreign_keys = OFF', $id));
+                        $statements = array_filter($statements, fn(string $sql): bool =>
+                            false === $this->isSqliteForeignKeyPragma($sql));
+                    }
+                }
                 if (false === $dryRun) {
                     $this->connection->beginTransaction();
                     $inTransaction = true;
                 }
 
-                foreach ($plan->getStatements($this->compiler, $this->schema) as $sql) {
+                foreach ($statements as $sql) {
                     $this->logger?->debug(sprintf('%s[%s] %s', $prefix, $id, $sql));
 
                     if (false === $dryRun) {
                         $this->connection->execute($sql);
+                    }
+                }
+
+                if (null !== $sqliteForeignKeys) {
+                    $this->logger?->debug(sprintf('[%s] PRAGMA foreign_key_check', $id));
+                    $violation = $this->connection->fetchOne('PRAGMA foreign_key_check');
+                    if (null !== $violation) {
+                        throw new MigrationException(sprintf(
+                            'SQLite foreign key check failed for table "%s", rowid %s, parent "%s", constraint %s',
+                            $violation['table'],
+                            $violation['rowid'] ?? 'NULL',
+                            $violation['parent'],
+                            $violation['fkid'],
+                        ));
                     }
                 }
 
@@ -294,6 +335,12 @@ class MigrationRunner
                 if (false === $dryRun) {
                     $this->connection->commit();
                     $inTransaction = false;
+                    $this->refreshSchema = $sqlite && null !== $this->schema;
+                }
+                if (null !== $sqliteForeignKeys) {
+                    $this->restoreSqliteForeignKeys($sqliteForeignKeys);
+                    $this->logger?->debug(sprintf('[%s] PRAGMA foreign_keys = %d', $id, $sqliteForeignKeys));
+                    $sqliteForeignKeys = null;
                 }
             }
         } catch (Throwable $e) {
@@ -311,6 +358,16 @@ class MigrationRunner
                         $label,
                         $direction,
                         $rollbackError->getMessage(),
+                    ));
+                }
+            }
+
+            if (null !== $sqliteForeignKeys) {
+                try {
+                    $this->restoreSqliteForeignKeys($sqliteForeignKeys);
+                } catch (Throwable $restoreError) {
+                    $this->logger?->error(sprintf(
+                        'Migration %s could not restore SQLite foreign_keys: %s', $label, $restoreError->getMessage(),
                     ));
                 }
             }
@@ -382,6 +439,32 @@ class MigrationRunner
         );
 
         return true;
+    }
+
+    private function isSqliteForeignKeyPragma(string $sql): bool
+    {
+        return 1 === preg_match('/^\s*PRAGMA\s+(?:main\.)?foreign_keys\s*=\s*(?:ON|OFF|0|1)\s*;?\s*$/i', $sql);
+    }
+
+    private function restoreSqliteForeignKeys(int $value): void
+    {
+        $this->connection->execute('PRAGMA foreign_keys = ' . $value);
+        if ($value !== (int)$this->connection->getPdo()->query('PRAGMA foreign_keys')->fetchColumn()) {
+            throw new MigrationException('Could not restore SQLite foreign_keys outside the migration transaction');
+        }
+    }
+
+    private function assertSqliteCheckEnforcement(Plan $plan): void
+    {
+        foreach ($plan as $entry) {
+            $operations = $entry instanceof OperationGroupInterface ? $entry : [$entry];
+            foreach ($operations as $operation) {
+                if ($operation instanceof AddCheck &&
+                    1 === (int)$this->connection->getPdo()->query('PRAGMA ignore_check_constraints')->fetchColumn()) {
+                    throw new MigrationException('SQLite CHECK enforcement is disabled by ignore_check_constraints');
+                }
+            }
+        }
     }
 
     /**

@@ -105,11 +105,14 @@ class Compiler implements CompilerInterface
         foreach ($plan as $entry) {
             if ($entry instanceof OperationGroupInterface) {
                 yield from $this->compileGroupForPhase($entry, $context, $phase);
-                continue;
+            } elseif ($this->phaseOf($entry) === $phase) {
+                yield from $this->compileOperation($entry, $context);
             }
 
-            if ($this->phaseOf($entry) === $phase) {
-                yield from $this->compileOperation($entry, $context);
+            if (self::PHASE_STRUCTURE === $phase && $this->phaseOf($entry) === $phase &&
+                false === ($entry instanceof RawStatement || $entry instanceof MigrateData ||
+                    $entry instanceof PurgeTable) && null !== $entry->getObjectName()) {
+                $context = $context->withModifiedTable($entry->getObjectName());
             }
         }
     }

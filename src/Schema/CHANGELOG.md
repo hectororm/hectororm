@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Reject SQLite rebuilds that would reuse a schema snapshot after earlier structural changes to the same table in one plan; combine operations in a single `alter()` or use separate migrations
 - Preserve generated expressions and storage modes in the legacy MySQL/MariaDB CHANGE COLUMN rename fallback; avoid reconstructing integer types with decimal precision/scale
 - Preserve SQL expression and quoted literal defaults during SQLite rebuilds. Follow column rename chains, update generated references and index/local foreign-key metadata, and avoid copying dropped-and-readded columns. Reject rebuilds without surviving writable columns and ambiguous keyword rewrites before emitting destructive SQL
 - Preserve column-level `ON UPDATE`, fractional seconds precision and temporal expression defaults when renaming columns via the legacy MySQL `CHANGE COLUMN` fallback

@@ -30,10 +30,12 @@ final class CompilationContext
      * @param bool        $foreignKeyChecksManaged Whether the plan explicitly manages FK checks
      *                                        (contains a DisableForeignKeyChecks entry), so internal
      *                                        mechanisms (e.g. SQLite rebuild) skip their own PRAGMA.
+     * @param string[]    $modifiedTables Tables already changed during this plan's structure phase.
      */
     public function __construct(
         public ?Schema $schema = null,
         public bool $foreignKeyChecksManaged = false,
+        public array $modifiedTables = [],
     ) {
     }
 
@@ -46,6 +48,11 @@ final class CompilationContext
      */
     public function withForeignKeyChecksManaged(bool $managed): self
     {
-        return new self($this->schema, $managed);
+        return new self($this->schema, $managed, $this->modifiedTables);
+    }
+
+    public function withModifiedTable(string $name): self
+    {
+        return new self($this->schema, $this->foreignKeyChecksManaged, array_merge($this->modifiedTables, [$name]));
     }
 }
