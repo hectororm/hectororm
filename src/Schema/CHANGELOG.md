@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `CheckConstraint` metadata with nullable names, verbatim SQL expressions and nullable enforcement state; `Table` CHECK accessors and serialization preserve unnamed constraints and distinguish unavailable metadata from a known empty list, including when reading older serialized schemas
 - `Generated` value object and `generated: Generated|string|null` on column operations, `addColumn()` and `modifyColumn()`. Strings declare VIRTUAL columns; `new Generated($expression, stored: true)` declares STORED columns on MySQL/MariaDB and SQLite 3.31+. Generated columns reject explicit defaults, AUTO_INCREMENT and useCurrentOnUpdate
 - Generated-column introspection (`Column::getGenerationExpression()`, `isGenerated()`, `isGeneratedStored()`) with backward-compatible serialization. SQLite uses `table_xinfo` and token-aware extraction of generation expressions; hidden virtual-table implementation columns remain excluded
 - Automatic SQLite table rebuilds for STORED column additions, preserving generated definitions and recalculating generated destinations instead of copying their values
