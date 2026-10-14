@@ -22,6 +22,7 @@ use Hector\Schema\Plan\Generated;
 use Hector\Schema\Plan\Operation\AddCheck;
 use Hector\Schema\Plan\Plan;
 use Hector\Schema\Schema;
+use PDO;
 use PDOException;
 use PHPUnit\Framework\TestCase;
 
@@ -31,7 +32,8 @@ class CheckRebuildTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->connection = new Connection('sqlite::memory:');
+        // Exercise the string-valued numeric results returned by older PDO_SQLite versions.
+        $this->connection = new Connection('sqlite::memory:', options: [PDO::ATTR_STRINGIFY_FETCHES => true]);
     }
 
     private function schema(): Schema
@@ -69,7 +71,10 @@ class CheckRebuildTest extends TestCase
         $plan->alter('items')->dropCheck('upper_price')->addCheck('upper_price', 'price < 50');
         $this->execute($plan);
 
-        self::assertSame([['id' => 3, 'price' => 10, 'double_price' => 20]], $this->connection->fetchAll('SELECT * FROM items'));
+        self::assertSame([['id' => 3, 'price' => 10, 'double_price' => 20]], array_map(
+            static fn(array $row): array => array_map('intval', $row),
+            $this->connection->fetchAll('SELECT * FROM items'),
+        ));
         $checks = iterator_to_array($this->schema()->getTable('items')->getChecks());
         self::assertCount(2, $checks);
         self::assertNull($checks[0]->getName());
@@ -81,7 +86,8 @@ class CheckRebuildTest extends TestCase
         $plan->alter('items')->dropCheck('upper_price');
         $this->execute($plan);
         $this->connection->execute('INSERT INTO items(price) VALUES (60)');
-        self::assertSame([120], $this->connection->fetchColumn('SELECT double_price FROM items WHERE price = 60'));
+        self::assertSame([120], array_map('intval',
+            $this->connection->fetchColumn('SELECT double_price FROM items WHERE price = 60')));
     }
 
     public function testUnrelatedRebuildPreservesChecksAndRewritesOnlyColumnReferences(): void
@@ -94,8 +100,8 @@ class CheckRebuildTest extends TestCase
             ->addColumn('double_amount', 'INT', generated: new Generated('amount * 2', stored: true));
         $this->execute($plan);
 
-        self::assertSame([99], $this->connection->fetchColumn('SELECT rowid FROM items'));
-        self::assertSame([20], $this->connection->fetchColumn('SELECT double_amount FROM items'));
+        self::assertSame([99], array_map('intval', $this->connection->fetchColumn('SELECT rowid FROM items')));
+        self::assertSame([20], array_map('intval', $this->connection->fetchColumn('SELECT double_amount FROM items')));
         $checks = iterator_to_array($this->schema()->getTable('items')->getChecks());
         self::assertSame("\"amount\" >= 0 AND label <> 'price'", $checks[0]->getExpression());
         $this->assertRejected("INSERT INTO items(amount, label) VALUES (-1, 'label')");
@@ -120,12 +126,15 @@ class CheckRebuildTest extends TestCase
 
         self::assertSame($before, $this->connection->fetchAll("SELECT name, sql FROM sqlite_master " .
             "WHERE name IN ('idx_price', 'audit_item') ORDER BY name"));
-        self::assertSame([3], $this->connection->fetchColumn("SELECT id FROM items WHERE label = 'KEPT'"));
-        self::assertSame([2], $this->connection->fetchColumn('SELECT count(*) FROM audit'));
+        self::assertSame([3], array_map('intval',
+            $this->connection->fetchColumn("SELECT id FROM items WHERE label = 'KEPT'")));
+        self::assertSame([2], array_map('intval', $this->connection->fetchColumn('SELECT count(*) FROM audit')));
         $this->connection->execute('INSERT INTO items DEFAULT VALUES');
-        self::assertSame([101], $this->connection->fetchColumn("SELECT id FROM items WHERE label = 'hello'"));
-        self::assertSame([2], $this->connection->fetchColumn("SELECT price FROM items WHERE label = 'hello'"));
-        self::assertSame([3], $this->connection->fetchColumn('SELECT count(*) FROM audit'));
+        self::assertSame([101], array_map('intval',
+            $this->connection->fetchColumn("SELECT id FROM items WHERE label = 'hello'")));
+        self::assertSame([2], array_map('intval',
+            $this->connection->fetchColumn("SELECT price FROM items WHERE label = 'hello'")));
+        self::assertSame([3], array_map('intval', $this->connection->fetchColumn('SELECT count(*) FROM audit')));
         $this->assertRejected("INSERT INTO items(label, price) VALUES ('bad', -1)");
     }
 
@@ -225,7 +234,7 @@ class CheckRebuildTest extends TestCase
         self::assertSame([], $this->connection->fetchAll('PRAGMA foreign_key_check'));
         self::assertCount(1, $this->connection->fetchAll('PRAGMA foreign_key_list(items)'));
         $this->connection->execute('DELETE FROM parents WHERE id = 1');
-        self::assertSame([0], $this->connection->fetchColumn('SELECT count(*) FROM items'));
+        self::assertSame([0], array_map('intval', $this->connection->fetchColumn('SELECT count(*) FROM items')));
     }
 
     public function testQuotedKeywordsAndCommentsSurviveReconstruction(): void
@@ -256,7 +265,10 @@ class CheckRebuildTest extends TestCase
         $plan->alter('items')->addCheck('positive', 'price >= 0');
         $this->execute($plan);
 
-        self::assertSame([['rowid' => 99, 'id' => 1]], $this->connection->fetchAll('SELECT rowid, id FROM items'));
+        self::assertSame([['rowid' => 99, 'id' => 1]], array_map(
+            static fn(array $row): array => array_map('intval', $row),
+            $this->connection->fetchAll('SELECT rowid, id FROM items'),
+        ));
     }
 
     public function testMixedAlterRejectsLossOfColumnCollationBeforeEmittingSql(): void
@@ -318,6 +330,6 @@ class CheckRebuildTest extends TestCase
         }
 
         self::assertSame($original, $this->connection->fetchAll('SELECT name, sql FROM sqlite_master ORDER BY name'));
-        self::assertSame([-1], $this->connection->fetchColumn('SELECT price FROM items'));
+        self::assertSame([-1], array_map('intval', $this->connection->fetchColumn('SELECT price FROM items')));
     }
 }

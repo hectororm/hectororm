@@ -34,6 +34,7 @@ use Hector\Schema\Plan\DisableForeignKeyChecks;
 use Hector\Schema\Plan\EnableForeignKeyChecks;
 use Hector\Schema\Plan\Plan;
 use Hector\Schema\Schema;
+use PDO;
 use PDOException;
 use PHPUnit\Framework\TestCase;
 use Psr\EventDispatcher\EventDispatcherInterface;
@@ -55,7 +56,8 @@ class CheckMigrationTest extends TestCase
                 $this->markTestSkipped('MYSQL_DSN is required');
             }
         }
-        $this->connection = new Connection($dsn);
+        // Exercise the string-valued numeric results returned by older PDO versions.
+        $this->connection = new Connection($dsn, options: [PDO::ATTR_STRINGIFY_FETCHES => true]);
         if (false === $this->connection->getDriverInfo()->getCapabilities()->hasCheckConstraints()) {
             $this->markTestSkipped('The server does not enforce CHECK constraints');
         }
@@ -206,15 +208,15 @@ class CheckMigrationTest extends TestCase
         )]);
 
         $runner->up(dryRun: true);
-        self::assertSame([$initial], $connection->fetchColumn('PRAGMA foreign_keys'));
-        self::assertSame([1], $connection->fetchColumn('SELECT parent_id FROM children'));
+        self::assertSame([$initial], array_map('intval', $connection->fetchColumn('PRAGMA foreign_keys')));
+        self::assertSame([1], array_map('intval', $connection->fetchColumn('SELECT parent_id FROM children')));
         $runner->up();
-        self::assertSame([1], $connection->fetchColumn('SELECT parent_id FROM children'));
-        self::assertSame([$initial], $connection->fetchColumn('PRAGMA foreign_keys'));
+        self::assertSame([1], array_map('intval', $connection->fetchColumn('SELECT parent_id FROM children')));
+        self::assertSame([$initial], array_map('intval', $connection->fetchColumn('PRAGMA foreign_keys')));
         self::assertCount(2, iterator_to_array($this->schema()->getTable('parents')->getChecks()));
         $runner->down();
-        self::assertSame([1], $connection->fetchColumn('SELECT parent_id FROM children'));
-        self::assertSame([$initial], $connection->fetchColumn('PRAGMA foreign_keys'));
+        self::assertSame([1], array_map('intval', $connection->fetchColumn('SELECT parent_id FROM children')));
+        self::assertSame([$initial], array_map('intval', $connection->fetchColumn('PRAGMA foreign_keys')));
         self::assertCount(1, iterator_to_array($this->schema()->getTable('parents')->getChecks()));
         self::assertSame([], $connection->fetchAll('PRAGMA foreign_key_check'));
         self::assertFalse($connection->inTransaction());
@@ -282,8 +284,8 @@ class CheckMigrationTest extends TestCase
 
         self::assertSame($originalSchema, $connection->fetchAll('SELECT name, sql FROM sqlite_master ORDER BY name'));
         self::assertSame($originalRows, $connection->fetchAll('SELECT * FROM parents'));
-        self::assertSame([1], $connection->fetchColumn('SELECT parent_id FROM children'));
-        self::assertSame([$initial], $connection->fetchColumn('PRAGMA foreign_keys'));
+        self::assertSame([1], array_map('intval', $connection->fetchColumn('SELECT parent_id FROM children')));
+        self::assertSame([$initial], array_map('intval', $connection->fetchColumn('PRAGMA foreign_keys')));
         self::assertSame([], (new DbTracker($connection, self::TRACKING))->getArrayCopy());
         self::assertSame(['positive' => false], $runner->getStatus());
         self::assertFalse($connection->inTransaction());
@@ -308,8 +310,8 @@ class CheckMigrationTest extends TestCase
             self::assertStringContainsString('require their own transaction', $exception->getMessage());
         }
         self::assertTrue($connection->inTransaction());
-        self::assertSame([10], $connection->fetchColumn('SELECT price FROM ' . self::TABLE));
-        self::assertSame([1], $connection->fetchColumn('PRAGMA foreign_keys'));
+        self::assertSame([10], array_map('intval', $connection->fetchColumn('SELECT price FROM ' . self::TABLE)));
+        self::assertSame([1], array_map('intval', $connection->fetchColumn('PRAGMA foreign_keys')));
         self::assertSame(['positive' => false], $runner->getStatus());
         $connection->rollBack();
     }
@@ -345,7 +347,7 @@ class CheckMigrationTest extends TestCase
         } catch (MigrationException $exception) {
             self::assertStringContainsString('stale table metadata', $exception->getMessage());
         }
-        self::assertSame([10], $connection->fetchColumn('SELECT price FROM ' . self::TABLE));
+        self::assertSame([10], array_map('intval', $connection->fetchColumn('SELECT price FROM ' . self::TABLE)));
         self::assertCount(0, iterator_to_array($this->schema()->getTable(self::TABLE)->getChecks()));
         self::assertSame(['two_checks' => false], $runner->getStatus());
     }
@@ -432,7 +434,7 @@ class CheckMigrationTest extends TestCase
         self::assertTrue($this->schema()->getTable(self::TABLE)->hasCheck('positive'));
         self::assertSame(['positive'], (new DbTracker($connection, self::TRACKING))->getArrayCopy());
         self::assertSame(['positive' => true], $runner->getStatus());
-        self::assertSame([1], $connection->fetchColumn('PRAGMA foreign_keys'));
+        self::assertSame([1], array_map('intval', $connection->fetchColumn('PRAGMA foreign_keys')));
         self::assertFalse($connection->inTransaction());
     }
 }
