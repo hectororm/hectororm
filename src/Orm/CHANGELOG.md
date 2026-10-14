@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `InverseOf` and programmatic `inverseOf()` declarations for structural inversion of an explicitly named relationship (#145)
+- Independent query clauses and non-destructive parent-side defaults for `InverseOf`; lifecycle options are validated on the resulting relation (#145)
 - `HasOneChild` and programmatic `hasOneChild()` / `oneToOne()` declarations for scalar child relations, with shared lifecycle policies and non-destructive `orphanRemoval: false` default (#135)
 - Optional `isParent` on `OneToOne`: infer unambiguous FK direction/mappings, propagate parent keys after insertion, and invert resolved direction in `reverse()` while preserving the unresolved historical fallback until v2 (#135)
 - Scalar assignment tracking for loaded and unloaded child replacement, atomic removal and retry after rollback; filtered-out children are never implicitly deleted (#135)
@@ -26,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Avoid preloading an opposite relationship from a collection when its cardinality, mapping or query clauses require its own lookup (#145)
 - Discover relationship attributes before resolving individual relationships, so named inversions no longer depend on declaration order (#153)
 - Report the dependency path when relationship inversions form a cycle without a concrete definition (#153)
 - Keep failed relationship attribute initialization retryable and expose cached relations only after their options and clauses are applied (#153)

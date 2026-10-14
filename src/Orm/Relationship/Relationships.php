@@ -328,6 +328,14 @@ class Relationships implements Countable
             ));
         }
 
+        // Inversion reuses structure, never the opposite declaration's read view.
+        $inverse->resetWhere()->resetGroup()->resetHaving()->resetOrder()->resetLimit();
+
+        // A new inversion must not acquire OneToMany's historical destructive default.
+        if ($inverse instanceof OneToMany || ($inverse instanceof OneToOne && true === $inverse->isParent())) {
+            $inverse->setOrphanRemoval(false);
+        }
+
         return $this->list[$name] = $inverse;
     }
 

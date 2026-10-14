@@ -221,6 +221,20 @@ class OneToMany extends RegularRelationship
             $relationship = null;
         }
 
+        // Only an unfiltered scalar inverse can be populated without executing its own query.
+        if (
+            !$relationship instanceof ManyToOne
+            || $relationship->getTargetColumns() !== $this->getSourceColumns()
+            || 0 !== count($relationship->where)
+            || 0 !== count($relationship->group)
+            || 0 !== count($relationship->having)
+            || 0 !== count($relationship->order)
+            || null !== $relationship->limit->getLimit()
+            || null !== $relationship->limit->getOffset()
+        ) {
+            $relationship = null;
+        }
+
         foreach ($entities as $entity) {
             $foreignersFiltered = array_filter(
                 $foreigners,

@@ -17,6 +17,7 @@ namespace Hector\Orm\Tests\Relationship;
 use ArgumentCountError;
 use Hector\Connection\Connection;
 use Hector\Orm\Attributes as Mapping;
+use Hector\Orm\Collection\Collection;
 use Hector\Orm\Entity\MagicEntity;
 use Hector\Orm\Entity\ReflectionEntity;
 use Hector\Orm\Exception\RelationException;
@@ -242,6 +243,162 @@ class InverseOfTest extends TestCase
         foreach (['valid', 'source', 'name', 'endpoints', 'same'] as $case) {
             yield $case => [$case];
         }
+    }
+
+    public function testQueryClausesAreIndependentEvenWhenCustomReverseCopiesThem(): void
+    {
+        $foreign = $this->getMockBuilder(ManyToOne::class)
+            ->setConstructorArgs(['original', InverseParent::class, InverseChild::class, ['id' => 'id']])
+            ->onlyMethods(['reverse'])->getMock();
+        $foreign->whereEquals(['tenant' => 1])->groupBy('tenant')->havingEquals(['tenant' => 1])
+            ->orderBy('tenant')->limit(3, 2);
+        $inverse = new OneToMany('inverse', InverseChild::class, InverseParent::class, ['id' => 'id'], true);
+        // A custom reverse may shallow-copy clause objects; resetting must not mutate the original.
+        foreach (['where', 'group', 'having', 'order', 'limit'] as $clause) {
+            $inverse->{$clause} = $foreign->{$clause};
+        }
+        $foreign->method('reverse')->willReturn($inverse);
+        $this->orm->getMapper(InverseParent::class)->getRelationships()
+            ->addDeclaration(new InverseFixtureAttribute($foreign));
+        $children = $this->orm->getMapper(InverseChild::class)->getRelationships();
+        $children->addDeclaration(new Mapping\InverseOf(
+            InverseParent::class,
+            'inverse',
+            'original',
+            where: ['id' => 7],
+            groupBy: ['id'],
+            having: ['id' => 7],
+            orderBy: ['id' => 'DESC'],
+            limit: [10, 4],
+        ));
+        $resolved = $children->get('inverse');
+        foreach (['where', 'group', 'having', 'order'] as $clause) {
+            $this->assertNotSame($foreign->{$clause}, $resolved->{$clause});
+            $this->assertCount(1, $foreign->{$clause});
+            $this->assertCount(1, $resolved->{$clause});
+        }
+        $this->assertSame(3, $foreign->limit->getLimit());
+        $this->assertSame(2, $foreign->limit->getOffset());
+        $this->assertSame(10, $resolved->limit->getLimit());
+        $this->assertSame(4, $resolved->limit->getOffset());
+        $this->assertFalse($resolved->getOrphanRemoval());
+    }
+
+    /** @dataProvider filteredReadProvider */
+    public function testOppositeFilterIsRespectedRegardlessOfLoadingOrder(bool $eager, bool $inverseFirst): void
+    {
+        $this->orm->getConnection()->execute('INSERT INTO inverse_parent VALUES (1, 10)');
+        $this->orm->getConnection()->execute('INSERT INTO inverse_child VALUES (2, 20, 1, NULL)');
+        $parents = $this->orm->getMapper(InverseParent::class)->getRelationships();
+        $parents->hasMany(InverseChild::class, 'children', ['id' => 'parent_id']);
+        $children = $this->orm->getMapper(InverseChild::class)->getRelationships();
+        $children->addDeclaration(new Mapping\InverseOf(
+            InverseParent::class, 'parent', 'children', where: ['tenant' => 999],
+        ));
+        $parent = InverseParent::find(1);
+        if ($inverseFirst) {
+            $this->assertNull(InverseChild::find(2)->parent);
+        }
+        if ($eager) {
+            (new Collection([$parent]))->load(['children']);
+        }
+        $this->assertCount(1, $parent->children);
+        $this->assertNull($parent->children->first()->parent);
+    }
+
+    public function filteredReadProvider(): array
+    {
+        return [[false, false], [false, true], [true, false], [true, true]];
+    }
+
+    /** @dataProvider apiProvider */
+    public function testInverseCollectionDetachesByDefaultAndDeletesOnlyExplicitly(bool $orphanRemoval): void
+    {
+        $this->orm->getConnection()->execute('INSERT INTO inverse_parent VALUES (1, 10)');
+        $this->orm->getConnection()->execute('INSERT INTO inverse_child VALUES (2, 20, 1, NULL)');
+        $this->orm->getMapper(InverseChild::class)->getRelationships()
+            ->hasOne(InverseParent::class, 'parent', ['parent_id' => 'id']);
+        $parents = $this->orm->getMapper(InverseParent::class)->getRelationships();
+        $attribute = $orphanRemoval
+            ? new Mapping\InverseOf(InverseChild::class, 'children', 'parent', orphanRemoval: true)
+            : new Mapping\InverseOf(InverseChild::class, 'children', 'parent');
+        $parents->addDeclaration($attribute);
+        $this->assertSame($orphanRemoval, $parents->get('children')->getOrphanRemoval());
+        $parent = InverseParent::find(1);
+        $collection = $parent->children;
+        unset($collection[0]);
+        $parent->save();
+        $rows = $this->orm->getConnection()->fetchAll('SELECT * FROM inverse_child');
+        $this->assertCount($orphanRemoval ? 0 : 1, $rows);
+        if (!$orphanRemoval) {
+            $this->assertNull($rows[0]['parent_id']);
+        }
+        $this->assertCount(1, $this->orm->getConnection()->fetchAll('SELECT * FROM inverse_parent'));
+    }
+
+    public function testParentReferenceRejectsLifecycleOption(): void
+    {
+        $this->orm->getMapper(InverseParent::class)->getRelationships()
+            ->hasOneChild(InverseChild::class, 'child', ['id' => 'parent_id'], orphanRemoval: true);
+        $children = $this->orm->getMapper(InverseChild::class)->getRelationships();
+        $children->addDeclaration(new Mapping\InverseOf(
+            InverseParent::class, 'parent', 'child', orphanRemoval: true,
+        ));
+        $this->expectException(RelationException::class);
+        $this->expectExceptionMessage('does not support orphanRemoval');
+        $children->get('parent');
+    }
+
+    public function testFiltersAreNotAssignedToNewChildren(): void
+    {
+        $this->orm->getConnection()->execute('INSERT INTO inverse_parent VALUES (1, 10)');
+        $this->orm->getMapper(InverseChild::class)->getRelationships()
+            ->hasOne(InverseParent::class, 'parent', ['parent_id' => 'id']);
+        $this->orm->getMapper(InverseParent::class)->getRelationships()->addDeclaration(new Mapping\InverseOf(
+            InverseChild::class, 'children', 'parent', where: ['tenant' => 999],
+        ));
+        $parent = InverseParent::find(1);
+        $child = new InverseChild();
+        $child->id = 2;
+        $child->tenant = 42;
+        $parent->children = new Collection([$child]);
+        $parent->save();
+        $row = $this->orm->getConnection()->fetchAll('SELECT * FROM inverse_child')[0];
+        $this->assertEquals(42, $row['tenant']);
+        $this->assertEquals(1, $row['parent_id']);
+    }
+
+    public function testCollectionOnOppositeSideIsNotPreloadedAsScalar(): void
+    {
+        $this->orm->getConnection()->execute('INSERT INTO inverse_parent VALUES (1, 10)');
+        $this->orm->getConnection()->execute('INSERT INTO inverse_child VALUES (2, 20, 1, NULL)');
+        $this->orm->getMapper(InverseParent::class)->getRelationships()
+            ->hasMany(InverseChild::class, 'children', ['id' => 'parent_id']);
+        $this->orm->getMapper(InverseChild::class)->getRelationships()
+            ->hasMany(InverseParent::class, 'parents', ['parent_id' => 'id']);
+        $child = InverseParent::find(1)->children->first();
+        $this->assertInstanceOf(Collection::class, $child->parents);
+        $this->assertCount(1, $child->parents);
+    }
+
+    public function testInversePivotDetachmentPreservesTargetEntity(): void
+    {
+        $connection = $this->orm->getConnection();
+        $connection->execute('INSERT INTO inverse_parent VALUES (1, 10)');
+        $connection->execute('INSERT INTO inverse_child VALUES (2, 20, NULL, NULL)');
+        $connection->execute('INSERT INTO inverse_pivot VALUES (1, 2)');
+        $this->orm->getMapper(InverseParent::class)->getRelationships()->belongsToMany(
+            InverseChild::class, 'children', 'inverse_pivot', ['id' => 'parent_key'], ['child_key' => 'id'],
+        );
+        $this->orm->getMapper(InverseChild::class)->getRelationships()
+            ->inverseOf(InverseParent::class, 'parents', 'children');
+        $child = InverseChild::find(2);
+        $parents = $child->parents;
+        unset($parents[0]);
+        $child->save();
+        $this->assertCount(0, $connection->fetchAll('SELECT * FROM inverse_pivot'));
+        $this->assertCount(1, $connection->fetchAll('SELECT * FROM inverse_parent'));
+        $this->assertCount(1, $connection->fetchAll('SELECT * FROM inverse_child'));
     }
 }
 
