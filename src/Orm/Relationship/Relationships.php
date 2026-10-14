@@ -16,10 +16,12 @@ namespace Hector\Orm\Relationship;
 
 use Countable;
 use Hector\Orm\Assert\EntityAssert;
+use Hector\Orm\Attributes\RelationshipAttribute;
 use Hector\Orm\Entity\Entity;
 use Hector\Orm\Entity\ReflectionEntity;
 use Hector\Orm\Exception\OrmException;
 use Hector\Orm\Exception\RelationException;
+use Throwable;
 
 class Relationships implements Countable
 {
@@ -27,6 +29,10 @@ class Relationships implements Countable
 
     private ReflectionEntity $entity;
     private array $list = [];
+    /** @var array<string, RelationshipAttribute> */
+    private array $declarations = [];
+    /** @var array<string, bool> */
+    private array $resolving = [];
 
     /**
      * Relationships constructor.
@@ -45,7 +51,18 @@ class Relationships implements Countable
      */
     public function count(): int
     {
-        return count($this->list);
+        return count($this->list + $this->declarations);
+    }
+
+    /**
+     * Register an attribute without constructing its relationship.
+     *
+     * @internal
+     */
+    public function addDeclaration(RelationshipAttribute $attribute): void
+    {
+        $this->declarations[$attribute->name] = $attribute;
+        unset($this->list[$attribute->name]);
     }
 
     /**
@@ -60,7 +77,31 @@ class Relationships implements Countable
     {
         $this->assertExists($name);
 
-        return $this->list[$name];
+        if (isset($this->resolving[$name])) {
+            throw new RelationException(
+                sprintf('Relationship "%s" is already being resolved in entity "%s"', $name, $this->entity->getName()),
+            );
+        }
+
+        if (isset($this->list[$name])) {
+            return $this->list[$name];
+        }
+
+        $this->resolving[$name] = true;
+
+        try {
+            $relationship = $this->declarations[$name]->init($this);
+            $this->list[$name] = $relationship;
+            unset($this->declarations[$name]);
+
+            return $relationship;
+        } catch (Throwable $exception) {
+            unset($this->list[$name]);
+
+            throw $exception;
+        } finally {
+            unset($this->resolving[$name]);
+        }
     }
 
     /**
@@ -88,12 +129,15 @@ class Relationships implements Countable
 
         $relationshipFounds = [];
 
-        /** @var Relationship $relationship */
-        foreach ($this->list as $relationship) {
+        foreach ($this->list + $this->declarations as $relationshipName => $candidate) {
+            $target = $candidate instanceof Relationship ? $candidate->getTargetEntity() : $candidate->target;
+
             // Same relationship entity
-            if ($relationship->getTargetEntity() !== $foreignEntity) {
+            if ($target !== $foreignEntity) {
                 continue;
             }
+
+            $relationship = $this->get((string)$relationshipName);
 
             // Search columns if given
             if (null !== $columns && $relationship->getSourceColumns() != $columns) {
@@ -125,7 +169,7 @@ class Relationships implements Countable
      */
     public function exists(string $name): bool
     {
-        return array_key_exists($name, $this->list);
+        return array_key_exists($name, $this->list) || array_key_exists($name, $this->declarations);
     }
 
     /**
@@ -137,7 +181,7 @@ class Relationships implements Countable
      */
     public function assertExists(string $name): void
     {
-        if (array_key_exists($name, $this->list)) {
+        if ($this->exists($name)) {
             return;
         }
 

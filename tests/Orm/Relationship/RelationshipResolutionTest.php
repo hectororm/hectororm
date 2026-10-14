@@ -88,6 +88,56 @@ class RelationshipResolutionTest extends TestCase
         ];
     }
 
+    public function testDiscoveryDoesNotConstructRelationships(): void
+    {
+        $mapper = $this->orm->getMapper(ResolutionInvalidCategory::class);
+        $relationships = $mapper->getRelationships();
+
+        $this->assertSame($relationships, $mapper->getRelationships());
+        $this->assertCount(2, $relationships);
+        $this->assertTrue($relationships->exists('parent'));
+        $this->assertTrue($relationships->exists('children'));
+        $this->assertFalse($relationships->exists('missing'));
+        $relationships->assertExists('children');
+
+        $this->assertInstanceOf(ManyToOne::class, $relationships->get('parent'));
+        $this->assertCount(2, $relationships);
+    }
+
+    public function testProgrammaticDeclarationReturnsConfigurableRelationshipImmediately(): void
+    {
+        $relationships = $this->orm->getMapper(ResolutionInvalidCategory::class)->getRelationships();
+        $children = $relationships->hasMany(
+            ResolutionInvalidCategory::class,
+            'children',
+            ['id' => 'parent_id'],
+        )->orderBy('id', 'DESC');
+
+        $this->assertInstanceOf(OneToMany::class, $children);
+        $this->assertSame($children, $relationships->get('children'));
+        $this->assertCount(1, $relationships->get('children')->order);
+        $this->assertCount(2, $relationships);
+    }
+
+    public function testUnnamedLookupFindsUnconstructedDeclaration(): void
+    {
+        $relationships = $this->orm->getMapper(ResolutionParent::class)->getRelationships();
+        $children = $relationships->getWith(ResolutionChild::class);
+
+        $this->assertInstanceOf(OneToMany::class, $children);
+        $this->assertSame($children, $relationships->get('children'));
+        $this->assertSame(['parent_id'], $children->getTargetColumns());
+    }
+
+    public function testUnknownNameStillThrowsAfterDiscovery(): void
+    {
+        $relationships = $this->orm->getMapper(ResolutionInvalidCategory::class)->getRelationships();
+
+        $this->expectException(RelationException::class);
+        $this->expectExceptionMessage('Relationship "unknown" not found');
+        $relationships->get('unknown');
+    }
+
     public function testFailedInitializationDoesNotExposeProvisionalRelationshipOnRetry(): void
     {
         $mapper = $this->orm->getMapper(ResolutionInvalidCategory::class);
