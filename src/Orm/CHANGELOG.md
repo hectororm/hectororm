@@ -19,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Orm::lifecycle()` exposes a dedicated `Lifecycle` service for lifecycle transactions, child removal policies and internal change tracking (#146)
 - Opt-in whole-collection replacement tracking limited to materialized members; query hydration and unseen rows never imply orphan removal (#146)
 
+### Changed
+
+- Attribute-based relationship construction and dependency validation now happen on lookup; `getRelationships()` discovers declarations, while `exists()` and `count()` inspect them without constructing relationships. Programmatic declarations remain immediate (#153)
+
 ### Fixed
 
 - Discover relationship attributes before resolving individual relationships, so named inversions no longer depend on declaration order (#153)

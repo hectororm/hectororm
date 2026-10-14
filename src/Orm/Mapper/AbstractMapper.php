@@ -67,6 +67,8 @@ abstract class AbstractMapper implements Mapper
 
     /**
      * @inheritDoc
+     *
+     * Attributes are constructed during discovery; relationships are constructed on registry lookup.
      */
     public function getRelationships(): Relationships
     {
