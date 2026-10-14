@@ -10,6 +10,8 @@
  * file that was distributed with this source code, to the root.
  */
 
+declare(strict_types=1);
+
 namespace Hector\Orm\Tests\Relationship;
 
 use Hector\Connection\Bind\BindParam;
@@ -201,42 +203,55 @@ class ManyToManyTest extends AbstractTestCase
 
     public function testLinkNativeReattachLoadedEntityKeepsPivotKeys(): void
     {
-        // An actor loaded through a M2M relation carries a PivotData whose extra data
-        // is empty. Re-attaching it to another film must not raise and must insert the
-        // pivot row with the correct foreign keys.
         $relationship = new ManyToMany('actors', Film::class, Actor::class);
-
         $connection = $this->getOrm()->getConnection();
+        $connection->beginTransaction();
 
-        $film1 = Film::get(1);
-        $film2 = Film::get(2);
+        try {
+            // Own the fixtures so repeated runs cannot exhaust Sakila's unlinked actors.
+            $film1 = new Film();
+            $film1->title = 'Pivot source';
+            $film1->language_id = 1;
+            $film1->save();
 
-        // Pick an actor loaded through film1's M2M relation (so it carries a PivotData
-        // whose extra data is empty) that is genuinely NOT yet linked to film2 in the
-        // database, to exercise the INSERT branch.
-        /** @var Actor|null $loadedActor */
-        $loadedActor = $film1->getActors()->first(
-            function (Actor $actor) use ($connection, $film2): bool {
-                $count = $connection->fetchColumn(
-                    'SELECT COUNT(*) FROM film_actor WHERE film_id = ? AND actor_id = ?',
-                    [$film2->film_id, $actor->actor_id]
-                );
+            $film2 = new Film();
+            $film2->title = 'Pivot target';
+            $film2->language_id = 1;
+            $film2->save();
 
-                return 0 === (int)($count[0] ?? 0);
-            }
-        );
-        $this->assertNotNull($loadedActor);
-        $this->assertNotNull($loadedActor->getPivot());
-        $this->assertSame([], $loadedActor->getPivot()->getData());
+            $actor = new Actor();
+            $actor->first_name = 'Pivot';
+            $actor->last_name = 'Actor';
+            $actor->save();
 
-        // Must not throw RelationException nor insert a FK-less pivot row.
-        $relationship->linkNative($film2, new Collection([$loadedActor]));
+            // Set up the source link independently of the method under test.
+            $connection->execute(
+                'INSERT INTO film_actor (film_id, actor_id) VALUES (?, ?)',
+                [$film1->film_id, $actor->actor_id]
+            );
 
-        $count = $connection->fetchColumn(
-            'SELECT COUNT(*) FROM film_actor WHERE film_id = ? AND actor_id = ?',
-            [$film2->film_id, $loadedActor->actor_id]
-        );
+            /** @var Actor|null $loadedActor */
+            $loadedActor = $film1->getActors()->first();
+            $this->assertNotNull($loadedActor);
+            $this->assertNotNull($loadedActor->getPivot());
+            $this->assertSame([], $loadedActor->getPivot()->getData());
 
-        $this->assertSame(1, (int)($count[0] ?? 0));
+            $count = $connection->fetchColumn(
+                'SELECT COUNT(*) FROM film_actor WHERE film_id = ? AND actor_id = ?',
+                [$film2->film_id, $loadedActor->actor_id]
+            );
+            $this->assertSame(0, (int)$count[0]);
+
+            // Exercise INSERT with a loaded pivot whose additional data is empty.
+            $relationship->linkNative($film2, new Collection([$loadedActor]));
+
+            $count = $connection->fetchColumn(
+                'SELECT COUNT(*) FROM film_actor WHERE film_id = ? AND actor_id = ?',
+                [$film2->film_id, $loadedActor->actor_id]
+            );
+            $this->assertSame(1, (int)$count[0]);
+        } finally {
+            $connection->rollBack();
+        }
     }
 }
