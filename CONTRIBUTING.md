@@ -47,7 +47,8 @@ Feature requests are welcome. Open an issue with the `enhancement` label and des
 
 ### Coding standards
 
-- PHP code must follow the **PSR-12 / PER** coding style.
+- PHP code must follow the **PSR-12 / PER** coding style. `phpcs.xml.dist` describes the PHP_CodeSniffer rules (PSR-12
+  with project conventions) used by Codacy on pull requests.
 - Use `declare(strict_types=1);` in every PHP file.
 - Indentation: 4 spaces for PHP files, 2 spaces for other files (see `.editorconfig`); LF line endings.
 - Maximum line length: 120 characters for PHP files.
