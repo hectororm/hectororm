@@ -16,10 +16,12 @@ namespace Hector\Orm\Relationship;
 
 use Countable;
 use Hector\Orm\Assert\EntityAssert;
+use Hector\Orm\Attributes\RelationshipAttribute;
 use Hector\Orm\Entity\Entity;
 use Hector\Orm\Entity\ReflectionEntity;
 use Hector\Orm\Exception\OrmException;
 use Hector\Orm\Exception\RelationException;
+use Throwable;
 
 class Relationships implements Countable
 {
@@ -27,6 +29,12 @@ class Relationships implements Countable
 
     private ReflectionEntity $entity;
     private array $list = [];
+    /** @var array<string, RelationshipAttribute> */
+    private array $declarations = [];
+    /** @var array<string, int> Positions of this registry's active declarations in the shared path. */
+    private array $resolving = [];
+    /** @var list<string> Dependency path shared by synchronous resolution across mappers. */
+    private static array $resolutionPath = [];
 
     /**
      * Relationships constructor.
@@ -45,7 +53,18 @@ class Relationships implements Countable
      */
     public function count(): int
     {
-        return count($this->list);
+        return count($this->list + $this->declarations);
+    }
+
+    /**
+     * Register an attribute without constructing its relationship.
+     *
+     * @internal
+     */
+    public function addDeclaration(RelationshipAttribute $attribute): void
+    {
+        $this->declarations[$attribute->name] = $attribute;
+        unset($this->list[$attribute->name]);
     }
 
     /**
@@ -60,7 +79,34 @@ class Relationships implements Countable
     {
         $this->assertExists($name);
 
-        return $this->list[$name];
+        if (isset($this->resolving[$name])) {
+            $path = array_slice(self::$resolutionPath, $this->resolving[$name]);
+            $path[] = $this->entity->getName() . '.' . $name;
+
+            throw RelationException::circularReference($path);
+        }
+
+        if (isset($this->list[$name])) {
+            return $this->list[$name];
+        }
+
+        $this->resolving[$name] = count(self::$resolutionPath);
+        self::$resolutionPath[] = $this->entity->getName() . '.' . $name;
+
+        try {
+            $relationship = $this->declarations[$name]->init($this);
+            $this->list[$name] = $relationship;
+            unset($this->declarations[$name]);
+
+            return $relationship;
+        } catch (Throwable $exception) {
+            unset($this->list[$name]);
+
+            throw $exception;
+        } finally {
+            array_pop(self::$resolutionPath);
+            unset($this->resolving[$name]);
+        }
     }
 
     /**
@@ -77,9 +123,16 @@ class Relationships implements Countable
     {
         // Given name so... more simple to found :)
         if (null !== $name) {
+            $this->assertExists($name);
+            $candidate = $this->list[$name] ?? $this->declarations[$name];
+            $target = $candidate instanceof Relationship ? $candidate->getTargetEntity() : $candidate->target;
+            if ($target !== $foreignEntity) {
+                throw RelationException::notFoundBetween($this->entity->getName(), $foreignEntity);
+            }
+
             $relation = $this->get($name);
 
-            if (null !== $relation && $relation->getTargetEntity() === $foreignEntity) {
+            if ($relation->getTargetEntity() === $foreignEntity) {
                 return $relation;
             }
 
@@ -88,19 +141,24 @@ class Relationships implements Countable
 
         $relationshipFounds = [];
 
-        /** @var Relationship $relationship */
-        foreach ($this->list as $relationship) {
+        foreach ($this->list + $this->declarations as $relationshipName => $candidate) {
+            $target = $candidate instanceof Relationship ? $candidate->getTargetEntity() : $candidate->target;
+
             // Same relationship entity
-            if ($relationship->getTargetEntity() !== $foreignEntity) {
+            if ($target !== $foreignEntity) {
                 continue;
             }
 
-            // Search columns if given
-            if (null !== $columns && $relationship->getSourceColumns() != $columns) {
-                continue;
+            // Inspect available column metadata before resolving a candidate. In particular,
+            // an in-progress relationship with different columns is not a dependency of this lookup.
+            if (null !== $columns) {
+                $relationship = $candidate instanceof Relationship ? $candidate : $this->get((string)$relationshipName);
+                if ($relationship->getSourceColumns() != $columns) {
+                    continue;
+                }
             }
 
-            $relationshipFounds[] = $relationship;
+            $relationshipFounds[] = (string)$relationshipName;
         }
 
         // If more than one result, it's ambiguous, and need to more descriptive
@@ -110,7 +168,7 @@ class Relationships implements Countable
 
         // Return only result of relationship array
         if (count($relationshipFounds) === 1) {
-            return reset($relationshipFounds);
+            return $this->get(reset($relationshipFounds));
         }
 
         throw RelationException::notFoundBetween($this->entity->getName(), $foreignEntity);
@@ -125,7 +183,7 @@ class Relationships implements Countable
      */
     public function exists(string $name): bool
     {
-        return array_key_exists($name, $this->list);
+        return array_key_exists($name, $this->list) || array_key_exists($name, $this->declarations);
     }
 
     /**
@@ -137,7 +195,7 @@ class Relationships implements Countable
      */
     public function assertExists(string $name): void
     {
-        if (array_key_exists($name, $this->list)) {
+        if ($this->exists($name)) {
             return;
         }
 
