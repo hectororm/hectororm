@@ -48,7 +48,7 @@ vendor/bin/rector --dry-run                # preview Rector changes
 - **Yoda conditions required:** `false === $var`, `null === $var`, `true === $var` — not `$var === false`
 - **Guard clauses preferred:** early `return`/`continue` instead of nested `if` blocks
 - **Collections pattern:** implement `IteratorAggregate` + `Countable`, provide `getArrayCopy(): array`
-- No PHP-CS-Fixer or PHPCS config — style enforced via Rector and review
+- `phpcs.xml.dist` (PSR-12 with project conventions) configures PHP_CodeSniffer for Codacy; no PHP-CS-Fixer config — style enforced via Rector, Codacy and review
 - Rector config (`rector.php`): PHP upgrade sets, type coverage level 10, dead code level 10, code quality level 10, auto-imports with unused import removal
 
 ## Changelogs

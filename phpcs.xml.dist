@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<ruleset name="Hector ORM">
+  <description>Hector ORM coding standard (PSR-12 with project conventions)</description>
+
+  <file>src</file>
+  <file>tests</file>
+
+  <arg name="extensions" value="php"/>
+
+  <rule ref="PSR12">
+    <!-- License docblock directly follows the opening tag -->
+    <exclude name="PSR12.Files.FileHeader.SpacingAfterTagBlock"/>
+    <!-- Multi-line conditions keep the first expression on the opening line -->
+    <exclude name="PSR12.ControlStructures.ControlStructureSpacing.FirstExpressionLine"/>
+    <exclude name="PSR12.ControlStructures.ControlStructureSpacing.CloseParenthesisLine"/>
+  </rule>
+
+  <!-- Tests: descriptive method names, inline fixture classes and compact assertions -->
+  <rule ref="PSR1.Methods.CamelCapsMethodName.NotCamelCaps">
+    <exclude-pattern>tests/*</exclude-pattern>
+  </rule>
+  <rule ref="PSR1.Classes.ClassDeclaration.MultipleClasses">
+    <exclude-pattern>tests/*</exclude-pattern>
+  </rule>
+  <rule ref="PSR1.Files.SideEffects.FoundWithSymbols">
+    <exclude-pattern>tests/*</exclude-pattern>
+  </rule>
+  <rule ref="Generic.Formatting.DisallowMultipleStatements.SameLine">
+    <exclude-pattern>tests/*</exclude-pattern>
+  </rule>
+</ruleset>
