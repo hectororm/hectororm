@@ -29,7 +29,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Report the dependency path when relationship inversions form a cycle without a concrete definition (#153)
 - Keep failed relationship attribute initialization retryable and expose cached relations only after their options and clauses are applied (#153)
 - Preserve target-mismatch and ambiguity diagnostics across unresolved declarations, and skip unrelated in-progress relationships in column-filtered lookups (#153)
-- Isolate the many-to-many reattachment regression test with transactional fixtures so repeated runs do not exhaust Sakila's unlinked actors
 - One-to-one bidirectional saves can start at either entity without reinserting an active parent or child; child key propagation is shared with collection relations through `Lifecycle::linkChild()` (#135)
 - Keep cascading saves and nested `persist()` batches inside the active lifecycle transaction, restore queued entity state on rollback, and cancel removed transient children before queued writes regardless of scheduling order
 - Reject lifecycle writes when an event listener restores a detached link or redirects an attached child to a different parent
@@ -40,7 +39,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Attribute-based relationship construction and dependency validation now happen on lookup; `getRelationships()` discovers declarations, while `exists()` and `count()` inspect them without constructing relationships. Programmatic declarations remain immediate (#153)
 - Require internal `hectororm/*` packages with `self.version`, so each release depends on the exact same release of its sibling packages; prevents installing the ORM with `hectororm/connection` versions lacking the `options` constructor parameter used by `OrmFactory::connection()` (#170, #172)
-- Simplify default many-to-many pivot table naming and remove redundant reflection property defaults assigned during initialization
 
 ### Deprecated
 
