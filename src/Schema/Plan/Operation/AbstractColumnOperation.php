@@ -33,6 +33,8 @@ abstract class AbstractColumnOperation implements OperationInterface
         private bool $first = false,
         private bool $useCurrentOnUpdate = false,
         Generated|string|null $generated = null,
+        private ?string $charset = null,
+        private ?string $collation = null,
     ) {
         $this->generated = is_string($generated) ? new Generated($generated) : $generated;
     }
@@ -83,6 +85,26 @@ abstract class AbstractColumnOperation implements OperationInterface
     public function getType(): string
     {
         return $this->type;
+    }
+
+    /**
+     * Get the native character set name.
+     *
+     * @return string|null
+     */
+    public function getCharset(): ?string
+    {
+        return $this->charset;
+    }
+
+    /**
+     * Get the native collation name.
+     *
+     * @return string|null
+     */
+    public function getCollation(): ?string
+    {
+        return $this->collation;
     }
 
     /**

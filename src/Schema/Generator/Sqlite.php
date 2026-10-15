@@ -170,6 +170,8 @@ class Sqlite extends AbstractGenerator
         }
         $tableStatement = $tableStatement['sql'];
 
+        $collations = null === $tableStatement ? [] :
+            (new CreateTableParser())->getColumnCollations($tableStatement);
         $expressions = null;
         $columnsInfo = [];
         foreach ($results as $result) {
@@ -215,7 +217,7 @@ class Sqlite extends AbstractGenerator
                 'numeric_scale' => $type['numeric_scale'],
                 'unsigned' => $type['unsigned'],
                 'charset' => $type['is_string'] ? $this->getEncoding() : null,
-                'collation' => null,
+                'collation' => $collations[$result['name']] ?? null,
             ];
         }
 

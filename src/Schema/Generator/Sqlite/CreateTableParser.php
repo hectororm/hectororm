@@ -18,7 +18,7 @@ use Hector\Schema\Exception\SchemaException;
 use Hector\Schema\Exception\PlanException;
 
 /**
- * Extract generated expressions and CHECKs, and rewrite column-reference tokens.
+ * Extract column definitions and CHECKs, and rewrite column-reference tokens.
  *
  * @internal
  */
@@ -231,6 +231,57 @@ final class CreateTableParser
     }
 
     /**
+     * Extract declared column collations, excluding expression/index collations.
+     * Views and virtual tables do not use the ordinary table definition grammar.
+     *
+     * @return array<string, string>
+     */
+    public function getColumnCollations(string $sql): array
+    {
+        $tokens = $this->tokenize($sql);
+        $index = 1;
+        if (isset($tokens[$index]) &&
+            ($this->isToken($tokens[$index], 'TEMP') || $this->isToken($tokens[$index], 'TEMPORARY'))) {
+            $index++;
+        }
+        if (false === isset($tokens[$index]) || false === $this->isToken($tokens[$index], 'TABLE')) {
+            return [];
+        }
+
+        $collations = [];
+        foreach ($this->getDefinitions($tokens) as $definition) {
+            if (false === $this->isColumnDefinition($definition)) {
+                continue;
+            }
+            $depth = 0;
+            for ($index = 1; $index < count($definition); $index++) {
+                $token = $definition[$index];
+                if ($this->isToken($token, '(')) {
+                    $depth++;
+                    continue;
+                }
+                if ($this->isToken($token, ')')) {
+                    $depth--;
+                    continue;
+                }
+                if (0 !== $depth) {
+                    continue;
+                }
+                if ($this->isToken($token, 'CONSTRAINT')) {
+                    $index++; // A constraint name is not a column option.
+                    continue;
+                }
+                if ($this->isToken($token, 'COLLATE') && isset($definition[$index + 1])) {
+                    // SQLite uses the last column COLLATE clause when repeated.
+                    $collations[$definition[0]['text']] = $definition[++$index]['text'];
+                }
+            }
+        }
+
+        return $collations;
+    }
+
+    /**
      * Features not represented by the structured column/index/FK diff.
      * The source-preserving CHECK-only path can retain these unchanged.
      *
@@ -257,7 +308,8 @@ final class CreateTableParser
                     continue;
                 }
                 $keyword = strtoupper($token['text']);
-                if (in_array($keyword, ['COLLATE', 'CONFLICT', 'DEFERRABLE', 'INITIALLY', 'MATCH', 'ASC', 'DESC'], true)) {
+                if (('COLLATE' === $keyword && false === $column) ||
+                    in_array($keyword, ['CONFLICT', 'DEFERRABLE', 'INITIALLY', 'MATCH', 'ASC', 'DESC'], true)) {
                     $features[] = $keyword;
                 }
                 if ('CONSTRAINT' === $keyword && isset($definition[$index + 2]) &&

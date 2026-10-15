@@ -252,12 +252,18 @@ final class TableRebuilder
         $table = $schema->getTable($tableName);
 
         $columns = [];
-        $types = null === $table->getDefinition() ? [] :
-            (new CreateTableParser())->getColumnTypes($table->getDefinition());
+        $parser = new CreateTableParser();
+        $definition = $table->getDefinition();
+        $types = null === $definition ? [] : $parser->getColumnTypes($definition);
+        $collations = null === $definition ? [] : $parser->getColumnCollations($definition);
         foreach ($table->getColumns() as $column) {
             $columns[$column->getName()] = ColumnDef::fromSchema(
                 $column, $types[$column->getName()] ?? $this->reconstructColumnType($column),
             );
+            // Older schema snapshots may have the source SQL but no parsed collations.
+            if (isset($collations[$column->getName()])) {
+                $columns[$column->getName()]->collation = $collations[$column->getName()];
+            }
         }
 
         $indexes = [];
@@ -328,6 +334,7 @@ final class TableRebuilder
                     hasDefault: $col->hasDefault,
                     autoIncrement: $col->autoIncrement,
                     generated: $col->generated,
+                    collation: $col->collation,
                 );
             }
 

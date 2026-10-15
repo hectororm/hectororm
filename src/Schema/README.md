@@ -29,6 +29,70 @@ $ composer require hectororm/schema
 
 ## Documentation
 
+### Column character sets and collations
+
+`addColumn()` and `modifyColumn()` accept optional `?string $charset = null` and
+`?string $collation = null` arguments, appended after the existing arguments.
+Names are native to the target database, not portable presets. Existing calls and
+table-level string options keep their behavior.
+
+For example, store canonical textual UUIDs in an ASCII column on MySQL/MariaDB,
+while keeping the same migration executable on SQLite:
+
+```php
+use Hector\Schema\Plan\Plan;
+
+$plan = new Plan();
+$plan->create('documents', charset: 'utf8mb4', collation: 'utf8mb4_unicode_ci')
+    ->addColumn('id', 'CHAR(36)', charset: 'ascii')
+    ->addColumn('title', 'VARCHAR(255)')
+    ->addIndex('uq_documents_id', ['id'], type: 'unique');
+
+$alter = new Plan();
+$alter->alter('documents')->modifyColumn('id', 'CHAR(36)', charset: 'ascii');
+```
+
+| Option | MySQL / MariaDB | SQLite |
+| --- | --- | --- |
+| `charset` | Emits `CHARACTER SET` with the native name | Ignored; no per-column character sets |
+| `collation` | Emits `COLLATE` with the native name | Emits `COLLATE`; the name must exist on the connection |
+
+ASCII is a storage choice, not a portable input validator: SQLite still accepts non-ASCII text.
+ASCII characters already use one byte each in UTF-8; declaring ASCII does not imply a universal
+fourfold space saving. Binary UUID storage is a separate representation.
+
+For explicit comparison behavior, choose a collation supported by your database:
+
+```php
+// MySQL / MariaDB:
+$table->addColumn('reference', 'VARCHAR(64)', charset: 'ascii', collation: 'ascii_bin');
+
+// SQLite:
+$table->addColumn('reference', 'VARCHAR(64)', collation: 'BINARY');
+```
+
+These are backend-specific alternatives, not equivalent portable presets. MySQL's `ascii_bin`
+and SQLite's `BINARY` differ on trailing spaces; SQLite's `NOCASE` only folds ASCII case and is
+not equivalent to a Unicode case-/accent-insensitive MySQL collation. Unknown or incompatible
+native names are rejected by the database, without an automatic fallback.
+
+#### Defaults and modifications
+
+- On MySQL/MariaDB, when neither option is supplied, text columns inherit the table defaults.
+  A charset without a collation uses that charset's default collation; a collation without a
+  charset selects its associated charset. When both are supplied, they must be compatible.
+- SQLite continues to ignore table-level charset/collation options. Column comparisons use
+  `BINARY` unless an explicit column collation is supplied; there is no table-default inheritance.
+- `modifyColumn()` describes the complete new column definition. Repeat options you want to retain.
+  Omitting both returns to the table defaults on MySQL/MariaDB and the implicit `BINARY` collation
+  on SQLite; it does not preserve the modified column's previous options automatically.
+- The same options work on generated text columns. Renames and unrelated table rebuilds preserve
+  existing column options. SQLite introspection reports explicitly declared column collations;
+  it does not infer view-result collations or expression collations as column declarations.
+- SQLite column modification requires a table rebuild with a current schema. Pass the schema to
+  `getStatements($compiler, $schema)` or use the migration runner with a supplied schema for
+  transaction and foreign-key management. Re-read metadata after structural changes.
+
 ### CHECK constraints
 
 ```php

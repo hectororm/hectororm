@@ -73,6 +73,8 @@ final class AlterTable extends TableOperation
      * @param bool $first
      * @param bool $useCurrentOnUpdate MySQL/MariaDB only; ignored on SQLite
      * @param Generated|string|null $generated A string is a SQL expression for a VIRTUAL column
+     * @param string|null $charset Native character set name (MySQL/MariaDB only; ignored on SQLite)
+     * @param string|null $collation Native collation name, without cross-dialect translation
      *
      * @return static
      */
@@ -87,6 +89,8 @@ final class AlterTable extends TableOperation
         bool $first = false,
         bool $useCurrentOnUpdate = false,
         Generated|string|null $generated = null,
+        ?string $charset = null,
+        ?string $collation = null,
     ): static {
         $this->add(new ModifyColumn(
             table: $this->getObjectName(),
@@ -100,6 +104,8 @@ final class AlterTable extends TableOperation
             first: $first,
             useCurrentOnUpdate: $useCurrentOnUpdate,
             generated: $generated,
+            charset: $charset,
+            collation: $collation,
         ));
 
         return $this;

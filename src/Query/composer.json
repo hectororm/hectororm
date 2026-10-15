@@ -20,10 +20,10 @@
   },
   "require": {
     "php": "^8.0",
-    "hectororm/connection": "^1.0"
+    "hectororm/connection": "self.version"
   },
   "suggest": {
-    "hectororm/pagination": "Required to use paginate() method (^1.0)"
+    "hectororm/pagination": "Required to use paginate() method"
   },
   "extra": {
     "branch-alias": {

@@ -62,6 +62,8 @@ class TableOperationTest extends TestCase
         $this->assertFalse($op->isFirst());
         $this->assertNull($op->getGenerated());
         $this->assertFalse($op->isGenerated());
+        $this->assertNull($op->getCharset());
+        $this->assertNull($op->getCollation());
     }
 
     public function testAddColumnWithAllOptions(): void
@@ -131,6 +133,48 @@ class TableOperationTest extends TestCase
             'constant zero' => ['0'],
             'virtual object' => [new Generated('quantity * price')],
             'stored object' => [new Generated('quantity * price', stored: true)],
+        ];
+    }
+
+    /**
+     * @dataProvider columnTextOptions
+     */
+    public function testColumnTextOptions(?string $charset, ?string $collation): void
+    {
+        $create = new CreateTable('items');
+        $this->assertSame($create, $create->addColumn('reference', 'CHAR(36)',
+            charset: $charset, collation: $collation));
+
+        $alter = new AlterTable('items');
+        $this->assertSame($alter, $alter->addColumn('reference', 'CHAR(36)',
+            charset: $charset, collation: $collation));
+        $this->assertSame($alter, $alter->modifyColumn('reference', 'CHAR(36)',
+            charset: $charset, collation: $collation));
+        $column = new Column('reference', 0, null, false, 'char');
+        $this->assertSame($alter, $alter->modifyColumn($column, 'CHAR(36)',
+            charset: $charset, collation: $collation));
+
+        $operations = [
+            new AddColumn('items', 'reference', 'CHAR(36)', charset: $charset, collation: $collation),
+            new ModifyColumn('items', 'reference', 'CHAR(36)', charset: $charset, collation: $collation),
+            ...$create->getArrayCopy(),
+            ...$alter->getArrayCopy(),
+        ];
+
+        foreach ($operations as $operation) {
+            $this->assertSame('CHAR(36)', $operation->getType());
+            $this->assertSame($charset, $operation->getCharset());
+            $this->assertSame($collation, $operation->getCollation());
+        }
+    }
+
+    public static function columnTextOptions(): array
+    {
+        return [
+            'defaults' => [null, null],
+            'charset only' => ['ascii', null],
+            'collation only' => [null, 'NOCASE'],
+            'native MySQL names' => ['utf8mb4', 'utf8mb4_0900_ai_ci'],
         ];
     }
 
