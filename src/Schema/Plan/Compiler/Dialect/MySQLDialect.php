@@ -411,6 +411,8 @@ final class MySQLDialect extends AbstractDialect
             $type .= ' unsigned';
         }
 
+        $type .= $this->compileColumnTextOptions($column->getCharset(), $column->getCollation());
+
         $expression = $column->getGenerationExpression();
         if (null !== $expression) {
             return $this->compileGeneratedColumnDefinition(
@@ -470,16 +472,20 @@ final class MySQLDialect extends AbstractDialect
     {
         $this->validateColumnOperation($operation);
 
+        $type = $operation->getType() . $this->compileColumnTextOptions(
+            $operation->getCharset(),
+            $operation->getCollation(),
+        );
         $parts = [
             $this->quoteIdentifier($operation->getName()),
-            $operation->getType(),
+            $type,
         ];
 
         $generated = $operation->getGenerated();
         if (null !== $generated) {
             return $this->compileGeneratedColumnDefinition(
                 $operation->getName(),
-                $operation->getType(),
+                $type,
                 $generated->getExpression(),
                 $generated->isStored(),
                 $operation->isNullable(),
@@ -515,6 +521,22 @@ final class MySQLDialect extends AbstractDialect
         }
 
         return implode(' ', $parts);
+    }
+
+    /**
+     * Compile native column character set and collation names.
+     */
+    private function compileColumnTextOptions(?string $charset, ?string $collation): string
+    {
+        $sql = '';
+        if (null !== $charset) {
+            $sql .= ' CHARACTER SET ' . $this->quoteIdentifier($charset);
+        }
+        if (null !== $collation) {
+            $sql .= ' COLLATE ' . $this->quoteIdentifier($collation);
+        }
+
+        return $sql;
     }
 
     /**

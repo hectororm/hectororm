@@ -67,6 +67,8 @@ abstract class AbstractMapper implements Mapper
 
     /**
      * @inheritDoc
+     *
+     * Attributes are constructed during discovery; relationships are constructed on registry lookup.
      */
     public function getRelationships(): Relationships
     {
@@ -74,8 +76,7 @@ abstract class AbstractMapper implements Mapper
             return $this->relationships;
         }
 
-        // Init relationships
-        $this->relationships = new Relationships($this->reflection->class);
+        $relationships = new Relationships($this->reflection->class);
 
         $attributes =
             $this->reflection->getClass()
@@ -87,10 +88,10 @@ abstract class AbstractMapper implements Mapper
         foreach ($attributes as $attribute) {
             /** @var Attributes\RelationshipAttribute $attrRelationship */
             $attrRelationship = $attribute->newInstance();
-            $attrRelationship->init($this->relationships);
+            $relationships->addDeclaration($attrRelationship);
         }
 
-        return $this->relationships;
+        return $this->relationships = $relationships;
     }
 
     /**

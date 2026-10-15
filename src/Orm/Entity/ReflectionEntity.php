@@ -59,9 +59,9 @@ class ReflectionEntity
     private string $table;
     private ?string $schema = null;
     private ?string $connection = null;
-    private ?array $primaryColumns = [];
+    private ?array $primaryColumns;
     private array $types = [];
-    private array $hidden = [];
+    private array $hidden;
 
     private ?Table $tableInstance = null;
     private Mapper $mapperInstance;

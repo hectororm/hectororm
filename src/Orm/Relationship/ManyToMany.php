@@ -95,9 +95,7 @@ class ManyToMany extends Relationship
      */
     private function resolvePivotTable(?string $table): Table
     {
-        if (null === $table) {
-            $table = sprintf('%s_%s', $this->sourceEntity->table, $this->targetEntity->table);
-        }
+        $table ??= sprintf('%s_%s', $this->sourceEntity->table, $this->targetEntity->table);
 
         try {
             return $this->sourceEntity->getTable()->getSchema()->getTable($table);

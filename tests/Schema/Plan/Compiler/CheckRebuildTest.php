@@ -271,17 +271,17 @@ class CheckRebuildTest extends TestCase
         ));
     }
 
-    public function testMixedAlterRejectsLossOfColumnCollationBeforeEmittingSql(): void
+    public function testMixedAlterPreservesColumnCollationAndChecks(): void
     {
         $this->connection->execute('CREATE TABLE items (label TEXT COLLATE NOCASE, price INT CHECK(price >= 0))');
+        $this->connection->execute("INSERT INTO items VALUES ('ABC', 1)");
         $plan = new Plan();
         $plan->alter('items')->modifyColumn('price', 'INTEGER', nullable: true);
 
-        $this->expectException(PlanException::class);
-        $this->expectExceptionMessage('Cannot faithfully rebuild SQLite definitions with: COLLATE');
-        foreach ((new SqliteCompiler())->compile($plan, $this->schema()) as $statement) {
-            self::fail('Emitted lossy rebuild SQL: ' . $statement);
-        }
+        $this->execute($plan);
+        self::assertSame('NOCASE', $this->schema()->getTable('items')->getColumn('label')->getCollation());
+        self::assertSame(['ABC'], $this->connection->fetchColumn("SELECT label FROM items WHERE label = 'abc'"));
+        $this->assertRejected("INSERT INTO items VALUES ('other', -1)");
     }
 
     public static function unsafeDependencies(): array

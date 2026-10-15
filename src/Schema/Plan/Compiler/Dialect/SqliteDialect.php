@@ -311,6 +311,15 @@ final class SqliteDialect extends AbstractDialect
 
         if ($operation instanceof AddColumn || $operation instanceof ModifyColumn) {
             $this->validateColumnOperation($operation);
+            if ($operation instanceof ModifyColumn &&
+                (null !== $operation->getCharset() || null !== $operation->getCollation())) {
+                throw new PlanException(sprintf(
+                    'Column "%s" on table "%s": changing charset or collation requires ' .
+                    'a SQLite table rebuild with an existing schema',
+                    $operation->getName(),
+                    $tableName,
+                ));
+            }
             if ($operation->isGenerated() &&
                 ($operation instanceof ModifyColumn || true === $operation->getGenerated()?->isStored())) {
                 throw new PlanException(sprintf(
@@ -418,6 +427,11 @@ final class SqliteDialect extends AbstractDialect
             // rejects, so force the exact "INTEGER" keyword in that case.
             $autoIncrement ? 'INTEGER' : $operation->getType(),
         ];
+
+        // SQLite has no per-column character set. Collation names remain native.
+        if (null !== $operation->getCollation()) {
+            $parts[] = 'COLLATE ' . $this->quoteIdentifier($operation->getCollation());
+        }
 
         $generated = $operation->getGenerated();
         if (null !== $generated) {
