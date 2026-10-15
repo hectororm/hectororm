@@ -21,7 +21,7 @@
   "require": {
     "php": "^8.0",
     "ext-pdo": "*",
-    "hectororm/connection": "^1.5"
+    "hectororm/connection": "self.version"
   },
   "extra": {
     "branch-alias": {

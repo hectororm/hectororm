@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Require `hectororm/connection ^1.5` and `hectororm/schema ^1.5` for CHECK-aware migration compilation and schema introspection
+- Require internal `hectororm/*` packages with `self.version`, so each release depends on the exact same release of its sibling packages (#172)
 
 ## [1.4.1] - 2026-07-31
 

@@ -21,11 +21,11 @@
   "require": {
     "php": "^8.0",
     "ext-pdo": "*",
-    "hectororm/connection": "^1.5",
-    "hectororm/schema": "^1.5"
+    "hectororm/connection": "self.version",
+    "hectororm/schema": "self.version"
   },
   "suggest": {
-    "hectororm/query": "Required for DbTracker (^1.0)",
+    "hectororm/query": "Required for DbTracker",
     "league/flysystem": "Required for FlysystemTracker (^3.0)",
     "psr/container": "Required for container-based migration instantiation in DirectoryProvider (^1.0 || ^2.0)",
     "psr/event-dispatcher": "For migration lifecycle events (^1.0)",
