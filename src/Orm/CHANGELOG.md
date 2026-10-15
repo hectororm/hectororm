@@ -19,21 +19,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Orm::lifecycle()` exposes a dedicated `Lifecycle` service for lifecycle transactions, child removal policies and internal change tracking (#146)
 - Opt-in whole-collection replacement tracking limited to materialized members; query hydration and unseen rows never imply orphan removal (#146)
 
-### Changed
-
-- Attribute-based relationship construction and dependency validation now happen on lookup; `getRelationships()` discovers declarations, while `exists()` and `count()` inspect them without constructing relationships. Programmatic declarations remain immediate (#153)
-
 ### Fixed
 
 - Discover relationship attributes before resolving individual relationships, so named inversions no longer depend on declaration order (#153)
 - Report the dependency path when relationship inversions form a cycle without a concrete definition (#153)
 - Keep failed relationship attribute initialization retryable and expose cached relations only after their options and clauses are applied (#153)
 - Preserve target-mismatch and ambiguity diagnostics across unresolved declarations, and skip unrelated in-progress relationships in column-filtered lookups (#153)
+- Isolate the many-to-many reattachment regression test with transactional fixtures so repeated runs do not exhaust Sakila's unlinked actors
 - One-to-one bidirectional saves can start at either entity without reinserting an active parent or child; child key propagation is shared with collection relations through `Lifecycle::linkChild()` (#135)
 - Keep cascading saves and nested `persist()` batches inside the active lifecycle transaction, restore queued entity state on rollback, and cancel removed transient children before queued writes regardless of scheduling order
 - Reject lifecycle writes when an event listener restores a detached link or redirects an attached child to a different parent
 - Track explicit collection offset replacement and cancel removals when an entity is reattached before saving; transient removed children no longer cause invalid deletes
 - Release removed child links before persisting replacements, preserving unique constraints and restoring pending edits when persistence fails
+
+### Changed
+
+- Attribute-based relationship construction and dependency validation now happen on lookup; `getRelationships()` discovers declarations, while `exists()` and `count()` inspect them without constructing relationships. Programmatic declarations remain immediate (#153)
+- Require internal `hectororm/*` packages with `self.version`, so each release depends on the exact same release of its sibling packages; prevents installing the ORM with `hectororm/connection` versions lacking the `options` constructor parameter used by `OrmFactory::connection()` (#170, #172)
+- Simplify default many-to-many pivot table naming and remove redundant reflection property defaults assigned during initialization
 
 ### Deprecated
 

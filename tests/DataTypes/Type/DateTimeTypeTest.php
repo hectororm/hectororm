@@ -10,6 +10,8 @@
  * file that was distributed with this source code, to the root.
  */
 
+declare(strict_types=1);
+
 namespace Hector\DataTypes\Tests\Type;
 
 use DateTime;
@@ -249,5 +251,89 @@ class DateTimeTypeTest extends TestCase
         } finally {
             date_default_timezone_set($previous);
         }
+    }
+
+    public static function provideSerializationTimezones(): array
+    {
+        return [
+            'explicit UTC' => ['UTC', 'Asia/Tokyo', '2026-10-15T14:00:00+02:00', '2026-10-15 12:00:00'],
+            'explicit non-UTC with day rollover' => [
+                'Asia/Tokyo', 'America/New_York', '2026-10-15T23:00:00+02:00', '2026-10-16 06:00:00',
+            ],
+            'explicit daylight saving time' => [
+                'America/New_York', 'Asia/Tokyo', '2026-07-15T14:00:00+02:00', '2026-07-15 08:00:00',
+            ],
+            'explicit standard time' => [
+                'America/New_York', 'Asia/Tokyo', '2026-01-15T14:00:00+02:00', '2026-01-15 07:00:00',
+            ],
+            'ambient timezone fallback' => [
+                null, 'America/New_York', '2026-10-15T14:00:00+02:00', '2026-10-15 08:00:00',
+            ],
+        ];
+    }
+
+    /**
+     * A null configuration uses the ambient PHP timezone for every input representation.
+     *
+     * @dataProvider provideSerializationTimezones
+     */
+    public function testToSchemaNormalizesEveryRepresentation(
+        ?string $timezone,
+        string $ambientTimezone,
+        string $input,
+        string $expected,
+    ): void {
+        $previous = date_default_timezone_get();
+        date_default_timezone_set($ambientTimezone);
+
+        try {
+            $type = new DateTimeType(timezone: null === $timezone ? null : new DateTimeZone($timezone));
+            $instant = new DateTimeImmutable($input);
+            $timestamp = $instant->getTimestamp();
+
+            foreach ([
+                'integer timestamp' => $timestamp,
+                'float timestamp' => (float)$timestamp,
+                'numeric string' => (string)$timestamp,
+                'immutable object' => $instant,
+                'mutable object' => DateTime::createFromImmutable($instant),
+                'offset-bearing string' => $input,
+                'string without offset' => $expected,
+            ] as $label => $value) {
+                $this->assertSame($expected, $type->toSchema($value), $label);
+            }
+        } finally {
+            date_default_timezone_set($previous);
+        }
+    }
+
+    public static function provideFractionalSecondFormats(): array
+    {
+        return [
+            'milliseconds' => ['Y-m-d H:i:s.v', '2026-10-15 12:00:00.123'],
+            'microseconds' => ['Y-m-d H:i:s.u', '2026-10-15 12:00:00.123456'],
+        ];
+    }
+
+    /**
+     * @dataProvider provideFractionalSecondFormats
+     */
+    public function testToSchemaPreservesPrecisionAndOriginalObjects(string $format, string $expected): void
+    {
+        $type = new DateTimeType(format: $format, timezone: new DateTimeZone('UTC'));
+        $input = '2026-10-15T14:00:00.123456+02:00';
+        $mutable = new DateTime($input);
+        $immutable = new DateTimeImmutable($input);
+
+        foreach ([$mutable, $immutable] as $value) {
+            $original = clone $value;
+
+            $this->assertSame($expected, $type->toSchema($value));
+            $this->assertSame($original->format('U.u'), $value->format('U.u'));
+            $this->assertSame($original->format('Y-m-d H:i:s.uP'), $value->format('Y-m-d H:i:s.uP'));
+            $this->assertSame($original->getTimezone()->getName(), $value->getTimezone()->getName());
+        }
+
+        $this->assertSame($expected, $type->toSchema($input));
     }
 }

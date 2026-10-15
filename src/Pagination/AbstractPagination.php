@@ -89,11 +89,9 @@ abstract class AbstractPagination implements PaginationInterface
      */
     public function getArrayCopy(): array
     {
-        if (null === $this->resolvedItems) {
-            $this->resolvedItems = $this->items instanceof Traversable
-                ? iterator_to_array($this->items, false)
-                : array_values($this->items);
-        }
+        $this->resolvedItems ??= $this->items instanceof Traversable
+            ? iterator_to_array($this->items, false)
+            : array_values($this->items);
 
         return $this->resolvedItems;
     }
@@ -123,12 +121,10 @@ abstract class AbstractPagination implements PaginationInterface
             return null;
         }
 
-        if (null === $this->resolvedTotal) {
-            $this->resolvedTotal = match ($this->total instanceof Closure) {
-                true => ($this->total)(),
-                false => $this->total,
-            };
-        }
+        $this->resolvedTotal ??= match ($this->total instanceof Closure) {
+            true => ($this->total)(),
+            false => $this->total,
+        };
 
         return $this->resolvedTotal;
     }
