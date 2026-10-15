@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-10-15
+
 ### Added
 
 - `InverseOf` and programmatic `inverseOf()` declarations for structural inversion of an explicitly named relationship (#145)

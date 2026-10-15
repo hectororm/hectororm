@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-10-15
+
 ### Added
 
 - Native column `charset` and `collation` options on `addColumn()` and `modifyColumn()`, including generated columns. MySQL/MariaDB emit both clauses; SQLite ignores charset and uses the supplied native collation name without translation

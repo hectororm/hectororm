@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-10-15
+
 ### Added
 
 - CHECK migration integration with transactional SQLite rebuilds, integrity verification and preservation of the original `foreign_keys` setting on success or failure

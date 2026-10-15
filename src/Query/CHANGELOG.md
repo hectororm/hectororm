@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-10-15
+
 ### Changed
 
 - Require internal `hectororm/*` packages with `self.version`, so each release depends on the exact same release of its sibling packages (#172)

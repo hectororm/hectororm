@@ -7,6 +7,78 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-10-15
+
+### Added
+
+- **hectororm/connection**: Added `DriverCapabilities::hasCheckConstraints()` for enforced CHECK support (MySQL 8.0.16+, MariaDB 10.2.1+, SQLite and PostgreSQL) and `DriverCapabilities::hasDropCheck()` for native `DROP CHECK` syntax detection. **Note:** these additions break compatibility with third-party implementations of `DriverCapabilities`, which must implement both methods
+- **hectororm/connection**: Added `SQLiteCapabilities::hasGeneratedColumns()` to detect support for VIRTUAL and STORED generated columns (SQLite 3.31.0 or newer)
+- **hectororm/connection**: Added an `$options` parameter to `Connection::__construct()` to pass driver-specific PDO connection options (the PDO constructor `$options` array), shared by both the read/write and read-only connections and preserved across serialization. **Note:** options such as `PDO::ATTR_AUTOCOMMIT` or `PDO::ATTR_ERRMODE` may interfere with the internal transaction handling and should not be altered lightly
+- **hectororm/migration**: CHECK migration integration with transactional SQLite rebuilds, integrity verification and preservation of the original `foreign_keys` setting on success or failure
+- **hectororm/orm**: `InverseOf` and programmatic `inverseOf()` declarations for structural inversion of an explicitly named relationship (#145)
+- **hectororm/orm**: Independent query clauses and non-destructive parent-side defaults for `InverseOf`; lifecycle options are validated on the resulting relation (#145)
+- **hectororm/orm**: `HasOneChild` and programmatic `hasOneChild()` / `oneToOne()` declarations for scalar child relations, with shared lifecycle policies and non-destructive `orphanRemoval: false` default (#135)
+- **hectororm/orm**: Optional `isParent` on `OneToOne`: infer unambiguous FK direction/mappings, propagate parent keys after insertion, and invert resolved direction in `reverse()` while preserving the unresolved historical fallback until v2 (#135)
+- **hectororm/orm**: Scalar assignment tracking for loaded and unloaded child replacement, atomic removal and retry after rollback; filtered-out children are never implicitly deleted (#135)
+- **hectororm/orm**: Internal `LifecycleSnapshotInterface` shared by `Related`, ORM collections and `EntityData`; transaction snapshots retain pending scalar assignments independently of the existing PHP serialization format (#135)
+- **hectororm/orm**: Added support for an `options` key in the `OrmFactory::connection()` configuration array, forwarded as the driver-specific PDO connection options to the created `Connection`
+- **hectororm/orm**: Explicit `orphanRemoval` policy for `HasMany`, `Relationships::hasMany()` and `OneToMany`: detach nullable child links or delete removed children; omitted policy preserves historical deletion until v2 (#146)
+- **hectororm/orm**: Shared child lifecycle operations and single-connection transactions with savepoint isolation and rollback restoration of mapped entity state, relation caches and collection removal tracking (#146)
+- **hectororm/orm**: `Orm::lifecycle()` exposes a dedicated `Lifecycle` service for lifecycle transactions, child removal policies and internal change tracking (#146)
+- **hectororm/orm**: Opt-in whole-collection replacement tracking limited to materialized members; query hydration and unseen rows never imply orphan removal (#146)
+- **hectororm/schema**: Native column `charset` and `collation` options on `addColumn()` and `modifyColumn()`, including generated columns. MySQL/MariaDB emit both clauses; SQLite ignores charset and uses the supplied native collation name without translation
+- **hectororm/schema**: SQLite column collation introspection, retained through serialization and table rebuilds, including unrelated changes and generated columns
+- **hectororm/schema**: Native SQL definitions on `Table` (including views) and `Index`, with named trigger definitions attached to their table/view and implicit-index metadata. Definitions survive serialization; older payloads leave definitions unavailable
+- **hectororm/schema**: SQLite CHECK additions/removals through table rebuilds, retaining named and anonymous CHECKs during unrelated rebuilds. CHECK-only changes preserve source table definitions, indexes, triggers, generated columns, rowids and AUTOINCREMENT history; incomplete CHECK metadata and unsafe dependency rewrites fail explicitly
+- **hectororm/schema**: Named CHECK plan operations (`addCheck()` / `dropCheck()`) with non-empty input validation, CREATE compilation on MySQL/MariaDB/SQLite and native ALTER compilation on supported MySQL/MariaDB versions. MySQL-family CHECK compilation requires explicit enforcement capabilities, including for offline compilers
+- **hectororm/schema**: CHECK introspection for MySQL/MariaDB and SQLite, preserving MySQL enforcement state and SQLite named/unnamed column and table constraints. Unsupported catalogs (including older MariaDB versions without `CHECK_CONSTRAINTS`) retain unknown metadata
+- **hectororm/schema**: `CheckConstraint` metadata with nullable names, verbatim SQL expressions and nullable enforcement state; `Table` CHECK accessors and serialization preserve unnamed constraints and distinguish unavailable metadata from a known empty list, including when reading older serialized schemas
+- **hectororm/schema**: `Generated` value object and `generated: Generated|string|null` on column operations, `addColumn()` and `modifyColumn()`. Strings declare VIRTUAL columns; `new Generated($expression, stored: true)` declares STORED columns on MySQL/MariaDB and SQLite 3.31+. Generated columns reject explicit defaults, AUTO_INCREMENT and useCurrentOnUpdate
+- **hectororm/schema**: Generated-column introspection (`Column::getGenerationExpression()`, `isGenerated()`, `isGeneratedStored()`) with backward-compatible serialization. SQLite uses `table_xinfo` and token-aware extraction of generation expressions; hidden virtual-table implementation columns remain excluded
+- **hectororm/schema**: Automatic SQLite table rebuilds for STORED column additions, preserving generated definitions and recalculating generated destinations instead of copying their values
+- **hectororm/schema**: `useCurrentOnUpdate` option on column operations, `TableOperation::addColumn()` and `AlterTable::modifyColumn()` to emit MySQL/MariaDB `ON UPDATE CURRENT_TIMESTAMP` for `TIMESTAMP` / `DATETIME` columns, preserving fractional seconds precision. SQLite accepts and ignores this option without creating triggers
+- **hectororm/schema**: `Column::getOnUpdate()` and `Column::getDatetimePrecision()` with MySQL/MariaDB introspection and backward-compatible serialization
+- **hectororm/schema**: Added `Plan::purge(string|Table $table, bool $resetIncrement = false)` and the `PurgeTable` operation to clear a table before schema changes. MySQL/MariaDB use `DELETE` or `TRUNCATE` depending on the reset option; SQLite uses `DELETE` and optionally removes the table's `sqlite_sequence` entry (the system table must exist when requesting a reset). Purges follow structure declaration order and use the existing migration logging, dry-run, and failure handling
+- **hectororm/schema**: Added `compilePurgeTable(PurgeTable $purgeTable): iterable` to `DialectInterface`; custom dialect implementations must implement this method
+
+### Changed
+
+- **hectororm/migration**: Require internal `hectororm/*` packages with `self.version`, so each release depends on the exact same release of its sibling packages (#172)
+- **hectororm/orm**: Attribute-based relationship construction and dependency validation now happen on lookup; `getRelationships()` discovers declarations, while `exists()` and `count()` inspect them without constructing relationships. Programmatic declarations remain immediate (#153)
+- **hectororm/orm**: Require internal `hectororm/*` packages with `self.version`, so each release depends on the exact same release of its sibling packages; prevents installing the ORM with `hectororm/connection` versions lacking the `options` constructor parameter used by `OrmFactory::connection()` (#170, #172)
+- **hectororm/query**: Require internal `hectororm/*` packages with `self.version`, so each release depends on the exact same release of its sibling packages (#172)
+- **hectororm/schema**: Require internal `hectororm/*` packages with `self.version`, so each release depends on the exact same release of its sibling packages (#172)
+- **hectororm/schema**: Refactored the plan compiler to separate responsibilities: a single ordering-only `Compiler` orchestrates the three compilation passes and delegates all DBMS-specific SQL to a `Dialect` (`Hector\Schema\Plan\Compiler\Dialect\DialectInterface`), with `MySQLDialect` and `SqliteDialect` implementations. This removes the large `switch` and the dialect-specific SQL that had leaked into the shared base class, and makes adding a new DBMS a single new `Dialect`. The SQLite table rebuild is now isolated in a dedicated `TableRebuilder`
+- **hectororm/schema**: Compilation is now stateless: per-run state (schema, foreign-key-check management) travels in an immutable `CompilationContext` instead of mutable compiler properties
+- **hectororm/schema**: `MySQLCompiler` and `SqliteCompiler` are kept as thin backward-compatible wrappers around `Compiler` (their constructor signature and behaviour are unchanged); the internal `AbstractCompiler` base class has been removed
+
+### Deprecated
+
+- **hectororm/orm**: `BelongsTo` resolving to collections or parent-side `OneToOne` relations: use `InverseOf` with an explicit `foreignName`; existing behavior is preserved before v2 and warnings are emitted once per relation registry/name (#145)
+- **hectororm/orm**: The implicit `OneToMany` deletion policy: declare `orphanRemoval: true` to preserve it across v2, whose target default is non-destructive detachment
+
+### Fixed
+
+- **hectororm/datatypes**: `DateTimeType::toSchema()` now normalizes date objects and strings containing an explicit timezone or offset to the configured timezone (or the ambient PHP default when none is configured), consistently with numeric timestamps. Fractional seconds are preserved according to the output format, and caller-owned date objects are not mutated (#158).
+- **hectororm/migration**: Fully compile migrations before executing SQL, so compilation failures cannot leave partial DDL changes
+- **hectororm/migration**: Move SQLite foreign-key toggles outside the migration transaction and reject rebuilds inside caller-owned transactions. Refresh supplied SQLite schema metadata between executed migrations; reject CHECK additions when session enforcement is disabled
+- **hectororm/orm**: Avoid preloading an opposite relationship from a collection when its cardinality, mapping or query clauses require its own lookup (#145)
+- **hectororm/orm**: Exclude generated columns from entity INSERT and UPDATE statements while preserving hydration and refresh, including saves that only change generated values. `MagicEntity` rejects assignments to generated columns as read-only (#168)
+- **hectororm/orm**: Discover relationship attributes before resolving individual relationships, so named inversions no longer depend on declaration order (#153)
+- **hectororm/orm**: Report the dependency path when relationship inversions form a cycle without a concrete definition (#153)
+- **hectororm/orm**: Keep failed relationship attribute initialization retryable and expose cached relations only after their options and clauses are applied (#153)
+- **hectororm/orm**: Preserve target-mismatch and ambiguity diagnostics across unresolved declarations, and skip unrelated in-progress relationships in column-filtered lookups (#153)
+- **hectororm/orm**: One-to-one bidirectional saves can start at either entity without reinserting an active parent or child; child key propagation is shared with collection relations through `Lifecycle::linkChild()` (#135)
+- **hectororm/orm**: Keep cascading saves and nested `persist()` batches inside the active lifecycle transaction, restore queued entity state on rollback, and cancel removed transient children before queued writes regardless of scheduling order
+- **hectororm/orm**: Reject lifecycle writes when an event listener restores a detached link or redirects an attached child to a different parent
+- **hectororm/orm**: Track explicit collection offset replacement and cancel removals when an entity is reattached before saving; transient removed children no longer cause invalid deletes
+- **hectororm/orm**: Release removed child links before persisting replacements, preserving unique constraints and restoring pending edits when persistence fails
+- **hectororm/schema**: Preserve column character sets and collations in legacy MySQL/MariaDB `CHANGE COLUMN` renames
+- **hectororm/schema**: Reject SQLite rebuilds that would reuse a schema snapshot after earlier structural changes to the same table in one plan; combine operations in a single `alter()` or use separate migrations
+- **hectororm/schema**: Preserve generated expressions and storage modes in the legacy MySQL/MariaDB CHANGE COLUMN rename fallback; avoid reconstructing integer types with decimal precision/scale
+- **hectororm/schema**: Preserve SQL expression and quoted literal defaults during SQLite rebuilds. Follow column rename chains, update generated references and index/local foreign-key metadata, and avoid copying dropped-and-readded columns. Reject rebuilds without surviving writable columns and ambiguous keyword rewrites before emitting destructive SQL
+- **hectororm/schema**: Preserve column-level `ON UPDATE`, fractional seconds precision and temporal expression defaults when renaming columns via the legacy MySQL `CHANGE COLUMN` fallback
+
 ## [1.4.1] - 2026-07-31
 
 ### Fixed

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-10-15
+
 ### Added
 
 - Added `DriverCapabilities::hasCheckConstraints()` for enforced CHECK support (MySQL 8.0.16+, MariaDB 10.2.1+, SQLite and PostgreSQL) and `DriverCapabilities::hasDropCheck()` for native `DROP CHECK` syntax detection. **Note:** these additions break compatibility with third-party implementations of `DriverCapabilities`, which must implement both methods
