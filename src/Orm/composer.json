@@ -23,7 +23,7 @@
     "ext-pdo": "*",
     "berlioz/helpers": "^1.6",
     "hectororm/collection": "^1.0",
-    "hectororm/connection": "^1.0",
+    "hectororm/connection": "^1.5",
     "hectororm/data-types": "^1.0",
     "hectororm/query": "^1.0",
     "hectororm/schema": "^1.0",
