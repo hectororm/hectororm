@@ -184,7 +184,7 @@ abstract class AbstractMapper implements Mapper
     {
         $entity->getRelated()->linkForeign();
 
-        // Collect data from entity and filter NULL data
+        // Collect data from entity and filter generated columns and NULL data
         $collected = $this->collectEntity($entity);
         $collected = array_filter(
             $collected,
@@ -196,6 +196,10 @@ abstract class AbstractMapper implements Mapper
                 }
 
                 $column = $table->getColumn($key);
+
+                if ($column->isGenerated()) {
+                    return false;
+                }
 
                 if (null === $value) {
                     // Remove null value on auto increment column
@@ -268,12 +272,19 @@ abstract class AbstractMapper implements Mapper
             }
         }
 
-        if (count($values) > 0) {
-            // Separate values of primary value
-            if (false === $noPrimary) {
-                $values = array_diff_key($values, array_fill_keys(array_keys($primaryValue), null));
-            }
+        // Generated columns are readable but must never appear in the SET clause.
+        $values = array_filter(
+            $values,
+            fn(string $column): bool => false === $this->reflection->getTable()->getColumn($column)->isGenerated(),
+            ARRAY_FILTER_USE_KEY,
+        );
 
+        // Separate values of primary value
+        if (false === $noPrimary) {
+            $values = array_diff_key($values, array_fill_keys(array_keys($primaryValue), null));
+        }
+
+        if (count($values) > 0) {
             $nbAffected =
                 $entity::query()
                     ->whereEquals($this->quotedTuples($primaryValue))

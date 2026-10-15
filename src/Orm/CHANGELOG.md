@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Exclude generated columns from entity INSERT and UPDATE statements while preserving hydration and refresh, including saves that only change generated values. `MagicEntity` rejects assignments to generated columns as read-only (#168)
 - Discover relationship attributes before resolving individual relationships, so named inversions no longer depend on declaration order (#153)
 - Report the dependency path when relationship inversions form a cycle without a concrete definition (#153)
 - Keep failed relationship attribute initialization retryable and expose cached relations only after their options and clauses are applied (#153)
