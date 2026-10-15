@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Require internal `hectororm/*` packages with `self.version`, so each release depends on the exact same release of its sibling packages; prevents installing the ORM with `hectororm/connection` versions lacking the `options` constructor parameter used by `OrmFactory::connection()` (#170, #172)
 - Simplify default many-to-many pivot table naming and remove redundant reflection property defaults assigned during initialization
 
 ### Deprecated
