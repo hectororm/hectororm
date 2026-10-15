@@ -29,6 +29,8 @@ class Relationships implements Countable
 
     private ReflectionEntity $entity;
     private array $list = [];
+    /** @var array<string, true> Non-parent BelongsTo declarations already diagnosed by this registry. */
+    private array $deprecatedBelongsTo = [];
     /** @var array<string, RelationshipAttribute> */
     private array $declarations = [];
     /** @var array<string, int> Positions of this registry's active declarations in the shared path. */
@@ -290,6 +292,56 @@ class Relationships implements Countable
     }
 
     /**
+     * Structurally invert an explicitly named relationship on the target mapper.
+     *
+     * @throws OrmException
+     */
+    public function inverseOf(string $target, string $name, string $foreignName): Relationship
+    {
+        $targetReflection = ReflectionEntity::get($target);
+        $source = $this->entity->getName();
+        $target = $targetReflection->getName();
+        $foreign = $targetReflection->getMapper()->getRelationships()->getWith($source, $foreignName);
+
+        if ($foreign->getSourceEntity() !== $target) {
+            throw new RelationException(sprintf(
+                'Relationship "%s.%s" must originate from "%s" to be inverted as "%s.%s"',
+                $target,
+                $foreignName,
+                $target,
+                $source,
+                $name,
+            ));
+        }
+
+        $inverse = $foreign->reverse($name);
+        if (
+            $inverse === $foreign
+            || $inverse->getName() !== $name
+            || $inverse->getSourceEntity() !== $source
+            || $inverse->getTargetEntity() !== $target
+        ) {
+            throw new RelationException(sprintf(
+                'Relationship "%s.%s" returned an invalid inverse for "%s.%s"',
+                $target,
+                $foreignName,
+                $source,
+                $name,
+            ));
+        }
+
+        // Inversion reuses structure, never the opposite declaration's read view.
+        $inverse->resetWhere()->resetGroup()->resetHaving()->resetOrder()->resetLimit();
+
+        // A new inversion must not acquire OneToMany's historical destructive default.
+        if ($inverse instanceof OneToMany || ($inverse instanceof OneToOne && true === $inverse->isParent())) {
+            $inverse->setOrphanRemoval(false);
+        }
+
+        return $this->list[$name] = $inverse;
+    }
+
+    /**
      * Belongs to.
      *
      * @param string $target
@@ -307,7 +359,27 @@ class Relationships implements Countable
         $foreignRelationships = $targetReflection->getMapper()->getRelationships();
         $foreignRelationship = $foreignRelationships->getWith($this->entity->getName(), $foreignName);
 
-        return $this->list[$name] = $foreignRelationship->reverse($name);
+        $relationship = $foreignRelationship->reverse($name);
+        $nonParentReference = $relationship instanceof OneToMany
+            || $relationship instanceof ManyToMany
+            || ($relationship instanceof OneToOne && true === $relationship->isParent());
+
+        if ($nonParentReference && !isset($this->deprecatedBelongsTo[$name])) {
+            $this->deprecatedBelongsTo[$name] = true;
+            trigger_error(sprintf(
+                'BelongsTo "%s.%s" resolves to a collection or a parent-side relation; '
+                . 'this usage is deprecated and will be rejected in v2. '
+                . 'Use InverseOf(target: "%s", name: "%s", foreignName: "%s"). '
+                . 'Specify orphanRemoval: true if preserving historical deletion of detached children.',
+                $this->entity->getName(),
+                $name,
+                $targetReflection->getName(),
+                $name,
+                $foreignRelationship->getName(),
+            ), E_USER_DEPRECATED);
+        }
+
+        return $this->list[$name] = $relationship;
     }
 
     /**

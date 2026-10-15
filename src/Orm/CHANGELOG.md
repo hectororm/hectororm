@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `InverseOf` and programmatic `inverseOf()` declarations for structural inversion of an explicitly named relationship (#145)
+- Independent query clauses and non-destructive parent-side defaults for `InverseOf`; lifecycle options are validated on the resulting relation (#145)
 - `HasOneChild` and programmatic `hasOneChild()` / `oneToOne()` declarations for scalar child relations, with shared lifecycle policies and non-destructive `orphanRemoval: false` default (#135)
 - Optional `isParent` on `OneToOne`: infer unambiguous FK direction/mappings, propagate parent keys after insertion, and invert resolved direction in `reverse()` while preserving the unresolved historical fallback until v2 (#135)
 - Scalar assignment tracking for loaded and unloaded child replacement, atomic removal and retry after rollback; filtered-out children are never implicitly deleted (#135)
@@ -21,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Avoid preloading an opposite relationship from a collection when its cardinality, mapping or query clauses require its own lookup (#145)
 - Exclude generated columns from entity INSERT and UPDATE statements while preserving hydration and refresh, including saves that only change generated values. `MagicEntity` rejects assignments to generated columns as read-only (#168)
 - Discover relationship attributes before resolving individual relationships, so named inversions no longer depend on declaration order (#153)
 - Report the dependency path when relationship inversions form a cycle without a concrete definition (#153)
@@ -41,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Deprecated
 
+- `BelongsTo` resolving to collections or parent-side `OneToOne` relations: use `InverseOf` with an explicit `foreignName`; existing behavior is preserved before v2 and warnings are emitted once per relation registry/name (#145)
 - The implicit `OneToMany` deletion policy: declare `orphanRemoval: true` to preserve it across v2, whose target default is non-destructive detachment
 
 ## [1.4.1] - 2026-07-31
