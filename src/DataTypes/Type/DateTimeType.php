@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace Hector\DataTypes\Type;
 
 use DateTime;
+use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
 use Hector\DataTypes\Exception\ValueException;
@@ -111,16 +112,15 @@ class DateTimeType extends AbstractType
             $timezone = $this->resolveTimezone();
 
             if (is_numeric($value)) {
-                // The '@timestamp' syntax always yields a UTC DateTime; move it to
-                // the resolved timezone so it agrees with the string path instead of
-                // rendering UTC wall-clock.
-                $value = (new DateTime(sprintf('@%d', $value)))->setTimezone($timezone);
+                $value = new DateTime(sprintf('@%d', $value));
             } elseif (is_string($value)) {
                 $value = new DateTime($value, $timezone);
             }
 
             if ($value instanceof DateTimeInterface) {
-                return $value->format($this->format);
+                return DateTimeImmutable::createFromInterface($value)
+                    ->setTimezone($timezone)
+                    ->format($this->format);
             }
 
             throw ValueException::castError($this);
