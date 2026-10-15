@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `DateTimeType::toSchema()` now normalizes date objects and strings containing an explicit timezone or offset to the configured timezone (or the ambient PHP default when none is configured), consistently with numeric timestamps. Fractional seconds are preserved according to the output format, and caller-owned date objects are not mutated (#158).
+
 ## [1.4.1] - 2026-07-31
 
 _No changes in this release._

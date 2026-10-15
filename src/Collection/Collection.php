@@ -565,9 +565,7 @@ class Collection implements CollectionInterface, ArrayAccess
                 default => null,
             };
 
-            if (!isset($result[$groupKey])) {
-                $result[$groupKey] = new static();
-            }
+            $result[$groupKey] ??= new static();
 
             $result[$groupKey]->append($item);
         }

@@ -21,11 +21,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Isolate the many-to-many reattachment regression test with transactional fixtures so repeated runs do not exhaust Sakila's unlinked actors
 - One-to-one bidirectional saves can start at either entity without reinserting an active parent or child; child key propagation is shared with collection relations through `Lifecycle::linkChild()` (#135)
 - Keep cascading saves and nested `persist()` batches inside the active lifecycle transaction, restore queued entity state on rollback, and cancel removed transient children before queued writes regardless of scheduling order
 - Reject lifecycle writes when an event listener restores a detached link or redirects an attached child to a different parent
 - Track explicit collection offset replacement and cancel removals when an entity is reattached before saving; transient removed children no longer cause invalid deletes
 - Release removed child links before persisting replacements, preserving unique constraints and restoring pending edits when persistence fails
+
+### Changed
+
+- Require internal `hectororm/*` packages with `self.version`, so each release depends on the exact same release of its sibling packages; prevents installing the ORM with `hectororm/connection` versions lacking the `options` constructor parameter used by `OrmFactory::connection()` (#170, #172)
+- Simplify default many-to-many pivot table naming and remove redundant reflection property defaults assigned during initialization
 
 ### Deprecated
 

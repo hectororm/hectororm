@@ -10,6 +10,8 @@
  * file that was distributed with this source code, to the root.
  */
 
+declare(strict_types=1);
+
 namespace Hector\Connection\Tests\Log;
 
 use Hector\Connection\Bind\BindParamList;
@@ -41,7 +43,8 @@ class LogEntryTest extends TestCase
 
         $logEntry->end();
 
-        $this->assertGreaterThan(0, $logEntry->getDuration());
+        $this->assertNotNull($logEntry->getDuration());
+        $this->assertGreaterThanOrEqual(0, $logEntry->getDuration());
     }
 
     public function testGetStart(): void
@@ -82,8 +85,11 @@ class LogEntryTest extends TestCase
         $logEntry->end();
         $time2 = microtime(true);
 
-        $this->assertGreaterThan(0, $logEntry->getDuration());
-        $this->assertLessThan($time2 - $time1, $logEntry->getDuration());
+        // Consecutive measurements may be equal at microtime() precision.
+        $this->assertNotNull($logEntry->getDuration());
+        $this->assertGreaterThanOrEqual(0, $logEntry->getDuration());
+        $this->assertLessThanOrEqual($time2 - $time1, $logEntry->getDuration());
+        $this->assertSame($logEntry->getEnd() - $logEntry->getStart(), $logEntry->getDuration());
     }
 
     public function testGetConnection(): void
