@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.1] - 2026-10-16
+
+### Fixed
+
+- **hectororm/datatypes**: Avoid PHP 8.6 `is_a()` deprecations when converting scalar values to backed enum schema values.
+- **hectororm/orm**: Avoid PHP 8.6 deprecations by using non-nullable array return types for entity debug information.
+- **hectororm/orm**: Avoid PHP 8.5 `SplObjectStorage` deprecations when traversing materialized relationship graphs for lifecycle operations.
+
 ## [1.5.0] - 2026-10-15
 
 ### Added
