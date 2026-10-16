@@ -132,13 +132,13 @@ final class Lifecycle
         $children = new SplObjectStorage();
         foreach ($pending as $entity) {
             foreach ($entity->getRelated()->getChildren() as $child) {
-                $children->attach($child);
+                $children->offsetSet($child);
             }
         }
         usort(
             $pending,
             static fn(Entity $left, Entity $right): int =>
-                (int)$children->contains($left) <=> (int)$children->contains($right),
+                (int)$children->offsetExists($left) <=> (int)$children->offsetExists($right),
         );
 
         foreach ($pending as $entity) {

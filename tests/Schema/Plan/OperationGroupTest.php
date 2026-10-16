@@ -121,7 +121,7 @@ class OperationGroupTest extends TestCase
 
         // Use reflection to call the protected add() method
         $reflection = new ReflectionMethod($group, 'add');
-        $reflection->setAccessible(true);
+        PHP_VERSION_ID < 80100 && $reflection->setAccessible(true);
         $reflection->invoke($group, $wrongColumn);
     }
 
@@ -137,7 +137,7 @@ class OperationGroupTest extends TestCase
 
         // Use reflection to call the protected add() method
         $reflection = new ReflectionMethod($group, 'add');
-        $reflection->setAccessible(true);
+        PHP_VERSION_ID < 80100 && $reflection->setAccessible(true);
         $reflection->invoke($group, $column);
 
         $this->assertCount(1, $group);

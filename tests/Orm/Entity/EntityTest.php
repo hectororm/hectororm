@@ -251,7 +251,7 @@ class EntityTest extends AbstractTestCase
         $this->assertInstanceOf(Builder::class, $entityBuilder);
 
         $reflectionProperty = new ReflectionProperty(Builder::class, 'entityReflection');
-        $reflectionProperty->setAccessible(true);
+        PHP_VERSION_ID < 80100 && $reflectionProperty->setAccessible(true);
         /** @var ReflectionEntity $entityReflection */
         $entityReflection = $reflectionProperty->getValue($entityBuilder);
 

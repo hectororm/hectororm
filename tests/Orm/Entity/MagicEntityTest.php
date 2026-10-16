@@ -127,7 +127,7 @@ class MagicEntityTest extends AbstractTestCase
         $entity->description = 'Hector secret synopsis';
 
         $reflectionProperty = new ReflectionProperty(FilmMagicHidden::class, '_hectorAttributes');
-        $reflectionProperty->setAccessible(true);
+        PHP_VERSION_ID < 80100 && $reflectionProperty->setAccessible(true);
         $attributes = $reflectionProperty->getValue($entity);
 
         $this->assertSame('Hector secret synopsis', $attributes['description']);

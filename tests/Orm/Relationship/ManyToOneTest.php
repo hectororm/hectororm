@@ -112,7 +112,7 @@ class ManyToOneTest extends AbstractTestCase
         );
 
         $reflectionMethod = new ReflectionMethod(ManyToOne::class, 'switchIntoEntities');
-        $reflectionMethod->setAccessible(true);
+        PHP_VERSION_ID < 80100 && $reflectionMethod->setAccessible(true);
 
         $foreigners = new Collection(
             [$address1 = Address::find(3), $address2 = Address::find(4), Actor::find(2), Actor::find(3)]
@@ -181,7 +181,7 @@ class ManyToOneTest extends AbstractTestCase
     public function testKeysMatch(array $left, array $right, bool $expected): void
     {
         $method = new ReflectionMethod(Relationship::class, 'keysMatch');
-        $method->setAccessible(true);
+        PHP_VERSION_ID < 80100 && $method->setAccessible(true);
 
         $this->assertSame($expected, $method->invoke(null, $left, $right));
     }

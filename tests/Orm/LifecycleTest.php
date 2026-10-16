@@ -35,6 +35,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use ReflectionProperty;
 use RuntimeException;
+use SplObjectStorage;
 use Throwable;
 
 class LifecycleTest extends TestCase
@@ -49,7 +50,7 @@ class LifecycleTest extends TestCase
         $this->previousOrm = Orm::$instance;
         Orm::$instance = null;
         $property = new ReflectionProperty(ReflectionEntity::class, 'reflections');
-        $property->setAccessible(true);
+        PHP_VERSION_ID < 80100 && $property->setAccessible(true);
         $this->previousReflections = $property->getValue();
         $property->setValue(null, []);
 
@@ -96,8 +97,26 @@ class LifecycleTest extends TestCase
     {
         Orm::$instance = $this->previousOrm;
         $property = new ReflectionProperty(ReflectionEntity::class, 'reflections');
-        $property->setAccessible(true);
+        PHP_VERSION_ID < 80100 && $property->setAccessible(true);
         $property->setValue(null, $this->previousReflections);
+    }
+
+    public function testLifecycleTraversalStopsAtMaterializedCycles(): void
+    {
+        $parent = LifecycleParent::find(1);
+        $child = LifecycleChild::find(10);
+        $parent->getRelated()->setLoaded('legacy', new Collection([$child]));
+        $child->getRelated()->setLoaded('parent', $parent);
+
+        $visited = new SplObjectStorage();
+        $this->assertTrue($child->getRelated()->hasLifecyclePolicy($visited));
+        $this->assertCount(2, $visited);
+        $this->assertFalse($child->getRelated()->hasLifecyclePolicy($visited));
+
+        $visited = new SplObjectStorage();
+        $parent->getRelated()->prepareLifecycle($visited);
+        $this->assertCount(2, $visited);
+        $this->assertSame($parent, $child->getRelated()->get('parent'));
     }
 
     public function testExplicitDetachmentPreservesChildAndClearsCachedParent(): void

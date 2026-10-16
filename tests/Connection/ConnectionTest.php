@@ -273,7 +273,7 @@ class ConnectionTest extends TestCase
         $connection->beginTransaction();
 
         $reflectionProperty = new ReflectionProperty(Connection::class, 'transactions');
-        $reflectionProperty->setAccessible(true);
+        PHP_VERSION_ID < 80100 && $reflectionProperty->setAccessible(true);
 
         $this->assertTrue($connection->inTransaction());
         $this->assertEquals(1, $reflectionProperty->getValue($connection));
@@ -289,7 +289,7 @@ class ConnectionTest extends TestCase
         $connection = Connection::fromPdo($pdo);
 
         $reflectionProperty = new ReflectionProperty(Connection::class, 'transactions');
-        $reflectionProperty->setAccessible(true);
+        PHP_VERSION_ID < 80100 && $reflectionProperty->setAccessible(true);
 
         $threw = false;
         try {
@@ -310,7 +310,7 @@ class ConnectionTest extends TestCase
         $connection->beginTransaction();
 
         $reflectionProperty = new ReflectionProperty(Connection::class, 'transactions');
-        $reflectionProperty->setAccessible(true);
+        PHP_VERSION_ID < 80100 && $reflectionProperty->setAccessible(true);
 
         $this->assertTrue($connection->inTransaction());
         $this->assertEquals(2, $reflectionProperty->getValue($connection));
@@ -321,7 +321,7 @@ class ConnectionTest extends TestCase
     public function testCommit(): void
     {
         $reflectionProperty = new ReflectionProperty(Connection::class, 'transactions');
-        $reflectionProperty->setAccessible(true);
+        PHP_VERSION_ID < 80100 && $reflectionProperty->setAccessible(true);
 
         $connection = new Connection('sqlite::memory:');
         $connection->beginTransaction();
@@ -336,7 +336,7 @@ class ConnectionTest extends TestCase
     public function testCommitWithNoTransaction(): void
     {
         $reflectionProperty = new ReflectionProperty(Connection::class, 'transactions');
-        $reflectionProperty->setAccessible(true);
+        PHP_VERSION_ID < 80100 && $reflectionProperty->setAccessible(true);
 
         $connection = new Connection('sqlite::memory:');
 
@@ -350,7 +350,7 @@ class ConnectionTest extends TestCase
     public function testCommitWithMultipleTransactions(): void
     {
         $reflectionProperty = new ReflectionProperty(Connection::class, 'transactions');
-        $reflectionProperty->setAccessible(true);
+        PHP_VERSION_ID < 80100 && $reflectionProperty->setAccessible(true);
 
         $connection = new Connection('sqlite::memory:');
         $connection->beginTransaction();
@@ -378,7 +378,7 @@ class ConnectionTest extends TestCase
         $connection = Connection::fromPdo($pdo);
 
         $reflectionProperty = new ReflectionProperty(Connection::class, 'transactions');
-        $reflectionProperty->setAccessible(true);
+        PHP_VERSION_ID < 80100 && $reflectionProperty->setAccessible(true);
 
         $connection->beginTransaction();
         // PDO commits "behind the connection's back" (as a DDL implicit commit would).
@@ -393,7 +393,7 @@ class ConnectionTest extends TestCase
     public function testRollBack(): void
     {
         $reflectionProperty = new ReflectionProperty(Connection::class, 'transactions');
-        $reflectionProperty->setAccessible(true);
+        PHP_VERSION_ID < 80100 && $reflectionProperty->setAccessible(true);
 
         $connection = new Connection('sqlite::memory:');
         $connection->beginTransaction();
@@ -415,7 +415,7 @@ class ConnectionTest extends TestCase
         $connection = Connection::fromPdo($pdo);
 
         $reflectionProperty = new ReflectionProperty(Connection::class, 'transactions');
-        $reflectionProperty->setAccessible(true);
+        PHP_VERSION_ID < 80100 && $reflectionProperty->setAccessible(true);
 
         $connection->beginTransaction();
         $pdo->commit();
@@ -429,7 +429,7 @@ class ConnectionTest extends TestCase
     public function testRollBackNoTransactions(): void
     {
         $reflectionProperty = new ReflectionProperty(Connection::class, 'transactions');
-        $reflectionProperty->setAccessible(true);
+        PHP_VERSION_ID < 80100 && $reflectionProperty->setAccessible(true);
 
         $connection = new Connection('sqlite::memory:');
 
@@ -443,7 +443,7 @@ class ConnectionTest extends TestCase
     public function testRollBackWithMultipleTransactions(): void
     {
         $reflectionProperty = new ReflectionProperty(Connection::class, 'transactions');
-        $reflectionProperty->setAccessible(true);
+        PHP_VERSION_ID < 80100 && $reflectionProperty->setAccessible(true);
 
         $connection = new Connection('sqlite::memory:');
         $connection->beginTransaction();

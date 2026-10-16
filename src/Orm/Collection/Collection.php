@@ -239,11 +239,11 @@ class Collection extends \Hector\Collection\Collection implements LifecycleSnaps
             }
 
             // An explicitly removed child may have been reattached before saving.
-            if (true === $seen->contains($entity) || true === $this->contains($entity)) {
+            if (true === $seen->offsetExists($entity) || true === $this->contains($entity)) {
                 continue;
             }
 
-            $seen->attach($entity);
+            $seen->offsetSet($entity);
             yield $entity;
         }
     }

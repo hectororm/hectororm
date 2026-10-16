@@ -17,6 +17,7 @@ namespace Hector\Schema\Tests\Generator;
 use Hector\Connection\Connection;
 use Hector\Schema\Generator\Sqlite;
 use Hector\Schema\Generator\Sqlite\CreateTableParser;
+use PDO;
 use PHPUnit\Framework\TestCase;
 
 class SqliteCollationsTest extends TestCase
@@ -25,8 +26,14 @@ class SqliteCollationsTest extends TestCase
     public function testExtractionAndIntrospection(string $sql, array $expected): void
     {
         $this->assertSame($expected, (new CreateTableParser())->getColumnCollations($sql));
-        $connection = new Connection('sqlite::memory:');
-        $connection->getPdo()->sqliteCreateCollation('custom"name', 'strcmp');
+        if (PHP_VERSION_ID >= 80400) {
+            $pdo = PDO::connect('sqlite::memory:');
+            $pdo->createCollation('custom"name', 'strcmp');
+        } else {
+            $pdo = new PDO('sqlite::memory:');
+            $pdo->sqliteCreateCollation('custom"name', 'strcmp');
+        }
+        $connection = Connection::fromPdo($pdo);
         $connection->execute($sql);
         $table = unserialize(serialize((new Sqlite($connection))->generateSchema('main')))->getTable('items');
         foreach ($table->getColumns() as $column) {

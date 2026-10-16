@@ -18,7 +18,7 @@ class CollectionAssertTest extends TestCase
         $trait = $this->getMockForTrait(CollectionAssert::class);
 
         $rMethod = new ReflectionMethod($trait, 'assertCollection');
-        $rMethod->setAccessible(true);
+        PHP_VERSION_ID < 80100 && $rMethod->setAccessible(true);
 
         $rMethod->invoke($trait, Collection::class);
         $rMethod->invoke($trait, new Collection());
@@ -31,7 +31,7 @@ class CollectionAssertTest extends TestCase
         $trait = $this->getMockForTrait(CollectionAssert::class);
 
         $rMethod = new ReflectionMethod($trait, 'assertCollection');
-        $rMethod->setAccessible(true);
+        PHP_VERSION_ID < 80100 && $rMethod->setAccessible(true);
 
         $rMethod->invoke($trait, new stdClass());
     }
@@ -43,7 +43,7 @@ class CollectionAssertTest extends TestCase
         $trait = $this->getMockForTrait(CollectionAssert::class);
 
         $rMethod = new ReflectionMethod($trait, 'assertCollection');
-        $rMethod->setAccessible(true);
+        PHP_VERSION_ID < 80100 && $rMethod->setAccessible(true);
 
         $rMethod->invoke($trait, stdClass::class);
     }

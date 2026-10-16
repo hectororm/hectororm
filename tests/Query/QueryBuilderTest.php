@@ -113,7 +113,7 @@ class QueryBuilderTest extends TestCase
     public function testSelect(): void
     {
         $reflectionMethod = new ReflectionMethod(QueryBuilder::class, 'makeSelect');
-        $reflectionMethod->setAccessible(true);
+        PHP_VERSION_ID < 80100 && $reflectionMethod->setAccessible(true);
 
         $queryBuilder = new QueryBuilder($this->getConnection());
         $queryBuilder = $queryBuilder->select('foo', 'f');
@@ -146,7 +146,7 @@ class QueryBuilderTest extends TestCase
     public function testSelectWithClosureCondition(): void
     {
         $reflectionMethod = new ReflectionMethod(QueryBuilder::class, 'makeSelect');
-        $reflectionMethod->setAccessible(true);
+        PHP_VERSION_ID < 80100 && $reflectionMethod->setAccessible(true);
 
         $queryBuilder = new QueryBuilder($this->getConnection());
         $queryBuilder->from('`foo`')
@@ -180,7 +180,7 @@ class QueryBuilderTest extends TestCase
     public function testSelectWithClosureConditionWithReturnedValue(): void
     {
         $reflectionMethod = new ReflectionMethod(QueryBuilder::class, 'makeSelect');
-        $reflectionMethod->setAccessible(true);
+        PHP_VERSION_ID < 80100 && $reflectionMethod->setAccessible(true);
 
         $queryBuilder = new QueryBuilder($this->getConnection());
         $queryBuilder->from('`foo`')
@@ -203,7 +203,7 @@ class QueryBuilderTest extends TestCase
     public function testSelectWithClosureConditionValue(): void
     {
         $reflectionMethod = new ReflectionMethod(QueryBuilder::class, 'makeSelect');
-        $reflectionMethod->setAccessible(true);
+        PHP_VERSION_ID < 80100 && $reflectionMethod->setAccessible(true);
 
         $queryBuilder = new QueryBuilder($this->getConnection());
         $queryBuilder->from('`foo`')
