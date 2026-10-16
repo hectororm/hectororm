@@ -333,7 +333,7 @@ class ConnectionTransactionTest extends TestCase
         $connection = Connection::fromPdo($pdo);
 
         $connection->beginTransaction();
-        $connection->transaction(fn() => $connection->rollBack());
+        $connection->transaction(fn() => $connection->rollBack(allTransactions: true));
 
         $this->assertFalse($pdo->inTransaction());
         $this->assertSame(0, $this->counter($connection));
@@ -389,6 +389,126 @@ class ConnectionTransactionTest extends TestCase
         $this->assertFalse($connection->inTransaction());
         $this->assertSame(0, $this->counter($connection));
         $this->assertSame([], $connection->fetchColumn('SELECT parent_id FROM child'));
+    }
+
+    /**
+     * @dataProvider driverProvider
+     */
+    public function testManualRollbackOnlyDiscardsCurrentLevel(string $driver): void
+    {
+        $connection = $this->getConnection($driver);
+        $connection->beginTransaction();
+        $this->insert($connection, 1);
+        $connection->beginTransaction();
+        $this->insert($connection, 2);
+        $connection->beginTransaction();
+        $this->insert($connection, 3);
+        $connection->rollBack(allTransactions: false);
+        $this->assertSame(2, $this->counter($connection));
+        $this->assertSame([1, 2], $this->ids($connection));
+        $connection->commit();
+        $connection->rollBack(allTransactions: false);
+        $this->assertSame([], $this->ids($connection));
+        $this->assertSame(0, $this->counter($connection));
+        $this->assertFalse($connection->inTransaction());
+    }
+
+    /**
+     * @dataProvider driverProvider
+     */
+    public function testManualRollbackAllDiscardsEveryLevel(string $driver): void
+    {
+        $connection = $this->getConnection($driver);
+        $connection->beginTransaction();
+        $this->insert($connection, 1);
+        $connection->beginTransaction();
+        $this->insert($connection, 2);
+        $connection->rollBack(allTransactions: true);
+        $this->assertSame([], $this->ids($connection));
+        $this->assertSame(0, $this->counter($connection));
+        $this->assertFalse($connection->inTransaction());
+    }
+
+    /**
+     * @dataProvider driverProvider
+     */
+    public function testManualLevelsPreserveExternalTransaction(string $driver): void
+    {
+        $connection = $this->getConnection($driver);
+        $pdo = $connection->getPdo();
+        $pdo->beginTransaction();
+        $this->insert($connection, 1);
+        $connection->beginTransaction();
+        $this->insert($connection, 2);
+        $connection->beginTransaction();
+        $this->insert($connection, 3);
+        $connection->rollBack(allTransactions: true);
+        $this->assertTrue($pdo->inTransaction());
+        $this->assertSame(0, $this->counter($connection));
+        $this->assertSame([1], $this->ids($connection));
+
+        $connection->beginTransaction();
+        $this->insert($connection, 4);
+        $connection->commit();
+        $this->assertTrue($pdo->inTransaction());
+        $pdo->rollBack();
+        $this->assertSame([], $this->ids($connection));
+    }
+
+    public function testImplicitNestedRollbackIsDeprecatedAndStillRollsBackAll(): void
+    {
+        $connection = $this->getConnection('sqlite');
+        $connection->beginTransaction();
+        $this->insert($connection, 1);
+        $connection->beginTransaction();
+        $this->insert($connection, 2);
+        $warnings = [];
+        set_error_handler(static function (int $severity, string $message) use (&$warnings): bool {
+            $warnings[] = [$severity, $message];
+
+            return true;
+        });
+        try {
+            $connection->rollBack();
+        } finally {
+            restore_error_handler();
+        }
+
+        $this->assertCount(1, $warnings);
+        $this->assertSame(E_USER_DEPRECATED, $warnings[0][0]);
+        $this->assertStringContainsString('allTransactions: true', $warnings[0][1]);
+        $this->assertSame([], $this->ids($connection));
+        $this->assertSame(0, $this->counter($connection));
+    }
+
+    public function testManualBeginRecoversFromImplicitCommit(): void
+    {
+        $connection = $this->getConnection('sqlite');
+        $connection->beginTransaction();
+        $connection->beginTransaction();
+        $connection->getPdo()->commit();
+        $connection->beginTransaction();
+        $this->assertTrue($connection->inTransaction());
+        $this->assertSame(1, $this->counter($connection));
+        $this->insert($connection, 1);
+        $connection->rollBack();
+        $this->assertSame([], $this->ids($connection));
+    }
+
+    public function testFailedSavepointDoesNotIncrementCounter(): void
+    {
+        $pdo = $this->createMock(PDO::class);
+        $pdo->method('inTransaction')->willReturn(true);
+        $failure = new RuntimeException('Cannot create savepoint');
+        $pdo->method('prepare')->willThrowException($failure);
+        $connection = Connection::fromPdo($pdo);
+        try {
+            $connection->beginTransaction();
+            $this->fail('Savepoint creation must fail');
+        } catch (RuntimeException $exception) {
+            $this->assertSame($failure, $exception);
+        }
+        $this->assertSame(0, $this->counter($connection));
     }
 
     public function testReadsUseWritePdo(): void

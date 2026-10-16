@@ -126,12 +126,14 @@ class ConnectionSet implements Countable, IteratorAggregate
     /**
      * Roll back the transaction on every connection of the set.
      *
+     * @param bool|null $allTransactions See Connection::rollBack()
+     *
      * @return void
      */
-    public function rollBack(): void
+    public function rollBack(?bool $allTransactions = null): void
     {
         foreach ($this->connections as $connection) {
-            $connection->rollBack();
+            $connection->rollBack($allTransactions);
         }
     }
 

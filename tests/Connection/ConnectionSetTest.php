@@ -224,6 +224,34 @@ class ConnectionSetTest extends TestCase
         $this->assertFalse($connection1->inTransaction());
     }
 
+    public function testPartialRollbackPreservesOuterTransactions(): void
+    {
+        $set = new ConnectionSet(
+            new Connection('sqlite::memory:'),
+            new Connection('sqlite::memory:', name: 'other'),
+        );
+        foreach ($set as $connection) {
+            $connection->execute('CREATE TABLE foo (id INTEGER)');
+        }
+        $set->beginTransaction();
+        foreach ($set as $connection) {
+            $connection->execute('INSERT INTO foo VALUES (1)');
+        }
+        $set->beginTransaction();
+        foreach ($set as $connection) {
+            $connection->execute('INSERT INTO foo VALUES (2)');
+        }
+        $set->rollBack(allTransactions: false);
+        foreach ($set as $connection) {
+            $this->assertTrue($connection->inTransaction());
+        }
+        $set->commit();
+        foreach ($set as $connection) {
+            $this->assertEquals([1], $connection->fetchColumn('SELECT id FROM foo'));
+            $this->assertFalse($connection->inTransaction());
+        }
+    }
+
     public function testGetLoggers(): void
     {
         $connectionSet = new ConnectionSet();
