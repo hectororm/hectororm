@@ -42,7 +42,7 @@ class RelatedTest extends AbstractTestCase
 
         $reflectionObject = new ReflectionObject($builder);
         $entityReflectionProperty = $reflectionObject->getProperty('entityReflection');
-        $entityReflectionProperty->setAccessible(true);
+        PHP_VERSION_ID < 80100 && $entityReflectionProperty->setAccessible(true);
 
         $this->assertInstanceOf(Builder::class, $builder);
         $this->assertEquals(Language::class, $entityReflectionProperty->getValue($builder)->class);

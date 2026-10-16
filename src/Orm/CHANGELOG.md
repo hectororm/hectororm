@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Avoid PHP 8.5 `SplObjectStorage` deprecations when traversing materialized relationship graphs for lifecycle operations.
+
 ## [1.5.0] - 2026-10-15
 
 ### Added

@@ -46,7 +46,7 @@ class OrmFactoryTest extends TestCase
     private function ormInstanceProperty(): ReflectionProperty
     {
         $property = new ReflectionProperty(Orm::class, 'instance');
-        $property->setAccessible(true);
+        PHP_VERSION_ID < 80100 && $property->setAccessible(true);
 
         return $property;
     }

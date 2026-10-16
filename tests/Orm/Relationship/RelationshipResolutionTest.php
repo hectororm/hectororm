@@ -43,7 +43,7 @@ class RelationshipResolutionTest extends TestCase
         $this->previousOrm = Orm::$instance;
         Orm::$instance = null;
         $reflections = new ReflectionProperty(ReflectionEntity::class, 'reflections');
-        $reflections->setAccessible(true);
+        PHP_VERSION_ID < 80100 && $reflections->setAccessible(true);
         $this->previousReflections = $reflections->getValue();
         $reflections->setValue(null, []);
 
@@ -68,7 +68,7 @@ class RelationshipResolutionTest extends TestCase
         ResolutionObservedHasMany::$onClauses = null;
         Orm::$instance = $this->previousOrm;
         $reflections = new ReflectionProperty(ReflectionEntity::class, 'reflections');
-        $reflections->setAccessible(true);
+        PHP_VERSION_ID < 80100 && $reflections->setAccessible(true);
         $reflections->setValue(null, $this->previousReflections);
     }
 

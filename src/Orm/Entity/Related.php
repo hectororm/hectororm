@@ -285,11 +285,11 @@ class Related implements Countable, LifecycleSnapshotInterface
     public function hasLifecyclePolicy(?SplObjectStorage $visited = null): bool
     {
         $visited ??= new SplObjectStorage();
-        if (true === $visited->contains($this->entity)) {
+        if (true === $visited->offsetExists($this->entity)) {
             return false;
         }
 
-        $visited->attach($this->entity);
+        $visited->offsetSet($this->entity);
 
         foreach ($this->related as $name => $value) {
             if (true === $this->getRelationships()->get($name)->hasLifecyclePolicy()) {
@@ -315,11 +315,11 @@ class Related implements Countable, LifecycleSnapshotInterface
     public function prepareLifecycle(?SplObjectStorage $visited = null): void
     {
         $visited ??= new SplObjectStorage();
-        if (true === $visited->contains($this->entity)) {
+        if (true === $visited->offsetExists($this->entity)) {
             return;
         }
 
-        $visited->attach($this->entity);
+        $visited->offsetSet($this->entity);
         foreach ($this->related as $name => $value) {
             $this->getRelationships()->get($name)->prepareLifecycle($this->entity, $value);
 

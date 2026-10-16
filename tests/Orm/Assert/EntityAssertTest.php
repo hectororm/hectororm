@@ -19,7 +19,7 @@ class EntityAssertTest extends TestCase
         $trait = $this->getMockForTrait(EntityAssert::class);
 
         $rMethod = new ReflectionMethod($trait, 'assertEntity');
-        $rMethod->setAccessible(true);
+        PHP_VERSION_ID < 80100 && $rMethod->setAccessible(true);
 
         $rMethod->invoke($trait, Actor::class);
         $rMethod->invoke($trait, new Actor());
@@ -32,7 +32,7 @@ class EntityAssertTest extends TestCase
         $trait = $this->getMockForTrait(EntityAssert::class);
 
         $rMethod = new ReflectionMethod($trait, 'assertEntity');
-        $rMethod->setAccessible(true);
+        PHP_VERSION_ID < 80100 && $rMethod->setAccessible(true);
 
         $rMethod->invoke($trait, new stdClass());
     }
@@ -44,7 +44,7 @@ class EntityAssertTest extends TestCase
         $trait = $this->getMockForTrait(EntityAssert::class);
 
         $rMethod = new ReflectionMethod($trait, 'assertEntity');
-        $rMethod->setAccessible(true);
+        PHP_VERSION_ID < 80100 && $rMethod->setAccessible(true);
 
         $rMethod->invoke($trait, stdClass::class);
     }
@@ -56,7 +56,7 @@ class EntityAssertTest extends TestCase
         $trait = $this->getMockForTrait(EntityAssert::class);
 
         $rMethod = new ReflectionMethod($trait, 'assertEntityType');
-        $rMethod->setAccessible(true);
+        PHP_VERSION_ID < 80100 && $rMethod->setAccessible(true);
 
         $rMethod->invoke($trait, Actor::class, Actor::class);
         $rMethod->invoke($trait, new Actor(), Actor::class);
@@ -69,7 +69,7 @@ class EntityAssertTest extends TestCase
         $trait = $this->getMockForTrait(EntityAssert::class);
 
         $rMethod = new ReflectionMethod($trait, 'assertEntityType');
-        $rMethod->setAccessible(true);
+        PHP_VERSION_ID < 80100 && $rMethod->setAccessible(true);
 
         $rMethod->invoke($trait, new Film(), Actor::class);
     }
@@ -81,7 +81,7 @@ class EntityAssertTest extends TestCase
         $trait = $this->getMockForTrait(EntityAssert::class);
 
         $rMethod = new ReflectionMethod($trait, 'assertEntityType');
-        $rMethod->setAccessible(true);
+        PHP_VERSION_ID < 80100 && $rMethod->setAccessible(true);
 
         $rMethod->invoke($trait, Film::class, Actor::class);
     }

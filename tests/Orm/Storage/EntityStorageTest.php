@@ -184,13 +184,13 @@ class EntityStorageTest extends TestCase
         $storage = new FakeEntityStorage();
         $entity = new Film();
         $entity->title = 'Title of article';
-        $entity->content = 'Content of article';
+        $entity->description = 'Content of article';
         $storage->attach($entity);
         unset($entity);
 
         $entity2 = new Film();
         $entity2->title = 'Title of article';
-        $entity2->content = 'Content of article';
+        $entity2->description = 'Content of article';
 
         $this->assertFalse($storage->contains($entity2));
         $this->assertFalse(isset($storage[$entity2]));

@@ -111,7 +111,7 @@ class OneToManyTest extends AbstractTestCase
         );
 
         $reflectionMethod = new ReflectionMethod(OneToMany::class, 'switchIntoEntities');
-        $reflectionMethod->setAccessible(true);
+        PHP_VERSION_ID < 80100 && $reflectionMethod->setAccessible(true);
 
         $foreigners = new Collection(
             [$film1 = Film::find(1), $film2 = Film::find(2), Actor::find(2), Actor::find(3)]
@@ -144,7 +144,7 @@ class OneToManyTest extends AbstractTestCase
         );
 
         $reflectionMethod = new ReflectionMethod(OneToMany::class, 'switchIntoEntities');
-        $reflectionMethod->setAccessible(true);
+        PHP_VERSION_ID < 80100 && $reflectionMethod->setAccessible(true);
 
         $foreigners = new Collection([
             $payment1 = Payment::find(1),
@@ -173,7 +173,7 @@ class OneToManyTest extends AbstractTestCase
         $language = Language::get(1);
         $film = new Film();
         $film->title = 'Foo';
-        $film->content = 'Bar';
+        $film->description = 'Bar';
 
         $relationship->linkNative($language, new Collection([$film]));
 

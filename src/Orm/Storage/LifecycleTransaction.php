@@ -59,7 +59,7 @@ final class LifecycleTransaction
             throw new OrmException('A relationship lifecycle operation cannot span multiple connections');
         }
 
-        if (true === $this->entities->contains($entity)) {
+        if (true === $this->entities->offsetExists($entity)) {
             return;
         }
 
@@ -113,7 +113,7 @@ final class LifecycleTransaction
      */
     public function captureCollection(Collection $collection): void
     {
-        if (true === $this->snapshots->contains($collection)) {
+        if (true === $this->snapshots->offsetExists($collection)) {
             return;
         }
 
@@ -133,7 +133,7 @@ final class LifecycleTransaction
      */
     private function captureSnapshot(LifecycleSnapshotInterface $participant): void
     {
-        if (false === $this->snapshots->contains($participant)) {
+        if (false === $this->snapshots->offsetExists($participant)) {
             $this->snapshots[$participant] = $participant->lifecycleSnapshot();
         }
     }

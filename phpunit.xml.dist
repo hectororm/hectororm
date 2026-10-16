@@ -3,6 +3,7 @@
          xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/9.3/phpunit.xsd"
          bootstrap="./tests/bootstrap.php"
          colors="true"
+         convertDeprecationsToExceptions="true"
 >
   <coverage processUncoveredFiles="true">
     <include>
@@ -13,6 +14,7 @@
     </exclude>
   </coverage>
   <php>
+    <ini name="error_reporting" value="-1"/>
     <env name="MYSQL_DSN" value="mysql:host=localhost;dbname=sakila;user=root"/>
   </php>
   <testsuites>
