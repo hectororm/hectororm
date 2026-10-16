@@ -76,9 +76,126 @@ class QueryBuilderTest extends TestCase
             }
         };
         $queryBuilder = new QueryBuilder($connection);
-        $queryBuilder->from('`table`')->columns('*')->fetchOne(true);
+        $queryBuilder->from('`table`')->columns('*')->fetchOne(true, true);
 
         $this->assertEquals('SELECT * FROM `table` FOR UPDATE SKIP LOCKED', $connection->lastStatement);
+    }
+
+    public function testFetchWithLockWithoutExplicitSkipLockedIsDeprecated(): void
+    {
+        $connection = new class('sqlite:' . realpath(__DIR__ . '/test.sqlite')) extends Connection {
+            public array $statements = [];
+
+            public function getDriverInfo(): DriverInfo
+            {
+                return new DriverInfo('mysql', '8.0.0');
+            }
+
+            public function fetchOne(string $statement, BindParamList|array $input_parameters = []): ?array
+            {
+                $this->statements[] = $statement;
+                return null;
+            }
+
+            public function fetchAll(string $statement, BindParamList|array $input_parameters = []): array
+            {
+                $this->statements[] = $statement;
+                return [];
+            }
+
+            public function fetchColumn(
+                string $statement,
+                BindParamList|array $input_parameters = [],
+                int $column = 0
+            ): array {
+                $this->statements[] = $statement;
+                return [];
+            }
+        };
+        $queryBuilder = new QueryBuilder($connection);
+        $queryBuilder->from('`table`')->columns('*');
+
+        $deprecations = [];
+        set_error_handler(
+            function (int $errno, string $errstr) use (&$deprecations): bool {
+                $deprecations[] = $errstr;
+                return true;
+            },
+            E_USER_DEPRECATED
+        );
+
+        try {
+            $queryBuilder->fetchOne(lock: false);
+            $queryBuilder->fetchOne(lock: true);
+            iterator_to_array($queryBuilder->fetchAll(lock: true));
+            iterator_to_array($queryBuilder->fetchColumn(lock: true));
+        } finally {
+            restore_error_handler();
+        }
+
+        // Implicit skipLocked keeps the current behavior (SKIP LOCKED) but is deprecated,
+        // only when locking is requested.
+        $this->assertCount(3, $deprecations);
+        $this->assertStringContainsString('$skipLocked', $deprecations[0]);
+        $this->assertSame(
+            [
+                'SELECT * FROM `table`',
+                'SELECT * FROM `table` FOR UPDATE SKIP LOCKED',
+                'SELECT * FROM `table` FOR UPDATE SKIP LOCKED',
+                'SELECT * FROM `table` FOR UPDATE SKIP LOCKED',
+            ],
+            $connection->statements,
+        );
+    }
+
+    public function testFetchWithLockWithoutSkipLocked(): void
+    {
+        $connection = new class('sqlite:' . realpath(__DIR__ . '/test.sqlite')) extends Connection {
+            public array $statements = [];
+
+            public function getDriverInfo(): DriverInfo
+            {
+                return new DriverInfo('mysql', '8.0.0');
+            }
+
+            public function fetchOne(string $statement, BindParamList|array $input_parameters = []): ?array
+            {
+                $this->statements[] = $statement;
+                return null;
+            }
+
+            public function fetchAll(string $statement, BindParamList|array $input_parameters = []): array
+            {
+                $this->statements[] = $statement;
+                return [];
+            }
+
+            public function fetchColumn(
+                string $statement,
+                BindParamList|array $input_parameters = [],
+                int $column = 0
+            ): array {
+                $this->statements[] = $statement;
+                return [];
+            }
+        };
+        $queryBuilder = new QueryBuilder($connection);
+        $queryBuilder->from('`table`')->columns('*');
+
+        $queryBuilder->fetchOne(lock: true, skipLocked: false);
+        iterator_to_array($queryBuilder->fetchAll(lock: true, skipLocked: false));
+        iterator_to_array($queryBuilder->fetchColumn(lock: true, skipLocked: false));
+        $queryBuilder->fetchOne(lock: false, skipLocked: false);
+
+        $this->assertSame(
+            [
+                'SELECT * FROM `table` FOR UPDATE',
+                'SELECT * FROM `table` FOR UPDATE',
+                'SELECT * FROM `table` FOR UPDATE',
+                'SELECT * FROM `table`',
+            ],
+            $connection->statements,
+        );
     }
 
     public function testFetchAll(): void
@@ -348,8 +465,12 @@ class QueryBuilderTest extends TestCase
     /**
      * @dataProvider lockForUpdateProvider
      */
-    public function testAddLockForUpdateIsDriverAware(string $driver, string $version, string $expectedSuffix): void
-    {
+    public function testAddLockForUpdateIsDriverAware(
+        string $driver,
+        string $version,
+        bool $skipLocked,
+        string $expectedSuffix,
+    ): void {
         $connection = $this->createMock(Connection::class);
         $connection->method('getDriverInfo')->willReturn(new DriverInfo($driver, $version));
 
@@ -357,7 +478,7 @@ class QueryBuilderTest extends TestCase
 
         $this->assertSame(
             'SELECT * FROM foo' . $expectedSuffix,
-            $queryBuilder->addLockForUpdate('SELECT * FROM foo'),
+            $queryBuilder->addLockForUpdate('SELECT * FROM foo', $skipLocked),
         );
     }
 
@@ -365,12 +486,18 @@ class QueryBuilderTest extends TestCase
     {
         return [
             // MySQL >= 8.0 supports SKIP LOCKED.
-            'mysql 8.0' => ['mysql', '8.0.30', ' FOR UPDATE SKIP LOCKED'],
+            'mysql 8.0' => ['mysql', '8.0.30', true, ' FOR UPDATE SKIP LOCKED'],
             // MySQL < 8.0 locks rows but has no SKIP LOCKED: must still emit a plain FOR UPDATE
             // (it previously emitted nothing, silently dropping the lock).
-            'mysql 5.7' => ['mysql', '5.7.40', ' FOR UPDATE'],
+            'mysql 5.7' => ['mysql', '5.7.40', true, ' FOR UPDATE'],
             // SQLite has no row-level locking clause: no suffix.
-            'sqlite' => ['sqlite', '3.45.0', ''],
+            'sqlite' => ['sqlite', '3.45.0', true, ''],
+            // Without skipLocked, a blocking FOR UPDATE is emitted even if SKIP LOCKED is supported.
+            'mysql 8.0 without skip locked' => ['mysql', '8.0.30', false, ' FOR UPDATE'],
+            'mysql 5.7 without skip locked' => ['mysql', '5.7.40', false, ' FOR UPDATE'],
+            'mariadb 10.6 without skip locked' => ['mariadb', '10.6.0', false, ' FOR UPDATE'],
+            'pgsql without skip locked' => ['pgsql', '16.0', false, ' FOR UPDATE'],
+            'sqlite without skip locked' => ['sqlite', '3.45.0', false, ''],
         ];
     }
 
