@@ -62,11 +62,13 @@
     "ext-sodium": "*",
     "berlioz/http-message": "^2.3 || ^3.0",
     "league/flysystem": "^3.0",
-    "league/flysystem-memory": "^3.0",
+    "league/flysystem-memory": "^3.25.1",
+    "league/mime-type-detection": "^1.16",
     "phpunit/phpunit": "^9.6.34",
     "psr/container": "^1.0 || ^2.0",
     "psr/log": "^1.0 || ^2.0 || ^3.0",
-    "ramsey/uuid": "^4.0",
+    "ramsey/collection": "^1.2 || ^2.0",
+    "ramsey/uuid": "^4.3",
     "rector/rector": "^2.2"
   },
   "suggest": {

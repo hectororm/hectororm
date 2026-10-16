@@ -75,7 +75,7 @@ class EnumType extends AbstractType
             return null;
         }
 
-        if (false === is_a($value, $this->enum)) {
+        if (!$value instanceof $this->enum) {
             if (is_scalar($value)) {
                 return $this->resolveEnum($value)?->value;
             }

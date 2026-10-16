@@ -49,9 +49,9 @@ abstract class Entity
         }
     }
 
-    public function __debugInfo(): ?array
+    public function __debugInfo(): array
     {
-        return null;
+        return [];
     }
 
     /**
