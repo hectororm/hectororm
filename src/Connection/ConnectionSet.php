@@ -20,6 +20,7 @@ use Generator;
 use Hector\Connection\Exception\ConnectionException;
 use Hector\Connection\Exception\NotFoundException;
 use Hector\Connection\Log\Logger;
+use InvalidArgumentException;
 use IteratorAggregate;
 use Throwable;
 
@@ -144,23 +145,78 @@ class ConnectionSet implements Countable, IteratorAggregate
      * transaction is already active). Commits are not atomic across connections:
      * if one commit fails, connections already committed are not rolled back.
      *
+     * With several attempts, the transaction is retried on every connection when one
+     * of them reports a transient concurrency failure, unless a transaction was
+     * already active on any connection.
+     *
      * @template T
      *
      * @param callable(ConnectionSet): T $work
+     * @param int $attempts Maximum number of attempts, at least 1
      *
      * @return T
+     * @throws InvalidArgumentException If attempts is lower than 1
      * @throws Throwable
      * @see Connection::transaction()
      */
-    public function transaction(callable $work): mixed
+    public function transaction(callable $work, int $attempts = 1): mixed
     {
-        $operation = fn(): mixed => $work($this);
+        if ($attempts < 1) {
+            throw new InvalidArgumentException('Transaction attempts must be greater than or equal to 1');
+        }
 
+        $operation = fn(): mixed => $work($this);
         foreach (array_reverse($this->connections) as $connection) {
             $operation = fn(): mixed => $connection->transaction($operation);
         }
 
-        return $operation();
+        if (true === $this->inTransaction()) {
+            return $operation();
+        }
+
+        for ($attempt = 1; ; $attempt++) {
+            try {
+                return $operation();
+            } catch (Throwable $exception) {
+                if ($attempt >= $attempts || false === $this->isRetryable($exception)) {
+                    throw $exception;
+                }
+            }
+        }
+    }
+
+    /**
+     * Is a transaction active on any connection?
+     *
+     * @return bool
+     */
+    private function inTransaction(): bool
+    {
+        foreach ($this->connections as $connection) {
+            if (true === $connection->inTransaction()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Does any connection consider the failure retryable?
+     *
+     * @param Throwable $exception
+     *
+     * @return bool
+     */
+    private function isRetryable(Throwable $exception): bool
+    {
+        foreach ($this->connections as $connection) {
+            if (true === $connection->getDriverInfo()->isRetryable($exception)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

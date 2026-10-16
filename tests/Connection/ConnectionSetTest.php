@@ -17,6 +17,8 @@ use Hector\Connection\ConnectionSet;
 use Hector\Connection\Exception\ConnectionException;
 use Hector\Connection\Exception\NotFoundException;
 use Hector\Connection\Log\Logger;
+use InvalidArgumentException;
+use PDOException;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
@@ -250,6 +252,71 @@ class ConnectionSetTest extends TestCase
             $this->assertEquals([1], $connection->fetchColumn('SELECT id FROM foo'));
             $this->assertFalse($connection->inTransaction());
         }
+    }
+
+    private static function busyException(): PDOException
+    {
+        $exception = new PDOException('SQLSTATE[HY000]: General error: 5 database is locked');
+        $exception->errorInfo = ['HY000', 5, 'database is locked'];
+
+        return $exception;
+    }
+
+    public function testTransactionRetriesOnEveryConnection(): void
+    {
+        $connectionSet = new ConnectionSet(
+            $connection1 = new Connection('sqlite::memory:'),
+            $connection2 = new Connection('sqlite::memory:', name: 'connection'),
+        );
+        $connection1->execute('CREATE TABLE foo (id INTEGER)');
+        $connection2->execute('CREATE TABLE foo (id INTEGER)');
+        $calls = 0;
+
+        $connectionSet->transaction(function (ConnectionSet $set) use (&$calls): void {
+            $calls++;
+            foreach ($set as $connection) {
+                $connection->execute('INSERT INTO foo (id) VALUES (?)', [$calls]);
+            }
+            if (1 === $calls) {
+                throw self::busyException();
+            }
+        }, attempts: 2);
+
+        $this->assertSame(2, $calls);
+        $this->assertEquals([2], $connection1->fetchColumn('SELECT id FROM foo'));
+        $this->assertEquals([2], $connection2->fetchColumn('SELECT id FROM foo'));
+    }
+
+    public function testTransactionDoesNotRetryWhenAConnectionIsInTransaction(): void
+    {
+        $connectionSet = new ConnectionSet(
+            new Connection('sqlite::memory:'),
+            $connection2 = new Connection('sqlite::memory:', name: 'connection'),
+        );
+        $calls = 0;
+
+        $connection2->beginTransaction();
+        try {
+            $connectionSet->transaction(function () use (&$calls): void {
+                $calls++;
+                throw self::busyException();
+            }, attempts: 3);
+            $this->fail('Exception expected');
+        } catch (PDOException) {
+        }
+
+        $this->assertSame(1, $calls);
+        $this->assertTrue($connection2->inTransaction());
+        $connection2->rollBack();
+    }
+
+    public function testTransactionRejectsInvalidAttempts(): void
+    {
+        $connectionSet = new ConnectionSet(new Connection('sqlite::memory:'));
+
+        $this->expectException(InvalidArgumentException::class);
+
+        $connectionSet->transaction(fn() => $this->fail('Work must not be called'), attempts: 0);
     }
 
     public function testGetLoggers(): void

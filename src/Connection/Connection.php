@@ -16,6 +16,7 @@ namespace Hector\Connection;
 
 use Exception;
 use Generator;
+use InvalidArgumentException;
 use Hector\Connection\Bind\BindParamList;
 use Hector\Connection\Driver\DriverInfo;
 use Hector\Connection\Exception\ConnectionException;
@@ -376,6 +377,45 @@ class Connection
      * When a transaction is already active, the work runs inside a savepoint so
      * that a failure only discards the nested work, not the outer transaction.
      *
+     * With several attempts, the whole transaction is retried after a transient
+     * concurrency failure (deadlock, lock wait timeout...), as detected by
+     * DriverInfo::isRetryable(). Nested calls are never retried: such failures
+     * usually abort the outer transaction, which is the one to retry.
+     *
+     * @template T
+     *
+     * @param callable(Connection): T $work
+     * @param int $attempts Maximum number of attempts, at least 1
+     *
+     * @return T
+     * @throws InvalidArgumentException If attempts is lower than 1
+     * @throws Throwable
+     * @see DriverInfo::isRetryable()
+     */
+    public function transaction(callable $work, int $attempts = 1): mixed
+    {
+        if ($attempts < 1) {
+            throw new InvalidArgumentException('Transaction attempts must be greater than or equal to 1');
+        }
+
+        if (true === $this->getPdo()->inTransaction()) {
+            return $this->runTransaction($work);
+        }
+
+        for ($attempt = 1; ; $attempt++) {
+            try {
+                return $this->runTransaction($work);
+            } catch (Throwable $exception) {
+                if ($attempt >= $attempts || false === $this->getDriverInfo()->isRetryable($exception)) {
+                    throw $exception;
+                }
+            }
+        }
+    }
+
+    /**
+     * Execute a single transaction attempt.
+     *
      * @template T
      *
      * @param callable(Connection): T $work
@@ -383,7 +423,7 @@ class Connection
      * @return T
      * @throws Throwable
      */
-    public function transaction(callable $work): mixed
+    private function runTransaction(callable $work): mixed
     {
         $this->beginTransaction();
 
