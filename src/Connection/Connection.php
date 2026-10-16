@@ -25,6 +25,7 @@ use PDO;
 use PDOException;
 use PDOStatement;
 use SensitiveParameter;
+use Throwable;
 
 class Connection
 {
@@ -315,6 +316,109 @@ class Connection
 
             $this->transactions = 0;
         }
+    }
+
+    /**
+     * Execute a unit of work inside a transaction.
+     *
+     * The callback receives the connection. Its result is returned after commit;
+     * on failure the work is rolled back and the original exception is rethrown.
+     * When a transaction is already active, the work runs inside a savepoint so
+     * that a failure only discards the nested work, not the outer transaction.
+     *
+     * @template T
+     *
+     * @param callable(Connection): T $work
+     *
+     * @return T
+     * @throws Throwable
+     */
+    public function transaction(callable $work): mixed
+    {
+        $savepoint = null;
+
+        if (true === $this->getPdo()->inTransaction()) {
+            $depth = $this->transactions;
+            $savepoint = 'hector_tx_' . ($depth + 1);
+            $this->execute('SAVEPOINT ' . $savepoint);
+            $this->transactions++;
+        } else {
+            // No real transaction: discard a stale counter (e.g. left by a DDL implicit
+            // COMMIT), otherwise beginTransaction() would not open a PDO transaction.
+            $depth = $this->transactions = 0;
+            $this->beginTransaction();
+        }
+
+        try {
+            $result = $work($this);
+            $this->commitTransaction($savepoint, $depth);
+
+            return $result;
+        } catch (Throwable $exception) {
+            try {
+                $this->rollBackTransaction($savepoint, $depth);
+            } catch (Throwable) {
+                // Keep the original failure: the rollback error is secondary.
+            }
+
+            throw $exception;
+        }
+    }
+
+    /**
+     * Commit a transaction() level: the whole transaction or the savepoint only.
+     *
+     * @param string|null $savepoint
+     * @param int $depth Counter value before the transaction() call
+     */
+    private function commitTransaction(?string $savepoint, int $depth): void
+    {
+        if (null === $savepoint) {
+            $this->commit();
+
+            return;
+        }
+
+        // A DDL implicit COMMIT (MySQL/MariaDB) or a rollback inside the work may have
+        // closed the transaction, discarding the savepoint with it.
+        if (true === $this->getPdo()->inTransaction()) {
+            $this->execute('RELEASE SAVEPOINT ' . $savepoint);
+        }
+        $this->restoreDepth($depth);
+    }
+
+    /**
+     * Roll back a transaction() level: the whole transaction or the savepoint only.
+     *
+     * @param string|null $savepoint
+     * @param int $depth Counter value before the transaction() call
+     */
+    private function rollBackTransaction(?string $savepoint, int $depth): void
+    {
+        if (null === $savepoint) {
+            $this->rollBack();
+
+            return;
+        }
+
+        try {
+            if (true === $this->getPdo()->inTransaction()) {
+                $this->execute('ROLLBACK TO SAVEPOINT ' . $savepoint);
+                $this->execute('RELEASE SAVEPOINT ' . $savepoint);
+            }
+        } finally {
+            $this->restoreDepth($depth);
+        }
+    }
+
+    /**
+     * Restore the counter after a savepoint, or reset it if the transaction was closed meanwhile.
+     *
+     * @param int $depth
+     */
+    private function restoreDepth(int $depth): void
+    {
+        $this->transactions = true === $this->getPdo()->inTransaction() ? $depth : 0;
     }
 
     /**

@@ -143,35 +143,12 @@ final class LifecycleTransaction
      */
     public function run(callable $operation): mixed
     {
-        // Connection nesting uses a counter, not savepoints. Do not roll back a
-        // caller-owned transaction when this individual operation fails.
-        $nested = $this->connection->inTransaction();
-        $savepoint = 'hector_lifecycle_' . spl_object_id($this);
-        if (true === $nested) {
-            $this->connection->execute('SAVEPOINT ' . $savepoint);
-        } else {
-            $this->connection->beginTransaction();
-        }
-
+        // A caller-owned transaction is preserved: the connection uses a savepoint.
         try {
-            $result = $operation();
-            if (true === $nested) {
-                $this->connection->execute('RELEASE SAVEPOINT ' . $savepoint);
-            } else {
-                $this->connection->commit();
-            }
-            return $result;
+            return $this->connection->transaction(fn(): mixed => $operation());
         } catch (Throwable $exception) {
-            try {
-                if (true === $nested) {
-                    $this->connection->execute('ROLLBACK TO SAVEPOINT ' . $savepoint);
-                    $this->connection->execute('RELEASE SAVEPOINT ' . $savepoint);
-                } else {
-                    $this->connection->rollBack();
-                }
-            } finally {
-                $this->restore();
-            }
+            $this->restore();
+
             throw $exception;
         }
     }

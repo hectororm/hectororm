@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added `Connection::transaction(callable $work)` to run a unit of work in a transaction: commit and return the callback result on success, roll back and rethrow the original exception on failure. When a transaction is already active, the work runs inside a savepoint, so a failure only discards the nested work (#184)
+- Added `ConnectionSet::transaction(callable $work)` to run a unit of work in a transaction on every connection of the set. Commits are not atomic across connections (#184)
+
 ## [1.5.1] - 2026-10-16
 
 _No changes in this release._

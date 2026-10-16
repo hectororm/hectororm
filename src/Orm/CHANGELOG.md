@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `Orm::transaction(callable $work)` to run a unit of work in a transaction on every connection; the in-memory state of entities is not restored on failure (#184)
+
+### Changed
+
+- `Orm::persist()` called inside an active transaction now uses a savepoint: on failure, only its own writes are rolled back instead of the whole caller transaction (#184)
+- Relationship lifecycle transactions delegate database handling to `Connection::transaction()`; a failing rollback no longer replaces the original exception (#184)
+
 ## [1.5.1] - 2026-10-16
 
 ### Fixed

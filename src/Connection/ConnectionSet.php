@@ -21,6 +21,7 @@ use Hector\Connection\Exception\ConnectionException;
 use Hector\Connection\Exception\NotFoundException;
 use Hector\Connection\Log\Logger;
 use IteratorAggregate;
+use Throwable;
 
 class ConnectionSet implements Countable, IteratorAggregate
 {
@@ -132,6 +133,32 @@ class ConnectionSet implements Countable, IteratorAggregate
         foreach ($this->connections as $connection) {
             $connection->rollBack();
         }
+    }
+
+    /**
+     * Execute a unit of work inside a transaction on every connection of the set.
+     *
+     * Each connection follows Connection::transaction() semantics (savepoint when a
+     * transaction is already active). Commits are not atomic across connections:
+     * if one commit fails, connections already committed are not rolled back.
+     *
+     * @template T
+     *
+     * @param callable(ConnectionSet): T $work
+     *
+     * @return T
+     * @throws Throwable
+     * @see Connection::transaction()
+     */
+    public function transaction(callable $work): mixed
+    {
+        $operation = fn(): mixed => $work($this);
+
+        foreach (array_reverse($this->connections) as $connection) {
+            $operation = fn(): mixed => $connection->transaction($operation);
+        }
+
+        return $operation();
     }
 
     /**
