@@ -74,7 +74,7 @@ final class EntityData implements LifecycleSnapshotInterface
         $this->related->restore($entity);
     }
 
-    public function __debugInfo(): ?array
+    public function __debugInfo(): array
     {
         return [];
     }

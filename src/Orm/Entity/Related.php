@@ -95,9 +95,9 @@ class Related implements Countable, LifecycleSnapshotInterface
     /**
      * PHP magic method.
      *
-     * @return array|null
+     * @return array
      */
-    public function __debugInfo(): ?array
+    public function __debugInfo(): array
     {
         return $this->related;
     }

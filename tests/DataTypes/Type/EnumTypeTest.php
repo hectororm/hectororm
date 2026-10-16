@@ -161,6 +161,20 @@ class EnumTypeTest extends TestCase
         $type->toSchema(['foo']);
     }
 
+    public function testToSchemaWithScalarValues(): void
+    {
+        $type = new EnumType(FakeEnumString::class);
+
+        $this->assertSame('foo', $type->toSchema('foo'));
+        $this->assertSame('bar', $type->toSchema('bar'));
+        $this->assertNull((new EnumType(FakeEnumString::class, true))->toSchema('unknown'));
+
+        $type = new EnumType(FakeEnumInt::class);
+
+        $this->assertSame(0, $type->toSchema(0));
+        $this->assertSame(1, $type->toSchema('1'));
+    }
+
     public function testFromSchemaNullWithoutExpected(): void
     {
         $type = new EnumType(FakeEnumString::class);
