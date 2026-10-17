@@ -281,12 +281,7 @@ class ConnectionTest extends TestCase
 
     public function testBeginTransactionKeepsCounterConsistentOnFailure(): void
     {
-        // Put the PDO already in a transaction so PDO::beginTransaction() throws.
-        $pdo = new PDO('sqlite::memory:');
-        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $pdo->beginTransaction();
-
-        $connection = Connection::fromPdo($pdo);
+        $connection = new Connection('invalid-driver:');
 
         $reflectionProperty = new ReflectionProperty(Connection::class, 'transactions');
         PHP_VERSION_ID < 80100 && $reflectionProperty->setAccessible(true);
@@ -315,7 +310,7 @@ class ConnectionTest extends TestCase
         $this->assertTrue($connection->inTransaction());
         $this->assertEquals(2, $reflectionProperty->getValue($connection));
 
-        $connection->rollBack();
+        $connection->rollBack(allTransactions: true);
     }
 
     public function testCommit(): void
@@ -451,7 +446,7 @@ class ConnectionTest extends TestCase
 
         $this->assertEquals(2, $reflectionProperty->getValue($connection));
 
-        $connection->rollBack();
+        $connection->rollBack(allTransactions: true);
 
         $this->assertEquals(0, $reflectionProperty->getValue($connection));
     }

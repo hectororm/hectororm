@@ -18,6 +18,7 @@ use Hector\Connection\Exception\ConnectionException;
 use Hector\Connection\Exception\NotFoundException;
 use Hector\Connection\Log\Logger;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 
 class ConnectionSetTest extends TestCase
 {
@@ -146,6 +147,109 @@ class ConnectionSetTest extends TestCase
 
         $this->assertFalse($connection1->inTransaction());
         $this->assertFalse($connection2->inTransaction());
+    }
+
+    public function testTransactionCommitsEveryConnection(): void
+    {
+        $connectionSet = new ConnectionSet(
+            $connection1 = new Connection('sqlite::memory:'),
+            $connection2 = new Connection('sqlite::memory:', name: 'connection'),
+        );
+        $connection1->execute('CREATE TABLE foo (id INTEGER)');
+        $connection2->execute('CREATE TABLE foo (id INTEGER)');
+
+        $result = $connectionSet->transaction(function (ConnectionSet $set) use ($connectionSet): string {
+            $this->assertSame($connectionSet, $set);
+            foreach ($set as $connection) {
+                $this->assertTrue($connection->inTransaction());
+                $connection->execute('INSERT INTO foo (id) VALUES (1)');
+            }
+
+            return 'done';
+        });
+
+        $this->assertSame('done', $result);
+        $this->assertFalse($connection1->inTransaction());
+        $this->assertFalse($connection2->inTransaction());
+        $this->assertEquals([1], $connection1->fetchColumn('SELECT id FROM foo'));
+        $this->assertEquals([1], $connection2->fetchColumn('SELECT id FROM foo'));
+    }
+
+    public function testTransactionRollsBackEveryConnection(): void
+    {
+        $connectionSet = new ConnectionSet(
+            $connection1 = new Connection('sqlite::memory:'),
+            $connection2 = new Connection('sqlite::memory:', name: 'connection'),
+        );
+        $connection1->execute('CREATE TABLE foo (id INTEGER)');
+        $connection2->execute('CREATE TABLE foo (id INTEGER)');
+        $exception = new RuntimeException('Failure');
+
+        try {
+            $connectionSet->transaction(function (ConnectionSet $set) use ($exception): void {
+                foreach ($set as $connection) {
+                    $connection->execute('INSERT INTO foo (id) VALUES (1)');
+                }
+
+                throw $exception;
+            });
+            $this->fail('Exception expected');
+        } catch (RuntimeException $caught) {
+            $this->assertSame($exception, $caught);
+        }
+
+        $this->assertFalse($connection1->inTransaction());
+        $this->assertFalse($connection2->inTransaction());
+        $this->assertSame([], $connection1->fetchColumn('SELECT id FROM foo'));
+        $this->assertSame([], $connection2->fetchColumn('SELECT id FROM foo'));
+    }
+
+    public function testTransactionRollsBackOpenedConnectionsWhenBeginFails(): void
+    {
+        $connectionSet = new ConnectionSet(
+            $connection1 = new Connection('sqlite::memory:'),
+            new Connection('sqlite:/nonexistent/directory/database.sqlite', name: 'broken'),
+        );
+        $called = false;
+
+        try {
+            $connectionSet->transaction(function () use (&$called): void {
+                $called = true;
+            });
+            $this->fail('Exception expected');
+        } catch (ConnectionException) {
+        }
+
+        $this->assertFalse($called);
+        $this->assertFalse($connection1->inTransaction());
+    }
+
+    public function testPartialRollbackPreservesOuterTransactions(): void
+    {
+        $set = new ConnectionSet(
+            new Connection('sqlite::memory:'),
+            new Connection('sqlite::memory:', name: 'other'),
+        );
+        foreach ($set as $connection) {
+            $connection->execute('CREATE TABLE foo (id INTEGER)');
+        }
+        $set->beginTransaction();
+        foreach ($set as $connection) {
+            $connection->execute('INSERT INTO foo VALUES (1)');
+        }
+        $set->beginTransaction();
+        foreach ($set as $connection) {
+            $connection->execute('INSERT INTO foo VALUES (2)');
+        }
+        $set->rollBack(allTransactions: false);
+        foreach ($set as $connection) {
+            $this->assertTrue($connection->inTransaction());
+        }
+        $set->commit();
+        foreach ($set as $connection) {
+            $this->assertEquals([1], $connection->fetchColumn('SELECT id FROM foo'));
+            $this->assertFalse($connection->inTransaction());
+        }
     }
 
     public function testGetLoggers(): void

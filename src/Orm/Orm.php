@@ -162,6 +162,25 @@ class Orm
     }
 
     /**
+     * Execute a unit of work inside a transaction on every connection.
+     *
+     * Database writes are rolled back on failure, but the in-memory state of
+     * entities is not restored.
+     *
+     * @template T
+     *
+     * @param callable(Orm): T $work
+     *
+     * @return T
+     * @throws Throwable
+     * @see ConnectionSet::transaction()
+     */
+    public function transaction(callable $work): mixed
+    {
+        return $this->connections->transaction(fn(): mixed => $work($this));
+    }
+
+    /**
      * Get schema container.
      *
      * @return SchemaContainer
@@ -391,20 +410,12 @@ class Orm
             }
         }
 
-        try {
-            $this->connections->beginTransaction();
-
+        $this->connections->transaction(function (): void {
             /** @var Entity $entity */
             foreach ($this->storage as $entity) {
                 $this->persistEntity($entity);
             }
-
-            $this->connections->commit();
-        } catch (Throwable $exception) {
-            $this->connections->rollBack();
-
-            throw $exception;
-        }
+        });
     }
 
     /**

@@ -25,6 +25,7 @@ use PDO;
 use PDOException;
 use PDOStatement;
 use SensitiveParameter;
+use Throwable;
 
 class Connection
 {
@@ -34,6 +35,7 @@ class Connection
     private ?PDO $readPdo = null;
     private ?DriverInfo $driverInfo = null;
     private int $transactions = 0;
+    private bool $ownsTransaction = false;
 
     /**
      * Connection constructor.
@@ -269,13 +271,22 @@ class Connection
      */
     public function beginTransaction(): void
     {
-        // Only the outermost call hits the real PDO. Increment the counter *after* the
-        // PDO call succeeds, so a failure (incl. lazy connection) does not leave a
-        // phantom transaction level that would misroute reads and break later commits.
-        if ($this->transactions === 0) {
+        if (false === $this->getPdo()->inTransaction()) {
+            // DDL may have committed behind our back. Start a real transaction
+            // rather than letting a stale counter route subsequent writes to autocommit.
+            $this->transactions = 0;
+            $this->ownsTransaction = false;
             $this->getPdo()->beginTransaction();
+            $this->ownsTransaction = true;
+        } else {
+            // At level zero the transaction belongs to the PDO caller, not Hector.
+            if (0 === $this->transactions) {
+                $this->ownsTransaction = false;
+            }
+            $this->execute('SAVEPOINT hector_tx_' . ($this->transactions + 1));
         }
 
+        // A failed BEGIN or SAVEPOINT must not increment the counter (#69).
         $this->transactions++;
     }
 
@@ -288,32 +299,107 @@ class Connection
             return;
         }
 
-        // Decrement only after the PDO commit succeeds (outermost level only).
-        // A DDL statement (CREATE/ALTER/DROP TABLE) issues an implicit COMMIT on
-        // MySQL/MariaDB, so PDO may no longer have an active transaction even though
-        // the counter still expects one: guard against it to avoid a spurious
-        // "There is no active transaction" error.
-        if ($this->transactions === 1 && $this->getPdo()->inTransaction()) {
+        if (false === $this->getPdo()->inTransaction()) {
+            $this->transactions = 0;
+            $this->ownsTransaction = false;
+
+            return;
+        }
+
+        if (1 === $this->transactions && true === $this->ownsTransaction) {
             $this->getPdo()->commit();
+        } else {
+            $this->execute('RELEASE SAVEPOINT hector_tx_' . $this->transactions);
         }
 
         $this->transactions--;
+        if (0 === $this->transactions) {
+            $this->ownsTransaction = false;
+        }
     }
 
     /**
      * Roll back transaction.
+     *
+     * @param bool|null $allTransactions True rolls back all Hector-managed levels;
+     *                                  false only the current level. Null means true
+     *                                  in 1.x and will mean false in 2.0.
      */
-    public function rollBack(): void
+    public function rollBack(?bool $allTransactions = null): void
     {
-        if ($this->transactions > 0) {
-            // A DDL implicit COMMIT may have already closed the PDO transaction; only
-            // roll back when one is actually active to avoid a spurious
-            // "There is no active transaction" error.
-            if ($this->getPdo()->inTransaction()) {
-                $this->getPdo()->rollBack();
+        if ($this->transactions <= 0) {
+            return;
+        }
+
+        if (false === $this->getPdo()->inTransaction()) {
+            $this->transactions = 0;
+            $this->ownsTransaction = false;
+
+            return;
+        }
+
+        if (null === $allTransactions && $this->transactions > 1) {
+            trigger_error(
+                'Calling rollBack() without $allTransactions in a nested transaction is deprecated: '
+                . 'it rolls back all levels in 1.x and only the current level in 2.0. '
+                . 'Pass allTransactions: true to keep the current behavior.',
+                E_USER_DEPRECATED,
+            );
+        }
+
+        $level = ($allTransactions ?? true) ? 1 : $this->transactions;
+        if (1 === $level && true === $this->ownsTransaction) {
+            $this->getPdo()->rollBack();
+            $this->transactions = 0;
+            $this->ownsTransaction = false;
+
+            return;
+        }
+
+        // Even an all-level rollback must preserve an externally owned transaction.
+        try {
+            $this->execute('ROLLBACK TO SAVEPOINT hector_tx_' . $level);
+            $this->execute('RELEASE SAVEPOINT hector_tx_' . $level);
+        } finally {
+            $this->transactions = $this->getPdo()->inTransaction() ? $level - 1 : 0;
+            if (0 === $this->transactions) {
+                $this->ownsTransaction = false;
+            }
+        }
+    }
+
+    /**
+     * Execute a unit of work inside a transaction.
+     *
+     * The callback receives the connection. Its result is returned after commit;
+     * on failure the work is rolled back and the original exception is rethrown.
+     * When a transaction is already active, the work runs inside a savepoint so
+     * that a failure only discards the nested work, not the outer transaction.
+     *
+     * @template T
+     *
+     * @param callable(Connection): T $work
+     *
+     * @return T
+     * @throws Throwable
+     */
+    public function transaction(callable $work): mixed
+    {
+        $this->beginTransaction();
+
+        try {
+            $result = $work($this);
+            $this->commit();
+
+            return $result;
+        } catch (Throwable $exception) {
+            try {
+                $this->rollBack(allTransactions: false);
+            } catch (Throwable) {
+                // Keep the original failure: the rollback error is secondary.
             }
 
-            $this->transactions = 0;
+            throw $exception;
         }
     }
 
