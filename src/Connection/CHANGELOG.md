@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added `Connection::transaction(callable $work)` to run a unit of work in a transaction: commit and return the callback result on success, roll back and rethrow the original exception on failure. When a transaction is already active, the work runs inside a savepoint, so a failure only discards the nested work (#184)
 - Added `ConnectionSet::transaction(callable $work)` to run a unit of work in a transaction on every connection of the set. Commits are not atomic across connections (#184)
+- Added `DriverInfo::isRetryable(Throwable)` to detect transient concurrency failures (deadlocks, lock wait timeouts, serialization failures, SQLite busy/locked) through the exception chain, without hard-coding vendor error codes (#184)
+- Added an `$attempts` parameter to `Connection::transaction()` and `ConnectionSet::transaction()` to retry the whole transaction on retryable failures. Nested transactions are never retried (#184)
 
 ### Changed
 

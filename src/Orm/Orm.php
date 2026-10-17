@@ -165,19 +165,21 @@ class Orm
      * Execute a unit of work inside a transaction on every connection.
      *
      * Database writes are rolled back on failure, but the in-memory state of
-     * entities is not restored.
+     * entities is not restored. When retrying, load or create entities inside
+     * the callback so that each attempt starts from fresh state.
      *
      * @template T
      *
      * @param callable(Orm): T $work
+     * @param int $attempts Maximum number of attempts on transient concurrency failures, at least 1
      *
      * @return T
      * @throws Throwable
      * @see ConnectionSet::transaction()
      */
-    public function transaction(callable $work): mixed
+    public function transaction(callable $work, int $attempts = 1): mixed
     {
-        return $this->connections->transaction(fn(): mixed => $work($this));
+        return $this->connections->transaction(fn(): mixed => $work($this), $attempts);
     }
 
     /**

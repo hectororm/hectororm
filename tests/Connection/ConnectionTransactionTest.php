@@ -15,7 +15,9 @@ declare(strict_types=1);
 namespace Hector\Connection\Tests;
 
 use Hector\Connection\Connection;
+use InvalidArgumentException;
 use PDO;
+use PDOException;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
 use RuntimeException;
@@ -509,6 +511,173 @@ class ConnectionTransactionTest extends TestCase
             $this->assertSame($failure, $exception);
         }
         $this->assertSame(0, $this->counter($connection));
+    }
+
+    private static function busyException(): PDOException
+    {
+        $exception = new PDOException('SQLSTATE[HY000]: General error: 5 database is locked');
+        $exception->errorInfo = ['HY000', 5, 'database is locked'];
+
+        return $exception;
+    }
+
+    public function testRetriesWholeTransactionOnRetryableFailure(): void
+    {
+        $connection = $this->getConnection('sqlite');
+        $calls = 0;
+
+        $result = $connection->transaction(function (Connection $connection) use (&$calls): int {
+            $calls++;
+            $this->insert($connection, $calls);
+            if ($calls < 3) {
+                throw self::busyException();
+            }
+
+            return $calls;
+        }, attempts: 3);
+
+        $this->assertSame(3, $result);
+        $this->assertSame(0, $this->counter($connection));
+        $this->assertSame([3], $this->ids($connection));
+    }
+
+    public function testRetriesWrappedRetryableFailure(): void
+    {
+        $connection = $this->getConnection('sqlite');
+        $calls = 0;
+
+        $connection->transaction(function () use (&$calls): void {
+            if (1 === ++$calls) {
+                throw new RuntimeException('Wrapped', 0, self::busyException());
+            }
+        }, attempts: 2);
+
+        $this->assertSame(2, $calls);
+    }
+
+    public function testRethrowsLastFailureWhenAttemptsAreExhausted(): void
+    {
+        $connection = $this->getConnection('sqlite');
+        $calls = 0;
+        $last = null;
+
+        try {
+            $connection->transaction(function () use (&$calls, &$last): void {
+                $calls++;
+                throw $last = self::busyException();
+            }, attempts: 2);
+            $this->fail('Exception expected');
+        } catch (PDOException $exception) {
+            $this->assertSame($last, $exception);
+        }
+
+        $this->assertSame(2, $calls);
+        $this->assertSame(0, $this->counter($connection));
+    }
+
+    public function testDoesNotRetryNonRetryableFailure(): void
+    {
+        $connection = $this->getConnection('sqlite');
+        $calls = 0;
+
+        try {
+            $connection->transaction(function () use (&$calls): void {
+                $calls++;
+                throw new RuntimeException('Failure');
+            }, attempts: 3);
+            $this->fail('Exception expected');
+        } catch (RuntimeException) {
+        }
+
+        $this->assertSame(1, $calls);
+    }
+
+    public function testDoesNotRetryNestedTransaction(): void
+    {
+        $connection = $this->getConnection('sqlite');
+        $calls = 0;
+
+        $connection->transaction(function (Connection $connection) use (&$calls): void {
+            try {
+                $connection->transaction(function () use (&$calls): void {
+                    $calls++;
+                    throw self::busyException();
+                }, attempts: 3);
+            } catch (PDOException) {
+            }
+        });
+
+        $this->assertSame(1, $calls);
+    }
+
+    public function testRejectsInvalidAttempts(): void
+    {
+        $connection = new Connection('sqlite::memory:');
+
+        $this->expectException(InvalidArgumentException::class);
+
+        $connection->transaction(fn() => $this->fail('Work must not be called'), attempts: 0);
+    }
+
+    public function testRetriesRealSqliteBusy(): void
+    {
+        $file = tempnam(sys_get_temp_dir(), 'hector');
+
+        try {
+            $holder = new Connection('sqlite:' . $file);
+            $holder->execute('CREATE TABLE ' . self::TABLE . ' (id INTEGER NOT NULL PRIMARY KEY)');
+            // Busy timeout disabled: a locked database fails immediately with SQLITE_BUSY.
+            $connection = new Connection('sqlite:' . $file, options: [PDO::ATTR_TIMEOUT => 0]);
+
+            $holder->beginTransaction();
+            $this->insert($holder, 1);
+
+            $calls = 0;
+            $connection->transaction(function (Connection $connection) use (&$calls, $holder): void {
+                if (2 === ++$calls) {
+                    $holder->rollBack();
+                }
+                $this->insert($connection, 2);
+            }, attempts: 2);
+
+            $this->assertSame(2, $calls);
+            $this->assertSame([2], $this->ids($connection));
+        } finally {
+            unset($holder, $connection);
+            @unlink($file);
+        }
+    }
+
+    /**
+     * @dataProvider driverProvider
+     */
+    public function testRetriesRealLockWaitTimeout(string $driver): void
+    {
+        if ('sqlite' === $driver) {
+            $this->markTestSkipped('Lock wait timeout is specific to MySQL/MariaDB');
+        }
+
+        $connection = $this->getConnection($driver);
+        $this->insert($connection, 1);
+        $holder = new Connection(getenv('MYSQL_DSN'));
+        $holder->beginTransaction();
+        $holder->execute('UPDATE ' . self::TABLE . ' SET id = 1 WHERE id = 1');
+
+        try {
+            $connection->execute('SET SESSION innodb_lock_wait_timeout = 1');
+            $calls = 0;
+            $connection->transaction(function (Connection $connection) use (&$calls, $holder): void {
+                if (2 === ++$calls) {
+                    $holder->rollBack();
+                }
+                $connection->execute('UPDATE ' . self::TABLE . ' SET id = 2 WHERE id = 1');
+            }, attempts: 2);
+
+            $this->assertSame(2, $calls);
+            $this->assertSame([2], $this->ids($connection));
+        } finally {
+            $holder->rollBack();
+        }
     }
 
     public function testReadsUseWritePdo(): void
