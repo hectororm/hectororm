@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `skipLocked` parameter on `QueryBuilder::fetchOne()`/`fetchAll()`/`fetchColumn()` (and the protected `addLockForUpdate()`): pass `lock: true, skipLocked: false` to get a blocking `FOR UPDATE` that waits for rows locked by another transaction instead of silently excluding them with `SKIP LOCKED`. When omitted, the current behavior (`SKIP LOCKED`) is preserved (#181)
+
+### Deprecated
+
+- Locking rows (`lock: true`) without passing `skipLocked` explicitly now triggers an `E_USER_DEPRECATED`: it currently behaves as `skipLocked: true`, and will default to `false` (blocking `FOR UPDATE`) in 2.0 (#182)
+
 ## [1.5.1] - 2026-10-16
 
 _No changes in this release._

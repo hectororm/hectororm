@@ -291,10 +291,12 @@ class QueryBuilder implements CompoundStatementInterface
      * Fetch one.
      *
      * @param bool $lock Lock for update
+     * @param bool|null $skipLocked Skip rows already locked instead of waiting for them (if supported by driver);
+     *                             null is deprecated and behaves as true, pass it explicitly (default false in 2.0)
      *
      * @return array|null
      */
-    public function fetchOne(bool $lock = false): ?array
+    public function fetchOne(bool $lock = false, ?bool $skipLocked = null): ?array
     {
         $select = $this->makeSelect();
         $driverInfo = $this->connection->getDriverInfo();
@@ -302,7 +304,7 @@ class QueryBuilder implements CompoundStatementInterface
         $binds = new BindParamList();
         $statement = $select->getStatement($binds, $driverInfo);
 
-        true === $lock && $statement = $this->addLockForUpdate($statement);
+        true === $lock && $statement = $this->addLockForUpdate($statement, $skipLocked);
 
         return $this->connection->fetchOne($statement, $binds->getArrayCopy());
     }
@@ -311,10 +313,12 @@ class QueryBuilder implements CompoundStatementInterface
      * Fetch all.
      *
      * @param bool $lock Lock for update
+     * @param bool|null $skipLocked Skip rows already locked instead of waiting for them (if supported by driver);
+     *                             null is deprecated and behaves as true, pass it explicitly (default false in 2.0)
      *
      * @return Generator<array>
      */
-    public function fetchAll(bool $lock = false): Generator
+    public function fetchAll(bool $lock = false, ?bool $skipLocked = null): Generator
     {
         $select = $this->makeSelect();
         $driverInfo = $this->connection->getDriverInfo();
@@ -322,7 +326,7 @@ class QueryBuilder implements CompoundStatementInterface
         $binds = new BindParamList();
         $statement = $select->getStatement($binds, $driverInfo);
 
-        true === $lock && $statement = $this->addLockForUpdate($statement);
+        true === $lock && $statement = $this->addLockForUpdate($statement, $skipLocked);
 
         yield from $this->connection->fetchAll($statement, $binds->getArrayCopy());
     }
@@ -332,10 +336,12 @@ class QueryBuilder implements CompoundStatementInterface
      *
      * @param int $column
      * @param bool $lock Lock for update
+     * @param bool|null $skipLocked Skip rows already locked instead of waiting for them (if supported by driver);
+     *                             null is deprecated and behaves as true, pass it explicitly (default false in 2.0)
      *
      * @return Generator<mixed>
      */
-    public function fetchColumn(int $column = 0, bool $lock = false): Generator
+    public function fetchColumn(int $column = 0, bool $lock = false, ?bool $skipLocked = null): Generator
     {
         $select = $this->makeSelect();
         $driverInfo = $this->connection->getDriverInfo();
@@ -343,7 +349,7 @@ class QueryBuilder implements CompoundStatementInterface
         $binds = new BindParamList();
         $statement = $select->getStatement($binds, $driverInfo);
 
-        true === $lock && $statement = $this->addLockForUpdate($statement);
+        true === $lock && $statement = $this->addLockForUpdate($statement, $skipLocked);
 
         yield from $this->connection->fetchColumn($statement, $binds->getArrayCopy(), $column);
     }
@@ -352,18 +358,31 @@ class QueryBuilder implements CompoundStatementInterface
      * Add lock on statement.
      *
      * @param string $statement
+     * @param bool|null $skipLocked Skip rows already locked instead of waiting for them (if supported by driver);
+     *                             null is deprecated and behaves as true, pass it explicitly (default false in 2.0)
      *
      * @return string
      */
-    protected function addLockForUpdate(string $statement): string
+    protected function addLockForUpdate(string $statement, ?bool $skipLocked = null): string
     {
+        if (null === $skipLocked) {
+            trigger_error(
+                'Locking rows without the $skipLocked parameter is deprecated, pass it explicitly: ' .
+                'it currently defaults to true (FOR UPDATE SKIP LOCKED) and will default to false ' .
+                '(blocking FOR UPDATE) in 2.0.',
+                E_USER_DEPRECATED
+            );
+
+            $skipLocked = true;
+        }
+
         $capabilities = $this->connection->getDriverInfo()->getCapabilities();
 
-        // Prefer FOR UPDATE SKIP LOCKED, fall back to a plain FOR UPDATE when the driver locks
-        // rows but does not support SKIP LOCKED (e.g. MySQL < 8.0). Previously such drivers
-        // silently produced no lock at all.
+        // SKIP LOCKED excludes rows locked by another transaction from the result instead of waiting
+        // for them: only emit it when requested. Fall back to a plain FOR UPDATE when the driver locks
+        // rows but does not support SKIP LOCKED (e.g. MySQL < 8.0).
         $clause = match (true) {
-            $capabilities->hasLockAndSkip() => ' FOR UPDATE SKIP LOCKED',
+            true === $skipLocked && $capabilities->hasLockAndSkip() => ' FOR UPDATE SKIP LOCKED',
             $capabilities->hasLock() => ' FOR UPDATE',
             default => '',
         };
