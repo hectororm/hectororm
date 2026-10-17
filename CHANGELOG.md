@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-10-18
+
+### Added
+
+- **hectororm/connection**: Added `rollBack(?bool $allTransactions = null)` on `Connection` and `ConnectionSet`: pass `false` to roll back only the current transaction level, or `true` for all Hector-managed levels. The default remains `true` in 1.x; implicit nested rollback emits `E_USER_DEPRECATED` ahead of a default of `false` in 2.0 (#184)
+- **hectororm/connection**: Added `Connection::transaction(callable $work)` to run a unit of work in a transaction: commit and return the callback result on success, roll back and rethrow the original exception on failure. When a transaction is already active, the work runs inside a savepoint, so a failure only discards the nested work (#184)
+- **hectororm/connection**: Added `ConnectionSet::transaction(callable $work)` to run a unit of work in a transaction on every connection of the set. Commits are not atomic across connections (#184)
+- **hectororm/connection**: Added `DriverInfo::isRetryable(Throwable)` to detect transient concurrency failures (deadlocks, lock wait timeouts, serialization failures, SQLite busy/locked) through the exception chain, without hard-coding vendor error codes (#184)
+- **hectororm/connection**: Added an `$attempts` parameter to `Connection::transaction()` and `ConnectionSet::transaction()` to retry the whole transaction on retryable failures. Nested transactions are never retried (#184)
+- **hectororm/connection**: Added `Connection::afterCommit(callable $callback)` to run a callback once the outermost Hector-managed transaction is committed, in registration order. Callbacks of a released savepoint are promoted to the parent level and discarded with a rolled-back level or a failed attempt; without an active transaction, the callback runs immediately. A callback exception discards the remaining callbacks and is rethrown, but never rolls back nor retries the committed transaction. Registering inside a transaction opened directly on PDO throws a `LogicException`, and pending callbacks are discarded after an implicit commit (e.g. DDL on MySQL/MariaDB). This is an in-process hook, not a durable delivery mechanism (#189)
+- **hectororm/orm**: `Orm::transaction(callable $work)` to run a unit of work in a transaction on every connection; the in-memory state of entities is not restored on failure (#184)
+- **hectororm/orm**: `$attempts` parameter on `Orm::transaction()` to retry the whole transaction on transient concurrency failures (#184)
+- **hectororm/query**: `skipLocked` parameter on `QueryBuilder::fetchOne()`/`fetchAll()`/`fetchColumn()` (and the protected `addLockForUpdate()`): pass `lock: true, skipLocked: false` to get a blocking `FOR UPDATE` that waits for rows locked by another transaction instead of silently excluding them with `SKIP LOCKED`. When omitted, the current behavior (`SKIP LOCKED`) is preserved (#181)
+- **hectororm/query**: `Statement\Increment` and `Statement\Decrement` assignment values for atomic arithmetic updates in a single statement (e.g. `update(['stock' => new Decrement(5)])` renders `stock = stock - :amount`); the amount accepts an `int`, a finite `float` or a numeric string and is always bound as a parameter (#190)
+- **hectororm/query**: `Statement\AssignmentValueInterface` for UPDATE assignment values computed from the assigned column (#190)
+
+### Changed
+
+- **hectororm/connection**: Nested manual `beginTransaction()` / `commit()` now create / release savepoints; `transaction()` reuses the public transaction methods (#184)
+- **hectororm/connection**: `beginTransaction()` inside an externally opened PDO transaction now creates a savepoint instead of failing; committing or rolling back Hector's levels preserves the external transaction (#184)
+- **hectororm/connection**: `beginTransaction()` now opens a real transaction when an implicit DDL commit left a stale nesting counter (#184)
+- **hectororm/orm**: `Orm::persist()` called inside an active transaction now uses a savepoint: on failure, only its own writes are rolled back instead of the whole caller transaction (#184)
+- **hectororm/orm**: Relationship lifecycle transactions delegate database handling to `Connection::transaction()`; a failing rollback no longer replaces the original exception (#184)
+- **hectororm/query**: `Component\AbstractComponent::getSubStatementValue()` throws an `InvalidArgumentException` when given an `AssignmentValueInterface` (e.g. in an INSERT or a condition), instead of binding the object (#190)
+
+### Deprecated
+
+- **hectororm/connection**: Calling `rollBack()` without `$allTransactions` while several Hector transaction levels are active triggers an `E_USER_DEPRECATED`: it currently rolls back all levels, and will roll back only the current level in 2.0 (#184)
+- **hectororm/query**: Locking rows (`lock: true`) without passing `skipLocked` explicitly now triggers an `E_USER_DEPRECATED`: it currently behaves as `skipLocked: true`, and will default to `false` (blocking `FOR UPDATE`) in 2.0 (#182)
+
 ## [1.5.1] - 2026-10-16
 
 ### Fixed

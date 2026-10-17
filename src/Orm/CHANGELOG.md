@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-10-18
+
 ### Added
 
 - `Orm::transaction(callable $work)` to run a unit of work in a transaction on every connection; the in-memory state of entities is not restored on failure (#184)

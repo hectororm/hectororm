@@ -7,10 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-10-18
+
 ### Added
 
 - Added `rollBack(?bool $allTransactions = null)` on `Connection` and `ConnectionSet`: pass `false` to roll back only the current transaction level, or `true` for all Hector-managed levels. The default remains `true` in 1.x; implicit nested rollback emits `E_USER_DEPRECATED` ahead of a default of `false` in 2.0 (#184)
-
 - Added `Connection::transaction(callable $work)` to run a unit of work in a transaction: commit and return the callback result on success, roll back and rethrow the original exception on failure. When a transaction is already active, the work runs inside a savepoint, so a failure only discards the nested work (#184)
 - Added `ConnectionSet::transaction(callable $work)` to run a unit of work in a transaction on every connection of the set. Commits are not atomic across connections (#184)
 - Added `DriverInfo::isRetryable(Throwable)` to detect transient concurrency failures (deadlocks, lock wait timeouts, serialization failures, SQLite busy/locked) through the exception chain, without hard-coding vendor error codes (#184)
@@ -22,6 +23,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Nested manual `beginTransaction()` / `commit()` now create / release savepoints; `transaction()` reuses the public transaction methods (#184)
 - `beginTransaction()` inside an externally opened PDO transaction now creates a savepoint instead of failing; committing or rolling back Hector's levels preserves the external transaction (#184)
 - `beginTransaction()` now opens a real transaction when an implicit DDL commit left a stale nesting counter (#184)
+
+### Deprecated
+
+- Calling `rollBack()` without `$allTransactions` while several Hector transaction levels are active triggers an `E_USER_DEPRECATED`: it currently rolls back all levels, and will roll back only the current level in 2.0 (#184)
 
 ## [1.5.1] - 2026-10-16
 
