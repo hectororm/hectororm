@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `ConnectionSet::transaction(callable $work)` to run a unit of work in a transaction on every connection of the set. Commits are not atomic across connections (#184)
 - Added `DriverInfo::isRetryable(Throwable)` to detect transient concurrency failures (deadlocks, lock wait timeouts, serialization failures, SQLite busy/locked) through the exception chain, without hard-coding vendor error codes (#184)
 - Added an `$attempts` parameter to `Connection::transaction()` and `ConnectionSet::transaction()` to retry the whole transaction on retryable failures. Nested transactions are never retried (#184)
+- Added `Connection::afterCommit(callable $callback)` to run a callback once the outermost Hector-managed transaction is committed, in registration order. Callbacks of a released savepoint are promoted to the parent level and discarded with a rolled-back level or a failed attempt; without an active transaction, the callback runs immediately. A callback exception discards the remaining callbacks and is rethrown, but never rolls back nor retries the committed transaction. Registering inside a transaction opened directly on PDO throws a `LogicException`, and pending callbacks are discarded after an implicit commit (e.g. DDL on MySQL/MariaDB). This is an in-process hook, not a durable delivery mechanism (#189)
 
 ### Changed
 
