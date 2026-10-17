@@ -18,8 +18,10 @@ use Closure;
 use Hector\Connection\Bind\BindParamList;
 use Hector\Connection\Driver\DriverInfo;
 use Hector\Query\CompoundStatementInterface;
+use Hector\Query\Statement\AssignmentValueInterface;
 use Hector\Query\Statement\Encapsulated;
 use Hector\Query\StatementInterface;
+use InvalidArgumentException;
 
 abstract class AbstractComponent implements StatementInterface
 {
@@ -101,6 +103,12 @@ abstract class AbstractComponent implements StatementInterface
         BindParamList $bindParams,
         ?DriverInfo $driverInfo = null,
     ): ?string {
+        if ($value instanceof AssignmentValueInterface) {
+            throw new InvalidArgumentException(
+                sprintf('%s can only be used as an UPDATE assignment value', $value::class)
+            );
+        }
+
         // Compound statement value: encapsulate automatically
         if ($value instanceof CompoundStatementInterface) {
             return (new Encapsulated($value))->getStatement($bindParams, $driverInfo);

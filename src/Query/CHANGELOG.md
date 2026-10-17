@@ -10,6 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `skipLocked` parameter on `QueryBuilder::fetchOne()`/`fetchAll()`/`fetchColumn()` (and the protected `addLockForUpdate()`): pass `lock: true, skipLocked: false` to get a blocking `FOR UPDATE` that waits for rows locked by another transaction instead of silently excluding them with `SKIP LOCKED`. When omitted, the current behavior (`SKIP LOCKED`) is preserved (#181)
+- `Statement\Increment` and `Statement\Decrement` assignment values for atomic arithmetic updates in a single statement (e.g. `update(['stock' => new Decrement(5)])` renders `stock = stock - :amount`); the amount accepts an `int`, a finite `float` or a numeric string and is always bound as a parameter (#190)
+- `Statement\AssignmentValueInterface` for UPDATE assignment values computed from the assigned column (#190)
+
+### Changed
+
+- `Component\AbstractComponent::getSubStatementValue()` throws an `InvalidArgumentException` when given an `AssignmentValueInterface` (e.g. in an INSERT or a condition), instead of binding the object (#190)
 
 ### Deprecated
 
