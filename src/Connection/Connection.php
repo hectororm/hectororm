@@ -17,6 +17,7 @@ namespace Hector\Connection;
 use Exception;
 use Generator;
 use InvalidArgumentException;
+use LogicException;
 use Hector\Connection\Bind\BindParamList;
 use Hector\Connection\Driver\DriverInfo;
 use Hector\Connection\Exception\ConnectionException;
@@ -37,6 +38,8 @@ class Connection
     private ?DriverInfo $driverInfo = null;
     private int $transactions = 0;
     private bool $ownsTransaction = false;
+    /** @var array<int, list<callable(): mixed>> Pending after-commit callbacks by transaction level */
+    private array $afterCommitCallbacks = [];
 
     /**
      * Connection constructor.
@@ -277,6 +280,8 @@ class Connection
             // rather than letting a stale counter route subsequent writes to autocommit.
             $this->transactions = 0;
             $this->ownsTransaction = false;
+            // Hector did not observe that commit: never run its pending callbacks.
+            $this->discardAfterCommitCallbacks();
             $this->getPdo()->beginTransaction();
             $this->ownsTransaction = true;
         } else {
@@ -293,34 +298,73 @@ class Connection
 
     /**
      * Commit transaction.
+     *
+     * Releasing a savepoint promotes its after-commit callbacks to the parent level.
+     * Committing the outermost Hector-owned transaction runs them, in registration
+     * order. A callback exception is rethrown, but the transaction is committed.
+     *
+     * @throws Throwable
+     * @see Connection::afterCommit()
      */
     public function commit(): void
     {
+        $this->runAfterCommitCallbacks($this->commitTransaction());
+    }
+
+    /**
+     * Commit the current transaction level.
+     *
+     * @return list<callable(): mixed> Detached callbacks to run after a real commit
+     */
+    private function commitTransaction(): array
+    {
         if ($this->transactions <= 0) {
-            return;
+            return [];
         }
 
         if (false === $this->getPdo()->inTransaction()) {
             $this->transactions = 0;
             $this->ownsTransaction = false;
+            $this->discardAfterCommitCallbacks();
 
-            return;
+            return [];
         }
 
         if (1 === $this->transactions && true === $this->ownsTransaction) {
+            // A failed commit keeps the callbacks queued: the following rollback discards them.
             $this->getPdo()->commit();
-        } else {
-            $this->execute('RELEASE SAVEPOINT hector_tx_' . $this->transactions);
+            $callbacks = $this->afterCommitCallbacks[1] ?? [];
+            $this->transactions = 0;
+            $this->ownsTransaction = false;
+            $this->afterCommitCallbacks = [];
+
+            return $callbacks;
         }
 
+        $this->execute('RELEASE SAVEPOINT hector_tx_' . $this->transactions);
+
+        $callbacks = $this->afterCommitCallbacks[$this->transactions] ?? [];
+        unset($this->afterCommitCallbacks[$this->transactions]);
         $this->transactions--;
+
+        if ([] !== $callbacks && $this->transactions > 0) {
+            $this->afterCommitCallbacks[$this->transactions] = [
+                ...($this->afterCommitCallbacks[$this->transactions] ?? []),
+                ...$callbacks,
+            ];
+        }
+
         if (0 === $this->transactions) {
             $this->ownsTransaction = false;
         }
+
+        return [];
     }
 
     /**
      * Roll back transaction.
+     *
+     * After-commit callbacks of the rolled back levels are discarded.
      *
      * @param bool|null $allTransactions True rolls back all Hector-managed levels;
      *                                  false only the current level. Null means true
@@ -335,6 +379,7 @@ class Connection
         if (false === $this->getPdo()->inTransaction()) {
             $this->transactions = 0;
             $this->ownsTransaction = false;
+            $this->discardAfterCommitCallbacks();
 
             return;
         }
@@ -350,7 +395,12 @@ class Connection
 
         $level = ($allTransactions ?? true) ? 1 : $this->transactions;
         if (1 === $level && true === $this->ownsTransaction) {
-            $this->getPdo()->rollBack();
+            try {
+                $this->getPdo()->rollBack();
+            } finally {
+                // Whatever the rollback outcome, these callbacks must never run.
+                $this->discardAfterCommitCallbacks(0);
+            }
             $this->transactions = 0;
             $this->ownsTransaction = false;
 
@@ -366,6 +416,71 @@ class Connection
             if (0 === $this->transactions) {
                 $this->ownsTransaction = false;
             }
+            $this->discardAfterCommitCallbacks($level - 1);
+        }
+    }
+
+    /**
+     * Register a callback to run after the outermost transaction is committed.
+     *
+     * Callbacks run in registration order once the outermost Hector-owned
+     * transaction is committed, and are discarded if their level is rolled back.
+     * Without an active transaction, the callback runs immediately.
+     *
+     * When a callback throws, the remaining callbacks are discarded and the
+     * exception is rethrown: the transaction is already committed and is never
+     * retried. This is an in-process hook, not a durable delivery mechanism.
+     *
+     * @param callable(): mixed $callback
+     *
+     * @throws LogicException If the active transaction is not owned by Hector
+     * @throws Throwable
+     */
+    public function afterCommit(callable $callback): void
+    {
+        if (false === $this->getPdo()->inTransaction()) {
+            $callback();
+
+            return;
+        }
+
+        // Hector cannot observe the commit of a transaction opened directly on PDO.
+        if (0 === $this->transactions || false === $this->ownsTransaction) {
+            throw new LogicException(
+                'Cannot register an after-commit callback: the active transaction is not managed by Hector'
+            );
+        }
+
+        $this->afterCommitCallbacks[$this->transactions][] = $callback;
+    }
+
+    /**
+     * Discard after-commit callbacks above the given level.
+     *
+     * @param int|null $level Defaults to the current transaction level
+     */
+    private function discardAfterCommitCallbacks(?int $level = null): void
+    {
+        $level ??= $this->transactions;
+
+        foreach (array_keys($this->afterCommitCallbacks) as $callbacksLevel) {
+            if ($callbacksLevel > $level) {
+                unset($this->afterCommitCallbacks[$callbacksLevel]);
+            }
+        }
+    }
+
+    /**
+     * Run detached after-commit callbacks, stopping at the first failure.
+     *
+     * @param list<callable(): mixed> $callbacks
+     *
+     * @throws Throwable
+     */
+    private function runAfterCommitCallbacks(array $callbacks): void
+    {
+        foreach ($callbacks as $callback) {
+            $callback();
         }
     }
 
@@ -382,6 +497,9 @@ class Connection
      * DriverInfo::isRetryable(). Nested calls are never retried: such failures
      * usually abort the outer transaction, which is the one to retry.
      *
+     * After-commit callbacks run once the transaction is committed, outside the
+     * retry handling: their failures never replay the work.
+     *
      * @template T
      *
      * @param callable(Connection): T $work
@@ -391,6 +509,7 @@ class Connection
      * @throws InvalidArgumentException If attempts is lower than 1
      * @throws Throwable
      * @see DriverInfo::isRetryable()
+     * @see Connection::afterCommit()
      */
     public function transaction(callable $work, int $attempts = 1): mixed
     {
@@ -398,18 +517,26 @@ class Connection
             throw new InvalidArgumentException('Transaction attempts must be greater than or equal to 1');
         }
 
-        if (true === $this->getPdo()->inTransaction()) {
-            return $this->runTransaction($work);
-        }
+        $nested = $this->getPdo()->inTransaction();
 
         for ($attempt = 1; ; $attempt++) {
             try {
-                return $this->runTransaction($work);
+                [$result, $callbacks] = $this->runTransaction($work);
             } catch (Throwable $exception) {
-                if ($attempt >= $attempts || false === $this->getDriverInfo()->isRetryable($exception)) {
+                if (
+                    true === $nested
+                    || $attempt >= $attempts
+                    || false === $this->getDriverInfo()->isRetryable($exception)
+                ) {
                     throw $exception;
                 }
+
+                continue;
             }
+
+            $this->runAfterCommitCallbacks($callbacks);
+
+            return $result;
         }
     }
 
@@ -420,18 +547,17 @@ class Connection
      *
      * @param callable(Connection): T $work
      *
-     * @return T
+     * @return array{0: T, 1: list<callable(): mixed>} Result and after-commit callbacks to run
      * @throws Throwable
      */
-    private function runTransaction(callable $work): mixed
+    private function runTransaction(callable $work): array
     {
         $this->beginTransaction();
 
         try {
             $result = $work($this);
-            $this->commit();
 
-            return $result;
+            return [$result, $this->commitTransaction()];
         } catch (Throwable $exception) {
             try {
                 $this->rollBack(allTransactions: false);
