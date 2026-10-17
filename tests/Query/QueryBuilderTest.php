@@ -27,6 +27,8 @@ use Hector\Pagination\Request\RangePaginationRequest;
 use Hector\Query\Delete;
 use Hector\Query\QueryBuilder;
 use Hector\Query\Select;
+use Hector\Query\Statement\Decrement;
+use Hector\Query\Statement\Increment;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
@@ -568,6 +570,52 @@ class QueryBuilderTest extends TestCase
         $this->assertEquals(
             ['_h_0' => 'bar_value'],
             array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
+        );
+    }
+
+    public function testUpdateWithArithmeticValues(): void
+    {
+        $queryBuilder = new FakeQueryBuilder($this->getConnection());
+        $queryBuilder->from('products');
+        $queryBuilder->where('id', 42)->where('stock', '>=', 5);
+
+        $queryBuilder->update(['stock' => new Decrement(5), 'reserved' => new Increment(5)]);
+
+        $this->assertEquals(
+            'UPDATE products SET stock = stock - :_h_0, reserved = reserved + :_h_1 ' .
+            'WHERE id = :_h_2 AND stock >= :_h_3',
+            $queryBuilder->statement
+        );
+        $this->assertSame(
+            ['_h_0' => 5, '_h_1' => 5, '_h_2' => 42, '_h_3' => 5],
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $queryBuilder->input_parameters)
+        );
+    }
+
+    public function testUpdateWithArithmeticValuesKeepsBuilderReusable(): void
+    {
+        $queryBuilder = new FakeQueryBuilder($this->getConnection());
+        $queryBuilder->from('products');
+        $queryBuilder->where('id', 42);
+        $bindsBefore = $queryBuilder->getBindParams()->getArrayCopy();
+
+        $queryBuilder->update(['stock' => new Increment(2)]);
+        $firstStatement = $queryBuilder->statement;
+        $firstParameters = $queryBuilder->input_parameters;
+
+        $queryBuilder->update(['stock' => new Increment(2)]);
+
+        $this->assertSame('UPDATE products SET stock = stock + :_h_0 WHERE id = :_h_1', $firstStatement);
+        $this->assertSame($firstStatement, $queryBuilder->statement);
+        $this->assertEquals($firstParameters, $queryBuilder->input_parameters);
+        $this->assertEquals($bindsBefore, $queryBuilder->getBindParams()->getArrayCopy());
+
+        $queryBuilder->update(['stock' => 0]);
+        $this->assertSame('UPDATE products SET stock = :_h_0 WHERE id = :_h_1', $queryBuilder->statement);
+
+        $this->assertSame(
+            'SELECT * FROM products WHERE id = :_h_0',
+            $queryBuilder->makeSelect()->getStatement(new BindParamList())
         );
     }
 

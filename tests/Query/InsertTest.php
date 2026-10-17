@@ -18,7 +18,9 @@ use Hector\Connection\Driver\DriverInfo;
 use Hector\Query\Insert;
 use Hector\Query\Select;
 use Hector\Query\Statement\Encapsulated;
+use Hector\Query\Statement\Increment;
 use Hector\Query\Statement\Raw;
+use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 
 class InsertTest extends TestCase
@@ -57,6 +59,18 @@ class InsertTest extends TestCase
             ['_h_0' => 'value_bar'],
             array_map(fn(BindParam $bind): mixed => $bind->getValue(), $binds->getArrayCopy())
         );
+    }
+
+    public function testGetStatementRejectsArithmeticValue(): void
+    {
+        $insert = new Insert();
+        $insert->from('`foo`');
+        $insert->assign('`bar`', new Increment(1));
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('can only be used as an UPDATE assignment value');
+
+        $insert->getStatement(new BindParamList());
     }
 
     public function testGetStatementWithIgnore(): void

@@ -16,6 +16,7 @@ namespace Hector\Query\Component;
 
 use Hector\Connection\Bind\BindParamList;
 use Hector\Connection\Driver\DriverInfo;
+use Hector\Query\Statement\AssignmentValueInterface;
 use Hector\Query\StatementInterface;
 
 class UpdateAssignments extends Assignments
@@ -39,9 +40,19 @@ class UpdateAssignments extends Assignments
                         return $this->getSubStatement($assignment['column'], $bindParams, $driverInfo);
                     }
 
+                    $column = $this->getSubStatement($assignment['column'], $bindParams, $driverInfo);
+
+                    if ($assignment['value'] instanceof AssignmentValueInterface) {
+                        return sprintf(
+                            '%s = %s',
+                            $column,
+                            $assignment['value']->getAssignmentStatement($column ?? '', $bindParams, $driverInfo)
+                        );
+                    }
+
                     return sprintf(
                         '%s = %s',
-                        $this->getSubStatement($assignment['column'], $bindParams, $driverInfo),
+                        $column,
                         $this->getSubStatementValue($assignment['value'], $bindParams, $driverInfo)
                     );
                 },
