@@ -22,6 +22,7 @@ use Hector\Orm\Exception\OrmException;
 use Hector\Orm\Orm;
 use Hector\Schema\Generator\Sqlite;
 use Hector\Schema\SchemaContainer;
+use PDOException;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
 use RuntimeException;
@@ -103,6 +104,25 @@ class OrmTransactionTest extends TestCase
 
         $this->assertFalse($this->connection->inTransaction());
         $this->assertSame([], $this->codes());
+    }
+
+    public function testTransactionRetriesWrappedRetryableFailure(): void
+    {
+        $calls = 0;
+
+        $this->orm->transaction(function (Orm $orm) use (&$calls): void {
+            $calls++;
+            $orm->save($this->item('attempt' . $calls), true);
+            if (1 === $calls) {
+                $busy = new PDOException('SQLSTATE[HY000]: General error: 5 database is locked');
+                $busy->errorInfo = ['HY000', 5, 'database is locked'];
+
+                throw new OrmException('Error while persisting entities', previous: $busy);
+            }
+        }, attempts: 2);
+
+        $this->assertSame(2, $calls);
+        $this->assertSame(['attempt2'], $this->codes());
     }
 
     public function testFailedPersistOnlyRollsBackItsOwnWrites(): void
