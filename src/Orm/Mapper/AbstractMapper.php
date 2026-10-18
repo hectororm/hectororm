@@ -24,10 +24,12 @@ use Hector\Orm\Entity\Entity;
 use Hector\Orm\Entity\PivotData;
 use Hector\Orm\Entity\ReflectionEntity;
 use Hector\Orm\Exception\MapperException;
+use Hector\Orm\Exception\OptimisticLockException;
 use Hector\Orm\Exception\OrmException;
 use Hector\Orm\Orm;
 use Hector\Orm\Query\Builder;
 use Hector\Orm\Relationship\Relationships;
+use Hector\Query\Statement\Increment;
 use Hector\Query\Statement\Quoted;
 use Hector\Orm\Storage\EntityStorage;
 use ReflectionAttribute;
@@ -35,6 +37,9 @@ use ReflectionAttribute;
 abstract class AbstractMapper implements Mapper
 {
     use EntityAssert;
+
+    private const INITIAL_VERSION = 1;
+    private const EXPECTED_VERSION = 'expectedVersion';
 
     protected ReflectionEntity $reflection;
     protected ?Relationships $relationships = null;
@@ -112,6 +117,99 @@ abstract class AbstractMapper implements Mapper
         return $collected ?: null;
     }
 
+    ///////////////
+    /// VERSION ///
+    ///////////////
+
+    /**
+     * Validate the version expected by the caller against the loaded version,
+     * and condition the next write of the entity on it.
+     *
+     * @param Entity $entity
+     * @param int $version
+     *
+     * @throws OptimisticLockException if the loaded version differs
+     * @throws OrmException if the entity is not versioned or its loaded version is unavailable
+     */
+    public function expectVersion(Entity $entity, int $version): void
+    {
+        $this->assertEntityType($entity, $this->reflection->class);
+
+        $column = $this->reflection->getVersionColumn() ??
+            throw new MapperException(sprintf('Entity "%s" is not versioned', $this->reflection->class));
+
+        if ($this->getLoadedVersion($entity, $column) !== $version) {
+            throw new OptimisticLockException($entity, $version);
+        }
+
+        $this->reflection->getHectorData($entity)->set(self::EXPECTED_VERSION, $version);
+    }
+
+    /**
+     * Get the version loaded from the database.
+     *
+     * @param Entity $entity
+     * @param string $column
+     *
+     * @return int
+     * @throws MapperException if the version was not loaded (new entity, partial hydration or NULL value)
+     */
+    private function getLoadedVersion(Entity $entity, string $column): int
+    {
+        $original = $this->reflection->getHectorData($entity)->get('original');
+
+        if (null === $original || null === ($original[$column] ?? null)) {
+            throw new MapperException(
+                sprintf(
+                    'Version column "%s" of "%s" entity is not loaded, optimistic locking cannot be enforced',
+                    $column,
+                    $this->reflection->class
+                )
+            );
+        }
+
+        return (int)$original[$column];
+    }
+
+    /**
+     * Get the version the next write is conditioned on: the expected version if any, else the loaded one.
+     *
+     * @param Entity $entity
+     * @param string $column
+     *
+     * @return int
+     * @throws OrmException
+     */
+    private function getWriteVersion(Entity $entity, string $column): int
+    {
+        $loadedVersion = $this->getLoadedVersion($entity, $column);
+
+        return $this->reflection->getHectorData($entity)->get(self::EXPECTED_VERSION) ?? $loadedVersion;
+    }
+
+    /**
+     * Assert that the version column was not assigned outside the ORM.
+     *
+     * @param Entity $entity
+     * @param string $column
+     *
+     * @throws OrmException
+     */
+    private function assertVersionUnchanged(Entity $entity, string $column): void
+    {
+        if ([] === $this->getEntityAlteration($entity, [$column])) {
+            return;
+        }
+
+        throw new MapperException(
+            sprintf(
+                'Version column "%s" of "%s" entity is managed by the ORM and cannot be modified',
+                $column,
+                $this->reflection->class
+            )
+        );
+    }
+
     /////////////
     /// FETCH ///
     /////////////
@@ -182,6 +280,18 @@ abstract class AbstractMapper implements Mapper
      */
     public function insertEntity(Entity $entity): int
     {
+        $versionColumn = $this->reflection->getVersionColumn();
+
+        if (null !== $versionColumn && null !== $this->collectEntity($entity, [$versionColumn])[$versionColumn]) {
+            throw new MapperException(
+                sprintf(
+                    'Version column "%s" of "%s" entity is initialized by the ORM and must not be set',
+                    $versionColumn,
+                    $this->reflection->class
+                )
+            );
+        }
+
         $entity->getRelated()->linkForeign();
 
         // Collect data from entity and filter generated columns and NULL data
@@ -218,6 +328,11 @@ abstract class AbstractMapper implements Mapper
             ARRAY_FILTER_USE_BOTH
         );
 
+        // The entity is only updated once the row is written, by the refresh below
+        if (null !== $versionColumn) {
+            $collected[$versionColumn] = self::INITIAL_VERSION;
+        }
+
         $nbAffected = $entity::query()->insert($this->quotedTuples($collected));
 
         if ($nbAffected === 1) {
@@ -244,6 +359,13 @@ abstract class AbstractMapper implements Mapper
      */
     public function updateEntity(Entity $entity): int
     {
+        $versionColumn = $this->reflection->getVersionColumn();
+
+        if (null !== $versionColumn) {
+            $writeVersion = $this->getWriteVersion($entity, $versionColumn);
+            $this->assertVersionUnchanged($entity, $versionColumn);
+        }
+
         $entity->getRelated()->linkForeign();
 
         $values = $this->collectEntity($entity, $this->getEntityAlteration($entity));
@@ -285,15 +407,36 @@ abstract class AbstractMapper implements Mapper
         }
 
         if (count($values) > 0) {
+            $conditions = $primaryValue;
+
+            // Atomically compare and increment the version
+            if (null !== $versionColumn) {
+                $values[$versionColumn] = new Increment();
+                $conditions[$versionColumn] = $writeVersion;
+            }
+
             $nbAffected =
                 $entity::query()
-                    ->whereEquals($this->quotedTuples($primaryValue))
+                    ->whereEquals($this->quotedTuples($conditions))
                     ->update($this->quotedTuples($values));
+
+            if (0 === $nbAffected && null !== $versionColumn) {
+                throw new OptimisticLockException($entity, $writeVersion);
+            }
         }
 
         $entity->getRelated()->linkNative();
 
         $this->refreshEntity($entity);
+
+        if (null !== $versionColumn) {
+            // Nothing written: the refreshed version must still be the expected one
+            if (0 === count($values) && $writeVersion !== $this->getLoadedVersion($entity, $versionColumn)) {
+                throw new OptimisticLockException($entity, $writeVersion);
+            }
+
+            $this->reflection->getHectorData($entity)->set(self::EXPECTED_VERSION, null);
+        }
 
         return $nbAffected ?? 0;
     }
@@ -310,11 +453,21 @@ abstract class AbstractMapper implements Mapper
             throw new MapperException('Unable to delete entity');
         }
 
+        if (null !== ($versionColumn = $this->reflection->getVersionColumn())) {
+            $writeVersion = $this->getWriteVersion($entity, $versionColumn);
+            $conditions[$versionColumn] = $writeVersion;
+        }
+
         $affected = $entity::query()->whereEquals($this->quotedTuples($conditions))->delete();
+
+        if (0 === $affected && null !== $versionColumn) {
+            throw new OptimisticLockException($entity, $writeVersion);
+        }
 
         if ($affected !== 0) {
             $this->updateOriginalData($entity, [], true);
             $this->reflection->getHectorData($entity)->unsetPivot();
+            $this->reflection->getHectorData($entity)->set(self::EXPECTED_VERSION, null);
         }
 
         return $affected;
