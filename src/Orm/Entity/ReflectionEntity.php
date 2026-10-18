@@ -17,6 +17,7 @@ namespace Hector\Orm\Entity;
 use Hector\Orm\Attributes\Type;
 use Hector\Orm\Attributes\Hidden;
 use Hector\Orm\Attributes\Primary;
+use Hector\Orm\Attributes\Version;
 use Exception;
 use Hector\DataTypes\Type\StringType;
 use Hector\DataTypes\Type\TypeInterface;
@@ -52,6 +53,18 @@ class ReflectionEntity
 {
     use EntityAssert;
 
+    private const INTEGER_TYPES = [
+        'tinyint',
+        'smallint',
+        'mediumint',
+        'int',
+        'integer',
+        'bigint',
+        'int2',
+        'int4',
+        'int8',
+    ];
+
     private static array $reflections = [];
 
     private string $entity;
@@ -62,6 +75,8 @@ class ReflectionEntity
     private ?array $primaryColumns;
     private array $types = [];
     private array $hidden;
+    private ?string $version;
+    private bool $versionValidated = false;
 
     private ?Table $tableInstance = null;
     private Mapper $mapperInstance;
@@ -105,6 +120,7 @@ class ReflectionEntity
         $this->primaryColumns = $this->retrievePrimary();
         $this->types = $this->retrieveTypes();
         $this->hidden = $this->retrieveHidden();
+        $this->version = $this->retrieveVersion();
     }
 
     /**
@@ -123,6 +139,7 @@ class ReflectionEntity
             'primaryColumns' => $this->primaryColumns,
             'types' => $this->types,
             'hidden' => $this->hidden,
+            'version' => $this->version,
         ];
     }
 
@@ -143,6 +160,7 @@ class ReflectionEntity
         $this->primaryColumns = $data['primaryColumns'] ?? null;
         $this->types = $data['types'] ?? [];
         $this->hidden = $data['hidden'] ?? [];
+        $this->version = $data['version'] ?? null;
     }
 
     ////////////////
@@ -205,6 +223,29 @@ class ReflectionEntity
         } while ($reflectionClass = $reflectionClass->getParentClass());
 
         return $hidden;
+    }
+
+    /**
+     * Retrieve version column.
+     *
+     * The hierarchy is walked child first: the nearest declaration wins.
+     *
+     * @return string|null
+     * @throws OrmException
+     */
+    protected function retrieveVersion(): ?string
+    {
+        $reflectionClass = $this->getClass();
+
+        do {
+            $attributes = $reflectionClass->getAttributes(Version::class, ReflectionAttribute::IS_INSTANCEOF);
+
+            if (count($attributes) === 1) {
+                return reset($attributes)->newInstance()->column;
+            }
+        } while ($reflectionClass = $reflectionClass->getParentClass());
+
+        return null;
     }
 
     /**
@@ -484,6 +525,44 @@ class ReflectionEntity
     public function getHidden(): array
     {
         return $this->hidden;
+    }
+
+    /**
+     * Get the version column declared with the Version attribute, validated against the schema.
+     *
+     * @return string|null
+     * @throws OrmException if the version column cannot be managed by the ORM
+     */
+    public function getVersionColumn(): ?string
+    {
+        if (null === $this->version || true === $this->versionValidated) {
+            return $this->version;
+        }
+
+        $table = $this->getTable();
+        $reason = null;
+
+        if (false === $table->hasColumn($this->version)) {
+            $reason = 'does not exist';
+        } elseif (!in_array(strtolower($table->getColumn($this->version)->getType()), self::INTEGER_TYPES, true)) {
+            $reason = 'must be an integer column';
+        } elseif (true === $table->getColumn($this->version)->isGenerated()) {
+            $reason = 'cannot be a generated column';
+        } elseif (null === ($primaryIndex = $this->getPrimaryIndex())) {
+            $reason = 'requires a primary key on the entity';
+        } elseif (in_array($this->version, $primaryIndex->getColumnsName(), true)) {
+            $reason = 'cannot be part of the primary key';
+        }
+
+        if (null !== $reason) {
+            throw new OrmException(
+                sprintf('Version column "%s" of "%s" entity %s', $this->version, $this->entity, $reason)
+            );
+        }
+
+        $this->versionValidated = true;
+
+        return $this->version;
     }
 
     /**

@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Opt-in optimistic locking with an integer version column declared with the `Version` attribute: updates and deletions are conditioned on the loaded version, increment it atomically and throw an `OptimisticLockException` on conflict (#191)
+- `Entity::expectVersion()` to validate a version submitted by a previous request; the next write stays conditioned on it, even after a refresh (#191)
+
 ## [1.6.0] - 2026-10-18
 
 ### Added

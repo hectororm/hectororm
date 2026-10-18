@@ -165,6 +165,14 @@ abstract class MagicEntity extends Entity implements JsonSerializable
                 ));
             }
 
+            if ($name === ReflectionEntity::get(static::class)->getVersionColumn()) {
+                throw new OrmException(sprintf(
+                    'Version column "%s" is managed by the ORM and read-only for "%s" entity',
+                    $name,
+                    static::class,
+                ));
+            }
+
             $this->_hectorAttributes[$name] = $value;
             return;
         }
