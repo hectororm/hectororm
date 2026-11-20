@@ -292,6 +292,60 @@ class Relationships implements Countable
     }
 
     /**
+     * Declare a polymorphic collection of children, identified among other parent types by a discriminator.
+     *
+     * @param array<string, string> $columns Source column to target column
+     * @param array<string, bool|float|int|string> $discriminator Target column to the value identifying this entity
+     *
+     * @throws OrmException
+     */
+    public function morphMany(
+        string $target,
+        string $name,
+        array $columns,
+        array $discriminator,
+        bool $orphanRemoval = false,
+    ): MorphMany {
+        $this->assertEntity($target);
+
+        return $this->list[$name] = new MorphMany(
+            $name,
+            $this->entity->getName(),
+            $target,
+            $columns,
+            $discriminator,
+            $orphanRemoval,
+        );
+    }
+
+    /**
+     * Declare a single polymorphic child, identified among other parent types by a discriminator.
+     *
+     * @param array<string, string> $columns Source column to target column
+     * @param array<string, bool|float|int|string> $discriminator Target column to the value identifying this entity
+     *
+     * @throws OrmException
+     */
+    public function morphOne(
+        string $target,
+        string $name,
+        array $columns,
+        array $discriminator,
+        bool $orphanRemoval = false,
+    ): MorphOne {
+        $this->assertEntity($target);
+
+        return $this->list[$name] = new MorphOne(
+            $name,
+            $this->entity->getName(),
+            $target,
+            $columns,
+            $discriminator,
+            $orphanRemoval,
+        );
+    }
+
+    /**
      * Structurally invert an explicitly named relationship on the target mapper.
      *
      * @throws OrmException

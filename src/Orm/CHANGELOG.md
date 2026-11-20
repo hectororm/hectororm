@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `MorphMany` and `MorphOne` attributes, and `Relationships::morphMany()` / `morphOne()`, to declare the parent side of a polymorphic relationship with an explicit `discriminator` (e.g. `['commentable_type' => 'article']`): it filters reads and joins, and is written on children together with the parent key (#196)
+- `Relationship::getDiscriminator()` to expose the fixed target column values of a polymorphic relationship (#196)
+
 ## [1.6.0] - 2026-10-18
 
 ### Added
