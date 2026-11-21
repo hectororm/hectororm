@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `MorphMany` and `MorphOne` attributes, and `Relationships::morphMany()` / `morphOne()`, to declare the parent side of a polymorphic relationship with an explicit `discriminator` (e.g. `['commentable_type' => 'article']`): it filters reads and joins, and is written on children together with the parent key (#196)
 - `Relationship::getDiscriminator()` to expose the fixed target column values of a polymorphic relationship (#196)
 - `MorphTo` attribute and `Relationships::morphTo()` to declare the child side of a polymorphic relationship: repeated under the same `name`, it resolves to the target named by the row's discriminator; under its own `name`, it resolves to that target or `null`. Assigning an entity writes the key and the discriminator (#197)
+- Conditions through a `MorphTo` relationship with a single target (e.g. `where('article.title', ...)`) join on the discriminator; a relationship with several targets cannot be joined (#197)
+
+### Changed
+
+- `Collection::load()` loads entities of different classes through their own mapper, so nested relations can be loaded on the mixed result of a `MorphTo` relationship; a relation missing on some of the classes is skipped for them (#197)
 
 ## [1.6.0] - 2026-10-18
 

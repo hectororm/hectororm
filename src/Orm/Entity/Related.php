@@ -216,6 +216,29 @@ class Related implements Countable, LifecycleSnapshotInterface
         }
 
         $this->related[$name] = $value;
+
+        if ($relationship instanceof MorphTo) {
+            $this->invalidateSiblings($name, $relationship);
+        }
+    }
+
+    /**
+     * Drop the cached values of polymorphic references about to be superseded by an assignment on shared columns.
+     *
+     * @throws OrmException
+     */
+    private function invalidateSiblings(string $assigned, MorphTo $relationship): void
+    {
+        foreach (array_keys($this->related) as $name) {
+            if ($name === $assigned) {
+                continue;
+            }
+
+            $sibling = $this->getRelationships()->get($name);
+            if ($sibling instanceof MorphTo && true === $sibling->sharesColumnsWith($relationship)) {
+                unset($this->related[$name], $this->assignments[$name]);
+            }
+        }
     }
 
     /**

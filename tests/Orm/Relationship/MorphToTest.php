@@ -15,7 +15,9 @@ declare(strict_types=1);
 namespace Hector\Orm\Tests\Relationship;
 
 use Hector\Connection\Connection;
+use Hector\Connection\Log\Logger;
 use Hector\Orm\Attributes as OrmAttribute;
+use Hector\Orm\Collection\Collection;
 use Hector\Orm\Entity\MagicEntity;
 use Hector\Orm\Entity\ReflectionEntity;
 use Hector\Orm\Exception\RelationException;
@@ -44,13 +46,13 @@ class MorphToTest extends TestCase
         $this->previousReflections = $reflections->getValue();
         $reflections->setValue(null, []);
 
-        $this->connection = new Connection('sqlite::memory:');
+        $this->connection = new Connection('sqlite::memory:', logger: new Logger());
         foreach ([
             'CREATE TABLE morphto_article (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT)',
             'CREATE TABLE morphto_video (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT)',
             'CREATE TABLE morphto_page (id INTEGER PRIMARY KEY AUTOINCREMENT, legacy_id INTEGER UNIQUE, title TEXT)',
             'CREATE TABLE morphto_comment (id INTEGER PRIMARY KEY AUTOINCREMENT, commentable_type TEXT, '
-                . 'commentable_id INTEGER, body TEXT)',
+                . 'commentable_id INTEGER, body TEXT, reviewer_type TEXT, reviewer_id INTEGER)',
         ] as $sql) {
             $this->connection->execute($sql);
         }
@@ -60,10 +62,12 @@ class MorphToTest extends TestCase
         $this->connection->execute("INSERT INTO morphto_video VALUES (1, 'first video'), (2, 'second video')");
         $this->connection->execute("INSERT INTO morphto_page VALUES (10, 1, 'first page')");
         $this->connection->execute(
-            "INSERT INTO morphto_comment VALUES (1, 'article', 1, 'a1-first'), (2, 'article', 1, 'a1-second'), "
+            'INSERT INTO morphto_comment (id, commentable_type, commentable_id, body) VALUES '
+            . "(1, 'article', 1, 'a1-first'), (2, 'article', 1, 'a1-second'), "
             . "(3, 'video', 1, 'v1-first'), (4, 'article', 2, 'a2-first'), (5, NULL, NULL, 'unowned'), "
             . "(6, 'page', 1, 'p1-first'), (7, 'article', 99, 'dangling'), (8, 'unknown', 1, 'unknown type')",
         );
+        $this->connection->execute("UPDATE morphto_comment SET reviewer_type = 'video', reviewer_id = 2 WHERE id = 1");
 
         $this->orm = new Orm($this->connection, (new Sqlite($this->connection))->generateSchemas('main'));
     }
@@ -103,7 +107,11 @@ class MorphToTest extends TestCase
 
     public function testEagerLoadingQueriesEachTargetTypeAndSharesInstances(): void
     {
-        $comments = ToComment::query()->orderBy('id')->with(['commentable', 'article', 'video'])->all();
+        $queries = count($this->connection->getLogger());
+        $comments = ToComment::query()->orderBy('id')->with(['commentable'])->all();
+        $this->assertSame(4, count($this->connection->getLogger()) - $queries, 'comments, then one per type');
+
+        $comments->load(['article', 'video']);
 
         $this->assertTarget(ToArticle::class, 1, $comments[0]->commentable);
         $this->assertSame($comments[0]->commentable, $comments[1]->commentable);
@@ -425,6 +433,94 @@ class MorphToTest extends TestCase
         $this->assertFalse($relationships->exists('inverted'));
     }
 
+    public function testAssignmentInvalidatesSiblingsSharingItsColumns(): void
+    {
+        $comment = ToComment::find(1);
+        $this->assertTarget(ToArticle::class, 1, $comment->article);
+        $this->assertTarget(ToArticle::class, 1, $comment->commentable);
+        $this->assertTarget(ToVideo::class, 2, $comment->reviewer);
+
+        $comment->video = ToVideo::find(2);
+
+        $this->assertFalse($comment->getRelated()->isset('article'));
+        $this->assertFalse($comment->getRelated()->isset('commentable'));
+        $this->assertTrue($comment->getRelated()->isset('reviewer'), 'other columns: not a sibling');
+
+        $comment->save();
+
+        $this->assertSame(['commentable_type' => 'video', 'commentable_id' => 2], $this->link(1));
+        $this->assertNull($comment->article);
+        $this->assertTarget(ToVideo::class, 2, $comment->commentable);
+        $this->assertTarget(ToVideo::class, 2, $comment->video);
+    }
+
+    public function testLastAssignmentAmongSiblingsPrevails(): void
+    {
+        $comment = ToComment::find(5);
+        $comment->article = ToArticle::find(1);
+        $comment->video = ToVideo::find(2);
+        $comment->article = ToArticle::find(2);
+
+        $this->assertNull($comment->getRelated()->getAssignment('video'));
+        $comment->save();
+
+        $this->assertSame(['commentable_type' => 'article', 'commentable_id' => 2], $this->link(5));
+    }
+
+    public function testNestedLoadingOnTargetsOfSeveralClasses(): void
+    {
+        $comments = ToComment::query()->orderBy('id')->with(['commentable' => ['comments']])->all();
+
+        $this->assertSame([1, 2], $this->ids($comments[0]->commentable->getRelated()->get('comments')));
+        $this->assertTrue($comments[0]->commentable->getRelated()->isset('comments'));
+        $this->assertTrue($comments[2]->commentable->getRelated()->isset('comments'));
+        $this->assertSame([3], $this->ids($comments[2]->commentable->comments));
+        $this->assertFalse($comments[5]->commentable->getRelated()->isset('comments'), 'pages have no comments');
+    }
+
+    public function testNestedRelationshipMustExistOnAtLeastOneClass(): void
+    {
+        $this->expectException(RelationException::class);
+        $this->expectExceptionMessage('Relationship "unknown" not found');
+
+        ToComment::query()->with(['commentable' => ['unknown']])->all();
+    }
+
+    public function testSubclassLoadsWithTheClassItExtends(): void
+    {
+        $featured = new ToFeaturedArticle();
+        $featured->title = 'featured';
+        $featured->save();
+        $comment = ToComment::find(5);
+        $comment->commentable = $featured;
+        $comment->save();
+        $this->assertSame(['commentable_type' => 'article', 'commentable_id' => $featured->id], $this->link(5));
+
+        $articles = new Collection([ToArticle::find(1), $featured]);
+        $queries = count($this->connection->getLogger());
+        $articles->load(['comments']);
+
+        $this->assertSame(1, count($this->connection->getLogger()) - $queries);
+        $this->assertSame([1, 2], $this->ids($articles[0]->comments));
+        $this->assertSame([5], $this->ids($articles[1]->comments));
+    }
+
+    public function testConditionThroughOwnNameJoinsOnTheDiscriminator(): void
+    {
+        $this->assertSame([1, 2], $this->ids(ToComment::query()->where('article.title', 'first article')->all()));
+        $this->assertSame([3], $this->ids(ToComment::query()->where('video.title', 'first video')->all()));
+        $this->assertSame([], $this->ids(ToComment::query()->where('video.title', 'first article')->all()));
+        $this->assertSame(
+            [1],
+            $this->ids(
+                ToComment::query()
+                    ->where('article.title', 'first article')
+                    ->where('reviewer.title', 'second video')
+                    ->all(),
+            ),
+        );
+    }
+
     public function testConditionThroughSeveralTargetsIsRejected(): void
     {
         $this->expectException(RelationException::class);
@@ -490,7 +586,13 @@ class ToPage extends MagicEntity
 )]
 #[OrmAttribute\MorphTo(ToArticle::class, 'article', ['commentable_id' => 'id'], ['commentable_type' => 'article'])]
 #[OrmAttribute\MorphTo(ToVideo::class, 'video', ['commentable_id' => 'id'], ['commentable_type' => 'video'])]
+#[OrmAttribute\MorphTo(ToVideo::class, 'reviewer', ['reviewer_id' => 'id'], ['reviewer_type' => 'video'])]
 class ToComment extends MagicEntity
+{
+}
+
+#[OrmAttribute\MorphMany(ToComment::class, 'comments', ['id' => 'commentable_id'], ['commentable_type' => 'article'])]
+class ToFeaturedArticle extends ToArticle
 {
 }
 

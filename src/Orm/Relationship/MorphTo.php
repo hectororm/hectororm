@@ -20,6 +20,9 @@ use Hector\Orm\Entity\ReflectionEntity;
 use Hector\Orm\Exception\OrmException;
 use Hector\Orm\Exception\RelationException;
 use Hector\Orm\Query\Builder;
+use Hector\Query\Component\Conditions;
+use Hector\Query\Statement\Expression;
+use Hector\Query\Statement\Quoted;
 use Hector\Query\Statement\Row;
 
 /**
@@ -246,7 +249,58 @@ class MorphTo extends Relationship
         string $alias,
         ?string $initialAlias = null,
     ): string {
-        throw new RelationException(sprintf('Polymorphic relationship "%s" cannot be joined', $this->name));
+        // The table to join depends on each row: only a single target can be expressed as a join.
+        if (1 !== count($this->types)) {
+            throw new RelationException(sprintf(
+                'Polymorphic relationship "%s" has several target entities and cannot be joined',
+                $this->name,
+            ));
+        }
+
+        if (true === $builder->join->hasAlias($alias)) {
+            return $alias;
+        }
+
+        $type = $this->types[0];
+        $sourceTable = $this->sourceEntity->getTable();
+        $targetTable = $type['entity']->getTable();
+
+        $conditions = array_map(
+            fn(string $src, string $tgt): Expression => new Expression(
+                new Quoted($sourceTable->getColumn($src)->getName(tableAlias: $initialAlias)),
+                ' = ',
+                new Quoted($targetTable->getColumn($tgt)->getName(tableAlias: $alias)),
+            ),
+            $this->sourceColumns,
+            $type['columns'],
+        );
+
+        $morphConditions = new Conditions();
+        foreach ($type['discriminator'] as $column => $value) {
+            $morphConditions->equal(
+                new Quoted($sourceTable->getColumn($column)->getName(tableAlias: $initialAlias)),
+                $value,
+            );
+        }
+
+        $conditions[] = $morphConditions;
+
+        $builder->leftJoin(new Quoted($targetTable->getFullName()), $conditions, $alias);
+
+        return $alias;
+    }
+
+    /**
+     * Whether this relationship writes columns also written by another polymorphic reference.
+     *
+     * @internal
+     */
+    public function sharesColumnsWith(MorphTo $relationship): bool
+    {
+        return [] !== array_intersect(
+            [...$this->sourceColumns, ...$this->getDiscriminatorColumns()],
+            [...$relationship->sourceColumns, ...$relationship->getDiscriminatorColumns()],
+        );
     }
 
     /**
