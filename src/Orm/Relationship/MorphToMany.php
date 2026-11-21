@@ -14,14 +14,16 @@ declare(strict_types=1);
 
 namespace Hector\Orm\Relationship;
 
+use Hector\Orm\Assert\MorphAssert;
 use Hector\Orm\Exception\OrmException;
-use Hector\Orm\Exception\RelationException;
 
 /**
  * Many-to-many relationship through a pivot table shared with other entities: a discriminator identifies its rows.
  */
 class MorphToMany extends ManyToMany
 {
+    use MorphAssert;
+
     /**
      * Nothing can be inferred for a polymorphic pivot: its table and columns are always explicit.
      *
@@ -40,32 +42,10 @@ class MorphToMany extends ManyToMany
         array $columnsTo,
         array $discriminator,
     ) {
-        if ([] === $columnsFrom || [] === $columnsTo) {
-            throw new RelationException(sprintf('Polymorphic relationship "%s" requires explicit columns', $name));
-        }
-
-        if ([] === $discriminator) {
-            throw new RelationException(sprintf('Polymorphic relationship "%s" requires a discriminator', $name));
-        }
+        $this->assertMorphColumns($name, $columnsFrom, $columnsTo);
+        $this->assertDiscriminator($name, $discriminator, [...array_values($columnsFrom), ...array_keys($columnsTo)]);
 
         parent::__construct($name, $sourceEntity, $targetEntity, $pivotTable, $columnsFrom, $columnsTo);
-
-        foreach ($discriminator as $column => $value) {
-            if (false === is_string($column) || false === is_scalar($value)) {
-                throw new RelationException(sprintf(
-                    'Discriminator of relationship "%s" must map column names to scalar values',
-                    $name,
-                ));
-            }
-
-            if (true === in_array($column, [...$this->pivotTargetColumns, ...$this->pivotSourceColumns], true)) {
-                throw new RelationException(sprintf(
-                    'Discriminator column "%s" of relationship "%s" is already a key column',
-                    $column,
-                    $name,
-                ));
-            }
-        }
 
         $this->pivotDiscriminator = $discriminator;
     }
