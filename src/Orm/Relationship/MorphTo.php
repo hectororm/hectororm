@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace Hector\Orm\Relationship;
 
+use Hector\Orm\Assert\MorphAssert;
 use Hector\Orm\Collection\Collection;
 use Hector\Orm\Entity\Entity;
 use Hector\Orm\Entity\ReflectionEntity;
@@ -30,6 +31,8 @@ use Hector\Query\Statement\Row;
  */
 class MorphTo extends Relationship
 {
+    use MorphAssert;
+
     /**
      * @var list<array{
      *     entity: ReflectionEntity,
@@ -72,36 +75,8 @@ class MorphTo extends Relationship
         $this->assertEntity($targetEntity);
         $target = ReflectionEntity::get($targetEntity);
 
-        if ([] === $columns) {
-            throw new RelationException(sprintf(
-                'Polymorphic relationship "%s" requires explicit columns',
-                $this->name,
-            ));
-        }
-
-        if ([] === $discriminator) {
-            throw new RelationException(sprintf(
-                'Polymorphic relationship "%s" requires a discriminator',
-                $this->name,
-            ));
-        }
-
-        foreach ($discriminator as $column => $value) {
-            if (false === is_string($column) || false === is_scalar($value)) {
-                throw new RelationException(sprintf(
-                    'Discriminator of relationship "%s" must map column names to scalar values',
-                    $this->name,
-                ));
-            }
-
-            if (true === array_key_exists($column, $columns)) {
-                throw new RelationException(sprintf(
-                    'Discriminator column "%s" of relationship "%s" is already a key column',
-                    $column,
-                    $this->name,
-                ));
-            }
-        }
+        $this->assertMorphColumns($this->name, $columns);
+        $this->assertDiscriminator($this->name, $discriminator, array_keys($columns));
 
         if ([] !== $this->types) {
             $columns = self::alignColumns($this->sourceColumns, $columns)
