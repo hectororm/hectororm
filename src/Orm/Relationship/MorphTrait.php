@@ -14,11 +14,14 @@ declare(strict_types=1);
 
 namespace Hector\Orm\Relationship;
 
+use Hector\Orm\Assert\MorphAssert;
 use Hector\Orm\Exception\RelationException;
 use Hector\Orm\Query\Builder;
 
 trait MorphTrait
 {
+    use MorphAssert;
+
     /** @var array<string, bool|float|int|string> */
     private array $discriminator = [];
 
@@ -28,52 +31,6 @@ trait MorphTrait
     public function getDiscriminator(): array
     {
         return $this->discriminator;
-    }
-
-    /**
-     * A polymorphic relationship shares its key columns with other types: an inferred mapping would be wrong.
-     *
-     * @throws RelationException
-     */
-    private static function assertMorphColumns(string $name, array $columns): void
-    {
-        if ([] !== $columns) {
-            return;
-        }
-
-        throw new RelationException(sprintf('Polymorphic relationship "%s" requires explicit columns', $name));
-    }
-
-    /**
-     * @throws RelationException
-     */
-    private function setDiscriminator(array $discriminator): void
-    {
-        if ([] === $discriminator) {
-            throw new RelationException(sprintf(
-                'Polymorphic relationship "%s" requires a discriminator',
-                $this->name,
-            ));
-        }
-
-        foreach ($discriminator as $column => $value) {
-            if (false === is_string($column) || false === is_scalar($value)) {
-                throw new RelationException(sprintf(
-                    'Discriminator of relationship "%s" must map column names to scalar values',
-                    $this->name,
-                ));
-            }
-
-            if (true === in_array($column, $this->getTargetColumns(), true)) {
-                throw new RelationException(sprintf(
-                    'Discriminator column "%s" of relationship "%s" is already a key column',
-                    $column,
-                    $this->name,
-                ));
-            }
-        }
-
-        $this->discriminator = $discriminator;
     }
 
     /**

@@ -34,10 +34,11 @@ class MorphMany extends OneToMany
         array $discriminator,
         bool $orphanRemoval = false,
     ) {
-        self::assertMorphColumns($name, $columns);
+        $this->assertMorphColumns($name, $columns);
+        $this->assertDiscriminator($name, $discriminator, array_values($columns));
 
         parent::__construct($name, $sourceEntity, $targetEntity, $columns, $orphanRemoval);
 
-        $this->setDiscriminator($discriminator);
+        $this->discriminator = $discriminator;
     }
 }
