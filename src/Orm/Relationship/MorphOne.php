@@ -36,10 +36,11 @@ class MorphOne extends OneToOne
         array $discriminator,
         bool $orphanRemoval = false,
     ) {
-        self::assertMorphColumns($name, $columns);
+        $this->assertMorphColumns($name, $columns);
+        $this->assertDiscriminator($name, $discriminator, array_values($columns));
 
         parent::__construct($name, $sourceEntity, $targetEntity, $columns, true, $orphanRemoval);
 
-        $this->setDiscriminator($discriminator);
+        $this->discriminator = $discriminator;
     }
 }
