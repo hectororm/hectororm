@@ -413,4 +413,35 @@ class Relationships implements Countable
                 $columnsTo,
             );
     }
+
+    /**
+     * Declare a many-to-many relationship through a pivot table shared with other entities, whose rows are
+     * identified by a discriminator.
+     *
+     * @param array<string, string> $columnsFrom Source column to pivot column
+     * @param array<string, string> $columnsTo Pivot column to target column
+     * @param array<string, bool|float|int|string> $discriminator Pivot column to the value identifying the rows
+     *
+     * @throws OrmException
+     */
+    public function morphToMany(
+        string $target,
+        string $name,
+        string $pivotTable,
+        array $columnsFrom,
+        array $columnsTo,
+        array $discriminator,
+    ): MorphToMany {
+        $this->assertEntity($target);
+
+        return $this->list[$name] = new MorphToMany(
+            $name,
+            $this->entity->getName(),
+            $target,
+            $pivotTable,
+            $columnsFrom,
+            $columnsTo,
+            $discriminator,
+        );
+    }
 }
