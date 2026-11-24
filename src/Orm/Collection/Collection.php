@@ -110,14 +110,20 @@ class Collection extends \Hector\Collection\Collection implements LifecycleSnaps
      */
     public function load(array $relations): static
     {
+        // A polymorphic relationship returns entities of several classes: each class loads through its own
+        // mapper. A subclass stays with the class it extends, as when the first entity decided for all.
+        $groups = [];
         /** @var Entity $entity */
-        $entity = $this->filterInstanceOf(Entity::class)->first();
+        foreach ($this->filterInstanceOf(Entity::class) as $entity) {
+            foreach (array_keys($groups) as $class) {
+                if ($entity instanceof $class) {
+                    $groups[$class][] = $entity;
+                    continue 2;
+                }
+            }
 
-        if (null === $entity) {
-            return $this;
+            $groups[$entity::class] = [$entity];
         }
-
-        $entityReflection = ReflectionEntity::get($entity);
 
         foreach ($relations as $key => $value) {
             $relationName = $value;
@@ -125,10 +131,25 @@ class Collection extends \Hector\Collection\Collection implements LifecycleSnaps
                 $relationName = $key;
             }
 
-            $related = $entityReflection->getMapper()->getRelationships()->get($relationName)->get(...$this);
+            $missing = [];
+            foreach ($groups as $class => $entities) {
+                $relationships = ReflectionEntity::get($class)->getMapper()->getRelationships();
 
-            if (is_array($value)) {
-                $related->load($value);
+                // Classes sharing a collection do not have to share every relationship.
+                if (count($groups) > 1 && false === $relationships->exists($relationName)) {
+                    $missing[] = $class;
+                    continue;
+                }
+
+                $related = $relationships->get($relationName)->get(...$entities);
+
+                if (is_array($value)) {
+                    $related->load($value);
+                }
+            }
+
+            if ([] !== $missing && count($missing) === count($groups)) {
+                throw RelationException::notFound($relationName, implode('|', $missing));
             }
         }
 

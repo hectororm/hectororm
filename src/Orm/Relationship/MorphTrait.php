@@ -47,7 +47,7 @@ trait MorphTrait
     public function reverse(string $name): Relationship
     {
         throw new RelationException(sprintf(
-            'Polymorphic relationship "%s.%s" cannot be inverted as "%s.%s"',
+            'Polymorphic relationship "%s.%s" cannot be inverted as "%s.%s"; declare MorphTo instead',
             $this->getSourceEntity(),
             $this->name,
             $this->getTargetEntity(),

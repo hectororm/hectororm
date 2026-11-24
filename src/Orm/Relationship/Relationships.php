@@ -16,6 +16,7 @@ namespace Hector\Orm\Relationship;
 
 use Countable;
 use Hector\Orm\Assert\EntityAssert;
+use Hector\Orm\Attributes\MorphTo as MorphToAttribute;
 use Hector\Orm\Attributes\RelationshipAttribute;
 use Hector\Orm\Entity\Entity;
 use Hector\Orm\Entity\ReflectionEntity;
@@ -65,6 +66,23 @@ class Relationships implements Countable
      */
     public function addDeclaration(RelationshipAttribute $attribute): void
     {
+        $declared = $this->declarations[$attribute->name] ?? null;
+
+        if ($attribute instanceof MorphToAttribute && $declared instanceof MorphToAttribute) {
+            $declared->addSibling($attribute);
+
+            return;
+        }
+
+        // Only polymorphic targets may share a name: another relationship would silently replace them.
+        if (null !== $declared && ($attribute instanceof MorphToAttribute || $declared instanceof MorphToAttribute)) {
+            throw new RelationException(sprintf(
+                'Relationship "%s" of entity "%s" cannot be both polymorphic and of another kind',
+                $attribute->name,
+                $this->entity->getName(),
+            ));
+        }
+
         $this->declarations[$attribute->name] = $attribute;
         unset($this->list[$attribute->name]);
     }
@@ -127,14 +145,13 @@ class Relationships implements Countable
         if (null !== $name) {
             $this->assertExists($name);
             $candidate = $this->list[$name] ?? $this->declarations[$name];
-            $target = $candidate instanceof Relationship ? $candidate->getTargetEntity() : $candidate->target;
-            if ($target !== $foreignEntity) {
+            if (false === in_array($foreignEntity, self::getTargets($candidate), true)) {
                 throw RelationException::notFoundBetween($this->entity->getName(), $foreignEntity);
             }
 
             $relation = $this->get($name);
 
-            if ($relation->getTargetEntity() === $foreignEntity) {
+            if (true === in_array($foreignEntity, self::getTargets($relation), true)) {
                 return $relation;
             }
 
@@ -144,10 +161,8 @@ class Relationships implements Countable
         $relationshipFounds = [];
 
         foreach ($this->list + $this->declarations as $relationshipName => $candidate) {
-            $target = $candidate instanceof Relationship ? $candidate->getTargetEntity() : $candidate->target;
-
             // Same relationship entity
-            if ($target !== $foreignEntity) {
+            if (false === in_array($foreignEntity, self::getTargets($candidate), true)) {
                 continue;
             }
 
@@ -174,6 +189,24 @@ class Relationships implements Countable
         }
 
         throw RelationException::notFoundBetween($this->entity->getName(), $foreignEntity);
+    }
+
+    /**
+     * Get the target entities of a resolved or declared relationship: a polymorphic one may have several.
+     *
+     * @return list<string>
+     */
+    private static function getTargets(Relationship|RelationshipAttribute $candidate): array
+    {
+        if ($candidate instanceof MorphTo) {
+            return $candidate->getTargetEntities();
+        }
+
+        if ($candidate instanceof MorphToAttribute) {
+            return $candidate->getTargets();
+        }
+
+        return [$candidate instanceof Relationship ? $candidate->getTargetEntity() : $candidate->target];
     }
 
     /**
@@ -343,6 +376,26 @@ class Relationships implements Countable
             $discriminator,
             $orphanRemoval,
         );
+    }
+
+    /**
+     * Declare a target of a polymorphic reference; call again with the same name to add another target.
+     *
+     * @param array<string, string> $columns Source column to target column
+     * @param array<string, int|string> $discriminator Source column to the value identifying the target
+     *
+     * @throws OrmException
+     */
+    public function morphTo(string $target, string $name, array $columns, array $discriminator): MorphTo
+    {
+        $this->assertEntity($target);
+
+        $relationship = $this->list[$name] ?? null;
+        if ($relationship instanceof MorphTo) {
+            return $relationship->addType($target, $columns, $discriminator);
+        }
+
+        return $this->list[$name] = new MorphTo($name, $this->entity->getName(), $target, $columns, $discriminator);
     }
 
     /**

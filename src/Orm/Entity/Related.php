@@ -19,6 +19,7 @@ use Hector\Orm\Collection\Collection;
 use Hector\Orm\Exception\OrmException;
 use Hector\Orm\Orm;
 use Hector\Orm\Query\Builder;
+use Hector\Orm\Relationship\MorphTo;
 use Hector\Orm\Relationship\Relationship;
 use Hector\Orm\Relationship\Relationships;
 use Hector\Orm\Storage\LifecycleSnapshotInterface;
@@ -193,7 +194,9 @@ class Related implements Countable, LifecycleSnapshotInterface
                 sprintf(
                     'Invalid value for related property "%s", excepted "%s" entity',
                     $name,
-                    $this->getRelationships()->get($name)->getTargetEntity()
+                    $relationship instanceof MorphTo
+                        ? implode('|', $relationship->getTargetEntities())
+                        : $relationship->getTargetEntity()
                 )
             );
         }
@@ -213,6 +216,29 @@ class Related implements Countable, LifecycleSnapshotInterface
         }
 
         $this->related[$name] = $value;
+
+        if ($relationship instanceof MorphTo) {
+            $this->invalidateSiblings($name, $relationship);
+        }
+    }
+
+    /**
+     * Drop the cached values of polymorphic references about to be superseded by an assignment on shared columns.
+     *
+     * @throws OrmException
+     */
+    private function invalidateSiblings(string $assigned, MorphTo $relationship): void
+    {
+        foreach (array_keys($this->related) as $name) {
+            if ($name === $assigned) {
+                continue;
+            }
+
+            $sibling = $this->getRelationships()->get($name);
+            if ($sibling instanceof MorphTo && true === $sibling->sharesColumnsWith($relationship)) {
+                unset($this->related[$name], $this->assignments[$name]);
+            }
+        }
     }
 
     /**
@@ -265,12 +291,15 @@ class Related implements Countable, LifecycleSnapshotInterface
     {
         foreach (array_keys($this->related) as $name) {
             $relation = $this->getRelationships()->get($name);
-            if (
-                $relation->getTargetEntity() === $parentRelationship->getSourceEntity()
-                && $relation->getSourceColumns() === $parentRelationship->getTargetColumns()
-                && $relation->getTargetColumns() === $parentRelationship->getSourceColumns()
-            ) {
-                unset($this->related[$name]);
+            if (false === $relation->referencesParentOf($parentRelationship)) {
+                continue;
+            }
+
+            unset($this->related[$name]);
+
+            // A pending polymorphic assignment would otherwise shadow the next load of the relation.
+            if ($relation instanceof MorphTo) {
+                unset($this->assignments[$name]);
             }
         }
     }

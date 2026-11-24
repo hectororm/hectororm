@@ -276,6 +276,19 @@ abstract class Relationship
     }
 
     /**
+     * Whether this relationship references, through its own columns, the parent of the given relationship.
+     * Its cached value is then stale once that parent links or detaches the child.
+     *
+     * @internal
+     */
+    public function referencesParentOf(Relationship $parentRelationship): bool
+    {
+        return $this->getTargetEntity() === $parentRelationship->getSourceEntity()
+            && $this->getSourceColumns() === $parentRelationship->getTargetColumns()
+            && $this->getTargetColumns() === $parentRelationship->getSourceColumns();
+    }
+
+    /**
      * Lifecycle options are deliberately unsupported unless a relation opts in.
      */
     public function setOrphanRemoval(?bool $orphanRemoval): void
