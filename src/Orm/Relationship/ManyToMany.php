@@ -23,6 +23,7 @@ use Hector\Orm\Exception\OrmException;
 use Hector\Orm\Exception\RelationException;
 use Hector\Orm\Orm;
 use Hector\Orm\Query\Builder;
+use Hector\Query\Component\Conditions;
 use Hector\Query\QueryBuilder;
 use Hector\Query\Statement\Expression;
 use Hector\Query\Statement\Quoted;
@@ -37,6 +38,8 @@ class ManyToMany extends Relationship
     protected string $pivotTable;
     protected array $pivotTargetColumns;
     protected array $pivotSourceColumns;
+    /** @var array<string, int|string> */
+    protected array $pivotDiscriminator = [];
 
     /**
      * ManyToMany constructor.
@@ -138,6 +141,38 @@ class ManyToMany extends Relationship
     }
 
     /**
+     * Get the fixed pivot column values identifying the rows of this relationship in a shared pivot table.
+     *
+     * Empty unless the relationship is polymorphic.
+     *
+     * @return array<string, int|string>
+     */
+    public function getPivotDiscriminator(): array
+    {
+        return $this->pivotDiscriminator;
+    }
+
+    /**
+     * Get the join conditions restricting a pivot alias to the rows of this relationship.
+     *
+     * @return list<Conditions>
+     * @throws SchemaException
+     */
+    private function getPivotDiscriminatorConditions(Table $pivotTable, string $aliasPivot): array
+    {
+        if ([] === $this->pivotDiscriminator) {
+            return [];
+        }
+
+        $conditions = new Conditions();
+        foreach ($this->pivotDiscriminator as $column => $value) {
+            $conditions->equal(new Quoted($pivotTable->getColumn($column)->getName(tableAlias: $aliasPivot)), $value);
+        }
+
+        return [$conditions];
+    }
+
+    /**
      * @inheritDoc
      * @throws OrmException
      */
@@ -152,15 +187,18 @@ class ManyToMany extends Relationship
             $targetTable = $this->targetEntity->getTable();
             $builder->innerJoin(
                 new Quoted($pivotTable->getFullName()),
-                array_map(
-                    fn(string $src, string $tgt): Expression => new Expression(
-                        new Quoted($pivotTable->getColumn($src)->getName(tableAlias: $aliasPivot)),
-                        ' = ',
-                        new Quoted($targetTable->getColumn($tgt)->getName(tableAlias: Builder::FROM_ALIAS)),
+                [
+                    ...array_map(
+                        fn(string $src, string $tgt): Expression => new Expression(
+                            new Quoted($pivotTable->getColumn($src)->getName(tableAlias: $aliasPivot)),
+                            ' = ',
+                            new Quoted($targetTable->getColumn($tgt)->getName(tableAlias: Builder::FROM_ALIAS)),
+                        ),
+                        $this->pivotSourceColumns,
+                        $this->targetColumns,
                     ),
-                    $this->pivotSourceColumns,
-                    $this->targetColumns,
-                ),
+                    ...$this->getPivotDiscriminatorConditions($pivotTable, $aliasPivot),
+                ],
                 $aliasPivot
             );
 
@@ -207,15 +245,18 @@ class ManyToMany extends Relationship
             try {
                 $builder->leftJoin(
                     new Quoted($pivotTable->getFullName()),
-                    array_map(
-                        fn(string $src, string $tgt): Expression => new Expression(
-                            new Quoted($sourceTable->getColumn($src)->getName(tableAlias: $initialAlias)),
-                            ' = ',
-                            new Quoted($pivotTable->getColumn($tgt)->getName(tableAlias: $aliasPivot)),
+                    [
+                        ...array_map(
+                            fn(string $src, string $tgt): Expression => new Expression(
+                                new Quoted($sourceTable->getColumn($src)->getName(tableAlias: $initialAlias)),
+                                ' = ',
+                                new Quoted($pivotTable->getColumn($tgt)->getName(tableAlias: $aliasPivot)),
+                            ),
+                            $sourceColumns,
+                            $pivotTargetColumns,
                         ),
-                        $sourceColumns,
-                        $pivotTargetColumns,
-                    ),
+                        ...$this->getPivotDiscriminatorConditions($pivotTable, $aliasPivot),
+                    ],
                     $aliasPivot
                 )->leftJoin(
                     $tableName,
@@ -364,7 +405,9 @@ class ManyToMany extends Relationship
             // Pivot keys (foreign keys) and additional data are stored separately:
             // getPivotData() resolves the FK columns, getPivot()->getData() the extras.
             $pivotKeys = $this->getPivotData($entity, $foreignEntity);
-            $pivotExtra = $foreignEntity->getPivot()?->getData() ?? [];
+            // The discriminator identifies the rows of this relationship: additional data never overrides it,
+            // whether set by mistake or inherited from a link loaded through a relationship of another type.
+            $pivotExtra = array_diff_key($foreignEntity->getPivot()?->getData() ?? [], $this->pivotDiscriminator);
 
             $queryBuilder = $this->newQueryBuilder();
             $queryBuilder->whereEquals($pivotKeys);
@@ -433,6 +476,7 @@ class ManyToMany extends Relationship
         return array_merge(
             array_combine($this->getPivotTargetColumns(), $sourceValues),
             array_combine($this->getPivotSourceColumns(), $targetValues),
+            $this->pivotDiscriminator,
         );
     }
 
