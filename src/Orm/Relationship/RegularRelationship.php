@@ -18,6 +18,7 @@ use Hector\Orm\Collection\Collection;
 use Hector\Orm\Entity\Entity;
 use Hector\Orm\Exception\OrmException;
 use Hector\Orm\Query\Builder;
+use Hector\Query\Component\Conditions;
 use Hector\Query\Statement\Expression;
 use Hector\Query\Statement\Quoted;
 use Hector\Query\Statement\Row;
@@ -105,19 +106,29 @@ abstract class RegularRelationship extends Relationship
 
         if (false === $builder->join->hasAlias($alias)) {
 //            $alias = $this->getName() . ++Orm::$alias;
-            $builder->leftJoin(
-                $tableName,
-                array_map(
-                    fn(string $src, string $tgt): Expression => new Expression(
-                        new Quoted($sourceTable->getColumn($src)->getName(tableAlias: $initialAlias)),
-                        ' = ',
-                        new Quoted($targetTable->getColumn($tgt)->getName(tableAlias: $alias)),
-                    ),
-                    $sourceColumns,
-                    $targetColumns,
+            $conditions = array_map(
+                fn(string $src, string $tgt): Expression => new Expression(
+                    new Quoted($sourceTable->getColumn($src)->getName(tableAlias: $initialAlias)),
+                    ' = ',
+                    new Quoted($targetTable->getColumn($tgt)->getName(tableAlias: $alias)),
                 ),
-                $alias
+                $sourceColumns,
+                $targetColumns,
             );
+
+            if ([] !== ($discriminator = $this->getDiscriminator())) {
+                $morphConditions = new Conditions();
+                foreach ($discriminator as $column => $value) {
+                    $morphConditions->equal(
+                        new Quoted($targetTable->getColumn($column)->getName(tableAlias: $alias)),
+                        $value,
+                    );
+                }
+
+                $conditions[] = $morphConditions;
+            }
+
+            $builder->leftJoin($tableName, $conditions, $alias);
         }
 
         return $alias;

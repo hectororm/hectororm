@@ -118,6 +118,18 @@ abstract class Relationship
     }
 
     /**
+     * Get the fixed target column values identifying this relationship among others sharing the same keys.
+     *
+     * Empty unless the relationship is polymorphic.
+     *
+     * @return array<string, int|string>
+     */
+    public function getDiscriminator(): array
+    {
+        return [];
+    }
+
+    /**
      * Get builder for given entities.
      *
      * @param Entity ...$entities

@@ -175,8 +175,9 @@ final class Lifecycle
         $parentMapper = $this->orm->getMapper($parent);
         $childMapper = $this->orm->getMapper($child);
         $parentValues = $parentMapper->collectEntity($parent, $relationship->getSourceColumns());
-        $columns = $relationship->getTargetColumns();
-        $values = array_combine($columns, array_values($parentValues));
+        $values = array_combine($relationship->getTargetColumns(), array_values($parentValues));
+        $values += $relationship->getDiscriminator();
+        $columns = array_keys($values);
         $current = $childMapper->collectEntity($child, $columns);
 
         if (true === $this->keysMatch($values, $current) && false === $child->isAltered(...$columns)) {
@@ -262,6 +263,16 @@ final class Lifecycle
             $expected = $parentValues[$index];
             if (
                 null === $expected || false === array_key_exists($column, $original)
+                || (string)$original[$column] !== (string)$expected
+            ) {
+                throw new RelationException('Cannot remove a child without its original parent relationship');
+            }
+        }
+
+        // A child of another type sharing the same key value does not belong to this parent.
+        foreach ($relationship->getDiscriminator() as $column => $expected) {
+            if (
+                false === array_key_exists($column, $original) || null === $original[$column]
                 || (string)$original[$column] !== (string)$expected
             ) {
                 throw new RelationException('Cannot remove a child without its original parent relationship');
