@@ -13,6 +13,7 @@
 namespace Hector\Connection\Tests\Bind;
 
 use BackedEnum;
+use DateTimeImmutable;
 use Hector\Connection\Bind\BindParam;
 use Hector\Connection\Tests\FakeIntBackedEnum;
 use Hector\Connection\Tests\FakeStringBackedEnum;
@@ -69,6 +70,15 @@ class BindParamTest extends TestCase
 
         $this->assertSame(FakeIntBackedEnum::FOO->value, $param->getValue());
         $this->assertSame(PDO::PARAM_INT, $param->getDataType());
+    }
+
+    public function testGetVariable_DateTime(): void
+    {
+        $var = new DateTimeImmutable('2026-01-02 03:04:05');
+        $param = new BindParam('name', $var);
+
+        $this->assertSame($var, $param->getValue());
+        $this->assertSame(PDO::PARAM_STR, $param->getDataType());
     }
 
     public function testGetDataType(): void

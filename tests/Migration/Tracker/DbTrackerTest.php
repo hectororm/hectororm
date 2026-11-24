@@ -14,6 +14,8 @@ declare(strict_types=1);
 
 namespace Hector\Migration\Tests\Tracker;
 
+use DateTimeImmutable;
+use DateTimeZone;
 use Hector\Connection\Connection;
 use Hector\Migration\Exception\MigrationException;
 use Hector\Migration\Tracker\DbTracker;
@@ -155,6 +157,24 @@ class DbTrackerTest extends TestCase
         $this->assertArrayHasKey('id', $row);
         $this->assertSame(1, (int)$row['id']);
         $this->assertSame('m1', $row['migration_id']);
+    }
+
+    public function testAppliedAtStaysInUtcWhateverTheConnectionTimezone(): void
+    {
+        // applied_at is bound as a UTC string: the storage timezone of the
+        // connection (UTC+14 here) must not shift it.
+        $connection = new Connection('sqlite::memory:', timezone: new DateTimeZone('Pacific/Kiritimati'));
+        $tracker = new DbTracker($connection);
+
+        $before = time();
+        $tracker->markApplied('m1');
+        $after = time();
+
+        $appliedAt = $connection->fetchOne('SELECT applied_at FROM hector_migrations')['applied_at'];
+        $timestamp = (new DateTimeImmutable($appliedAt, new DateTimeZone('UTC')))->getTimestamp();
+
+        $this->assertGreaterThanOrEqual($before, $timestamp);
+        $this->assertLessThanOrEqual($after, $timestamp);
     }
 
     public function testThrowsWhenTrackingTableSchemaIsOutdated(): void

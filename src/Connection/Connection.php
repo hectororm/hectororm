@@ -14,10 +14,14 @@ declare(strict_types=1);
 
 namespace Hector\Connection;
 
+use DateTimeImmutable;
+use DateTimeInterface;
+use DateTimeZone;
 use Exception;
 use Generator;
 use InvalidArgumentException;
 use LogicException;
+use Hector\Connection\Bind\BindParam;
 use Hector\Connection\Bind\BindParamList;
 use Hector\Connection\Driver\DriverInfo;
 use Hector\Connection\Exception\ConnectionException;
@@ -32,6 +36,7 @@ use Throwable;
 class Connection
 {
     public const DEFAULT_NAME = 'default';
+    public const DEFAULT_DATETIME_FORMAT = 'Y-m-d H:i:s';
 
     private ?PDO $pdo = null;
     private ?PDO $readPdo = null;
@@ -54,6 +59,10 @@ class Connection
      *                       shared by both the read/write and read-only connections.
      *                       Beware that options like PDO::ATTR_AUTOCOMMIT or PDO::ATTR_ERRMODE
      *                       may interfere with the internal transaction handling.
+     * @param string $dateTimeFormat Format of the date/time values bound to statements.
+     * @param DateTimeZone|null $timezone Storage timezone of the database: date/time values
+     *                                    bound to statements are converted to it. Null means
+     *                                    the PHP default timezone.
      */
     public function __construct(
         protected string $dsn,
@@ -64,7 +73,9 @@ class Connection
         protected ?string $readDsn = null,
         protected string $name = self::DEFAULT_NAME,
         protected ?Logger $logger = null,
-        protected array $options = []
+        protected array $options = [],
+        protected string $dateTimeFormat = self::DEFAULT_DATETIME_FORMAT,
+        protected ?DateTimeZone $timezone = null,
     ) {
     }
 
@@ -94,6 +105,8 @@ class Connection
      * @param PDO|null $readPdo
      * @param string $name
      * @param Logger|null $logger
+     * @param string $dateTimeFormat
+     * @param DateTimeZone|null $timezone
      *
      * @return self
      */
@@ -102,8 +115,16 @@ class Connection
         ?PDO $readPdo = null,
         string $name = self::DEFAULT_NAME,
         ?Logger $logger = null,
+        string $dateTimeFormat = self::DEFAULT_DATETIME_FORMAT,
+        ?DateTimeZone $timezone = null,
     ): self {
-        $connection = new self('PDO', name: $name, logger: $logger);
+        $connection = new self(
+            'PDO',
+            name: $name,
+            logger: $logger,
+            dateTimeFormat: $dateTimeFormat,
+            timezone: $timezone,
+        );
         $connection->pdo = $pdo;
         $connection->readPdo = $readPdo;
 
@@ -128,6 +149,8 @@ class Connection
             'name' => $this->name,
             'logger' => $this->logger,
             'options' => $this->options,
+            'dateTimeFormat' => $this->dateTimeFormat,
+            'timezone' => $this->timezone?->getName(),
         ];
     }
 
@@ -145,6 +168,8 @@ class Connection
         $this->name = $data['name'];
         $this->logger = $data['logger'];
         $this->options = $data['options'] ?? [];
+        $this->dateTimeFormat = $data['dateTimeFormat'] ?? self::DEFAULT_DATETIME_FORMAT;
+        $this->timezone = true === isset($data['timezone']) ? new DateTimeZone($data['timezone']) : null;
     }
 
     /**
@@ -165,6 +190,26 @@ class Connection
     public function getLogger(): ?Logger
     {
         return $this->logger;
+    }
+
+    /**
+     * Get the format of the date/time values bound to statements.
+     *
+     * @return string
+     */
+    public function getDateTimeFormat(): string
+    {
+        return $this->dateTimeFormat;
+    }
+
+    /**
+     * Get the storage timezone of the database.
+     *
+     * @return DateTimeZone|null Null means the PHP default timezone
+     */
+    public function getTimezone(): ?DateTimeZone
+    {
+        return $this->timezone;
     }
 
     /**
@@ -580,6 +625,52 @@ class Connection
     }
 
     /**
+     * Convert date/time bind values to the storage format and timezone.
+     *
+     * The given list is never modified, as query builders reuse it: a new list
+     * is returned when a value has to be converted.
+     *
+     * @param BindParamList $bindParams
+     *
+     * @return BindParamList
+     */
+    private function convertBindParams(BindParamList $bindParams): BindParamList
+    {
+        $timezone = null;
+        $converted = [];
+
+        foreach ($bindParams as $bindParam) {
+            $value = $bindParam->getValue();
+            if (!$value instanceof DateTimeInterface) {
+                continue;
+            }
+
+            $timezone ??= $this->timezone ?? new DateTimeZone(date_default_timezone_get());
+            $converted[] = new BindParam(
+                $bindParam->getName(),
+                DateTimeImmutable::createFromInterface($value)
+                    ->setTimezone($timezone)
+                    ->format($this->dateTimeFormat),
+                $bindParam->getDataType(),
+            );
+        }
+
+        if ([] === $converted) {
+            return $bindParams;
+        }
+
+        $list = new BindParamList();
+        foreach ($bindParams as $bindParam) {
+            $list->add($bindParam);
+        }
+        foreach ($converted as $bindParam) {
+            $list->add($bindParam);
+        }
+
+        return $list;
+    }
+
+    /**
      * PDO execute.
      *
      * @param PDO $pdo
@@ -591,6 +682,7 @@ class Connection
     protected function pdoExecute(PDO $pdo, string $statement, BindParamList|array $input_parameters = []): PDOStatement
     {
         is_array($input_parameters) && $input_parameters = new BindParamList($input_parameters);
+        $input_parameters = $this->convertBindParams($input_parameters);
         $logEntry = $this->logger?->newEntry(
             $this->name,
             $statement,

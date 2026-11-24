@@ -83,6 +83,9 @@ class BindParam
     /**
      * Get value.
      *
+     * Date/time objects are returned as is: the connection converts them to its
+     * storage format and timezone when the statement is executed.
+     *
      * @return mixed
      */
     public function getValue(): mixed
