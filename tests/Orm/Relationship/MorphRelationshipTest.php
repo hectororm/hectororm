@@ -54,6 +54,8 @@ class MorphRelationshipTest extends TestCase
                 . 'imageable_id INTEGER, url TEXT)',
             'CREATE TABLE morph_required (id INTEGER PRIMARY KEY AUTOINCREMENT, owner_type TEXT NOT NULL, '
                 . 'owner_id INTEGER NOT NULL, label TEXT)',
+            'CREATE TABLE morph_note (id INTEGER PRIMARY KEY AUTOINCREMENT, owner_kind INTEGER, '
+                . 'owner_id INTEGER, body TEXT)',
         ] as $sql) {
             $this->connection->execute($sql);
         }
@@ -69,6 +71,10 @@ class MorphRelationshipTest extends TestCase
             "INSERT INTO morph_image VALUES (1, 'article', 1, 'a1.png'), (2, 'video', 1, 'v1.png')",
         );
         $this->connection->execute("INSERT INTO morph_required VALUES (1, 'article', 1, 'required')");
+        // Integer discriminator: articles are kind 0, the value most easily lost in a loose comparison.
+        $this->connection->execute(
+            "INSERT INTO morph_note VALUES (1, 0, 1, 'article note'), (2, 1, 1, 'video note'), (3, 0, 1, 'owned note')",
+        );
 
         $this->orm = new Orm($this->connection, (new Sqlite($this->connection))->generateSchemas('main'));
     }
@@ -293,6 +299,41 @@ class MorphRelationshipTest extends TestCase
         $this->assertSame([], $this->ids(MorphVideo::query()->where('image.url', 'a1.png')->all()));
     }
 
+    public function testIntegerZeroDiscriminatorRoundTrips(): void
+    {
+        $this->assertSame([1, 3], $this->ids(MorphArticle::find(1)->notes));
+        $this->assertSame([2], $this->ids(MorphVideo::find(1)->notes));
+        $this->assertSame([1], $this->ids(MorphArticle::query()->where('notes.body', 'article note')->all()));
+        $this->assertSame([], $this->ids(MorphArticle::query()->where('notes.body', 'video note')->all()));
+
+        // Writing
+        $article = MorphArticle::find(2);
+        $note = new MorphNote();
+        $note->body = 'new';
+        $article->notes[] = $note;
+        $article->save();
+        $this->assertSame(['owner_kind' => 0, 'owner_id' => 2], $this->noteLink($note->id));
+
+        // Detachment and orphan removal both check the original discriminator of the child
+        $article = MorphArticle::find(1);
+        $notes = $article->notes;
+        foreach ($notes as $key => $child) {
+            if (1 === (int)$child->id) {
+                unset($notes[$key]);
+            }
+        }
+        $article->save();
+        $this->assertSame(['owner_kind' => 0, 'owner_id' => null], $this->noteLink(1));
+
+        $article = MorphArticle::find(1);
+        $owned = $article->ownedNotes;
+        $this->assertSame([3], $this->ids($owned));
+        unset($owned[0]);
+        $article->save();
+        $this->assertNull($this->row('morph_note', 3));
+        $this->assertSame(['owner_kind' => 1, 'owner_id' => 1], $this->noteLink(2));
+    }
+
     public function testProgrammaticDeclaration(): void
     {
         $relationships = $this->orm->getMapper(MorphVideo::class)->getRelationships();
@@ -369,8 +410,10 @@ class MorphRelationshipTest extends TestCase
         return [
             'missing columns' => [[], ['commentable_type' => 'article'], 'requires explicit columns'],
             'missing discriminator' => [$columns, [], 'requires a discriminator'],
-            'unnamed discriminator column' => [$columns, ['article'], 'column names to scalar values'],
-            'non-scalar discriminator value' => [$columns, ['commentable_type' => null], 'scalar values'],
+            'unnamed discriminator column' => [$columns, ['article'], 'column names to string or integer values'],
+            'null discriminator value' => [$columns, ['commentable_type' => null], 'string or integer values'],
+            'boolean discriminator value' => [$columns, ['commentable_type' => false], 'string or integer values'],
+            'float discriminator value' => [$columns, ['commentable_type' => 1.5], 'string or integer values'],
             'discriminator on a key column' => [$columns, ['commentable_id' => 1], 'already a key column'],
         ];
     }
@@ -390,6 +433,16 @@ class MorphRelationshipTest extends TestCase
     private function row(string $table, int $id): ?array
     {
         return $this->connection->fetchOne(sprintf('SELECT * FROM %s WHERE id = ?', $table), [$id]);
+    }
+
+    private function noteLink(int $id): array
+    {
+        $row = $this->row('morph_note', $id);
+
+        return [
+            'owner_kind' => null === $row['owner_kind'] ? null : (int)$row['owner_kind'],
+            'owner_id' => null === $row['owner_id'] ? null : (int)$row['owner_id'],
+        ];
     }
 
     private function link(string $table, int $id, string $prefix): array
@@ -419,6 +472,14 @@ class MorphRelationshipTest extends TestCase
     orphanRemoval: true,
 )]
 #[OrmAttribute\MorphMany(MorphRequired::class, 'required', ['id' => 'owner_id'], ['owner_type' => 'article'])]
+#[OrmAttribute\MorphMany(MorphNote::class, 'notes', ['id' => 'owner_id'], ['owner_kind' => 0])]
+#[OrmAttribute\MorphMany(
+    MorphNote::class,
+    'ownedNotes',
+    ['id' => 'owner_id'],
+    ['owner_kind' => 0],
+    orphanRemoval: true,
+)]
 #[OrmAttribute\MorphOne(MorphImage::class, 'image', ['id' => 'imageable_id'], ['imageable_type' => 'article'])]
 #[OrmAttribute\MorphOne(
     MorphImage::class,
@@ -434,6 +495,7 @@ class MorphArticle extends MagicEntity
 #[OrmAttribute\Table('morph_video', 'main')]
 #[OrmAttribute\MorphMany(MorphComment::class, 'comments', ['id' => 'commentable_id'], ['commentable_type' => 'video'])]
 #[OrmAttribute\MorphOne(MorphImage::class, 'image', ['id' => 'imageable_id'], ['imageable_type' => 'video'])]
+#[OrmAttribute\MorphMany(MorphNote::class, 'notes', ['id' => 'owner_id'], ['owner_kind' => 1])]
 class MorphVideo extends MagicEntity
 {
 }
@@ -450,5 +512,10 @@ class MorphImage extends MagicEntity
 
 #[OrmAttribute\Table('morph_required', 'main')]
 class MorphRequired extends MagicEntity
+{
+}
+
+#[OrmAttribute\Table('morph_note', 'main')]
+class MorphNote extends MagicEntity
 {
 }

@@ -36,7 +36,9 @@ trait MorphAssert
     }
 
     /**
-     * Assert a discriminator mapping column names, other than key columns, to scalar values.
+     * Assert a discriminator mapping column names, other than key columns, to string or integer values.
+     *
+     * Booleans and floats are rejected: once stored, they do not compare reliably with the values read back.
      *
      * @param string $name Relationship name
      * @param array $discriminator
@@ -51,9 +53,9 @@ trait MorphAssert
         }
 
         foreach ($discriminator as $column => $value) {
-            if (false === is_string($column) || false === is_scalar($value)) {
+            if (false === is_string($column) || (false === is_string($value) && false === is_int($value))) {
                 throw new RelationException(sprintf(
-                    'Discriminator of relationship "%s" must map column names to scalar values',
+                    'Discriminator of relationship "%s" must map column names to string or integer values',
                     $name,
                 ));
             }

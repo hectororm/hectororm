@@ -122,7 +122,7 @@ abstract class Relationship
      *
      * Empty unless the relationship is polymorphic.
      *
-     * @return array<string, bool|float|int|string>
+     * @return array<string, int|string>
      */
     public function getDiscriminator(): array
     {
