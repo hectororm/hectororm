@@ -53,6 +53,8 @@ class MorphToTest extends TestCase
             'CREATE TABLE morphto_page (id INTEGER PRIMARY KEY AUTOINCREMENT, legacy_id INTEGER UNIQUE, title TEXT)',
             'CREATE TABLE morphto_comment (id INTEGER PRIMARY KEY AUTOINCREMENT, commentable_type TEXT, '
                 . 'commentable_id INTEGER, body TEXT, reviewer_type TEXT, reviewer_id INTEGER)',
+            'CREATE TABLE morphto_note (id INTEGER PRIMARY KEY AUTOINCREMENT, owner_kind INTEGER, '
+                . 'owner_id INTEGER, body TEXT)',
         ] as $sql) {
             $this->connection->execute($sql);
         }
@@ -68,6 +70,11 @@ class MorphToTest extends TestCase
             . "(6, 'page', 1, 'p1-first'), (7, 'article', 99, 'dangling'), (8, 'unknown', 1, 'unknown type')",
         );
         $this->connection->execute("UPDATE morphto_comment SET reviewer_type = 'video', reviewer_id = 2 WHERE id = 1");
+        // Integer discriminator: articles are kind 0, the value most easily lost in a loose comparison.
+        $this->connection->execute(
+            "INSERT INTO morphto_note VALUES (1, 0, 1, 'article note'), (2, 1, 1, 'video note'), "
+            . "(3, NULL, NULL, 'unowned')",
+        );
 
         $this->orm = new Orm($this->connection, (new Sqlite($this->connection))->generateSchemas('main'));
     }
@@ -240,6 +247,36 @@ class MorphToTest extends TestCase
         $comment->article = ToVideo::find(1);
     }
 
+    public function testIntegerZeroDiscriminatorRoundTrips(): void
+    {
+        // Lazy resolution
+        $this->assertTarget(ToArticle::class, 1, ToNote::find(1)->owner);
+        $this->assertTarget(ToVideo::class, 1, ToNote::find(2)->owner);
+        $this->assertNull(ToNote::find(3)->owner);
+        $this->assertTarget(ToArticle::class, 1, ToNote::find(1)->article);
+        $this->assertNull(ToNote::find(2)->article);
+
+        // Eager resolution and join
+        $notes = ToNote::query()->orderBy('id')->with(['owner'])->all();
+        $this->assertTarget(ToArticle::class, 1, $notes[0]->owner);
+        $this->assertTarget(ToVideo::class, 1, $notes[1]->owner);
+        $this->assertNull($notes[2]->owner);
+        $this->assertSame([1], $this->ids(ToNote::query()->where('article.title', 'first article')->all()));
+
+        // Assignment
+        $note = ToNote::find(3);
+        $note->owner = ToArticle::find(2);
+        $note->save();
+        $this->assertSame(['owner_kind' => 0, 'owner_id' => 2], $this->noteLink(3));
+
+        // Null assignment needs the type of the row to be resolved
+        $note = ToNote::find(1);
+        $note->owner = null;
+        $note->save();
+        $this->assertSame(['owner_kind' => 0, 'owner_id' => null], $this->noteLink(1));
+        $this->assertSame(['owner_kind' => 1, 'owner_id' => 1], $this->noteLink(2));
+    }
+
     public function testTargetAccessors(): void
     {
         $relationships = $this->orm->getMapper(ToComment::class)->getRelationships();
@@ -365,12 +402,29 @@ class MorphToTest extends TestCase
         return [
             'missing columns' => [ToVideo::class, [], ['commentable_type' => 'v'], 'requires explicit columns'],
             'missing discriminator' => [ToVideo::class, self::COLUMNS, [], 'requires a discriminator'],
-            'unnamed discriminator column' => [ToVideo::class, self::COLUMNS, ['v'], 'column names to scalar values'],
-            'non-scalar discriminator value' => [
+            'unnamed discriminator column' => [
+                ToVideo::class,
+                self::COLUMNS,
+                ['v'],
+                'column names to string or integer values',
+            ],
+            'null discriminator value' => [
                 ToVideo::class,
                 self::COLUMNS,
                 ['commentable_type' => null],
-                'scalar values',
+                'string or integer values',
+            ],
+            'boolean discriminator value' => [
+                ToVideo::class,
+                self::COLUMNS,
+                ['commentable_type' => false],
+                'string or integer values',
+            ],
+            'float discriminator value' => [
+                ToVideo::class,
+                self::COLUMNS,
+                ['commentable_type' => 1.5],
+                'string or integer values',
             ],
             'discriminator on a key column' => [
                 ToVideo::class,
@@ -547,6 +601,16 @@ class MorphToTest extends TestCase
         return $ids;
     }
 
+    private function noteLink(int $id): array
+    {
+        $row = $this->connection->fetchOne('SELECT * FROM morphto_note WHERE id = ?', [$id]);
+
+        return [
+            'owner_kind' => null === $row['owner_kind'] ? null : (int)$row['owner_kind'],
+            'owner_id' => null === $row['owner_id'] ? null : (int)$row['owner_id'],
+        ];
+    }
+
     private function link(int $id): array
     {
         $row = $this->connection->fetchOne('SELECT * FROM morphto_comment WHERE id = ?', [$id]);
@@ -588,6 +652,14 @@ class ToPage extends MagicEntity
 #[OrmAttribute\MorphTo(ToVideo::class, 'video', ['commentable_id' => 'id'], ['commentable_type' => 'video'])]
 #[OrmAttribute\MorphTo(ToVideo::class, 'reviewer', ['reviewer_id' => 'id'], ['reviewer_type' => 'video'])]
 class ToComment extends MagicEntity
+{
+}
+
+#[OrmAttribute\Table('morphto_note', 'main')]
+#[OrmAttribute\MorphTo(ToArticle::class, 'owner', ['owner_id' => 'id'], ['owner_kind' => 0])]
+#[OrmAttribute\MorphTo(ToVideo::class, 'owner', ['owner_id' => 'id'], ['owner_kind' => 1])]
+#[OrmAttribute\MorphTo(ToArticle::class, 'article', ['owner_id' => 'id'], ['owner_kind' => 0])]
+class ToNote extends MagicEntity
 {
 }
 

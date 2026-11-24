@@ -37,14 +37,14 @@ class MorphTo extends Relationship
      * @var list<array{
      *     entity: ReflectionEntity,
      *     columns: list<string>,
-     *     discriminator: array<string, bool|float|int|string>
+     *     discriminator: array<string, int|string>
      * }>
      */
     private array $types = [];
 
     /**
      * @param array<string, string> $columns Source column to target column
-     * @param array<string, bool|float|int|string> $discriminator Source column to the value identifying the target
+     * @param array<string, int|string> $discriminator Source column to the value identifying the target
      *
      * @throws OrmException
      */
@@ -66,7 +66,7 @@ class MorphTo extends Relationship
      * Add a target type sharing the source columns of this relationship.
      *
      * @param array<string, string> $columns Source column to target column
-     * @param array<string, bool|float|int|string> $discriminator Source column to the value identifying the target
+     * @param array<string, int|string> $discriminator Source column to the value identifying the target
      *
      * @throws OrmException
      */

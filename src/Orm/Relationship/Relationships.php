@@ -382,7 +382,7 @@ class Relationships implements Countable
      * Declare a target of a polymorphic reference; call again with the same name to add another target.
      *
      * @param array<string, string> $columns Source column to target column
-     * @param array<string, bool|float|int|string> $discriminator Source column to the value identifying the target
+     * @param array<string, int|string> $discriminator Source column to the value identifying the target
      *
      * @throws OrmException
      */
