@@ -427,16 +427,29 @@ abstract class AbstractMapper implements Mapper
 
         $entity->getRelated()->linkNative();
 
-        $this->refreshEntity($entity);
+        if (null === $versionColumn) {
+            $this->refreshEntity($entity);
 
-        if (null !== $versionColumn) {
-            // Nothing written: the refreshed version must still be the expected one
-            if (0 === count($values) && $writeVersion !== $this->getLoadedVersion($entity, $versionColumn)) {
-                throw new OptimisticLockException($entity, $writeVersion);
-            }
-
-            $this->reflection->getHectorData($entity)->set(self::EXPECTED_VERSION, null);
+            return $nbAffected ?? 0;
         }
+
+        // Nothing written: the row must still exist with the expected version
+        $data = $this->fetchEntityRow($entity);
+
+        if (null === $data && 0 === count($values)) {
+            throw new OptimisticLockException($entity, $writeVersion);
+        }
+
+        $this->refreshEntityWithRow(
+            $entity,
+            $data ?? throw new MapperException('Unable to refresh a non-existing entity'),
+        );
+
+        if (0 === count($values) && $writeVersion !== $this->getLoadedVersion($entity, $versionColumn)) {
+            throw new OptimisticLockException($entity, $writeVersion);
+        }
+
+        $this->reflection->getHectorData($entity)->set(self::EXPECTED_VERSION, null);
 
         return $nbAffected ?? 0;
     }
@@ -478,6 +491,25 @@ abstract class AbstractMapper implements Mapper
      */
     public function refreshEntity(Entity $entity): void
     {
+        $data = $this->fetchEntityRow($entity);
+
+        if (null === $data) {
+            throw new MapperException('Unable to refresh a non-existing entity');
+        }
+
+        $this->refreshEntityWithRow($entity, $data);
+    }
+
+    /**
+     * Fetch the current row of an entity by its primary value.
+     *
+     * @param Entity $entity
+     *
+     * @return array|null Null if the row does not exist
+     * @throws OrmException
+     */
+    private function fetchEntityRow(Entity $entity): ?array
+    {
         $values = $this->reflection->getHectorData($entity)->get('original') ?? $this->collectEntity($entity);
         $conditions = $this->extractPrimaryValue($values);
 
@@ -488,12 +520,19 @@ abstract class AbstractMapper implements Mapper
             throw new MapperException('Unable to refresh an entity without a primary value');
         }
 
-        $data = $entity::query()->whereEquals($this->quotedTuples($conditions))->fetchOne();
+        return $entity::query()->whereEquals($this->quotedTuples($conditions))->fetchOne();
+    }
 
-        if (null === $data) {
-            throw new MapperException('Unable to refresh a non-existing entity');
-        }
-
+    /**
+     * Hydrate an entity with its fetched row and track it as original data.
+     *
+     * @param Entity $entity
+     * @param array $data
+     *
+     * @throws OrmException
+     */
+    private function refreshEntityWithRow(Entity $entity, array $data): void
+    {
         $this->hydrateEntity($entity, $data);
         $this->updateOriginalData($entity, $data, true);
         $this->updatePivotData($entity, $data);

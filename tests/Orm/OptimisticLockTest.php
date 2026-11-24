@@ -349,6 +349,28 @@ class OptimisticLockTest extends TestCase
         $this->assertSame(2, (int)$this->row('versioned_comment', 10)['version']);
     }
 
+    public function testNoOpSaveDetectsConcurrentDeletion(): void
+    {
+        $comment = VersionedComment::find(10);
+        $this->connection->execute('DELETE FROM versioned_comment WHERE id = 10');
+
+        $this->assertConflict(fn() => $comment->save(), $comment, 1);
+        $this->assertSame(1, $comment->version);
+        $this->assertSame(1, (int)$this->original($comment)['version']);
+        $this->assertSame(EntityStorage::STATUS_TO_UPDATE, $this->orm->getStatus($comment));
+    }
+
+    public function testNoOpSaveWithExpectedVersionDetectsConcurrentDeletion(): void
+    {
+        $comment = VersionedComment::find(10);
+        $comment->expectVersion(1);
+        $this->connection->execute('DELETE FROM versioned_comment WHERE id = 10');
+
+        $this->assertConflict(fn() => $comment->save(), $comment, 1);
+        // The expected version is kept until a successful write
+        $this->assertConflict(fn(): int => $this->orm->getMapper($comment)->updateEntity($comment), $comment, 1);
+    }
+
     public function testUnversionedEntityIsUnchanged(): void
     {
         $first = UnversionedArticle::find(1);
@@ -482,6 +504,27 @@ class OptimisticLockTest extends TestCase
 
         $this->assertConflict(fn() => $comment->save(), $comment, 1);
         $this->assertSame('concurrent', $this->row('versioned_comment', 10)['body']);
+    }
+
+    public function testConflictWithExpectedVersionIsResolvedByAdoptingReviewedVersion(): void
+    {
+        $comment = VersionedComment::find(10);
+        $comment->expectVersion(1);
+        $this->bump('versioned_comment', 10);
+        $comment->body = 'mine';
+        $this->assertConflict(fn(): int => $this->orm->getMapper($comment)->updateEntity($comment), $comment, 1);
+
+        // Reloading alone keeps the stale client version
+        $comment->refresh();
+        $comment->body = 'merged';
+        $this->assertConflict(fn(): int => $this->orm->getMapper($comment)->updateEntity($comment), $comment, 1);
+
+        // The reviewed version is adopted explicitly
+        $comment->expectVersion($comment->version);
+        $this->orm->getMapper($comment)->updateEntity($comment);
+
+        $this->assertSame('merged', $this->row('versioned_comment', 10)['body']);
+        $this->assertSame(3, $comment->version);
     }
 
     public function testExpectedVersionIsCheckedOnNoOpSave(): void
