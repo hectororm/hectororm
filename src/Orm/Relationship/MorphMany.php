@@ -22,7 +22,7 @@ class MorphMany extends OneToMany
 
     /**
      * @param array<string, string> $columns Source column to target column
-     * @param array<string, bool|float|int|string> $discriminator Target column to the value identifying the source type
+     * @param array<string, int|string> $discriminator Target column to the value identifying the source type
      *
      * @throws OrmException
      */

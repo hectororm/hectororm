@@ -22,7 +22,7 @@ trait MorphTrait
 {
     use MorphAssert;
 
-    /** @var array<string, bool|float|int|string> */
+    /** @var array<string, int|string> */
     private array $discriminator = [];
 
     /**

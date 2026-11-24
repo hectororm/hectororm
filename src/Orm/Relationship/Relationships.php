@@ -328,7 +328,7 @@ class Relationships implements Countable
      * Declare a polymorphic collection of children, identified among other parent types by a discriminator.
      *
      * @param array<string, string> $columns Source column to target column
-     * @param array<string, bool|float|int|string> $discriminator Target column to the value identifying this entity
+     * @param array<string, int|string> $discriminator Target column to the value identifying this entity
      *
      * @throws OrmException
      */
@@ -355,7 +355,7 @@ class Relationships implements Countable
      * Declare a single polymorphic child, identified among other parent types by a discriminator.
      *
      * @param array<string, string> $columns Source column to target column
-     * @param array<string, bool|float|int|string> $discriminator Target column to the value identifying this entity
+     * @param array<string, int|string> $discriminator Target column to the value identifying this entity
      *
      * @throws OrmException
      */
