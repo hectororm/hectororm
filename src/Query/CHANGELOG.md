@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `QueryBuilder::upsert(array $rows, array $uniqueBy, ?array $update = null)` for a native, atomic "insert or update on conflict" in a single statement, with multiple rows, composite conflict keys, bound values and quoted column names. The SQL is driver- and version-aware: `ON DUPLICATE KEY UPDATE` on MySQL/MariaDB (through a row alias on MySQL 8.0.19+, `VALUES()` otherwise) and `ON CONFLICT ... DO UPDATE` on PostgreSQL 9.5+ and SQLite 3.24.0+. Without `$update`, every inserted column but the conflict ones is updated; with an empty list, existing rows are left untouched. An unsupported driver or version throws a `RuntimeException` instead of falling back to a non-atomic read-then-write. **Note:** MySQL/MariaDB detect the conflict on any primary/unique index and do not honor `$uniqueBy`, and the affected-row count is driver-specific (#192)
+- `Upsert` statement, to build the same query without a `QueryBuilder` (#192)
+
 ## [1.6.0] - 2026-10-18
 
 ### Added

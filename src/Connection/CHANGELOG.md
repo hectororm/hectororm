@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added `DriverCapabilities::hasUpsert()` for native upsert support (MySQL, MariaDB, SQLite 3.24.0+ and PostgreSQL 9.5+) and `DriverCapabilities::hasInsertRowAlias()` for the `INSERT ... VALUES (...) AS alias` row alias (MySQL 8.0.19+). **Note:** these additions break compatibility with third-party implementations of `DriverCapabilities`, which must implement both methods. The interface describes the engines supported by Hector and can gain methods in minor releases (#192)
+
 ## [1.6.0] - 2026-10-18
 
 ### Added

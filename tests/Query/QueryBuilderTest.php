@@ -553,6 +553,71 @@ class QueryBuilderTest extends TestCase
         );
     }
 
+    public function testUpsert(): void
+    {
+        $queryBuilder = new FakeQueryBuilder($this->getConnection());
+        $queryBuilder->from('foo', 'f');
+        $queryBuilder->where('bar', 'ignored');
+        $queryBuilder->upsert(
+            [
+                ['code' => 'A', 'name' => 'First', 'note' => 'n1'],
+                ['code' => 'B', 'name' => 'Second', 'note' => 'n2'],
+            ],
+            uniqueBy: ['code'],
+            update: ['name'],
+        );
+
+        // The connection is SQLite, so the driver-aware upsert syntax is "ON CONFLICT ... DO UPDATE".
+        $this->assertEquals(
+            'INSERT INTO foo ( "code", "name", "note" ) VALUES ( :_h_0, :_h_1, :_h_2 ), ( :_h_3, :_h_4, :_h_5 )' .
+            ' ON CONFLICT ( "code" ) DO UPDATE SET "name" = excluded."name"',
+            $queryBuilder->statement
+        );
+        $this->assertEquals(
+            ['_h_0' => 'A', '_h_1' => 'First', '_h_2' => 'n1', '_h_3' => 'B', '_h_4' => 'Second', '_h_5' => 'n2'],
+            array_map(fn(BindParam $bind): mixed => $bind->getValue(), $queryBuilder->input_parameters)
+        );
+    }
+
+    public function testUpsertWithoutRowsDoesNotExecute(): void
+    {
+        $queryBuilder = new FakeQueryBuilder($this->getConnection());
+        $queryBuilder->from('foo');
+
+        $this->assertSame(0, $queryBuilder->upsert([], uniqueBy: ['code']));
+        $this->assertFalse(isset($queryBuilder->statement));
+    }
+
+    public function testUpsertWithoutRowsStillValidatesColumns(): void
+    {
+        $queryBuilder = new FakeQueryBuilder($this->getConnection());
+        $queryBuilder->from('foo');
+
+        $this->expectException(InvalidArgumentException::class);
+
+        $queryBuilder->upsert([], uniqueBy: []);
+    }
+
+    public function testUpsertKeepsBuilderReusable(): void
+    {
+        $queryBuilder = new FakeQueryBuilder($this->getConnection());
+        $queryBuilder->from('foo')->where('bar', 'bar_value');
+        $rows = [['code' => 'A', 'name' => 'First']];
+
+        $queryBuilder->upsert($rows, uniqueBy: ['code']);
+        $firstStatement = $queryBuilder->statement;
+        $firstParameters = $queryBuilder->input_parameters;
+
+        $queryBuilder->upsert($rows, uniqueBy: ['code']);
+
+        $this->assertSame($firstStatement, $queryBuilder->statement);
+        $this->assertEquals($firstParameters, $queryBuilder->input_parameters);
+        $this->assertCount(0, $queryBuilder->getBindParams());
+
+        $binds = new BindParamList();
+        $this->assertSame('SELECT * FROM foo WHERE bar = :_h_0', $queryBuilder->getStatement($binds));
+    }
+
     public function testMakeDelete(): void
     {
         $queryBuilder = new FakeQueryBuilder($this->getConnection());

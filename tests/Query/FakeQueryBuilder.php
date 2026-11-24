@@ -18,6 +18,7 @@ use Hector\Query\Insert;
 use Hector\Query\QueryBuilder;
 use Hector\Query\Select;
 use Hector\Query\Update;
+use Hector\Query\Upsert;
 
 class FakeQueryBuilder extends QueryBuilder
 {
@@ -50,6 +51,11 @@ class FakeQueryBuilder extends QueryBuilder
     public function makeInsert(): Insert
     {
         return parent::makeInsert();
+    }
+
+    public function makeUpsert(): Upsert
+    {
+        return parent::makeUpsert();
     }
 
     public function makeUpdate(): Update

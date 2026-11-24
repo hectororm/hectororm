@@ -81,13 +81,7 @@ class MySQLCapabilities implements DriverCapabilities
      */
     public function hasCheckConstraints(): bool
     {
-        if ('mysql' !== $this->driverInfo->getDriver() ||
-            1 !== preg_match('/^(\d+\.\d+\.\d+)(?:[-+].*)?$/', $this->driverInfo->getVersion(), $matches)) {
-            return false;
-        }
-
-        // Server suffixes such as "-log" are not prerelease version qualifiers.
-        return version_compare($matches[1], '8.0.16', '>=');
+        return $this->isMySQLAtLeast('8.0.16');
     }
 
     /**
@@ -96,5 +90,39 @@ class MySQLCapabilities implements DriverCapabilities
     public function hasDropCheck(): bool
     {
         return $this->hasCheckConstraints();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function hasUpsert(): bool
+    {
+        return true;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function hasInsertRowAlias(): bool
+    {
+        return $this->isMySQLAtLeast('8.0.19');
+    }
+
+    /**
+     * Is the server a MySQL with a complete version, at least the given one?
+     *
+     * @param string $version
+     *
+     * @return bool
+     */
+    private function isMySQLAtLeast(string $version): bool
+    {
+        if ('mysql' !== $this->driverInfo->getDriver() ||
+            1 !== preg_match('/^(\d+\.\d+\.\d+)(?:[-+].*)?$/', $this->driverInfo->getVersion(), $matches)) {
+            return false;
+        }
+
+        // Server suffixes such as "-log" are not prerelease version qualifiers.
+        return version_compare($matches[1], $version, '>=');
     }
 }
