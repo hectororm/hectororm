@@ -18,7 +18,9 @@ use Generator;
 use Hector\Orm\Attributes\Mapper;
 use Hector\Orm\Collection\Collection;
 use Hector\Orm\Exception\NotFoundException;
+use Hector\Orm\Exception\OptimisticLockException;
 use Hector\Orm\Exception\OrmException;
+use Hector\Orm\Mapper\AbstractMapper;
 use Hector\Orm\Mapper\GenericMapper;
 use Hector\Orm\Orm;
 use Hector\Orm\Query\Builder;
@@ -128,6 +130,32 @@ abstract class Entity
     public function isAltered(string ...$column): bool
     {
         return !empty(Orm::get()->getMapper($this)->getEntityAlteration($this, $column ?: null));
+    }
+
+    /**
+     * Expect a version, typically the one submitted by a client from a previous request.
+     *
+     * Fails immediately if the loaded version differs. Otherwise, the next write of the
+     * entity is conditioned on this version, even if the entity is refreshed in between.
+     *
+     * @param int $version
+     *
+     * @throws OptimisticLockException if the loaded version differs
+     * @throws OrmException if the entity is not versioned or its version is not loaded
+     */
+    public function expectVersion(int $version): void
+    {
+        if (null === ReflectionEntity::get(static::class)->getVersionColumn()) {
+            throw new OrmException(sprintf('Entity "%s" is not versioned', static::class));
+        }
+
+        $mapper = Orm::get()->getMapper($this);
+
+        if (!$mapper instanceof AbstractMapper) {
+            throw new OrmException(sprintf('Mapper of "%s" entity does not support optimistic locking', static::class));
+        }
+
+        $mapper->expectVersion($this, $version);
     }
 
     //////////////////////////////////
