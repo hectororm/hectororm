@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `MorphToMany` attribute and `Relationships::morphToMany()` to declare a many-to-many relationship through a pivot table shared with other entities: an explicit `discriminator` (e.g. `['taggable_type' => 'article']`) filters reads and joins on the pivot table, and is written, updated and deleted with the pivot rows (#200)
+- `MorphToMany` attribute and `Relationships::morphToMany()` to declare a many-to-many relationship through a pivot table shared with other entities: an explicit `discriminator` mapping pivot columns to string or integer values (e.g. `['taggable_type' => 'article']`) filters reads and joins on the pivot table, is part of every pivot write, and cannot be overridden by additional pivot data (#200)
 - `ManyToMany::getPivotDiscriminator()` to expose the fixed pivot column values of a polymorphic many-to-many relationship (#200)
 
 ## [1.6.0] - 2026-10-18

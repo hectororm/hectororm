@@ -38,7 +38,7 @@ class ManyToMany extends Relationship
     protected string $pivotTable;
     protected array $pivotTargetColumns;
     protected array $pivotSourceColumns;
-    /** @var array<string, bool|float|int|string> */
+    /** @var array<string, int|string> */
     protected array $pivotDiscriminator = [];
 
     /**
@@ -145,7 +145,7 @@ class ManyToMany extends Relationship
      *
      * Empty unless the relationship is polymorphic.
      *
-     * @return array<string, bool|float|int|string>
+     * @return array<string, int|string>
      */
     public function getPivotDiscriminator(): array
     {
@@ -405,7 +405,9 @@ class ManyToMany extends Relationship
             // Pivot keys (foreign keys) and additional data are stored separately:
             // getPivotData() resolves the FK columns, getPivot()->getData() the extras.
             $pivotKeys = $this->getPivotData($entity, $foreignEntity);
-            $pivotExtra = $foreignEntity->getPivot()?->getData() ?? [];
+            // The discriminator identifies the rows of this relationship: additional data never overrides it,
+            // whether set by mistake or inherited from a link loaded through a relationship of another type.
+            $pivotExtra = array_diff_key($foreignEntity->getPivot()?->getData() ?? [], $this->pivotDiscriminator);
 
             $queryBuilder = $this->newQueryBuilder();
             $queryBuilder->whereEquals($pivotKeys);

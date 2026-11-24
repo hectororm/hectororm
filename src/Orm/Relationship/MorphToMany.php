@@ -29,7 +29,7 @@ class MorphToMany extends ManyToMany
      *
      * @param array<string, string> $columnsFrom Source column to pivot column
      * @param array<string, string> $columnsTo Pivot column to target column
-     * @param array<string, bool|float|int|string> $discriminator Pivot column to the value identifying the rows
+     * @param array<string, int|string> $discriminator Pivot column to the value identifying the rows
      *
      * @throws OrmException
      */

@@ -178,6 +178,48 @@ class MorphToManyTest extends TestCase
         $this->assertSame(20, $this->weight(2, 'article', 1));
     }
 
+    public function testAdditionalPivotDataCannotChangeTheDiscriminatorOfAnExistingLink(): void
+    {
+        // No pivot row links tag 2 to video 2: a changed discriminator would hand the link over to it.
+        $article = MArticle::find(2);
+        $tag = $article->tags[0];
+        $this->assertSame(2, (int)$tag->id);
+        $tag->getPivot()->setData(['taggable_type' => 'video', 'weight' => 77]);
+        $article->save();
+
+        $this->assertSame(
+            ['1/article/1', '1/video/1', '2/article/1', '2/article/2', '3/video/1'],
+            $this->pivotRows(),
+        );
+        $this->assertSame(77, $this->weight(2, 'article', 2));
+        $this->assertSame([2], $this->ids(MArticle::find(2)->tags));
+        $this->assertSame([], $this->ids(MVideo::find(2)->tags));
+    }
+
+    public function testAdditionalPivotDataCannotChangeTheDiscriminatorOfANewLink(): void
+    {
+        // The tag comes from a video, carrying the pivot data of that link.
+        $tag = null;
+        foreach (MVideo::find(1)->tags as $candidate) {
+            if (3 === (int)$candidate->id) {
+                $tag = $candidate;
+            }
+        }
+        $tag->getPivot()->setData(['taggable_type' => 'video', 'weight' => 5]);
+
+        $article = MArticle::find(2);
+        $article->tags[] = $tag;
+        $article->save();
+
+        $this->assertSame(
+            ['1/article/1', '1/video/1', '2/article/1', '2/article/2', '3/article/2', '3/video/1'],
+            $this->pivotRows(),
+        );
+        $this->assertSame(5, $this->weight(3, 'article', 2));
+        $this->assertSame(40, $this->weight(3, 'video', 1));
+        $this->assertSame([], $this->ids(MVideo::find(2)->tags));
+    }
+
     public function testConditionThroughTheRelationshipJoinsThePivotOnTheDiscriminator(): void
     {
         $this->assertSame([1], $this->ids(MArticle::query()->where('tags.name', 'php')->all()));
@@ -253,8 +295,10 @@ class MorphToManyTest extends TestCase
             'missing source columns' => [[], self::TO, $type, 'requires explicit columns'],
             'missing target columns' => [self::FROM, [], $type, 'requires explicit columns'],
             'missing discriminator' => [self::FROM, self::TO, [], 'requires a discriminator'],
-            'unnamed discriminator column' => [self::FROM, self::TO, ['article'], 'column names to scalar values'],
-            'non-scalar discriminator value' => [self::FROM, self::TO, ['taggable_type' => null], 'scalar values'],
+            'unnamed discriminator column' => [self::FROM, self::TO, ['article'], 'string or integer values'],
+            'null discriminator value' => [self::FROM, self::TO, ['taggable_type' => null], 'string or integer'],
+            'boolean discriminator value' => [self::FROM, self::TO, ['taggable_type' => false], 'string or integer'],
+            'float discriminator value' => [self::FROM, self::TO, ['taggable_type' => 1.5], 'string or integer'],
             'discriminator on a source key' => [self::FROM, self::TO, ['taggable_id' => 1], 'already a key column'],
             'discriminator on a target key' => [self::FROM, self::TO, ['tag_id' => 1], 'already a key column'],
         ];
