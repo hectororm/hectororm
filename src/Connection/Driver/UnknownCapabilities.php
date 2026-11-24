@@ -87,4 +87,20 @@ class UnknownCapabilities implements DriverCapabilities
     {
         return false;
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function hasUpsert(): bool
+    {
+        return false;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function hasInsertRowAlias(): bool
+    {
+        return false;
+    }
 }

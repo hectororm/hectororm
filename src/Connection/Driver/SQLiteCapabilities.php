@@ -101,4 +101,20 @@ class SQLiteCapabilities implements DriverCapabilities
     {
         return false;
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function hasUpsert(): bool
+    {
+        return version_compare($this->driverInfo->getVersion(), '3.24.0', '>=');
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function hasInsertRowAlias(): bool
+    {
+        return false;
+    }
 }

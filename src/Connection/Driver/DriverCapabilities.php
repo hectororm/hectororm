@@ -14,6 +14,13 @@ declare(strict_types=1);
 
 namespace Hector\Connection\Driver;
 
+/**
+ * Capabilities of a database engine, for a given version.
+ *
+ * This interface describes the engines supported by Hector and grows with them:
+ * methods can be added in minor releases. Third-party implementations must
+ * follow these additions, which are listed in the package changelog.
+ */
 interface DriverCapabilities
 {
     /**
@@ -94,4 +101,25 @@ interface DriverCapabilities
      * @return bool
      */
     public function hasDropCheck(): bool;
+
+    /**
+     * Support of a native, atomic upsert (insert or update on conflict)?
+     *
+     * True for ON DUPLICATE KEY UPDATE (MySQL/MariaDB) and for
+     * ON CONFLICT ... DO UPDATE (SQLite 3.24.0+, PostgreSQL 9.5+).
+     *
+     * @return bool
+     */
+    public function hasUpsert(): bool;
+
+    /**
+     * Support of a row alias on INSERT ... VALUES (...) AS alias?
+     *
+     * When true, ON DUPLICATE KEY UPDATE must reference the inserted row through
+     * this alias (MySQL 8.0.19+), the VALUES() function being deprecated there.
+     * When false, an engine using ON DUPLICATE KEY UPDATE relies on VALUES().
+     *
+     * @return bool
+     */
+    public function hasInsertRowAlias(): bool;
 }

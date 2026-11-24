@@ -40,6 +40,7 @@ use Hector\Query\Pagination\QueryOffsetPaginator;
 use Hector\Query\Pagination\QueryRangePaginator;
 use Hector\Query\Statement\Exists;
 use InvalidArgumentException;
+use RuntimeException;
 
 
 class QueryBuilder implements CompoundStatementInterface
@@ -251,6 +252,20 @@ class QueryBuilder implements CompoundStatementInterface
     }
 
     /**
+     * Make upsert.
+     *
+     * @return Upsert
+     */
+    protected function makeUpsert(): Upsert
+    {
+        $upsert = new Upsert($this->getBindParams());
+        $upsert->from = clone $this->from;
+        $upsert->from->useAlias(false);
+
+        return $upsert;
+    }
+
+    /**
      * Make update.
      *
      * @return Update
@@ -459,6 +474,42 @@ class QueryBuilder implements CompoundStatementInterface
 
         $binds = new BindParamList();
         $statement = $insert->getStatement($binds, $driverInfo);
+
+        return $this->execute($statement, $binds->getArrayCopy());
+    }
+
+    /**
+     * Upsert: insert rows, and update the existing ones on a uniqueness conflict, in a single statement.
+     *
+     * The table must have a primary/unique index on the conflict columns. MySQL/MariaDB detect the
+     * conflict on any primary/unique index of the table and do not honor the conflict columns.
+     * The affected-row count is driver-specific and gives no portable inserted/updated breakdown.
+     *
+     * @param array $rows Rows (or a single row) of values indexed by column name, all with the same columns
+     * @param string[] $uniqueBy Columns identifying a conflict
+     * @param string[]|null $update Columns to update on conflict; null for all but the conflict ones,
+     *                              an empty list leaves the existing rows untouched
+     *
+     * @return int
+     * @throws InvalidArgumentException If rows or columns are invalid
+     * @throws RuntimeException If the driver does not support a native upsert
+     */
+    public function upsert(array $rows, array $uniqueBy, ?array $update = null): int
+    {
+        $upsert = $this->makeUpsert();
+        $upsert
+            ->rows($rows)
+            ->uniqueBy($uniqueBy)
+            ->update($update);
+
+        if ([] === $rows) {
+            return 0;
+        }
+
+        $driverInfo = $this->connection->getDriverInfo();
+
+        $binds = new BindParamList();
+        $statement = $upsert->getStatement($binds, $driverInfo);
 
         return $this->execute($statement, $binds->getArrayCopy());
     }

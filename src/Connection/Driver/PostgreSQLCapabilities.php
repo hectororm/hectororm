@@ -91,4 +91,20 @@ class PostgreSQLCapabilities implements DriverCapabilities
     {
         return false;
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function hasUpsert(): bool
+    {
+        return version_compare($this->driverInfo->getVersion(), '9.5.0', '>=');
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function hasInsertRowAlias(): bool
+    {
+        return false;
+    }
 }

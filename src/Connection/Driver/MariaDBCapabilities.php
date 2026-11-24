@@ -96,4 +96,20 @@ class MariaDBCapabilities implements DriverCapabilities
     {
         return false;
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function hasUpsert(): bool
+    {
+        return true;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function hasInsertRowAlias(): bool
+    {
+        return false;
+    }
 }
