@@ -12,6 +12,9 @@
 
 namespace Hector\Orm\Tests\Query;
 
+use DateTime;
+use DateTimeImmutable;
+use Hector\Connection\Bind\BindParam;
 use Hector\Connection\Bind\BindParamList;
 use Hector\Connection\Log\LogEntry;
 use Hector\Orm\Collection\Collection;
@@ -565,6 +568,35 @@ class BuilderTest extends AbstractTestCase
             'LEFT JOIN `sakila`.`language` AS `language` ON ( `main`.`language_id` = `language`.`language_id` ) ' .
             'WHERE ( `language`.`name` = :_h_0 OR `language`.`name` = :_h_1 )',
             $statement);
+    }
+
+    public function testWhereWithDateTime(): void
+    {
+        $total = (new Builder(Film::class))->count();
+        $date = new DateTimeImmutable('2100-01-01 00:00:00');
+
+        $this->assertGreaterThan(0, $total);
+        $this->assertSame($total, (new Builder(Film::class))->where('last_update', '<', $date)->count());
+
+        // The date is bound by the connection, in its date/time format
+        $logs = $this->getOrm()->getConnection()->getLogger()->getLogs();
+        $this->assertContains(
+            '2100-01-01 00:00:00',
+            array_map(
+                fn(BindParam $bindParam): mixed => $bindParam->getValue(),
+                end($logs)->getParameters()->getArrayCopy()
+            )
+        );
+
+        $this->assertSame(0, (new Builder(Film::class))->where('last_update', '>=', $date)->count());
+        $this->assertSame(
+            $total,
+            (new Builder(Film::class))->whereBetween('last_update', new DateTime('1970-01-02'), $date)->count()
+        );
+        $this->assertSame(
+            $total,
+            (new Builder(Film::class))->whereIn('last_update', [$date])->orWhere('last_update', '<', $date)->count()
+        );
     }
 
     public function testEncapsuledWhere(): void
