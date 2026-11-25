@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `DateTimeInterface` values are supported wherever a value is bound (conditions, `BETWEEN`, `IN` lists, `insert()` and `update()` values, `Raw` binds): the connection converts them to its date/time format and storage timezone when the query runs (#203)
+
 ## [1.6.0] - 2026-10-18
 
 ### Added

@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `DateTimeInterface` values can now be bound to statements (`execute()`, `fetchOne()`, `fetchAll()`, `fetchColumn()`, `yieldAll()`, `yieldColumn()`), as an array value or through a `BindParam`/`BindParamList`: they are converted to the storage timezone of the connection and formatted when the statement is executed, instead of raising `Object of class DateTimeImmutable could not be converted to string`. The bind list given by the caller is never modified, and the logger receives the converted values (#203)
+- Added the `$dateTimeFormat` (default `Y-m-d H:i:s`) and `$timezone` (default `null`: the PHP default timezone, like `DateTimeType`) parameters to `Connection::__construct()` and `Connection::fromPdo()`, with the `Connection::getDateTimeFormat()` and `Connection::getTimezone()` getters and the `Connection::DEFAULT_DATETIME_FORMAT` constant. `$timezone` is the storage timezone of the database; both values are preserved across serialization (#203)
+
+### Changed
+
+- Date/time objects implementing `Stringable` (e.g. Carbon, Chronos) were bound through `__toString()`, in their own timezone; they are now converted like any other `DateTimeInterface`, with the format and storage timezone of the connection. The result only differs for an object whose timezone is not the storage timezone, or whose `__toString()` format is not the connection format (#203)
+
 ## [1.6.0] - 2026-10-18
 
 ### Added

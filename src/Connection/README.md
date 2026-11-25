@@ -29,6 +29,48 @@ $ composer require hectororm/connection
 
 ## Documentation
 
+### Date/time bind values and storage timezone
+
+`DateTimeInterface` values can be bound to any statement. When the statement is
+executed, the connection converts them to the storage timezone of the database,
+then formats them:
+
+```php
+use Hector\Connection\Connection;
+
+$connection = new Connection(
+    'mysql:host=localhost;dbname=app',
+    dateTimeFormat: 'Y-m-d H:i:s', // default
+    timezone: new DateTimeZone('UTC'), // storage timezone of the database
+);
+
+$connection->execute(
+    'INSERT INTO event (starts_at) VALUES (?)',
+    [new DateTimeImmutable('2026-01-02 03:04:05+09:00')]
+); // binds "2026-01-01 18:04:05"
+```
+
+| Parameter | Default | Meaning |
+| --- | --- | --- |
+| `dateTimeFormat` | `Y-m-d H:i:s` | Format of the bound value, e.g. `Y-m-d H:i:s.u` for `DATETIME(6)` columns |
+| `timezone` | `null` | Storage timezone of the database; `null` means the PHP default timezone |
+
+Both parameters are also available on `Connection::fromPdo()`, and through the
+`datetime_format` and `timezone` options of `OrmFactory::connection()`.
+
+Use the same timezone as the `DateTimeType` of your entities (which also falls back
+to the PHP default timezone), so that raw statements, the query builder and the
+entity mapping read and write dates in the same timezone.
+
+Limits:
+
+- There is a single format per connection, whatever the column: format the value
+  yourself for `DATE` or `TIME` columns when the engine compares them as text
+  (SQLite). Strings are bound as is.
+- The default format drops microseconds.
+- The session timezone of the server is not changed: `NOW()`, `CURRENT_TIMESTAMP`
+  and MySQL `TIMESTAMP` columns still follow it.
+
 ### CHECK constraint capabilities
 
 `DriverCapabilities::hasCheckConstraints()` reports enforced CHECK support.

@@ -14,6 +14,8 @@ declare(strict_types=1);
 
 namespace Hector\Orm;
 
+use DateTimeZone;
+use Exception;
 use Hector\Connection\Connection;
 use Hector\Connection\ConnectionSet;
 use Hector\Connection\Log\Logger;
@@ -100,6 +102,18 @@ class OrmFactory
             throw new OrmException('Missing "dsn" option key in configuration');
         }
 
+        $timezone = $options['timezone'] ?? null;
+        if (is_string($timezone)) {
+            try {
+                $timezone = new DateTimeZone($timezone);
+            } catch (Exception $exception) {
+                throw new OrmException(
+                    sprintf('Invalid "timezone" option "%s" in configuration', $timezone),
+                    previous: $exception
+                );
+            }
+        }
+
         return new Connection(
             dsn: $options['dsn'],
             username: $options['username'] ?? null,
@@ -107,7 +121,9 @@ class OrmFactory
             readDsn: $options['read_dsn'] ?? null,
             name: $options['name'] ?? Connection::DEFAULT_NAME,
             logger: ($options['log'] ?? false) ? new Logger() : null,
-            options: $options['options'] ?? []
+            options: $options['options'] ?? [],
+            dateTimeFormat: $options['datetime_format'] ?? Connection::DEFAULT_DATETIME_FORMAT,
+            timezone: $timezone,
         );
     }
 

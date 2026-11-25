@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `datetime_format` and `timezone` option keys on `OrmFactory::connection()` (and so `OrmFactory::orm()`), forwarded to the connection to convert the date/time values bound to statements. `timezone` accepts a timezone name or a `DateTimeZone`; an invalid name throws an `OrmException` (#203)
+
 ## [1.6.0] - 2026-10-18
 
 ### Added

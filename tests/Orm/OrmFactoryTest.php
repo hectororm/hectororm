@@ -12,8 +12,10 @@
 
 namespace Hector\Orm\Tests;
 
+use DateTimeZone;
 use Hector\Connection\Connection;
 use Hector\Connection\Log\Logger;
+use Hector\Orm\Exception\OrmException;
 use Hector\Orm\Orm;
 use Hector\Orm\OrmFactory;
 use LogicException;
@@ -79,5 +81,46 @@ class OrmFactoryTest extends TestCase
         $connection = OrmFactory::connection(['dsn' => 'sqlite::memory:']);
 
         $this->assertSame([], $connection->__serialize()['options']);
+    }
+
+    public function testConnectionDateTimeDefaults(): void
+    {
+        $connection = OrmFactory::connection(['dsn' => 'sqlite::memory:']);
+
+        $this->assertSame('Y-m-d H:i:s', $connection->getDateTimeFormat());
+        $this->assertNull($connection->getTimezone());
+    }
+
+    public function testConnectionForwardsDateTimeFormat(): void
+    {
+        $connection = OrmFactory::connection([
+            'dsn' => 'sqlite::memory:',
+            'datetime_format' => 'Y-m-d H:i:s.u',
+        ]);
+
+        $this->assertSame('Y-m-d H:i:s.u', $connection->getDateTimeFormat());
+    }
+
+    public function testConnectionForwardsTimezoneName(): void
+    {
+        $connection = OrmFactory::connection(['dsn' => 'sqlite::memory:', 'timezone' => 'Europe/Paris']);
+
+        $this->assertSame('Europe/Paris', $connection->getTimezone()->getName());
+    }
+
+    public function testConnectionForwardsTimezoneObject(): void
+    {
+        $timezone = new DateTimeZone('UTC');
+        $connection = OrmFactory::connection(['dsn' => 'sqlite::memory:', 'timezone' => $timezone]);
+
+        $this->assertSame($timezone, $connection->getTimezone());
+    }
+
+    public function testConnectionInvalidTimezone(): void
+    {
+        $this->expectException(OrmException::class);
+        $this->expectExceptionMessage('Invalid "timezone" option "Mars/Olympus" in configuration');
+
+        OrmFactory::connection(['dsn' => 'sqlite::memory:', 'timezone' => 'Mars/Olympus']);
     }
 }
