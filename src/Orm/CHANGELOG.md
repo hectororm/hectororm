@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Prevent additional pivot data from overriding source or target keys when creating or updating many-to-many links (#204).
+
 ## [1.6.0] - 2026-10-18
 
 ### Added
