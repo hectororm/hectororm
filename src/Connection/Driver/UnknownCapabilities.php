@@ -19,6 +19,22 @@ class UnknownCapabilities implements DriverCapabilities
     /**
      * @inheritDoc
      */
+    public function hasGeneratedColumns(): bool
+    {
+        return false;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function hasVirtualGeneratedColumns(): bool
+    {
+        return false;
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function hasLock(): bool
     {
         return false;

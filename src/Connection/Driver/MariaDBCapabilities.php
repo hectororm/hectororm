@@ -23,6 +23,28 @@ class MariaDBCapabilities implements DriverCapabilities
     /**
      * @inheritDoc
      */
+    public function hasGeneratedColumns(): bool
+    {
+        if ('mariadb' !== $this->driverInfo->getDriver() ||
+            1 !== preg_match('/^(\d+\.\d+\.\d+)(?:[-+].*)?$/', $this->driverInfo->getVersion(), $matches)) {
+            return false;
+        }
+
+        // Earlier releases use PERSISTENT instead of the STORED grammar emitted by Hector.
+        return version_compare($matches[1], '10.2.1', '>=');
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function hasVirtualGeneratedColumns(): bool
+    {
+        return $this->hasGeneratedColumns();
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function hasLock(): bool
     {
         return true;

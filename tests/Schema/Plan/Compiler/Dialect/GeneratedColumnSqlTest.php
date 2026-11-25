@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace Hector\Schema\Tests\Plan\Compiler\Dialect;
 
+use Hector\Connection\Driver\DriverCapabilities;
 use Hector\Connection\Driver\DriverInfo;
 use Hector\Connection\Driver\MariaDBCapabilities;
 use Hector\Connection\Driver\MySQLCapabilities;
@@ -192,5 +193,137 @@ class GeneratedColumnSqlTest extends TestCase
         $this->expectException(PlanException::class);
         $this->expectExceptionMessage('Generated columns require SQLite 3.31.0 or newer');
         $dialect->compileCreateTable($create);
+    }
+
+    public static function unsupportedVersions(): iterable
+    {
+        foreach ([
+            ['mysql', '5.7.5-log'],
+            ['mariadb', '10.2.0-MariaDB'],
+            ['sqlite', '3.30.1'],
+            ['unknown', '99.0.0'],
+        ] as [$driver, $version]) {
+            foreach ([false, true] as $stored) {
+                yield [$driver, $version, $stored];
+            }
+        }
+    }
+
+    /**
+     * @dataProvider unsupportedVersions
+     */
+    public function testUnsupportedVersionsRejectOnlyGeneratedColumns(
+        string $driver,
+        string $version,
+        bool $stored,
+    ): void {
+        $capabilities = (new DriverInfo($driver, $version))->getCapabilities();
+        $dialect = 'sqlite' === $driver ? new SqliteDialect($capabilities) : new MySQLDialect($capabilities);
+        $create = new CreateTable('items');
+        $create->addColumn('quantity', 'INTEGER');
+        self::assertCount(1, [...$dialect->compileCreateTable($create)]);
+
+        $create->addColumn('total', 'INTEGER', generated: new Generated('quantity * 2', stored: $stored));
+        $this->expectException(PlanException::class);
+        $dialect->compileCreateTable($create);
+    }
+
+    public static function capabilityModes(): iterable
+    {
+        foreach (['mysql', 'sqlite'] as $driver) {
+            foreach ([false, true] as $stored) {
+                foreach ([false, true] as $baseline) {
+                    foreach ([false, true] as $virtual) {
+                        yield [$driver, $stored, $baseline, $virtual];
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * @dataProvider capabilityModes
+     */
+    public function testInterfaceCapabilitiesControlEachMode(
+        string $driver,
+        bool $stored,
+        bool $baseline,
+        bool $virtual,
+    ): void {
+        $capabilities = $this->createMock(DriverCapabilities::class);
+        $capabilities->method('hasGeneratedColumns')->willReturn($baseline);
+        $capabilities->method('hasVirtualGeneratedColumns')->willReturn($virtual);
+        $dialect = 'sqlite' === $driver ? new SqliteDialect($capabilities) : new MySQLDialect($capabilities);
+        $create = new CreateTable('items');
+        $create->addColumn('quantity', 'INTEGER');
+        $create->addColumn('total', 'INTEGER', generated: new Generated('quantity * 2', stored: $stored));
+
+        if (false === $baseline || (false === $stored && false === $virtual)) {
+            $this->expectException(PlanException::class);
+        }
+
+        self::assertCount(1, [...$dialect->compileCreateTable($create)]);
+    }
+
+    public static function offlineModes(): array
+    {
+        return [['mysql', false], ['mysql', true], ['sqlite', false], ['sqlite', true]];
+    }
+
+    /**
+     * @dataProvider offlineModes
+     */
+    public function testOfflineCompilationWithoutCapabilities(string $driver, bool $stored): void
+    {
+        $dialect = 'sqlite' === $driver ? new SqliteDialect() : new MySQLDialect();
+        $create = new CreateTable('items');
+        $create->addColumn('quantity', 'INTEGER');
+        $create->addColumn('total', 'INTEGER', generated: new Generated('quantity * 2', stored: $stored));
+
+        $sql = implode("\n", [...$dialect->compileCreateTable($create)]);
+        self::assertStringContainsString(
+            'GENERATED ALWAYS AS (quantity * 2) ' . ($stored ? 'STORED' : 'VIRTUAL'),
+            $sql,
+        );
+    }
+
+    public static function unsupportedMysqlAlterOperations(): iterable
+    {
+        foreach (['mysql', 'mariadb'] as $driver) {
+            foreach (['add', 'modify', 'rename'] as $operation) {
+                foreach ([false, true] as $stored) {
+                    yield [$driver, $operation, $stored];
+                }
+            }
+        }
+    }
+
+    /**
+     * @dataProvider unsupportedMysqlAlterOperations
+     */
+    public function testMysqlAlterRejectsUnsupportedGeneratedDefinitions(
+        string $driver,
+        string $operation,
+        bool $stored,
+    ): void {
+        $capabilities = (new DriverInfo($driver, 'mysql' === $driver ? '5.7.5' : '10.2.0'))->getCapabilities();
+        $dialect = new MySQLDialect($capabilities);
+        $column = new Column('total', 0, null, true, 'int',
+            generation_expression: 'quantity * 2', generated_stored: $stored);
+        $table = new Table(schema_name: 'main', name: 'items', type: Table::TYPE_TABLE, columns: ['total' => $column]);
+        $schema = new Schema(connection: 'default', name: 'main', charset: 'utf8mb4', tables: ['items' => $table]);
+        $alter = new AlterTable('items');
+        $generated = new Generated('quantity * 2', stored: $stored);
+        match ($operation) {
+            'add' => $alter->addColumn('new_total', 'INTEGER', generated: $generated),
+            'modify' => $alter->modifyColumn('total', 'INTEGER', generated: $generated),
+            'rename' => $alter->renameColumn('total', 'renamed_total'),
+        };
+
+        $this->expectException(PlanException::class);
+        $this->expectExceptionMessage(
+            ($stored ? 'STORED' : 'VIRTUAL') . ' generated columns are not supported by the target engine/version',
+        );
+        iterator_to_array($dialect->compileAlterTable($alter, new CompilationContext($schema)));
     }
 }

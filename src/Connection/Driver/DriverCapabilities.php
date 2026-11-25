@@ -17,6 +17,27 @@ namespace Hector\Connection\Driver;
 interface DriverCapabilities
 {
     /**
+     * Support of GENERATED ALWAYS AS (...) STORED column definitions?
+     *
+     * This is the generated-column baseline; it does not imply VIRTUAL support.
+     * Describes server syntax, not storage-engine or expression-specific restrictions,
+     * nor support for every ALTER TABLE operation or availability of a schema dialect.
+     *
+     * @return bool
+     */
+    public function hasGeneratedColumns(): bool;
+
+    /**
+     * Support of GENERATED ALWAYS AS (...) VIRTUAL in addition to the STORED baseline?
+     *
+     * Requires hasGeneratedColumns(). In particular, MariaDB's older PERSISTENT-only
+     * grammar is outside this contract. PostgreSQL supports STORED from 12 and VIRTUAL from 18.
+     *
+     * @return bool
+     */
+    public function hasVirtualGeneratedColumns(): bool;
+
+    /**
      * Support of lock?
      *
      * @return bool

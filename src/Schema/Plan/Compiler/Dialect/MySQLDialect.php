@@ -549,6 +549,15 @@ final class MySQLDialect extends AbstractDialect
         bool $stored,
         bool $nullable,
     ): string {
+        if (null !== $this->capabilities &&
+            (false === $this->capabilities->hasGeneratedColumns() ||
+                (false === $stored && false === $this->capabilities->hasVirtualGeneratedColumns()))) {
+            throw new PlanException(sprintf(
+                '%s generated columns are not supported by the target engine/version',
+                $stored ? 'STORED' : 'VIRTUAL',
+            ));
+        }
+
         $sql = sprintf(
             '%s %s GENERATED ALWAYS AS (%s) %s',
             $this->quoteIdentifier($name),

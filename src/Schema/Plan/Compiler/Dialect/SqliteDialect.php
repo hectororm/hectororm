@@ -15,7 +15,6 @@ declare(strict_types=1);
 namespace Hector\Schema\Plan\Compiler\Dialect;
 
 use Hector\Connection\Driver\DriverCapabilities;
-use Hector\Connection\Driver\SQLiteCapabilities;
 use Hector\Schema\Exception\PlanException;
 use Hector\Schema\Index;
 use Hector\Schema\Plan\AlterTable;
@@ -435,8 +434,10 @@ final class SqliteDialect extends AbstractDialect
 
         $generated = $operation->getGenerated();
         if (null !== $generated) {
-            if ($this->capabilities instanceof SQLiteCapabilities &&
-                false === $this->capabilities->hasGeneratedColumns()) {
+            if (null !== $this->capabilities &&
+                (false === $this->capabilities->hasGeneratedColumns() ||
+                    (false === $generated->isStored() &&
+                        false === $this->capabilities->hasVirtualGeneratedColumns()))) {
                 throw new PlanException('Generated columns require SQLite 3.31.0 or newer');
             }
 

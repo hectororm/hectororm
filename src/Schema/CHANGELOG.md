@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- SQLite and MySQL/MariaDB schema dialects now check generated-column support through `DriverCapabilities`, including the requested STORED/VIRTUAL mode, and throw `PlanException` when supplied capabilities deny support. Compilation without capabilities remains available for offline SQL generation without server-version validation (#205)
+
 ## [1.6.0] - 2026-10-18
 
 _No changes in this release._

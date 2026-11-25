@@ -23,6 +23,33 @@ class PostgreSQLCapabilities implements DriverCapabilities
     /**
      * @inheritDoc
      */
+    public function hasGeneratedColumns(): bool
+    {
+        return $this->hasGeneratedColumnsSince('12.0');
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function hasVirtualGeneratedColumns(): bool
+    {
+        return $this->hasGeneratedColumnsSince('18.0');
+    }
+
+    private function hasGeneratedColumnsSince(string $minimumVersion): bool
+    {
+        // PostgreSQL uses major.minor versions since 10; PDO may include a distribution suffix.
+        if ('pgsql' !== $this->driverInfo->getDriver() ||
+            1 !== preg_match('/^(\d+\.\d+(?:\.\d+)?)(?:[-+ ].*)?$/', $this->driverInfo->getVersion(), $matches)) {
+            return false;
+        }
+
+        return version_compare($matches[1], $minimumVersion, '>=');
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function hasLock(): bool
     {
         return true;
