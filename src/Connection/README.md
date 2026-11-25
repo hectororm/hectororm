@@ -53,7 +53,7 @@ $connection->execute(
 | Parameter | Default | Meaning |
 | --- | --- | --- |
 | `dateTimeFormat` | `Y-m-d H:i:s` | Format of the bound value, e.g. `Y-m-d H:i:s.u` for `DATETIME(6)` columns |
-| `timezone` | `null` | Storage timezone of the database; `null` means the PHP default timezone |
+| `timezone` | `null` | Storage timezone of the database, also applied to the [session of the server](#session-timezone); `null` means the PHP default timezone, and leaves the session untouched |
 
 Both parameters are also available on `Connection::fromPdo()`, and through the
 `datetime_format` and `timezone` options of `OrmFactory::connection()`.
@@ -68,8 +68,42 @@ Limits:
   yourself for `DATE` or `TIME` columns when the engine compares them as text
   (SQLite). Strings are bound as is.
 - The default format drops microseconds.
-- The session timezone of the server is not changed: `NOW()`, `CURRENT_TIMESTAMP`
-  and MySQL `TIMESTAMP` columns still follow it.
+
+### Session timezone
+
+A date/time value without timezone is read by the server in the timezone of its
+session. When the connection has a `timezone`, the session is set to it as soon as
+the connection is opened, so that the values computed by the server (`NOW()`,
+`CURRENT_TIMESTAMP`, `DEFAULT CURRENT_TIMESTAMP` columns, MySQL/MariaDB `TIMESTAMP`
+columns) and the values bound from PHP are in the same timezone:
+
+```php
+$connection = new Connection('mysql:host=localhost;dbname=app', timezone: new DateTimeZone('UTC'));
+
+$connection->execute(
+    'INSERT INTO event (created_at, starts_at) VALUES (NOW(), ?)',
+    [new DateTimeImmutable()]
+); // both values are in UTC
+```
+
+| Engine | Statement |
+| --- | --- |
+| MySQL, MariaDB | `SET time_zone = ...` |
+| PostgreSQL | `SET TIME ZONE ...` |
+| SQLite, other drivers | None: there is no session timezone to set |
+
+It applies to the read/write and read-only connections, and to the PDO objects
+given to `Connection::fromPdo()`. Without a `timezone`, nothing is sent and the
+session keeps the timezone of the server.
+
+- `UTC` is sent as the `+00:00` offset on MySQL/MariaDB, which works on any server.
+- A named timezone (`Europe/Paris`) follows daylight saving time, but needs the
+  [timezone tables](https://dev.mysql.com/doc/refman/en/time-zone-support.html) to
+  be loaded on MySQL/MariaDB.
+- A fixed offset (`+02:00`) works on any server, but does not follow daylight saving
+  time.
+- A timezone refused by the server throws a `ConnectionException` when the
+  connection is opened.
 
 ### CHECK constraint capabilities
 
