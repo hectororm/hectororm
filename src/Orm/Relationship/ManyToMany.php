@@ -361,10 +361,9 @@ class ManyToMany extends Relationship
         foreach ($foreign as $foreignEntity) {
             // Pivot keys (foreign keys) and additional data are stored separately:
             // getPivotData() resolves the FK columns, getPivot()->getData() the extras.
-            // Pivot keys (foreign keys) and additional data are stored separately:
-            // getPivotData() resolves the FK columns, getPivot()->getData() the extras.
             $pivotKeys = $this->getPivotData($entity, $foreignEntity);
-            $pivotExtra = $foreignEntity->getPivot()?->getData() ?? [];
+            // Structural keys always come from the linked entities, never from additional data.
+            $pivotExtra = array_diff_key($foreignEntity->getPivot()?->getData() ?? [], $pivotKeys);
 
             $queryBuilder = $this->newQueryBuilder();
             $queryBuilder->whereEquals($pivotKeys);
