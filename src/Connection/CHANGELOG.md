@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added `DriverCapabilities::hasGeneratedColumns()` for the `GENERATED ALWAYS AS (...) STORED` baseline (MySQL 5.7.6+, MariaDB 10.2.1+, SQLite 3.31.0+ and PostgreSQL 12+) and `hasVirtualGeneratedColumns()` for VIRTUAL support in addition to that baseline (PostgreSQL 18+). Server version suffixes are accepted; unknown engines or versions return `false` (#205)
+
+### Changed
+
+- **Interface compatibility (1.7):** third-party implementations of `DriverCapabilities` must implement `hasGeneratedColumns()` and `hasVirtualGeneratedColumns()` (#205), alongside the `hasUpsert()` and `hasInsertRowAlias()` additions planned in #192. The interface describes the engines supported by Hector and can gain methods in minor releases
+
 ## [1.6.0] - 2026-10-18
 
 ### Added

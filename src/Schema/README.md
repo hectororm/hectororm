@@ -29,6 +29,28 @@ $ composer require hectororm/schema
 
 ## Documentation
 
+### Generated-column version checks
+
+The MySQL/MariaDB and SQLite dialects check generated-column definitions against supplied
+`DriverCapabilities`, throwing `PlanException` when the STORED baseline or requested VIRTUAL
+mode is unsupported. This applies to new definitions and definitions recreated from metadata.
+
+For version-checked offline compilation, pass capabilities for the intended server:
+
+```php
+use Hector\Connection\Driver\DriverInfo;
+use Hector\Schema\Plan\Compiler\Dialect\MySQLDialect;
+
+$dialect = new MySQLDialect(
+    (new DriverInfo('mysql', '5.7.6'))->getCapabilities(),
+);
+```
+
+Without capabilities, generated-column SQL can still be compiled offline, but server-version
+support is not checked. Supplying unknown capabilities explicitly rejects generated columns.
+SQLite's restrictions on native ALTER operations still apply, including the need to rebuild a
+table when adding a STORED generated column.
+
 ### Column character sets and collations
 
 `addColumn()` and `modifyColumn()` accept optional `?string $charset = null` and

@@ -29,6 +29,27 @@ $ composer require hectororm/connection
 
 ## Documentation
 
+### Generated-column capabilities
+
+`hasGeneratedColumns()` reports support for `GENERATED ALWAYS AS (...) STORED`.
+`hasVirtualGeneratedColumns()` reports VIRTUAL support in addition to that baseline.
+
+| Engine | `hasGeneratedColumns()` | `hasVirtualGeneratedColumns()` |
+| --- | --- | --- |
+| MySQL 5.7.6+ | `true` | `true` |
+| MariaDB 10.2.1+ | `true` | `true` |
+| SQLite 3.31.0+ | `true` | `true` |
+| PostgreSQL 12–17 | `true` | `false` |
+| PostgreSQL 18+ | `true` | `true` |
+| Older versions / unknown engines or versions | `false` | `false` |
+
+MariaDB's older `PERSISTENT` grammar is outside this contract, including its VIRTUAL support.
+Server suffixes such as `5.7.6-log` are accepted. These capabilities describe server syntax;
+storage-engine restrictions, valid expressions and supported ALTER operations still apply.
+They do not imply availability of a schema dialect.
+
+**Compatibility:** third-party `DriverCapabilities` implementations must implement both methods.
+
 ### CHECK constraint capabilities
 
 `DriverCapabilities::hasCheckConstraints()` reports enforced CHECK support.
