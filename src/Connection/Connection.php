@@ -61,8 +61,10 @@ class Connection
      *                       may interfere with the internal transaction handling.
      * @param string $dateTimeFormat Format of the date/time values bound to statements.
      * @param DateTimeZone|null $timezone Storage timezone of the database: date/time values
-     *                                    bound to statements are converted to it. Null means
-     *                                    the PHP default timezone.
+     *                                    bound to statements are converted to it, and the
+     *                                    session timezone of the server is set to it (MySQL,
+     *                                    MariaDB, PostgreSQL). Null means the PHP default
+     *                                    timezone, and leaves the session untouched.
      */
     public function __construct(
         protected string $dsn,
@@ -106,9 +108,11 @@ class Connection
      * @param string $name
      * @param Logger|null $logger
      * @param string $dateTimeFormat
-     * @param DateTimeZone|null $timezone
+     * @param DateTimeZone|null $timezone When given, the session timezone of the PDO
+     *                                    objects is set to it.
      *
      * @return self
+     * @throws ConnectionException If the server refuses the timezone
      */
     public static function fromPdo(
         PDO $pdo,
@@ -125,6 +129,10 @@ class Connection
             dateTimeFormat: $dateTimeFormat,
             timezone: $timezone,
         );
+        $connection->initSessionTimezone($pdo);
+        if (null !== $readPdo) {
+            $connection->initSessionTimezone($readPdo);
+        }
         $connection->pdo = $pdo;
         $connection->readPdo = $readPdo;
 
@@ -230,7 +238,7 @@ class Connection
         );
 
         try {
-            $this->pdo = new PDO($this->dsn, $this->username, $this->password, $this->options);
+            $pdo = new PDO($this->dsn, $this->username, $this->password, $this->options);
         } catch (PDOException $exception) {
             // Do not chain the PDOException: on PHP < 8.2 its stack trace holds
             // the password passed to the PDO constructor. Re-use its message
@@ -243,7 +251,10 @@ class Connection
             $logEntry?->end();
         }
 
-        return $this->pdo;
+        // Only keep a PDO whose session is initialized.
+        $this->initSessionTimezone($pdo);
+
+        return $this->pdo = $pdo;
     }
 
     /**
@@ -269,7 +280,7 @@ class Connection
         $logEntry = $this->logger?->newEntry($this->name, 'CONNECTION ' . $this->sanitizeDsn($this->readDsn));
 
         try {
-            $this->readPdo = new PDO($this->readDsn, $this->username, $this->password, $this->options);
+            $readPdo = new PDO($this->readDsn, $this->username, $this->password, $this->options);
         } catch (PDOException $exception) {
             throw new ConnectionException(
                 sprintf('Unable to connect to "%s": %s', $this->name, $exception->getMessage())
@@ -278,7 +289,80 @@ class Connection
             $logEntry?->end();
         }
 
-        return $this->readPdo;
+        $this->initSessionTimezone($readPdo);
+
+        return $this->readPdo = $readPdo;
+    }
+
+    /**
+     * Set the session timezone of the server to the storage timezone.
+     *
+     * Without a storage timezone, or with a driver without session timezone,
+     * the session is left untouched.
+     *
+     * @param PDO $pdo
+     *
+     * @throws ConnectionException If the server refuses the timezone
+     */
+    private function initSessionTimezone(PDO $pdo): void
+    {
+        if (null === $this->timezone) {
+            return;
+        }
+
+        $statement = $this->getSessionTimezoneStatement($pdo, $this->timezone);
+        if (null === $statement) {
+            return;
+        }
+
+        $logEntry = $this->logger?->newEntry($this->name, $statement);
+
+        try {
+            // PDO::exec() returns false instead of throwing with a silent error mode.
+            if (false === $pdo->exec($statement)) {
+                throw new PDOException($pdo->errorInfo()[2] ?? 'Unknown error');
+            }
+        } catch (PDOException $exception) {
+            throw new ConnectionException(
+                sprintf(
+                    'Unable to set the session timezone of "%s" to "%s": %s',
+                    $this->name,
+                    $this->timezone->getName(),
+                    $exception->getMessage()
+                ),
+                previous: $exception
+            );
+        } finally {
+            $logEntry?->end();
+        }
+    }
+
+    /**
+     * Get the statement setting the session timezone, if the driver has one.
+     *
+     * @param PDO $pdo
+     * @param DateTimeZone $timezone
+     *
+     * @return string|null
+     */
+    private function getSessionTimezoneStatement(PDO $pdo, DateTimeZone $timezone): ?string
+    {
+        $name = $timezone->getName();
+        // Fixed offsets and abbreviations have no location: they are sent as an offset.
+        $offset = false === $timezone->getLocation()
+            ? (new DateTimeImmutable('now', $timezone))->format('P')
+            : null;
+
+        return match (DriverInfo::fromPDO($pdo)->getDriver()) {
+            // UTC as an offset does not need the timezone tables of the server.
+            'mysql', 'mariadb', 'vitess' => 'SET time_zone = '
+                . $pdo->quote($offset ?? ('UTC' === $name ? '+00:00' : $name)),
+            // A quoted offset is read with the POSIX sign convention: use an interval.
+            'pgsql' => null === $offset
+                ? 'SET TIME ZONE ' . $pdo->quote($name)
+                : 'SET TIME ZONE INTERVAL ' . $pdo->quote($offset) . ' HOUR TO MINUTE',
+            default => null,
+        };
     }
 
     /**
