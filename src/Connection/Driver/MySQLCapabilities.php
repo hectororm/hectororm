@@ -23,6 +23,27 @@ class MySQLCapabilities implements DriverCapabilities
     /**
      * @inheritDoc
      */
+    public function hasGeneratedColumns(): bool
+    {
+        if ('mysql' !== $this->driverInfo->getDriver() ||
+            1 !== preg_match('/^(\d+\.\d+\.\d+)(?:[-+].*)?$/', $this->driverInfo->getVersion(), $matches)) {
+            return false;
+        }
+
+        return version_compare($matches[1], '5.7.6', '>=');
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function hasVirtualGeneratedColumns(): bool
+    {
+        return $this->hasGeneratedColumns();
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function hasLock(): bool
     {
         return true;
