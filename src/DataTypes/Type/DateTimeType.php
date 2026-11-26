@@ -23,8 +23,21 @@ use Hector\DataTypes\ExpectedType;
 use Throwable;
 use ValueError;
 
-class DateTimeType extends AbstractType
+class DateTimeType extends AbstractType implements StorageTimezoneAwareInterface
 {
+    protected ?DateTimeZone $storageTimezone = null;
+
+    /**
+     * DateTimeType constructor.
+     *
+     * @param string $format Format of the stored value
+     * @param string $class Class of the returned objects
+     * @param DateTimeZone|null $timezone Timezone of the returned objects, and of the stored
+     *                                    values unless a storage timezone is given. Null
+     *                                    means the PHP default timezone.
+     *
+     * @see DateTimeType::withStorageTimezone()
+     */
     public function __construct(
         protected string $format = 'Y-m-d H:i:s',
         protected string $class = DateTime::class,
@@ -42,15 +55,52 @@ class DateTimeType extends AbstractType
     }
 
     /**
-     * Resolve the timezone applied to every date/time path.
+     * @inheritDoc
+     */
+    public function withStorageTimezone(DateTimeZone $timezone): static
+    {
+        $type = clone $this;
+        $type->storageTimezone = $timezone;
+
+        return $type;
+    }
+
+    /**
+     * Resolve the timezone of the returned objects.
      *
-     * When no timezone is configured, the ambient PHP default timezone is used,
-     * preserving the previous behaviour of the string path while still letting
-     * the numeric/timestamp path agree with it.
+     * When no timezone is configured, the ambient PHP default timezone is used.
      */
     private function resolveTimezone(): DateTimeZone
     {
         return $this->timezone ?? new DateTimeZone(date_default_timezone_get());
+    }
+
+    /**
+     * Resolve the timezone of the stored values, applied to every date/time path.
+     *
+     * Without a storage timezone, values are stored in the timezone of the
+     * returned objects.
+     */
+    private function resolveStorageTimezone(): DateTimeZone
+    {
+        return $this->storageTimezone ?? $this->resolveTimezone();
+    }
+
+    /**
+     * Read a stored value.
+     *
+     * @param class-string<DateTime|DateTimeImmutable> $class
+     */
+    private function read(string $class, string $value): DateTime|DateTimeImmutable
+    {
+        $date = new $class($value, $this->resolveStorageTimezone());
+
+        // Without a storage timezone, the object is already in its timezone.
+        if (null === $this->storageTimezone) {
+            return $date;
+        }
+
+        return $date->setTimezone($this->resolveTimezone());
     }
 
     /**
@@ -65,10 +115,8 @@ class DateTimeType extends AbstractType
         }
 
         try {
-            $timezone = $this->resolveTimezone();
-
             if (null === $expected) {
-                return new $this->class((string)$value, $timezone);
+                return $this->read($this->class, (string)$value);
             }
 
             if ($expected->getName() == 'string') {
@@ -76,21 +124,18 @@ class DateTimeType extends AbstractType
             }
 
             if ($expected->getName() == 'int') {
-                $timestamp = strtotime((string)$value);
-
-                // strtotime() returns false on an invalid date; (int)false would
-                // be 0 (1970-01-01), silently corrupting the value.
-                if (false === $timestamp) {
+                // An empty value is not a date, but would be read as the current time.
+                if ('' === trim((string)$value)) {
                     throw ValueException::castError($this);
                 }
 
-                return $timestamp;
+                // Read in the storage timezone, like the objects: strtotime() only
+                // knows the PHP default timezone. An invalid date throws.
+                return (new DateTimeImmutable((string)$value, $this->resolveStorageTimezone()))->getTimestamp();
             }
 
             if (is_a($expected->getName(), DateTimeInterface::class, true)) {
-                $class = $expected->getName();
-
-                return new $class((string)$value, $timezone);
+                return $this->read($expected->getName(), (string)$value);
             }
         } catch (Throwable $e) {
             throw ValueException::castError($this, $e);
@@ -109,7 +154,7 @@ class DateTimeType extends AbstractType
         }
 
         try {
-            $timezone = $this->resolveTimezone();
+            $timezone = $this->resolveStorageTimezone();
 
             if (is_numeric($value)) {
                 $value = new DateTime(sprintf('@%d', $value));
