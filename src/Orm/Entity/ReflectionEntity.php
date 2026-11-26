@@ -17,7 +17,9 @@ namespace Hector\Orm\Entity;
 use Hector\Orm\Attributes\Type;
 use Hector\Orm\Attributes\Hidden;
 use Hector\Orm\Attributes\Primary;
+use DateTimeZone;
 use Exception;
+use Hector\DataTypes\Type\StorageTimezoneAwareInterface;
 use Hector\DataTypes\Type\StringType;
 use Hector\DataTypes\Type\TypeInterface;
 use Hector\Orm\Assert\EntityAssert;
@@ -64,6 +66,8 @@ class ReflectionEntity
     private array $hidden;
 
     private ?Table $tableInstance = null;
+    /** @var array<string, array{0: TypeInterface, 1: DateTimeZone, 2: TypeInterface}> Types by column */
+    private array $storageTypes = [];
     private Mapper $mapperInstance;
     private ReflectionClass $reflection;
 
@@ -498,17 +502,58 @@ class ReflectionEntity
     {
         try {
             if (array_key_exists($column, $this->types)) {
-                return $this->types[$column];
+                return $this->withStorageTimezone($column, $this->types[$column]);
             }
 
             try {
-                return Orm::get()->getTypes()->get($this->getTable()->getColumn($column)->getType());
+                $type = Orm::get()->getTypes()->get($this->getTable()->getColumn($column)->getType());
             } catch (UnexpectedValueException) {
                 return $this->types[$column] = new StringType();
             }
+
+            return $this->withStorageTimezone($column, $type);
         } catch (Exception $exception) {
             throw new OrmException(sprintf('Type error for column %s', $column), previous: $exception);
         }
+    }
+
+    /**
+     * Give the storage timezone of the connection of the entity to a type able to receive one.
+     *
+     * A connection without timezone leaves the type as is, and so does a `DATE` column:
+     * a date without time has no timezone to be converted to.
+     *
+     * @param string $column
+     * @param TypeInterface $type
+     *
+     * @return TypeInterface
+     * @throws OrmException
+     */
+    private function withStorageTimezone(string $column, TypeInterface $type): TypeInterface
+    {
+        if (!$type instanceof StorageTimezoneAwareInterface) {
+            return $type;
+        }
+
+        $table = $this->getTable();
+        $timezone = Orm::get()->getConnection($table->getSchema()->getConnection())->getTimezone();
+        if (null === $timezone) {
+            return $type;
+        }
+
+        // Reuse the type of the column while its source and the timezone are the same.
+        [$source, $sourceTimezone, $storageType] = $this->storageTypes[$column] ?? [null, null, null];
+        if ($type === $source && $timezone === $sourceTimezone) {
+            return $storageType;
+        }
+
+        $storageType = $type;
+        if (false === $table->hasColumn($column) || 'date' !== $table->getColumn($column)->getType()) {
+            $storageType = $type->withStorageTimezone($timezone);
+        }
+        $this->storageTypes[$column] = [$type, $timezone, $storageType];
+
+        return $storageType;
     }
 
     /////////////////

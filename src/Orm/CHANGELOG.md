@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `datetime_format` and `timezone` option keys on `OrmFactory::connection()` (and so `OrmFactory::orm()`), forwarded to the connection to convert the date/time values bound to statements. `timezone` accepts a timezone name or a `DateTimeZone`; an invalid name throws an `OrmException` (#203)
+- The date/time columns of an entity are read and written in the storage timezone of its connection, like the values bound to statements: `ReflectionEntity::getType()` gives it to the types implementing `StorageTimezoneAwareInterface`, whether they come from the `TypeSet` or from a `#[Type]` attribute. The timezone of a `DateTimeType` is then the timezone of the returned objects (`null`: the PHP default timezone). Each entity follows its own connection; `DATE` columns are not converted, and the entities of a connection without timezone are unchanged (#206)
 
 ## [1.6.0] - 2026-10-18
 

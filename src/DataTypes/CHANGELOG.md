@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added `StorageTimezoneAwareInterface`, implemented by `DateTimeType`: `withStorageTimezone(DateTimeZone)` returns a new type reading and writing the stored values in the given timezone, for the layers knowing the timezone of the database (e.g. the connection of an entity). The `$timezone` of a `DateTimeType` is then only the timezone of the objects it returns; without a storage timezone, it is still used for both (#206)
+
+### Fixed
+
+- `DateTimeType::fromSchema()` to an `int` property read the stored value in the PHP default timezone (`strtotime()`), whatever the timezone of the type: it now uses the same timezone as the returned objects and as `toSchema()`. The result only differs for a type whose timezone is not the PHP default timezone (#206)
+
 ## [1.6.0] - 2026-10-18
 
 _No changes in this release._

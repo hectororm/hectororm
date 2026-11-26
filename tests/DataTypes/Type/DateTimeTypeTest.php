@@ -84,9 +84,39 @@ class DateTimeTypeTest extends TestCase
         $expectedType = new ExpectedType('int', false, true);
         $type = new DateTimeType();
 
-        // strtotime() returns false here; the cast to int must not silently
-        // produce 0 (1970-01-01).
+        // An invalid date must not silently produce 0 (1970-01-01).
         $type->fromSchema('not a date', $expectedType);
+    }
+
+    public function testFromSchemaWithDeclaredTypeBuiltinIntAndEmptyDate(): void
+    {
+        $this->expectException(ValueException::class);
+
+        $type = new DateTimeType();
+
+        // An empty value must not silently produce the current time.
+        $type->fromSchema(' ', new ExpectedType('int', false, true));
+    }
+
+    /**
+     * The timestamp is read in the timezone of the type, like the objects and
+     * like toSchema(), and not in the ambient PHP default timezone.
+     */
+    public function testFromSchemaWithDeclaredTypeBuiltinIntAndExplicitTimezone(): void
+    {
+        $previous = date_default_timezone_get();
+        date_default_timezone_set('America/New_York');
+
+        try {
+            $type = new DateTimeType(timezone: new DateTimeZone('UTC'));
+            $expectedType = new ExpectedType('int', false, true);
+
+            // 1592143200 == 2020-06-14 14:00:00 UTC.
+            $this->assertSame(1592143200, $type->fromSchema('2020-06-14 14:00:00', $expectedType));
+            $this->assertSame('2020-06-14 14:00:00', $type->toSchema(1592143200));
+        } finally {
+            date_default_timezone_set($previous);
+        }
     }
 
     public function testFromSchemaWithDeclaredTypeBuiltinDateTime(): void
@@ -335,5 +365,120 @@ class DateTimeTypeTest extends TestCase
         }
 
         $this->assertSame($expected, $type->toSchema($input));
+    }
+
+    public static function provideStorageTimezones(): array
+    {
+        // Instant: 2026-01-15 12:00:00 UTC, 13:00:00 in Europe/Paris.
+        return [
+            'no storage timezone, no type timezone' => [
+                null, null, 'Europe/Paris', '2026-01-15 13:00:00', 'Europe/Paris',
+            ],
+            'no storage timezone, type timezone' => [
+                null, 'Europe/Paris', 'UTC', '2026-01-15 13:00:00', 'Europe/Paris',
+            ],
+            'storage timezone, no type timezone' => [
+                'UTC', null, 'Europe/Paris', '2026-01-15 12:00:00', 'Europe/Paris',
+            ],
+            'storage timezone, type timezone' => [
+                'UTC', 'Europe/Paris', 'Asia/Tokyo', '2026-01-15 12:00:00', 'Europe/Paris',
+            ],
+            'storage timezone ahead of the type timezone' => [
+                'Europe/Paris', 'UTC', 'Asia/Tokyo', '2026-01-15 13:00:00', 'UTC',
+            ],
+            'storage timezone equal to the type timezone' => [
+                'UTC', 'UTC', 'Asia/Tokyo', '2026-01-15 12:00:00', 'UTC',
+            ],
+        ];
+    }
+
+    /**
+     * @dataProvider provideStorageTimezones
+     */
+    public function testStorageTimezone(
+        ?string $storageTimezone,
+        ?string $timezone,
+        string $ambientTimezone,
+        string $stored,
+        string $returnedTimezone,
+    ): void {
+        $previous = date_default_timezone_get();
+        date_default_timezone_set($ambientTimezone);
+
+        try {
+            $type = new DateTimeType(timezone: null === $timezone ? null : new DateTimeZone($timezone));
+            if (null !== $storageTimezone) {
+                $type = $type->withStorageTimezone(new DateTimeZone($storageTimezone));
+            }
+            $instant = new DateTimeImmutable('2026-01-15T12:00:00+00:00');
+            $timestamp = $instant->getTimestamp();
+
+            foreach ([
+                'integer timestamp' => $timestamp,
+                'immutable object' => $instant,
+                'mutable object' => DateTime::createFromImmutable($instant),
+                'object in another timezone' => $instant->setTimezone(new DateTimeZone('America/New_York')),
+                'offset-bearing string' => '2026-01-15T21:00:00+09:00',
+                'string without offset' => $stored,
+            ] as $label => $value) {
+                $this->assertSame($stored, $type->toSchema($value), $label);
+            }
+
+            foreach ([
+                'default class' => $type->fromSchema($stored),
+                'mutable' => $type->fromSchema($stored, new ExpectedType(DateTime::class)),
+                'immutable' => $type->fromSchema($stored, new ExpectedType(DateTimeImmutable::class)),
+            ] as $label => $returned) {
+                $this->assertSame($timestamp, $returned->getTimestamp(), $label);
+                $this->assertSame($returnedTimezone, $returned->getTimezone()->getName(), $label);
+            }
+
+            $this->assertInstanceOf(DateTime::class, $type->fromSchema($stored));
+            $this->assertInstanceOf(
+                DateTimeImmutable::class,
+                $type->fromSchema($stored, new ExpectedType(DateTimeImmutable::class))
+            );
+            $this->assertSame($timestamp, $type->fromSchema($stored, new ExpectedType('int', false, true)));
+            $this->assertSame($stored, $type->fromSchema($stored, new ExpectedType('string', false, true)));
+        } finally {
+            date_default_timezone_set($previous);
+        }
+    }
+
+    public function testWithStorageTimezoneDoesNotModifyTheType(): void
+    {
+        $type = new DateTimeType(timezone: new DateTimeZone('Europe/Paris'));
+        $storageType = $type->withStorageTimezone(new DateTimeZone('UTC'));
+        $instant = new DateTimeImmutable('2026-01-15T12:00:00+00:00');
+
+        $this->assertNotSame($type, $storageType);
+        $this->assertSame('2026-01-15 13:00:00', $type->toSchema($instant));
+        $this->assertSame('2026-01-15 12:00:00', $storageType->toSchema($instant));
+    }
+
+    public function testStorageTimezoneFollowsDaylightSavingTime(): void
+    {
+        $type = (new DateTimeType(class: DateTimeImmutable::class, timezone: new DateTimeZone('America/New_York')))
+            ->withStorageTimezone(new DateTimeZone('UTC'));
+
+        // UTC-5 in winter, UTC-4 in summer.
+        $this->assertSame('07:00', $type->fromSchema('2026-01-15 12:00:00')->format('H:i'));
+        $this->assertSame('08:00', $type->fromSchema('2026-07-15 12:00:00')->format('H:i'));
+        $this->assertSame(
+            '2026-07-15 12:00:00',
+            $type->toSchema(new DateTimeImmutable('2026-07-15 08:00:00', new DateTimeZone('America/New_York')))
+        );
+    }
+
+    public function testStorageTimezoneWithOffsetBearingStoredValue(): void
+    {
+        $type = (new DateTimeType(class: DateTimeImmutable::class, timezone: new DateTimeZone('Europe/Paris')))
+            ->withStorageTimezone(new DateTimeZone('UTC'));
+
+        // The offset of the stored value prevails over the storage timezone.
+        $date = $type->fromSchema('2026-01-15 21:00:00+09:00');
+
+        $this->assertSame('2026-01-15 13:00:00', $date->format('Y-m-d H:i:s'));
+        $this->assertSame('Europe/Paris', $date->getTimezone()->getName());
     }
 }

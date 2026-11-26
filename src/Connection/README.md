@@ -58,9 +58,20 @@ $connection->execute(
 Both parameters are also available on `Connection::fromPdo()`, and through the
 `datetime_format` and `timezone` options of `OrmFactory::connection()`.
 
-Use the same timezone as the `DateTimeType` of your entities (which also falls back
-to the PHP default timezone), so that raw statements, the query builder and the
-entity mapping read and write dates in the same timezone.
+The entity mapping of the ORM follows the same storage timezone, so that raw
+statements, the query builder and entities read and write dates in the same
+timezone:
+
+| Connection `timezone` | `DateTimeType` timezone | Stored in | Objects returned in |
+| --- | --- | --- | --- |
+| `null` | `null` | PHP default timezone | PHP default timezone |
+| `null` | `Europe/Paris` | `Europe/Paris` | `Europe/Paris` |
+| `UTC` | `null` | `UTC` | PHP default timezone |
+| `UTC` | `Europe/Paris` | `UTC` | `Europe/Paris` |
+
+When the connection has a timezone, the timezone of a `DateTimeType` is only the
+timezone of the objects it returns. `DATE` columns are never converted to the
+storage timezone.
 
 Limits:
 
